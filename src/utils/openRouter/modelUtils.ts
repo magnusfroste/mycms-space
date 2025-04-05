@@ -66,8 +66,44 @@ export const findDefaultModel = (models: OpenRouterModel[], preferredIds: string
     preferredIds
   });
 
-  // Special handling for Agent B (DeepSeek R1)
-  if (preferredIds[0] === 'deepseek-ai/deepseek-r1-distill-qwen-32b:free') {
+  // Special handling for Agent B (DeepSeek V3)
+  if (preferredIds[0] === 'deepseek-ai/deepseek-v3:free') {
+    // First priority: exact match for deepseek-v3:free
+    const exactMatch = models.find(m => m.id === 'deepseek-ai/deepseek-v3:free');
+    if (exactMatch) {
+      console.log(`Found exact match for preferred DeepSeek V3 model:`, exactMatch.id);
+      return exactMatch.id;
+    }
+    
+    // Second priority: any deepseek-v3 variant
+    const deepseekV3Variants = models.filter(m => 
+      m.id.includes('deepseek-v3') || 
+      m.id.includes('deepseek/v3'));
+    
+    console.log(`Looking for DeepSeek V3 variants, found:`, deepseekV3Variants.map(m => m.id));
+    
+    if (deepseekV3Variants.length > 0) {
+      // Sort variants to prioritize free versions first
+      const sortedVariants = deepseekV3Variants.sort((a, b) => {
+        // Prioritize IDs with :free suffix
+        if (a.id.includes(':free') && !b.id.includes(':free')) return -1;
+        if (!a.id.includes(':free') && b.id.includes(':free')) return 1;
+        return 0;
+      });
+      console.log(`Selected DeepSeek V3 variant:`, sortedVariants[0].id);
+      return sortedVariants[0].id;
+    }
+    
+    // Third priority: any DeepSeek model
+    const anyDeepseek = models.find(m => m.id.toLowerCase().includes('deepseek-ai/'));
+    if (anyDeepseek) {
+      console.log(`Found any DeepSeek model:`, anyDeepseek.id);
+      return anyDeepseek.id;
+    }
+  }
+  
+  // Special handling for Agent B's original priority (DeepSeek R1)
+  if (preferredIds.includes('deepseek-ai/deepseek-r1-distill-qwen-32b:free')) {
     // First priority: exact match for deepseek-r1-distill-qwen-32b:free
     const exactMatch = models.find(m => m.id === 'deepseek-ai/deepseek-r1-distill-qwen-32b:free');
     if (exactMatch) {
@@ -186,3 +222,4 @@ export const findDefaultModel = (models: OpenRouterModel[], preferredIds: string
   console.log("No models available to select from");
   return undefined;
 };
+
