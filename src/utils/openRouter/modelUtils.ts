@@ -73,30 +73,17 @@ export const findDefaultModel = (models: OpenRouterModel[], preferredIds: string
     }
   }
   
-  // If no exact match, try matching by provider and partial model name
+  // If no exact match, try matching by provider 
   for (const preferredId of preferredIds) {
-    const [provider, modelNameWithVersion] = preferredId.split('/');
-    if (!provider || !modelNameWithVersion) continue;
+    const [provider] = preferredId.split('/');
+    if (!provider) continue;
     
-    const modelName = modelNameWithVersion.split(':')[0]; // Remove :free suffix if present
-    const providerModels = models.filter(m => m.provider.toLowerCase() === provider.toLowerCase());
+    // Look for any model from this provider
+    const providerModel = models.find(m => 
+      m.provider.toLowerCase() === provider.toLowerCase() && 
+      (m.isFree || preferredId.includes(':free'))
+    );
     
-    // Look for models containing the model name (case-insensitive)
-    for (const model of providerModels) {
-      const modelIdLower = model.id.toLowerCase();
-      const modelNameLower = modelName.toLowerCase();
-      
-      if (modelIdLower.includes(modelNameLower) || 
-          model.name.toLowerCase().includes(modelNameLower)) {
-        return model.id;
-      }
-    }
-  }
-  
-  // If still no match, try getting any model from preferred providers
-  const providers = new Set(preferredIds.map(id => id.split('/')[0]));
-  for (const provider of providers) {
-    const providerModel = models.find(m => m.provider.toLowerCase() === provider.toLowerCase());
     if (providerModel) {
       return providerModel.id;
     }
@@ -104,5 +91,5 @@ export const findDefaultModel = (models: OpenRouterModel[], preferredIds: string
   
   // Final fallback - any free model or first available model
   const freeModel = models.find(m => m.isFree);
-  return freeModel ? freeModel.id : models[0].id;
+  return freeModel ? freeModel.id : models[0]?.id;
 };
