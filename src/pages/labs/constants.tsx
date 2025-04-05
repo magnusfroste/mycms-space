@@ -46,7 +46,7 @@ export const AGENT_A_PREFERRED_MODELS = [
 ];
 
 export const AGENT_B_PREFERRED_MODELS = [
-  'deepseek/deepseek-chat-v3-0324:free',
+  'deepseek-ai/deepseek-chat-v3-0324:free',
   'deepseek-ai/deepseek-v3:free',
   'deepseek-ai/deepseek-r1-distill-qwen-32b:free',
   'qwen/qwen2.5-72b-instruct:free'
