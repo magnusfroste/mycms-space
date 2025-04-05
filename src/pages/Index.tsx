@@ -10,26 +10,26 @@ import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
 import { logPageVisit } from '@/lib/airtable';
 
-// Hardcoded Airtable credentials - These are the actual values now
-const AIRTABLE_API_KEY = "patlAzTOosbLUuINv.0d8bca81fe972e6d77b749d3d9674607f42fd408fa44debee1fcac7d458c7d9a";
-const AIRTABLE_BASE_ID = "appaxa4LjdMvZt4Pv";
-const AIRTABLE_TABLE_ID = "Projects";
-const AIRTABLE_NAME = "John Doe";
-
 const Index = () => {
-  // Set hardcoded credentials
+  // Set Airtable credentials from environment variables
   useEffect(() => {
-    // Set environment variables from hardcoded values
-    localStorage.setItem('VITE_AIRTABLE_API_KEY', AIRTABLE_API_KEY);
-    localStorage.setItem('VITE_AIRTABLE_BASE_ID', AIRTABLE_BASE_ID);
-    localStorage.setItem('VITE_AIRTABLE_TABLE_ID', AIRTABLE_TABLE_ID);
-    localStorage.setItem('VITE_AIRTABLE_NAME', AIRTABLE_NAME);
+    // Get environment variables
+    const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY;
+    const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID;
+    const tableId = import.meta.env.VITE_AIRTABLE_TABLE_ID;
+    const name = import.meta.env.VITE_AIRTABLE_NAME;
     
-    // Also store in localStorage for persistence between page reloads
-    localStorage.setItem('airtableApiKey', AIRTABLE_API_KEY);
-    localStorage.setItem('airtableBaseId', AIRTABLE_BASE_ID);
-    localStorage.setItem('airtableTableId', AIRTABLE_TABLE_ID);
-    localStorage.setItem('airtableName', AIRTABLE_NAME);
+    // Set them in localStorage for use throughout the app
+    localStorage.setItem('VITE_AIRTABLE_API_KEY', apiKey);
+    localStorage.setItem('VITE_AIRTABLE_BASE_ID', baseId);
+    localStorage.setItem('VITE_AIRTABLE_TABLE_ID', tableId);
+    localStorage.setItem('VITE_AIRTABLE_NAME', name);
+    
+    // Also store in localStorage under alternative keys for backward compatibility
+    localStorage.setItem('airtableApiKey', apiKey);
+    localStorage.setItem('airtableBaseId', baseId);
+    localStorage.setItem('airtableTableId', tableId);
+    localStorage.setItem('airtableName', name);
     
     // Log homepage visit
     logPageVisit('homepage')
