@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -38,7 +39,7 @@ const LabsContent: React.FC = () => {
             <div className="inline-block p-3 rounded-full bg-purple-100 mb-4">
               <Atom className="h-8 w-8 text-purple-600" />
             </div>
-            <h1 className="text-4xl font-bold mb-4">AI Agents Lab</h1>
+            <h1 className="text-4xl font-bold mb-4">AI Agents Meetup</h1>
             <p className="text-lg text-gray-600 max-w-3xl">
               Watch AI agents with different profiles collaborate to solve problems. Configure each agent's model and profile to see how diversity of thought leads to better outcomes.
             </p>
