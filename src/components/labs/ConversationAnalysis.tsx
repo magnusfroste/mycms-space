@@ -1,12 +1,12 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { BarChart2, Loader2, MessageSquare, Bot, Copy, Printer, RefreshCw } from 'lucide-react';
+import { BarChart2, Loader2, MessageSquare, Bot, Copy, Printer, RefreshCw, CheckCircle, ListChecks, AlertCircle, Speech } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ModelSelector } from './agent-card/ModelSelector';
 import { OpenRouterModel } from '@/utils/openRouter/types';
+import { parseMarkdown } from '@/pages/labs/hooks/utils';
 
 type ConversationEntry = {
   agent: string;
@@ -19,7 +19,7 @@ interface ConversationAnalysisProps {
   conversation: ConversationEntry[];
   isLoading: boolean;
   isAnalyzing: boolean;
-  analysisResults: string; // Changed from object to string
+  analysisResults: string;
   handleAnalyzeConversation: (model?: string) => void;
   goToStep: (step: number) => void;
   analyzerModel?: string;
@@ -203,7 +203,7 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
               <div className="w-full md:w-2/3">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-lg font-medium">Analysis Results</h3>
@@ -212,8 +212,27 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
                     Copy Analysis
                   </Button>
                 </div>
-                <div className="text-gray-700 bg-gray-50 p-4 rounded-md border border-gray-200 whitespace-pre-wrap">
-                  {analysisResults}
+                <div 
+                  className="text-gray-700 bg-gray-50 p-5 rounded-md border border-gray-200"
+                  dangerouslySetInnerHTML={{ __html: parseMarkdown(analysisResults) }}
+                />
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <div className="flex items-center text-sm bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
+                    <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Key Insights</span>
+                  </div>
+                  <div className="flex items-center text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+                    <ListChecks className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Discussion Points</span>
+                  </div>
+                  <div className="flex items-center text-sm bg-amber-50 text-amber-700 px-3 py-1 rounded-full">
+                    <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Areas of Disagreement</span>
+                  </div>
+                  <div className="flex items-center text-sm bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full">
+                    <Speech className="h-3.5 w-3.5 mr-1.5" />
+                    <span>Further Exploration</span>
+                  </div>
                 </div>
               </div>
               

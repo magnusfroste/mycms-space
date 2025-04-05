@@ -69,7 +69,7 @@ export const useConversationAnalysis = (
         4. Overall quality of the discussion
         5. Suggestions for further exploration
         
-        Format your response with clear headings and bullet points where appropriate.
+        Format your response with clear headings and bullet points where appropriate. Use markdown formatting for better readability.
       `;
       
       const analysis = await callOpenRouter(
