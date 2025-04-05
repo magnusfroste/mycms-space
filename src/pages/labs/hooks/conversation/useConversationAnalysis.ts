@@ -11,7 +11,8 @@ export const useConversationAnalysis = (
 ) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<string>('');
-  const [analyzerModel, setAnalyzerModel] = useState<string>('anthropic/claude-3-opus:beta');
+  // Updated to use Llama 3.3 70B instead of Claude
+  const [analyzerModel, setAnalyzerModel] = useState<string>('meta-llama/llama-3.3-70b-instruct:free');
 
   const handleAnalyzeConversation = async (model?: string, prompt?: string) => {
     if (!savedApiKey && !userApiKey) {
