@@ -19,6 +19,14 @@ export const useAboutMe = () => {
           const record = data.records[0];
           const fields = record.fields;
           
+          // Handle image properly from Airtable attachment field
+          let imageUrl = '';
+          if (fields.image && fields.image.length > 0) {
+            imageUrl = fields.image[0].url;
+          } else if (fields.Image && fields.Image.length > 0) {
+            imageUrl = fields.Image[0].url;
+          }
+          
           return {
             id: record.id,
             name: fields.name || fields.Name || configName || 'Your Name',
@@ -33,7 +41,7 @@ export const useAboutMe = () => {
             skill3Title: fields.skill3Title || fields.Skill3Title || 'AI Innovation',
             skill3Description: fields.skill3Description || fields.Skill3Description || 'Generative AI specialist with a wide range of experience developing AI Agents, RAG solutions, local AI deployments, generative AI libraries/packages, and more.',
             skill3Icon: fields.skill3Icon || fields.Skill3Icon || 'Brain',
-            image: fields.image || fields.Image || '',
+            image: imageUrl,
           };
         } else {
           return {

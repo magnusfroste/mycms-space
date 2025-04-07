@@ -21,6 +21,8 @@ const iconMap: Record<string, React.ReactNode> = {
 const AboutMe = () => {
   const { data: aboutMeData, isLoading, error } = useAboutMe();
 
+  console.log('About Me data with image:', aboutMeData);
+
   return (
     <section id="about" className="py-20 bg-white" aria-labelledby="about-heading">
       <div className="container mx-auto px-4">
