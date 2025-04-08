@@ -57,18 +57,32 @@ export const parseMarkdown = (markdown: string) => {
   parsed = parsed.replace(/<li class="ml-5 list-decimal">(.+?)(<\/li>)(?!\n<li class="ml-5 list-decimal">)/gs, '<ol class="list-decimal ml-5 my-3">$&</ol>');
   
   // Parse paragraph breaks
-  parsed = parsed.replace(/\n\s*\n/g, '<br/><br/>');
+  parsed = parsed.replace(/\n\s*\n/g, '</p><p class="my-3">');
+  parsed = '<p class="my-3">' + parsed + '</p>';
+  // Clean up any empty paragraphs
+  parsed = parsed.replace(/<p class="my-3"><\/p>/g, '');
   
   // Parse bold and italics
   parsed = parsed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   parsed = parsed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  parsed = parsed.replace(/__(.*?)__/g, '<strong>$1</strong>');
+  parsed = parsed.replace(/_(.*?)_/g, '<em>$1</em>');
   
   // Parse inline code
   parsed = parsed.replace(/`(.*?)`/g, '<code class="bg-gray-100 text-purple-600 px-1 rounded">$1</code>');
   
-  // Parse code blocks
+  // Parse code blocks with syntax highlighting
   parsed = parsed.replace(/```(.*?)\n([\s\S]*?)\n```/g, 
     '<pre class="bg-gray-100 p-3 rounded-md my-3 overflow-x-auto"><code>$2</code></pre>');
+  
+  // Parse blockquotes
+  parsed = parsed.replace(/^\> (.*$)/gim, '<blockquote class="pl-4 border-l-4 border-gray-300 italic text-gray-700">$1</blockquote>');
+  
+  // Parse horizontal rules
+  parsed = parsed.replace(/^\-\-\-+$/gim, '<hr class="my-4 border-t border-gray-300">');
+  
+  // Parse links
+  parsed = parsed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
   
   return parsed;
 };

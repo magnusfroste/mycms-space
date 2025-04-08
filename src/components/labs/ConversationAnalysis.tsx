@@ -251,7 +251,7 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
                 </div>
               </div>
               <div 
-                className="text-gray-700 bg-gray-50 p-5 rounded-md border border-gray-200"
+                className="text-gray-700 bg-gray-50 p-5 rounded-md border border-gray-200 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(analysisResults) }}
               />
               <div className="flex flex-wrap gap-3 mt-4">
