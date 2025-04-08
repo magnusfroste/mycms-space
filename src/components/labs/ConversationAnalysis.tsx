@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -90,14 +91,18 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
           h1 { color: #1e293b; margin-bottom: 30px; }
           h2 { color: #334155; margin-top: 30px; margin-bottom: 15px; }
           hr { border: 0; height: 1px; background: #e2e8f0; margin: 30px 0; }
-          .analysis { white-space: pre-wrap; background-color: #f8fafc; padding: 15px; border-radius: 8px; }
+          .analysis { white-space: pre-wrap; }
+          pre { background-color: #f8fafc; padding: 15px; border-radius: 8px; overflow-x: auto; }
+          code { font-family: monospace; }
+          ul, ol { margin-left: 20px; }
+          blockquote { border-left: 4px solid #e2e8f0; padding-left: 15px; margin-left: 0; font-style: italic; }
         </style>
       </head>
       <body>
         <h1>AI Agents Conversation Analysis</h1>
         
         <h2>Conversation Analysis</h2>
-        <div class="analysis">${analysisResults.replace(/\n/g, '<br/>')}</div>
+        <div class="analysis">${parseMarkdown(analysisResults)}</div>
         
         <hr>
         
