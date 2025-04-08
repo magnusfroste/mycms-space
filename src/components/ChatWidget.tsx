@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import '@n8n/chat/style.css';
 import { createChat } from '@n8n/chat';
@@ -30,12 +31,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
     
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
+    // Set language to English explicitly to avoid using system language
+    utterance.lang = 'en-US';
+    
     const voices = synth.getVoices();
     if (voices.length > 0) {
       const preferredVoice = voices.find(voice => 
         voice.name.includes('Samantha') || 
         voice.name.includes('Google') || 
-        voice.name.includes('Female')
+        voice.name.includes('Female') ||
+        (voice.lang === 'en-US' && voice.name.includes('Female'))
       );
       if (preferredVoice) utterance.voice = preferredVoice;
     }
@@ -241,12 +246,16 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           const chatInput = document.querySelector('.n8n-chat-input');
           const chatCompose = document.querySelector('.n8n-chat-compose');
           
-          if (chatInput) {
-            chatInput.setAttribute('style', 'display: block !important; visibility: visible !important; opacity: 1 !important;');
+          if (chatInput && chatInput instanceof HTMLElement) {
+            chatInput.style.display = 'block';
+            chatInput.style.visibility = 'visible';
+            chatInput.style.opacity = '1';
           }
           
-          if (chatCompose) {
-            chatCompose.setAttribute('style', 'display: flex !important; visibility: visible !important; opacity: 1 !important;');
+          if (chatCompose && chatCompose instanceof HTMLElement) {
+            chatCompose.style.display = 'flex';
+            chatCompose.style.visibility = 'visible';
+            chatCompose.style.opacity = '1';
           }
 
           if (enableSpeech) {
@@ -259,8 +268,10 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                   button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
                   button.title = 'Read message aloud';
                   button.onclick = () => speakMessage(text);
-                  message.style.position = 'relative';
-                  message.appendChild(button);
+                  if (message instanceof HTMLElement) {
+                    message.style.position = 'relative';
+                    message.appendChild(button);
+                  }
                 }
               });
             };

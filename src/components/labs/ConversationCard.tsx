@@ -72,18 +72,46 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({
     
     const utterance = new SpeechSynthesisUtterance(cleanText);
     
+    // Explicitly set language to English
+    utterance.lang = 'en-US';
+    
     // Set voice (optional: could be customized per agent)
     const voices = synth.getVoices();
+    console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`));
+    
     if (voices.length > 0) {
-      // Try to find a female voice for agent A, male for agent B, and another voice for agent C
+      // Try to find appropriate English voices for different agents
       const agentType = conversation[index]?.agent;
+      
+      // Filter for English voices first
+      const englishVoices = voices.filter(voice => 
+        voice.lang.includes('en-') || voice.lang === 'en'
+      );
+      
+      // Use English voices if available, otherwise use any available voice
+      const availableVoices = englishVoices.length > 0 ? englishVoices : voices;
+      
       if (agentType === 'Agent A') {
-        const femaleVoice = voices.find(voice => voice.name.includes('Female') || voice.name.includes('female'));
+        const femaleVoice = availableVoices.find(voice => 
+          voice.name.includes('Female') || 
+          voice.name.includes('female') || 
+          voice.name.includes('Samantha')
+        );
         if (femaleVoice) utterance.voice = femaleVoice;
       } else if (agentType === 'Agent B') {
-        const maleVoice = voices.find(voice => voice.name.includes('Male') || voice.name.includes('male'));
+        const maleVoice = availableVoices.find(voice => 
+          voice.name.includes('Male') || 
+          voice.name.includes('male') || 
+          voice.name.includes('David')
+        );
         if (maleVoice) utterance.voice = maleVoice;
+      } else {
+        // Default to any English voice for Agent C
+        const defaultVoice = availableVoices[0];
+        if (defaultVoice) utterance.voice = defaultVoice;
       }
+      
+      console.log(`Selected voice for ${agentType}:`, utterance.voice?.name);
     }
     
     // Event handlers for start and end of speech
@@ -97,18 +125,30 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({
       setCurrentPlayingIndex(null);
     };
     
-    utterance.onerror = () => {
+    utterance.onerror = (event) => {
+      console.error("Speech synthesis error:", event);
       setIsSpeaking(false);
       setCurrentPlayingIndex(null);
       toast({
         title: "Text-to-Speech Error",
-        description: "There was an error playing the audio.",
+        description: "There was an error playing the audio. Please try again.",
         variant: "destructive",
       });
     };
     
     // Start speaking
-    synth.speak(utterance);
+    try {
+      synth.speak(utterance);
+    } catch (error) {
+      console.error("Error during speech synthesis:", error);
+      toast({
+        title: "Text-to-Speech Error",
+        description: "Could not play speech. Your browser may have restricted this feature.",
+        variant: "destructive",
+      });
+      setIsSpeaking(false);
+      setCurrentPlayingIndex(null);
+    }
   };
   
   // Stop speaking
