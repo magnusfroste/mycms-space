@@ -39,8 +39,15 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
   availableModels,
   setAnalyzerModel
 }) => {
+  // Create a function to strip HTML tags for plain text copying
+  const stripHtmlTags = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  };
+
   const handleCopySummary = () => {
     if (analysisResults) {
+      // Copy the original markdown text, not the HTML
       navigator.clipboard.writeText(analysisResults)
         .then(() => {
           toast({
@@ -283,3 +290,4 @@ export const ConversationAnalysis: React.FC<ConversationAnalysisProps> = ({
     </Card>
   );
 };
+
