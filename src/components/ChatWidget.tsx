@@ -98,6 +98,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
               transform: scale(1);
             }
           }
+
+          /* Hide the powered by n8n footer */
+          .n8n-chat-footer {
+            display: none !important;
+          }
           
           /* Add a hint message that appears near hero section */
           .chat-hint {
@@ -144,7 +149,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
             en: {
               title: "Hi, I'm 'Magnet', Magnus digital twin!", 
               subtitle: "I can help with a lot as an agentic AI bot...",
-              footer: '',
+              footer: '', // Set empty footer to remove "Powered by n8n"
               getStarted: 'New Conversation',
               inputPlaceholder: 'Type your question..',
               closeButtonTooltip: 'Close chat', 
