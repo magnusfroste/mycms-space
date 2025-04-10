@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -6,7 +7,9 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastAction,
 } from "@/components/ui/toast"
+import { Button } from "@/components/ui/button"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -22,7 +25,19 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action && typeof action === 'object' && 'label' in action ? (
+              <ToastAction altText={action.label} asChild>
+                <Button 
+                  onClick={action.onClick}
+                  variant="outline"
+                  className={action.className || ""}
+                >
+                  {action.label}
+                </Button>
+              </ToastAction>
+            ) : (
+              action
+            )}
             <ToastClose />
           </Toast>
         )

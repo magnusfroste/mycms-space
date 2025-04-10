@@ -101,7 +101,6 @@ export const callOpenRouter = async (
           title: "⚠️ API Rate Limit Reached",
           description: "Free model credits have been used up for today. Add your own API key to continue.",
           variant: "destructive",
-          // Use actionable toast without JSX
           action: {
             label: "Add API Key",
             onClick: () => window.location.href = "/labs"
@@ -125,7 +124,21 @@ export const callOpenRouter = async (
     }
 
     const data = await response.json() as OpenRouterResponse;
-    return data.choices[0].message.content;
+    
+    // Add null check to prevent the "Cannot read properties of undefined" error
+    if (!data || !data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+      console.error("Received empty or invalid response from OpenRouter:", data);
+      return "Error: Received an invalid response from the AI model. Please try again.";
+    }
+    
+    // Make sure we have a message content before returning
+    const content = data.choices[0]?.message?.content;
+    if (!content) {
+      console.error("No message content in API response:", data);
+      return "Error: The AI model returned an empty response. Please try again.";
+    }
+    
+    return content;
   } catch (error) {
     console.error("Error calling OpenRouter API:", error);
     
