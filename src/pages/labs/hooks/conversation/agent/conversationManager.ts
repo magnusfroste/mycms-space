@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -23,20 +22,41 @@ export const checkBeforeStarting = async (
   savedApiKey: string,
   userApiKey?: string
 ): Promise<boolean> => {
+  // If we have no API keys at all, fail immediately
+  if (!savedApiKey && !userApiKey) {
+    toast({
+      title: "API Key Required",
+      description: "No API key available. Please add your own OpenRouter API key.",
+      variant: "destructive",
+    });
+    return false;
+  }
+
   const result = await checkApiAvailability(savedApiKey, userApiKey);
   
   if (!result.available) {
+    // If result mentions rate limits and we have no user key, redirect to API key page
+    const isRateLimit = result.message.includes("free model credits") || result.message.includes("rate limit");
+    
     toast({
       title: "API Availability Check Failed",
       description: result.message,
       variant: "destructive",
-      action: result.message.includes("free model credits") ? {
+      action: isRateLimit && !userApiKey ? {
         label: "Add API Key",
         onClick: () => window.location.href = "/labs",
         className: "border-white text-white hover:bg-white hover:text-destructive"
       } : undefined,
       duration: 10000,
     });
+    
+    // If this is a rate limit without a user key, redirect to API key page
+    if (isRateLimit && !userApiKey) {
+      setTimeout(() => {
+        window.location.href = "/labs";
+      }, 1500);
+    }
+    
     return false;
   }
   

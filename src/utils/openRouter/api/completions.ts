@@ -93,19 +93,29 @@ export const callOpenRouter = async (
       if (response.status === 429) {
         console.error("Rate limit exceeded:", errorData);
         
-        // Show a more attention-grabbing toast for rate limits
-        toast({
-          title: "⚠️ API Rate Limit Reached",
-          description: "Free model credits have been used up for today. Add your own API key to continue.",
-          variant: "destructive",
-          action: {
-            label: "Add API Key",
-            onClick: () => window.location.href = "/labs",
-            className: "border-white text-white hover:bg-white hover:text-destructive"
-          },
-          duration: 10000, // Show for longer (10 seconds)
-        });
-        return "🚫 Rate limit reached: Daily free credits have been used up. Please add your own OpenRouter API key to continue using AI features. Click the 'Add API Key' button above or refresh the page to navigate to the API key setup.";
+        // If this is a rate limit AND we're using an environment key without a user key,
+        // this is a true rate limit situation that needs a user key
+        if (!userApiKey) {
+          // Show a more attention-grabbing toast for rate limits
+          toast({
+            title: "⚠️ API Rate Limit Reached",
+            description: "Free model credits have been used up. Please add your own OpenRouter API key to continue.",
+            variant: "destructive",
+            action: {
+              label: "Add API Key",
+              onClick: () => window.location.href = "/labs",
+              className: "border-white text-white hover:bg-white hover:text-destructive"
+            },
+            duration: 10000, // Show for longer (10 seconds)
+          });
+          
+          // Redirect user to API key input page
+          setTimeout(() => {
+            window.location.href = "/labs";
+          }, 1500);
+          
+          return "🚫 Rate limit reached: Daily free credits have been used up. Please add your own OpenRouter API key to continue.";
+        }
       }
       
       // Handle authentication errors
@@ -145,20 +155,27 @@ export const callOpenRouter = async (
     let errorMessage = "Failed to connect to OpenRouter API";
     if (error instanceof Error) {
       if (error.message.includes("rate limit")) {
-        errorMessage = "Free model credits have been used up for today. Add your own API key to continue.";
+        errorMessage = "Free model credits have been used up. Add your own API key to continue.";
         
-        // Show a special toast for rate limit errors using action object instead of JSX
-        toast({
-          title: "⚠️ Free Credits Exhausted",
-          description: "Daily free model usage is depleted. Add your own OpenRouter API key to continue.",
-          variant: "destructive",
-          action: {
-            label: "Add API Key",
-            onClick: () => window.location.href = "/labs",
-            className: "border-white text-white hover:bg-white hover:text-destructive"
-          },
-          duration: 10000, // Show for longer
-        });
+        // Only show special toast if there's no user API key
+        if (!userApiKey) {
+          toast({
+            title: "⚠️ Free Credits Exhausted",
+            description: "Daily free model usage is depleted. Add your own OpenRouter API key to continue.",
+            variant: "destructive",
+            action: {
+              label: "Add API Key",
+              onClick: () => window.location.href = "/labs",
+              className: "border-white text-white hover:bg-white hover:text-destructive"
+            },
+            duration: 10000, // Show for longer
+          });
+          
+          // Redirect user to API key input page
+          setTimeout(() => {
+            window.location.href = "/labs";
+          }, 1500);
+        }
       } else {
         errorMessage = error.message;
       }

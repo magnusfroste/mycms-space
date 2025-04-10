@@ -1,13 +1,14 @@
-
-import { ResponseLength, AnalysisResults, ConversationMessage, ScenarioType } from '../types';
+import { ConversationMessage, ResponseLength } from '../types';
+import { Model, AnalysisResult } from '@/utils/openRouter';
+import { ScenarioType } from '../types';
 
 export interface LabsState {
   apiKey: string;
   savedApiKey: string;
-  userApiKey: string; // Added userApiKey
+  userApiKey: string;
   isSaving: boolean;
   isSaved: boolean;
-  isUsingEnvKey: boolean; // Added isUsingEnvKey
+  isUsingEnvKey: boolean;
   agentAModel: string;
   agentBModel: string;
   agentCModel: string;
@@ -19,20 +20,20 @@ export interface LabsState {
   responseLength: ResponseLength;
   conversation: ConversationMessage[];
   isLoading: boolean;
-  availableModels: any[];
+  availableModels: Model[];
   loadingModels: boolean;
   currentStep: number;
   activeScenario: string;
-  promptInputs: {[key: string]: string};
+  promptInputs: Record<string, string>;
   isAnalyzing: boolean;
-  analysisResults: string; // Changed from AnalysisResults to string
+  analysisResults: AnalysisResult | null;
   analyzerModel: string;
 }
 
 export interface LabsActions {
   setApiKey: (key: string) => void;
   setSavedApiKey: (key: string) => void;
-  setUserApiKey: (key: string) => void; // Added setUserApiKey
+  setUserApiKey: (key: string) => void;
   setIsSaving: (saving: boolean) => void;
   setIsSaved: (saved: boolean) => void;
   setAgentAModel: (model: string) => void;
@@ -42,28 +43,29 @@ export interface LabsActions {
   setAgentBPersona: (persona: string) => void;
   setAgentCPersona: (persona: string) => void;
   setRounds: (rounds: number) => void;
-  setNumberOfAgents: (agents: number) => void;
+  setNumberOfAgents: (number: number) => void;
   setResponseLength: (length: ResponseLength) => void;
-  setConversation: React.Dispatch<React.SetStateAction<ConversationMessage[]>>;
+  setConversation: (conversation: ConversationMessage[]) => void;
   setIsLoading: (loading: boolean) => void;
-  setAvailableModels: (models: any[]) => void;
+  setAvailableModels: (models: Model[]) => void;
   setLoadingModels: (loading: boolean) => void;
   setCurrentStep: (step: number) => void;
   setActiveScenario: (scenario: string) => void;
-  setPromptInputs: React.Dispatch<React.SetStateAction<{[key: string]: string}>>;
+  setPromptInputs: (inputs: Record<string, string>) => void;
   setIsAnalyzing: (analyzing: boolean) => void;
-  setAnalysisResults: React.Dispatch<React.SetStateAction<string>>; // Changed to match the string type
+  setAnalysisResults: (results: AnalysisResult | null) => void;
   setAnalyzerModel: (model: string) => void;
-  handleInputChange: (scenarioId: string, value: string) => void;
-  saveApiKey: () => Promise<boolean>; // Change from boolean to Promise<boolean>
-  getActiveApiKey: (modelIsFree?: boolean) => string;
+  handleInputChange: (scenarioId: string, key: string, value: string) => void;
+  saveApiKey: () => Promise<boolean>;
+  deleteApiKey: () => void;
+  getActiveApiKey: (modelIsFree?: boolean) => string | null;
   goToStep: (step: number) => void;
-  handleStartConversation: () => void;
-  handleAnalyzeConversation: (model?: string) => void;
-  handleAgentAPersonaChange: (value: string) => void;
-  handleAgentBPersonaChange: (value: string) => void;
-  handleAgentCPersonaChange: (value: string) => void;
+  handleStartConversation: () => Promise<void>;
+  handleAnalyzeConversation: (model?: string) => Promise<void>;
+  handleAgentAPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleAgentBPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleAgentCPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   getCurrentScenario: () => ScenarioType;
   getCurrentPrompt: () => string;
-  formatMessage: (text: string) => string;
+  formatMessage: (message: string) => string;
 }

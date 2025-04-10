@@ -18,14 +18,16 @@ export const checkApiAvailability = async (
     
     console.log("Testing API availability with minimal request");
     
-    const effectiveApiKey = userApiKey || apiKey;
-    
-    if (!effectiveApiKey) {
+    // If no API keys at all, fail immediately
+    if (!apiKey && !userApiKey) {
       return { 
         available: false, 
         message: "No API key available. Please provide an OpenRouter API key." 
       };
     }
+    
+    // Try user API key first if provided, as it's most likely to work if the default key is rate-limited
+    const effectiveApiKey = userApiKey || apiKey;
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
@@ -49,6 +51,16 @@ export const checkApiAvailability = async (
       // Handle rate limit specifically
       if (response.status === 429) {
         console.error("Rate limit detected during availability check:", errorData);
+        
+        // If we used a user API key and hit rate limits, that's a problem
+        if (userApiKey) {
+          return { 
+            available: false, 
+            message: "Your API key has reached its rate limit. Please try again later or use a different API key."
+          };
+        }
+        
+        // If we're using the default key, suggest adding a personal key
         return { 
           available: false, 
           message: "Free model credits have been used up for today. Add your own API key to continue." 
@@ -57,6 +69,14 @@ export const checkApiAvailability = async (
       
       // Handle authentication issues
       if (response.status === 401) {
+        // If an invalid user key was provided, give a more specific message
+        if (userApiKey && effectiveApiKey === userApiKey) {
+          return { 
+            available: false, 
+            message: "Your API key seems to be invalid. Please check your API key and try again." 
+          };
+        }
+        
         return { 
           available: false, 
           message: "Authentication failed. Please check your API key and try again." 
