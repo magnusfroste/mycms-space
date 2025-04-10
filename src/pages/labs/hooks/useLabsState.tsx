@@ -9,6 +9,7 @@ import { useConversationFlow } from './useConversationFlow';
 import { getCurrentScenario, getCurrentPrompt, formatMessage } from './utils';
 import { LabsState, LabsActions } from './types';
 import { ResponseLength, ScenarioType } from '../types';
+import React from 'react';
 
 export const useLabsState = (): [LabsState, LabsActions] => {
   // Combine all the sub-hooks

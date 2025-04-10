@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CardFooter } from '@/components/ui/card';
 import { ScenarioSelector, ScenarioType } from './ScenarioSelector';
@@ -32,9 +33,9 @@ interface AgentConfigSectionProps {
   agentAPersona: string;
   agentBPersona: string;
   agentCPersona: string;
-  handleAgentAPersonaChange: (value: string) => void;
-  handleAgentBPersonaChange: (value: string) => void;
-  handleAgentCPersonaChange: (value: string) => void;
+  handleAgentAPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleAgentBPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleAgentCPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   profiles: Profile[];
   formA: UseFormReturn<{ persona: string }>;
   formB: UseFormReturn<{ persona: string }>;

@@ -1,5 +1,6 @@
+
 import { ConversationMessage, ResponseLength } from '../types';
-import { Model, AnalysisResult } from '@/utils/openRouter';
+import { OpenRouterModel } from '@/utils/openRouter/types';
 import { ScenarioType } from '../types';
 
 export interface LabsState {
@@ -20,13 +21,13 @@ export interface LabsState {
   responseLength: ResponseLength;
   conversation: ConversationMessage[];
   isLoading: boolean;
-  availableModels: Model[];
+  availableModels: OpenRouterModel[];
   loadingModels: boolean;
   currentStep: number;
   activeScenario: string;
   promptInputs: Record<string, string>;
   isAnalyzing: boolean;
-  analysisResults: AnalysisResult | null;
+  analysisResults: any | null;
   analyzerModel: string;
 }
 
@@ -47,15 +48,15 @@ export interface LabsActions {
   setResponseLength: (length: ResponseLength) => void;
   setConversation: (conversation: ConversationMessage[]) => void;
   setIsLoading: (loading: boolean) => void;
-  setAvailableModels: (models: Model[]) => void;
+  setAvailableModels: (models: OpenRouterModel[]) => void;
   setLoadingModels: (loading: boolean) => void;
   setCurrentStep: (step: number) => void;
   setActiveScenario: (scenario: string) => void;
   setPromptInputs: (inputs: Record<string, string>) => void;
   setIsAnalyzing: (analyzing: boolean) => void;
-  setAnalysisResults: (results: AnalysisResult | null) => void;
+  setAnalysisResults: (results: any | null) => void;
   setAnalyzerModel: (model: string) => void;
-  handleInputChange: (scenarioId: string, key: string, value: string) => void;
+  handleInputChange: (scenarioId: string, value: string) => void;
   saveApiKey: () => Promise<boolean>;
   deleteApiKey: () => void;
   getActiveApiKey: (modelIsFree?: boolean) => string | null;
