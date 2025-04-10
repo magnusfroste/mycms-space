@@ -149,6 +149,12 @@ export const callOpenRouter = async (
     ];
 
     console.log(`Calling OpenRouter with model: ${model} using ${!modelIsFree ? "user API key" : "saved API key"}`);
+    console.log("Request payload:", JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    }, null, 2));
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
@@ -203,6 +209,7 @@ export const callOpenRouter = async (
     }
 
     const data = await response.json() as OpenRouterResponse;
+    console.log("OpenRouter API response:", JSON.stringify(data, null, 2));
     
     // Add null check to prevent the "Cannot read properties of undefined" error
     if (!data || !data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
