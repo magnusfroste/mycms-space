@@ -3,16 +3,11 @@ import * as React from "react"
 import type {
   ToastActionElement,
   ToastProps,
+  ToastActionProps,
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000000
-
-type ToastActionProps = {
-  label: string;
-  onClick: () => void;
-  className?: string;
-}
 
 type ToasterToast = ToastProps & {
   id: string

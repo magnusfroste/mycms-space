@@ -116,7 +116,7 @@ type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
 // Type for custom toast action props
-type ToastActionProps = {
+interface ToastActionProps {
   label: string;
   onClick: () => void;
   className?: string;

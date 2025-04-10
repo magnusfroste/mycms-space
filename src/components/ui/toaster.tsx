@@ -1,6 +1,5 @@
 
 import { useToast } from "@/hooks/use-toast"
-import type { ToastActionProps } from "@/hooks/use-toast"
 import {
   Toast,
   ToastClose,
@@ -9,6 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
   ToastAction,
+  ToastActionProps,
 } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
 
@@ -26,17 +26,19 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action && typeof action === 'object' && 'label' in action ? (
-              <ToastAction altText={action.label} asChild>
+            {action && 'label' in action ? (
+              <ToastAction altText={(action as ToastActionProps).label} asChild>
                 <Button 
-                  onClick={action.onClick}
+                  onClick={(action as ToastActionProps).onClick}
                   variant="outline"
-                  className={action.className || ""}
+                  className={(action as ToastActionProps).className || ""}
                 >
-                  {action.label}
+                  {(action as ToastActionProps).label}
                 </Button>
               </ToastAction>
-            ) : action}
+            ) : (
+              action
+            )}
             <ToastClose />
           </Toast>
         )
