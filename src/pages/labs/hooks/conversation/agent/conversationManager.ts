@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { callOpenRouter, isModelFree } from '@/utils/openRouter';
+import { callOpenRouter, isModelFree, checkApiAvailability } from '@/utils/openRouter';
 import { ConversationMessage, ResponseLength, ScenarioType } from '../../../types';
 import {
   createAgentAInitialPrompt,
@@ -11,6 +11,33 @@ import {
   createAgentBFinalPrompt,
   createAgentCFinalPrompt
 } from './agentPrompts';
+
+/**
+ * Checks API availability before starting a conversation
+ */
+export const checkBeforeStarting = async (
+  savedApiKey: string,
+  userApiKey?: string
+): Promise<boolean> => {
+  const result = await checkApiAvailability(savedApiKey, userApiKey);
+  
+  if (!result.available) {
+    toast({
+      title: "API Availability Check Failed",
+      description: result.message,
+      variant: "destructive",
+      action: result.message.includes("free model credits") ? {
+        label: "Add API Key",
+        onClick: () => window.location.href = "/labs",
+        className: "border-white text-white hover:bg-white hover:text-destructive"
+      } : undefined,
+      duration: 10000,
+    });
+    return false;
+  }
+  
+  return true;
+};
 
 /**
  * Validates conversation requirements before starting

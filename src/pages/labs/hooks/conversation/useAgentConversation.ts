@@ -5,7 +5,8 @@ import { ConversationMessage, ResponseLength, ScenarioType } from '../../types';
 import { 
   validateConversationRequirements,
   handleInitialRound,
-  handleAdditionalRounds
+  handleAdditionalRounds,
+  checkBeforeStarting
 } from './agent/conversationManager';
 
 export const useAgentConversation = (
@@ -30,6 +31,16 @@ export const useAgentConversation = (
     const currentPrompt = getCurrentPrompt();
     const currentScenario = getCurrentScenario();
     
+    // First check API availability
+    setIsLoading(true);
+    
+    // Check if the API is available and has credits before proceeding
+    const apiAvailable = await checkBeforeStarting(savedApiKey, userApiKey);
+    if (!apiAvailable) {
+      setIsLoading(false);
+      return;
+    }
+    
     // Validate requirements before starting
     if (!validateConversationRequirements(
       currentPrompt,
@@ -40,11 +51,11 @@ export const useAgentConversation = (
       numberOfAgents,
       userApiKey
     )) {
+      setIsLoading(false);
       return;
     }
     
     setConversation([]);
-    setIsLoading(true);
     
     try {
       // Handle the first round of conversation
