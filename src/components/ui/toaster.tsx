@@ -1,5 +1,6 @@
 
 import { useToast } from "@/hooks/use-toast"
+import type { ToastActionProps } from "@/hooks/use-toast"
 import {
   Toast,
   ToastClose,
