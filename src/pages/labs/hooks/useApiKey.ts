@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 
@@ -33,7 +34,7 @@ export const useApiKey = () => {
     if (storedUserApiKey) {
       setUserApiKey(storedUserApiKey);
       console.log("Loaded user API key from localStorage:", 
-        storedUserApiKey ? storedUserApiKey.substring(0, 8) + "..." : "none");
+        storedUserApiKey ? `${storedUserApiKey.substring(0, 8)}...` : "none");
     }
     
     console.log("Initial API keys setup - Environment key exists:", !!envApiKey);
@@ -65,11 +66,13 @@ export const useApiKey = () => {
       return false;
     }
     
-    console.log("Saving API key:", apiKey.substring(0, 10) + "...");
+    console.log("Saving API key:", `${apiKey.substring(0, 10)}...`);
     
     // Save to localStorage - this is crucial for paid models
     localStorage.setItem('userOpenRouterApiKey', apiKey);
     setUserApiKey(apiKey);
+    
+    // Also save as the general API key
     localStorage.setItem('openRouterApiKey', apiKey);
     setSavedApiKey(apiKey);
     
@@ -92,8 +95,8 @@ export const useApiKey = () => {
 
   const getActiveApiKey = (modelIsFree = true) => {
     console.log("getActiveApiKey called for", modelIsFree ? "free model" : "paid model");
-    console.log("User API key:", userApiKey ? "exists" : "doesn't exist");
-    console.log("Environment API key:", import.meta.env.VITE_OPENROUTER_API_KEY ? "exists" : "doesn't exist");
+    console.log("User API key exists:", !!userApiKey);
+    console.log("Environment API key exists:", !!import.meta.env.VITE_OPENROUTER_API_KEY);
     
     // For paid models, always use the user's API key first
     if (!modelIsFree && userApiKey) {

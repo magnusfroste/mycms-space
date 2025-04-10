@@ -27,36 +27,35 @@ export const callOpenRouter = async (
   // Determine which API key to use
   const modelIsFree = isModelFree(model);
   
-  // Use user API key for non-free models if available
-  let effectiveApiKey = apiKey;
+  // Get the appropriate API key
+  let effectiveApiKey: string;
   
-  // For paid models, always prefer the user's API key
-  if (!modelIsFree && userApiKey) {
-    console.log("Using user API key for paid model:", model);
-    effectiveApiKey = userApiKey;
-  }
-  
-  console.log("Model is free:", modelIsFree);
-  console.log("Using API key:", effectiveApiKey ? "API key available" : "No API key");
-  console.log("User API key provided:", userApiKey ? "Yes" : "No");
-  
-  if (!effectiveApiKey) {
-    if (!modelIsFree) {
-      console.error("Paid model selected but no API key available");
+  if (!modelIsFree) {
+    // For paid models, prioritize the user's API key
+    if (!userApiKey) {
+      console.error("No user API key available for paid model:", model);
       toast({
         title: "API Key Required",
-        description: "This model requires your own OpenRouter API key. Please provide it in the settings.",
+        description: "This model requires your own OpenRouter API key. Please add your API key in the settings.",
         variant: "destructive",
       });
       return "Error: This model requires your own OpenRouter API key. Please add your API key in the settings.";
-    } else {
-      toast({
-        title: "API Key Missing",
-        description: "Please provide an OpenRouter API key in the .env file",
-        variant: "destructive",
-      });
-      return "Error: API key is missing. Please provide an OpenRouter API key.";
     }
+    effectiveApiKey = userApiKey;
+    console.log(`Using user API key for paid model: ${model}`);
+  } else {
+    // For free models, use saved API key (env key), falling back to user key if needed
+    effectiveApiKey = apiKey || userApiKey || '';
+    console.log(`Using saved API key for free model: ${model}`);
+  }
+  
+  if (!effectiveApiKey) {
+    toast({
+      title: "API Key Missing",
+      description: "No API key available. Please provide an OpenRouter API key.",
+      variant: "destructive",
+    });
+    return "Error: No API key available. Please provide an OpenRouter API key.";
   }
 
   // Create system prompt based on persona and response length
@@ -71,7 +70,7 @@ export const callOpenRouter = async (
       { role: "user", content: prompt }
     ];
 
-    console.log("Sending request to OpenRouter with model:", model);
+    console.log(`Calling OpenRouter with model: ${model} using ${!modelIsFree && userApiKey ? "user API key" : "saved API key"}`);
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
