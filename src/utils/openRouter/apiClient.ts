@@ -28,7 +28,7 @@ export const callOpenRouter = async (
   const modelIsFree = isModelFree(model);
   
   // Get the appropriate API key
-  let effectiveApiKey: string;
+  let effectiveApiKey: string | null;
   
   if (!modelIsFree) {
     // For paid models, prioritize the user's API key
@@ -45,7 +45,7 @@ export const callOpenRouter = async (
     console.log(`Using user API key for paid model: ${model}`);
   } else {
     // For free models, use saved API key (env key), falling back to user key if needed
-    effectiveApiKey = apiKey || userApiKey || '';
+    effectiveApiKey = apiKey || userApiKey || null;
     console.log(`Using saved API key for free model: ${model}`);
   }
   
@@ -70,7 +70,7 @@ export const callOpenRouter = async (
       { role: "user", content: prompt }
     ];
 
-    console.log(`Calling OpenRouter with model: ${model} using ${!modelIsFree && userApiKey ? "user API key" : "saved API key"}`);
+    console.log(`Calling OpenRouter with model: ${model} using ${!modelIsFree ? "user API key" : "saved API key"}`);
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
