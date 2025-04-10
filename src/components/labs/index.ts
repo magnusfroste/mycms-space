@@ -6,7 +6,7 @@ export * from './ConversationCard';
 export * from './ProgressStepper';
 export * from './APIKeyInput';
 export * from './AgentConfigSection';
-export * from './ConversationAnalysis';
+export * from './conversation-analysis';
 export * from './agent-card/AgentCard';
 export * from './agent-card/types';
 export * from './agent-config';
