@@ -8,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
   ToastAction,
-  ToastActionProps,
+  type ToastActionProps,
 } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
 
@@ -27,13 +27,13 @@ export function Toaster() {
               )}
             </div>
             {action && 'label' in action ? (
-              <ToastAction altText={(action as ToastActionProps).label} asChild>
+              <ToastAction altText={action.label} asChild>
                 <Button 
-                  onClick={(action as ToastActionProps).onClick}
+                  onClick={action.onClick}
                   variant="outline"
-                  className={(action as ToastActionProps).className || ""}
+                  className={action.className || ""}
                 >
-                  {(action as ToastActionProps).label}
+                  {action.label}
                 </Button>
               </ToastAction>
             ) : (
