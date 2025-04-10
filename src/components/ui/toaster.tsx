@@ -26,7 +26,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action && 'label' in action ? (
+            {action && typeof action === 'object' && 'label' in action ? (
               <ToastAction altText={action.label} asChild>
                 <Button 
                   onClick={action.onClick}
