@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import '@n8n/chat/style.css';
 import { createChat } from '@n8n/chat';
@@ -171,7 +172,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
           const userApiKey = localStorage.getItem('userOpenRouterApiKey');
           
           if (envApiKey || userApiKey) {
-            const apiAvailable = await checkApiAvailability(envApiKey || '', userApiKey || '');
+            const apiAvailable = await checkApiAvailability(envApiKey || userApiKey || '');
             
             if (!apiAvailable.available) {
               console.warn("API availability check failed before chat initialization:", apiAvailable.message);

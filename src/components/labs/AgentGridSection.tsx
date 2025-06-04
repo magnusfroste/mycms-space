@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { AgentCard } from '../agent-card/AgentCard';
-import { Profile } from '../agent-card/types';
+import { AgentCard } from './agent-card/AgentCard';
+import { Profile } from './agent-card/types';
 import { UseFormReturn } from 'react-hook-form';
 
 interface AgentGridSectionProps {
