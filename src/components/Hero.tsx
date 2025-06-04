@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChevronDown, Rocket, BarChart, Brain, Lightbulb, Building, LineChart, Layers, Users } from 'lucide-react';
 import { useHero } from '@/lib/airtable';
@@ -115,9 +114,9 @@ const Hero = () => {
         mode="floating"
       />
 
-      <style jsx>{`
-        /* Override ChatWidget positioning to be more central */
-        :global(.n8n-chat-toggle) {
+      <style>
+        {`
+        .n8n-chat-toggle {
           position: fixed !important;
           bottom: 50% !important;
           right: 50px !important;
@@ -125,11 +124,12 @@ const Hero = () => {
           z-index: 1000 !important;
         }
         
-        :global(.chat-hint) {
+        .chat-hint {
           bottom: calc(50% + 80px) !important;
           right: 50px !important;
         }
-      `}</style>
+        `}
+      </style>
     </section>
   );
 };
