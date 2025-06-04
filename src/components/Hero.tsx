@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Rocket, BarChart, Brain, Lightbulb, Building, LineChart, Layers, Users } from 'lucide-react';
 import { useHero } from '@/lib/airtable';
 import { Skeleton } from '@/components/ui/skeleton';
 import MagnetChat from './MagnetChat';
