@@ -8,12 +8,14 @@ interface ChatWidgetProps {
   webhookUrl: string;
   greeting?: string;
   enableSpeech?: boolean;
+  mode?: 'floating' | 'embedded';
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ 
   webhookUrl, 
   greeting = "Lets chat and find out...",
-  enableSpeech = false
+  enableSpeech = false,
+  mode = 'floating'
 }) => {
   const [initialized, setInitialized] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -161,6 +163,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
       try {
         console.log('Initializing chat with webhook URL:', webhookUrl);
         console.log('Using greeting message:', greeting);
+        console.log('Chat mode:', mode);
         
         // Check API availability before initializing chat
         const checkApiStatus = async () => {
@@ -179,17 +182,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                 description: "To chat with the agent, you need to provide your own OpenRouter API key. Go to the Labs section to add your key.",
                 variant: "destructive",
               });
-              
-              // Add a hint about API key requirement
-              const apiKeyHint = document.createElement('div');
-              apiKeyHint.className = 'chat-hint';
-              apiKeyHint.style.backgroundColor = '#ef4444';
-              apiKeyHint.textContent = 'API key required! Visit Labs to add your key.';
-              document.body.appendChild(apiKeyHint);
-              
-              setTimeout(() => {
-                apiKeyHint.remove();
-              }, 8000);
               
               return false;
             }
@@ -259,6 +251,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
               --chat--toggle--size: 60px;
             }
             
+            ${mode === 'floating' ? `
             .n8n-chat-toggle {
               animation: pulse-chat 2s infinite;
               box-shadow: 0 0 0 rgba(155, 135, 245, 0.6);
@@ -278,7 +271,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
                 transform: scale(1);
               }
             }
-
+            ` : ''}
+            
             .n8n-chat-footer {
               display: none !important;
             }
@@ -296,6 +290,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
               min-height: 50px !important;
             }
 
+            ${enableSpeech ? `
             .speech-button {
               position: absolute;
               bottom: 12px;
@@ -319,6 +314,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
               width: 20px;
               height: 20px;
             }
+            ` : ''}
             
             .chat-hint {
               position: fixed;
@@ -516,7 +512,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         }
       }
     }
-  }, [webhookUrl, initialized, retryCount, greeting, enableSpeech, voicesLoaded]);
+  }, [webhookUrl, initialized, retryCount, greeting, enableSpeech, mode, voicesLoaded]);
 
   // Clean up speech synthesis when component unmounts
   useEffect(() => {
