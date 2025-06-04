@@ -15,9 +15,9 @@ interface AgentGridSectionProps {
   agentAPersona: string;
   agentBPersona: string;
   agentCPersona: string;
-  handleAgentAPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleAgentBPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  handleAgentCPersonaChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleAgentAPersonaChange: (value: string) => void;
+  handleAgentBPersonaChange: (value: string) => void;
+  handleAgentCPersonaChange: (value: string) => void;
   profiles: Profile[];
   formA: UseFormReturn<{ persona: string }>;
   formB: UseFormReturn<{ persona: string }>;
