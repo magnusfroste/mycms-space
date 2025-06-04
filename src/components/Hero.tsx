@@ -23,21 +23,33 @@ const Hero = () => {
 
   const handleChatSubmit = () => {
     if (chatInput.trim()) {
-      // Trigger the existing n8n chat widget
+      // Try to find the n8n chat widget and open it
       const chatButton = document.querySelector('.n8n-chat-toggle') as HTMLElement;
       if (chatButton) {
         chatButton.click();
-        // Small delay to ensure chat opens, then send message
+        // Wait for chat to open, then send message
         setTimeout(() => {
           const chatInputField = document.querySelector('.n8n-chat-input') as HTMLTextAreaElement;
           if (chatInputField) {
             chatInputField.value = chatInput;
             chatInputField.focus();
-            // Trigger input event to update the chat
-            const event = new Event('input', { bubbles: true });
-            chatInputField.dispatchEvent(event);
+            // Trigger input and change events
+            const inputEvent = new Event('input', { bubbles: true });
+            const changeEvent = new Event('change', { bubbles: true });
+            chatInputField.dispatchEvent(inputEvent);
+            chatInputField.dispatchEvent(changeEvent);
+            
+            // Try to find and click the send button
+            setTimeout(() => {
+              const sendButton = document.querySelector('.n8n-chat-send-button') as HTMLElement;
+              if (sendButton) {
+                sendButton.click();
+              }
+            }, 200);
           }
-        }, 500);
+        }, 800);
+      } else {
+        console.log('Chat widget not found, message would be:', chatInput);
       }
       setChatInput('');
     }

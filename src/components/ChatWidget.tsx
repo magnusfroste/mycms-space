@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import '@n8n/chat/style.css';
 import { createChat } from '@n8n/chat';
@@ -165,31 +164,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
         console.log('Initializing chat with webhook URL:', webhookUrl);
         console.log('Using greeting message:', greeting);
         console.log('Chat mode:', mode);
-        
-        // Check API availability before initializing chat
-        const checkApiStatus = async () => {
-          const envApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-          const userApiKey = localStorage.getItem('userOpenRouterApiKey');
-          
-          if (envApiKey || userApiKey) {
-            const apiAvailable = await checkApiAvailability(envApiKey || userApiKey || '');
-            
-            if (!apiAvailable.available) {
-              console.warn("API availability check failed before chat initialization:", apiAvailable.message);
-              
-              // Show a toast notification about API key requirement
-              toast({
-                title: "API Key Required",
-                description: "To chat with the agent, you need to provide your own OpenRouter API key. Go to the Labs section to add your key.",
-                variant: "destructive",
-              });
-              
-              return false;
-            }
-          }
-          
-          return true;
-        };
         
         // Initialize chat styles and configuration
         const initializeChat = () => {
