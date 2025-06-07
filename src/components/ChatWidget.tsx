@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import '@n8n/chat/style.css';
 import { createChat } from '@n8n/chat';
@@ -293,8 +292,8 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({
             
             .chat-hint {
               position: fixed;
-              bottom: 160px;
-              right: 30px;
+              bottom: calc(50% + 80px);
+              right: 50px;
               background: #9b87f5;
               color: white;
               padding: 10px 15px;
