@@ -77,8 +77,25 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
         throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to send message'}`);
       }
 
-      const data = await response.json();
-      console.log('Response data:', data);
+      // Get response text first
+      const responseText = await response.text();
+      console.log('Raw response text:', responseText);
+
+      // Check if response is empty
+      if (!responseText || responseText.trim() === '') {
+        console.warn('Empty response from webhook');
+        throw new Error('Empty response from server');
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text that failed to parse:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
 
       // Handle different response formats
       let botResponse = "I'm sorry, I couldn't process that request.";
@@ -115,7 +132,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
       
       const errorBotMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: `Error: ${errorMessage}. Please check the console for more details.`,
+        text: `Error: ${errorMessage}. Please check the webhook configuration.`,
         isUser: false
       };
       
