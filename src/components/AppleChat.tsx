@@ -24,7 +24,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -46,7 +45,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
 
     console.log('Sending message:', inputValue);
     console.log('Webhook URL:', webhookUrl);
-    console.log('Session ID:', sessionId);
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
@@ -54,8 +52,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
 
     try {
       const requestBody = { 
-        message: inputValue,
-        session_id: sessionId
+        message: inputValue
       };
       console.log('Request body:', JSON.stringify(requestBody));
 
@@ -145,17 +142,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="glass-card bg-white bg-opacity-90 backdrop-blur-xl border border-gray-200 rounded-3xl overflow-hidden shadow-apple">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-apple-purple to-apple-blue p-6">
-          <h3 className="text-xl font-semibold text-white mb-2">
-            Chat with Magnet
-          </h3>
-          <p className="text-white text-opacity-90 text-sm">
-            Your AI-powered innovation strategist
-          </p>
-        </div>
-
-        {/* Messages */}
+        {/* Messages - More space now */}
         <div className="h-96 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
           {messages.map((message) => (
             <div
