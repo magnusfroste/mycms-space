@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -190,25 +191,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="glass-card bg-white bg-opacity-90 backdrop-blur-xl border border-gray-200 rounded-3xl overflow-hidden shadow-apple">
-        {/* Quick Action Buttons */}
-        <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-          <div className="flex gap-2 justify-center flex-wrap">
-            {quickActions.map((action) => (
-              <Button
-                key={action.label}
-                onClick={() => sendPrefilledMessage(action.message)}
-                disabled={isLoading}
-                variant="outline"
-                size="sm"
-                className="bg-white hover:bg-apple-light-blue hover:text-apple-blue border-gray-200 text-gray-700 text-xs px-3 py-1 h-7"
-              >
-                <Zap className="h-3 w-3 mr-1" />
-                {action.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
@@ -282,6 +264,25 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
             >
               <Send className="h-4 w-4" />
             </Button>
+          </div>
+          
+          {/* Quick Action Buttons - moved here */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex gap-2 justify-center flex-wrap">
+              {quickActions.map((action) => (
+                <Button
+                  key={action.label}
+                  onClick={() => sendPrefilledMessage(action.message)}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white hover:bg-apple-light-blue hover:text-apple-blue border-gray-200 text-gray-700 text-xs px-3 py-1 h-7"
+                >
+                  <Zap className="h-3 w-3 mr-1" />
+                  {action.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
