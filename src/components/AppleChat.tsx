@@ -18,7 +18,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, strategy, or AI!",
+      text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
       isUser: false
     }
   ]);
