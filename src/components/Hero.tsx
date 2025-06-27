@@ -58,7 +58,7 @@ const Hero = () => {
                   {heroData?.tagline || 'Innovation Strategist & AI Integration Expert'}
                 </p>
                 
-                <div className="flex justify-center gap-8 mb-16 animate-fade-in">
+                <div className="flex justify-center gap-8 mb-12 animate-fade-in">
                   <div className="flex flex-col items-center" aria-label={heroData?.feature1 || 'Feature 1'}>
                     <div className="w-12 h-12 rounded-full bg-apple-light-purple flex items-center justify-center mb-2">
                       {iconMap[heroData?.feature1Icon || 'Rocket']}
@@ -83,31 +83,19 @@ const Hero = () => {
               </>
             )}
             
+            {/* Chat Section - moved up and integrated */}
+            <div className="mt-8 mb-8">
+              <AppleChat webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3" />
+            </div>
+            
             <a 
-              href="#chat"
+              href="#about"
               className="inline-flex items-center justify-center animate-bounce"
-              aria-label="Scroll to Chat section"
+              aria-label="Scroll to About section"
             >
               <ChevronDown className="h-8 w-8 text-gray-400" />
             </a>
           </div>
-        </div>
-      </section>
-
-      {/* Apple Chat Section */}
-      <section id="chat" className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="section-title">
-              Chat with Magnet
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Have a conversation with my AI-powered digital twin. Ask about innovation strategies, 
-              AI integration, or anything tech-related.
-            </p>
-          </div>
-          
-          <AppleChat webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3" />
         </div>
       </section>
     </>

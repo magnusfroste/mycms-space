@@ -8,7 +8,6 @@ interface Message {
   id: string;
   text: string;
   isUser: boolean;
-  timestamp: Date;
 }
 
 interface AppleChatProps {
@@ -20,8 +19,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
     {
       id: '1',
       text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, strategy, or AI!",
-      isUser: false,
-      timestamp: new Date()
+      isUser: false
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -43,8 +41,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputValue,
-      isUser: true,
-      timestamp: new Date()
+      isUser: true
     };
 
     console.log('Sending message:', inputValue);
@@ -104,8 +101,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse,
-        isUser: false,
-        timestamp: new Date()
+        isUser: false
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -124,8 +120,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
       const errorBotMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: `Error: ${errorMessage}. Please check the console for more details.`,
-        isUser: false,
-        timestamp: new Date()
+        isUser: false
       };
       
       setMessages(prev => [...prev, errorBotMessage]);
@@ -148,23 +143,10 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <div className="glass-card bg-white bg-opacity-90 backdrop-blur-xl border border-gray-200 rounded-3xl overflow-hidden shadow-apple">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-apple-purple to-apple-blue p-6">
-          <h3 className="text-xl font-semibold text-white mb-2">
-            Chat with Magnet
-          </h3>
-          <p className="text-white text-opacity-90 text-sm">
-            Your AI-powered innovation strategist
-          </p>
-          <p className="text-white text-opacity-70 text-xs mt-1">
-            Session: {sessionId}
-          </p>
-        </div>
-
         {/* Messages */}
-        <div className="h-96 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
+        <div className="h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -178,14 +160,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                 }`}
               >
                 <p className="text-sm leading-relaxed">{message.text}</p>
-                <p className={`text-xs mt-1 ${
-                  message.isUser ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </p>
               </div>
             </div>
           ))}
