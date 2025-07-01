@@ -210,7 +210,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                 }`}
               >
                 {message.isUser ? (
-                  <p className="text-sm leading-relaxed">{message.text}</p>
+                  <p className="text-sm leading-relaxed text-left">{message.text}</p>
                 ) : (
                   <>
                     {isLongResponse(message.text) ? (
@@ -220,7 +220,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                       />
                     ) : (
                       <div 
-                        className="text-sm leading-relaxed prose prose-sm max-w-none"
+                        className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
                         dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
                       />
                     )}

@@ -39,7 +39,7 @@ const TruncatedMessage: React.FC<TruncatedMessageProps> = ({
   return (
     <div className="space-y-3">
       <div 
-        className="text-sm leading-relaxed prose prose-sm max-w-none"
+        className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
         dangerouslySetInnerHTML={{ __html: parseMarkdown(truncatedContent) }}
       />
       
