@@ -11,7 +11,7 @@ export const checkApiAvailability = async (
 ): Promise<{ available: boolean; message: string }> => {
   try {
     // Use the simplest possible model and prompt to minimize token usage
-    const testModel = "nvidia/llama-3.1-nemotron-nano-8b-v1:free";
+    const testModel = "openai/gpt-3.5-turbo";
     const testPrompt = "Hi";
     
     console.log("Testing API availability with minimal request");
