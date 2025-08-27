@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Expand } from 'lucide-react';
-import { parseMarkdown } from '@/pages/labs/hooks/utils';
+import { parseMarkdown } from '@/lib/markdown';
 
 interface TruncatedMessageProps {
   content: string;

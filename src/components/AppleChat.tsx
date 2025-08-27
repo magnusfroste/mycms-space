@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { parseMarkdown } from '@/pages/labs/hooks/utils';
+import { parseMarkdown } from '@/lib/markdown';
 import ResponseModal from './ResponseModal';
 import TruncatedMessage from './TruncatedMessage';
 

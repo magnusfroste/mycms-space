@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { parseMarkdown } from '@/pages/labs/hooks/utils';
+import { parseMarkdown } from '@/lib/markdown';
 
 interface ResponseModalProps {
   isOpen: boolean;

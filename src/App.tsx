@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Index from "./pages/Index";
-import Labs from "./pages/Labs";
+
 import Demo from "./pages/Demo";
 import N8nTest from "./pages/N8nTest";
 import NotFound from "./pages/NotFound";
@@ -46,7 +46,7 @@ const App = () => {
           <PageTracker />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/labs" element={<Labs />} />
+            
             <Route path="/demo" element={<Demo />} />
             <Route path="/n8n-test" element={<N8nTest />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
