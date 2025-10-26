@@ -88,19 +88,21 @@ const FeaturedIn = () => {
           ) : (
             <div className="glass-card p-8 overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="bg-muted h-80 rounded-xl flex items-center justify-center overflow-hidden">
-                  {displayItems[activeIndex].image ? (
-                    <img 
-                      src={displayItems[activeIndex].image} 
-                      alt={displayItems[activeIndex].title}
-                      className="object-contain w-full h-full"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center text-muted-foreground">
-                      <Image className="h-12 w-12 mb-2" />
-                      <span>Image not available</span>
-                    </div>
-                  )}
+                <div className="bg-muted rounded-xl p-4">
+                  <div className="h-72 rounded-lg flex items-center justify-center overflow-hidden bg-background">
+                    {displayItems[activeIndex].image ? (
+                      <img 
+                        src={displayItems[activeIndex].image} 
+                        alt={displayItems[activeIndex].title}
+                        className="object-contain w-full h-full rounded-lg"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center text-muted-foreground">
+                        <Image className="h-12 w-12 mb-2" />
+                        <span>Image not available</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>

@@ -35,7 +35,7 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
         
         <div className="space-y-4 mt-4">
           {imagesToShow.length > 0 && (
-            <div className="rounded-lg overflow-hidden">
+            <div className="rounded-lg overflow-hidden p-4 bg-muted/30">
               {hasMultipleImages ? (
                 <div className="relative">
                   <Carousel
@@ -48,11 +48,11 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
                     <CarouselContent>
                       {imagesToShow.map((img, index) => (
                         <CarouselItem key={index}>
-                          <div className="relative aspect-[16/9]">
+                          <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
                             <img 
                               src={img} 
                               alt={`${project.title} - Image ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
+                              className="w-full h-full object-cover"
                             />
                           </div>
                         </CarouselItem>
@@ -106,7 +106,7 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
                 <img 
                   src={imagesToShow[0]} 
                   alt={project.title}
-                  className="w-full h-auto rounded-lg"
+                  className="w-full h-auto rounded-xl"
                 />
               )}
             </div>

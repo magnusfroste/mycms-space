@@ -50,12 +50,12 @@ const AboutMe = () => {
               {aboutMeData?.image ? (
                 <div className="mb-8">
                   <Card className="overflow-hidden border-0 shadow-lg rounded-2xl bg-gradient-to-br from-primary/10 to-apple-blue/10 w-4/5 mx-auto">
-                    <CardContent className="p-0">
-                      <AspectRatio ratio={16/9} className="bg-muted">
+                    <CardContent className="p-4">
+                      <AspectRatio ratio={16/9} className="bg-muted rounded-xl overflow-hidden">
                         <img 
                           src={aboutMeData.image} 
                           alt={aboutMeData?.name || "Profile"} 
-                          className="object-cover w-full h-full rounded-2xl"
+                          className="object-cover w-full h-full"
                         />
                       </AspectRatio>
                     </CardContent>

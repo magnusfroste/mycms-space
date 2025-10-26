@@ -159,12 +159,12 @@ const ProjectShowcase = () => {
                 <div className={`grid grid-cols-1 ${isImageOnLeft ? 'lg:grid-cols-[3fr,2fr]' : 'lg:grid-cols-[2fr,3fr]'}`}>
                   {isImageOnLeft ? (
                     <>
-                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] overflow-hidden">
+                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
                         {project.image ? (
                           <img 
                             src={project.image} 
                             alt={project.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover rounded-xl"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -219,12 +219,12 @@ const ProjectShowcase = () => {
                         <p className="text-muted-foreground mb-6">{project.description}</p>
 ...
                       </div>
-                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] overflow-hidden">
+                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
                         {project.image ? (
                           <img 
                             src={project.image} 
                             alt={project.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover rounded-xl"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
