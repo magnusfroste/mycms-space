@@ -217,7 +217,41 @@ const ProjectShowcase = () => {
                       <div className="p-8 flex flex-col justify-center">
                         <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
                         <p className="text-muted-foreground mb-6">{project.description}</p>
-...
+                        <div className="flex space-x-3">
+                          <Button 
+                            className="apple-button flex items-center gap-2" 
+                            asChild
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (project.demoLink.startsWith('#')) {
+                                e.preventDefault();
+                                handleDemoClick(project.title, project.demoLink);
+                              } else {
+                                handleDemoClick(project.title, project.demoLink);
+                              }
+                            }}
+                          >
+                            <a 
+                              href={project.demoLink.startsWith('#') ? undefined : project.demoLink} 
+                              target={project.demoLink.startsWith('#') ? undefined : "_blank"} 
+                              rel={project.demoLink.startsWith('#') ? undefined : "noopener noreferrer"}
+                            >
+                              Demo
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="flex items-center gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewMore(project);
+                            }}
+                          >
+                            View More
+                            <Info className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
                         {project.image ? (
