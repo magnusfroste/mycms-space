@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { parseMarkdown } from '@/lib/markdown';
 
-interface Message {
+export interface Message {
   id: string;
   text: string;
   isUser: boolean;
@@ -16,13 +16,15 @@ interface AppleChatProps {
   fullPage?: boolean;
   initialMessages?: Message[];
   resetTrigger?: number;
+  onMessagesChange?: (messages: Message[]) => void;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({ 
   webhookUrl, 
   fullPage = false,
   initialMessages,
-  resetTrigger = 0
+  resetTrigger = 0,
+  onMessagesChange
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -68,6 +70,13 @@ const AppleChat: React.FC<AppleChatProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Notify parent of messages changes
+  useEffect(() => {
+    if (onMessagesChange) {
+      onMessagesChange(messages);
+    }
+  }, [messages, onMessagesChange]);
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;

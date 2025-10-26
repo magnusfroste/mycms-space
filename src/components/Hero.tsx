@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, Rocket, BarChart, Brain, Lightbulb, Building, LineChart, Layers, Users } from 'lucide-react';
 import { useHero } from '@/lib/airtable';
 import { Skeleton } from '@/components/ui/skeleton';
-import AppleChat from './AppleChat';
+import AppleChat, { Message } from './AppleChat';
 import { useNavigate } from 'react-router-dom';
 
 // Map of icon names to components
@@ -21,6 +21,7 @@ const Hero = () => {
   const { data: heroData, isLoading, error } = useHero();
   const navigate = useNavigate();
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
 
   // Create a wrapper component to intercept the first message
   const ChatWrapper = () => {
@@ -35,7 +36,12 @@ const Hero = () => {
             setHasInteracted(true);
             // Small delay to allow the message to be sent, then navigate
             setTimeout(() => {
-              navigate('/chat', { state: { fromHero: true } });
+              navigate('/chat', { 
+                state: { 
+                  fromHero: true,
+                  messages: currentMessages 
+                } 
+              });
             }, 500);
           }
         });
@@ -51,7 +57,10 @@ const Hero = () => {
 
     return (
       <div ref={chatRef}>
-        <AppleChat webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3" />
+        <AppleChat 
+          webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3"
+          onMessagesChange={setCurrentMessages}
+        />
       </div>
     );
   };
