@@ -13,21 +13,51 @@ interface Message {
 
 interface AppleChatProps {
   webhookUrl: string;
+  fullPage?: boolean;
+  initialMessages?: Message[];
+  resetTrigger?: number;
 }
 
-const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
-      isUser: false
+const AppleChat: React.FC<AppleChatProps> = ({ 
+  webhookUrl, 
+  fullPage = false,
+  initialMessages,
+  resetTrigger = 0
+}) => {
+  const getInitialMessages = () => {
+    if (initialMessages && initialMessages.length > 0) {
+      return initialMessages;
     }
-  ]);
+    return [
+      {
+        id: '1',
+        text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
+        isUser: false
+      }
+    ];
+  };
+
+  const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [sessionId, setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset chat when resetTrigger changes
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      setMessages([
+        {
+          id: '1',
+          text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
+          isUser: false
+        }
+      ]);
+      setInputValue('');
+      setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    }
+  }, [resetTrigger]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -177,17 +207,18 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="glass-card overflow-hidden shadow-apple">
+    <div className={fullPage ? "flex flex-col h-full" : "max-w-3xl mx-auto"}>
+      <div className={fullPage ? "flex flex-col flex-1 glass-card overflow-hidden shadow-apple" : "glass-card overflow-hidden shadow-apple"}>
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
-          className="h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"
+          className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"}
         >
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+              data-user-message={message.isUser ? 'true' : 'false'}
             >
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${

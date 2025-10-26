@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Rocket, BarChart, Brain, Lightbulb, Building, LineChart, Layers, Users } from 'lucide-react';
 import { useHero } from '@/lib/airtable';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppleChat from './AppleChat';
+import { useNavigate } from 'react-router-dom';
 
 // Map of icon names to components
 const iconMap: Record<string, React.ReactNode> = {
@@ -18,6 +19,42 @@ const iconMap: Record<string, React.ReactNode> = {
 
 const Hero = () => {
   const { data: heroData, isLoading, error } = useHero();
+  const navigate = useNavigate();
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Create a wrapper component to intercept the first message
+  const ChatWrapper = () => {
+    const chatRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!hasInteracted && chatRef.current) {
+        const observer = new MutationObserver((mutations) => {
+          // Check if messages have been added (user sent a message)
+          const hasUserMessage = chatRef.current?.querySelector('[data-user-message="true"]');
+          if (hasUserMessage && !hasInteracted) {
+            setHasInteracted(true);
+            // Small delay to allow the message to be sent, then navigate
+            setTimeout(() => {
+              navigate('/chat', { state: { fromHero: true } });
+            }, 500);
+          }
+        });
+
+        observer.observe(chatRef.current, {
+          childList: true,
+          subtree: true,
+        });
+
+        return () => observer.disconnect();
+      }
+    }, [hasInteracted]);
+
+    return (
+      <div ref={chatRef}>
+        <AppleChat webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3" />
+      </div>
+    );
+  };
 
   return (
     <>
@@ -85,7 +122,7 @@ const Hero = () => {
             
             {/* Chat Section - moved up and integrated */}
             <div className="mt-8 mb-8">
-              <AppleChat webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3" />
+              <ChatWrapper />
             </div>
             
             <a 
