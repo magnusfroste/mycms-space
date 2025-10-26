@@ -76,7 +76,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
     if (onMessagesChange) {
       onMessagesChange(messages);
     }
-  }, [messages, onMessagesChange]);
+  }, [messages]); // Only depend on messages, not the callback
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;
