@@ -4,8 +4,6 @@ import { Send, Loader2, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { parseMarkdown } from '@/lib/markdown';
-import ResponseModal from './ResponseModal';
-import TruncatedMessage from './TruncatedMessage';
 
 interface Message {
   id: string;
@@ -28,8 +26,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
-  const [modalContent, setModalContent] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -42,15 +38,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const isLongResponse = (text: string) => {
-    return text.length > 300 || text.split('\n').length > 5;
-  };
-
-  const handleViewFullResponse = (content: string) => {
-    setModalContent(content);
-    setIsModalOpen(true);
-  };
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;
@@ -212,19 +199,10 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                 {message.isUser ? (
                   <p className="text-sm leading-relaxed text-left">{message.text}</p>
                 ) : (
-                  <>
-                    {isLongResponse(message.text) ? (
-                      <TruncatedMessage
-                        content={message.text}
-                        onViewFull={() => handleViewFullResponse(message.text)}
-                      />
-                    ) : (
-                      <div 
-                        className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-                        dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
-                      />
-                    )}
-                  </>
+                  <div 
+                    className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
+                  />
                 )}
               </div>
             </div>
@@ -287,13 +265,6 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
           </div>
         </div>
       </div>
-
-      <ResponseModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        content={modalContent}
-        title="Full Response from Magnet"
-      />
     </div>
   );
 };
