@@ -159,11 +159,6 @@ const AppleChat: React.FC<AppleChatProps> = ({
       };
 
       setMessages(prev => [...prev, botMessage]);
-      
-      toast({
-        title: "Message sent successfully",
-        description: "Magnet has responded!",
-      });
 
     } catch (error) {
       console.error('Error sending message:', error);
