@@ -23,8 +23,8 @@ const Hero = () => {
     <>
       <section className="min-h-screen flex flex-col justify-center py-20 relative overflow-hidden" aria-labelledby="hero-heading">
         {/* Background gradient circles */}
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-apple-light-purple rounded-full filter blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-apple-light-blue rounded-full filter blur-3xl opacity-30"></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/20 rounded-full filter blur-3xl opacity-30"></div>
+        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-apple-blue/20 rounded-full filter blur-3xl opacity-30"></div>
         
         <div className="container mx-auto px-4 z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -54,30 +54,30 @@ const Hero = () => {
                   {heroData?.name || 'Magnus Froste'}
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-gray-600 mb-10 animate-fade-in">
+                <p className="text-xl md:text-2xl text-muted-foreground mb-10 animate-fade-in">
                   {heroData?.tagline || 'Innovation Strategist & AI Integration Expert'}
                 </p>
                 
                 <div className="flex justify-center gap-8 mb-12 animate-fade-in">
                   <div className="flex flex-col items-center" aria-label={heroData?.feature1 || 'Feature 1'}>
-                    <div className="w-12 h-12 rounded-full bg-apple-light-purple flex items-center justify-center mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
                       {iconMap[heroData?.feature1Icon || 'Rocket']}
                     </div>
-                    <span className="text-gray-700">{heroData?.feature1 || 'Innovation'}</span>
+                    <span className="text-foreground/80">{heroData?.feature1 || 'Innovation'}</span>
                   </div>
                   
                   <div className="flex flex-col items-center" aria-label={heroData?.feature2 || 'Feature 2'}>
-                    <div className="w-12 h-12 rounded-full bg-apple-light-blue flex items-center justify-center mb-2">
+                    <div className="w-12 h-12 rounded-full bg-apple-blue/20 flex items-center justify-center mb-2">
                       {iconMap[heroData?.feature2Icon || 'BarChart']}
                     </div>
-                    <span className="text-gray-700">{heroData?.feature2 || 'Strategy'}</span>
+                    <span className="text-foreground/80">{heroData?.feature2 || 'Strategy'}</span>
                   </div>
                   
                   <div className="flex flex-col items-center" aria-label={heroData?.feature3 || 'Feature 3'}>
-                    <div className="w-12 h-12 rounded-full bg-apple-light-purple flex items-center justify-center mb-2">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
                       {iconMap[heroData?.feature3Icon || 'Brain']}
                     </div>
-                    <span className="text-gray-700">{heroData?.feature3 || 'AI Integration'}</span>
+                    <span className="text-foreground/80">{heroData?.feature3 || 'AI Integration'}</span>
                   </div>
                 </div>
               </>
@@ -93,7 +93,7 @@ const Hero = () => {
               className="inline-flex items-center justify-center animate-bounce"
               aria-label="Scroll to About section"
             >
-              <ChevronDown className="h-8 w-8 text-gray-400" />
+              <ChevronDown className="h-8 w-8 text-muted-foreground" />
             </a>
           </div>
         </div>

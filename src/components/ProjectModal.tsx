@@ -114,20 +114,20 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
           
           <div>
             <h3 className="text-lg font-semibold mb-2">Description</h3>
-            <p className="text-gray-600">{project.description}</p>
+            <p className="text-muted-foreground">{project.description}</p>
           </div>
           
           {project.problemStatement && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Problem</h3>
-              <p className="text-gray-600">{project.problemStatement}</p>
+              <p className="text-muted-foreground">{project.problemStatement}</p>
             </div>
           )}
           
           {project.whyBuilt && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Why It Matters</h3>
-              <p className="text-gray-600">{project.whyBuilt}</p>
+              <p className="text-muted-foreground">{project.whyBuilt}</p>
             </div>
           )}
         </div>

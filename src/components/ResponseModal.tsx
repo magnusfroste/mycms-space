@@ -52,7 +52,7 @@ const ResponseModal: React.FC<ResponseModalProps> = ({
         
         <div className="overflow-y-auto max-h-[60vh] pr-2">
           <div 
-            className="prose prose-sm max-w-none text-gray-800 leading-relaxed text-left"
+            className="prose prose-sm max-w-none text-foreground leading-relaxed text-left"
             dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
           />
         </div>

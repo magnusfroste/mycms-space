@@ -69,7 +69,7 @@ const ExpertiseCards = () => {
   });
 
   return (
-    <section id="expertise" className="py-20 bg-white">
+    <section id="expertise" className="py-20 bg-card">
       <div className="container mx-auto px-4">
         <h2 className="section-title">Areas of Expertise</h2>
         
@@ -93,12 +93,12 @@ const ExpertiseCards = () => {
             {areasToDisplay.map((area) => (
               <div key={area.id} className="glass-card p-6 h-full">
                 <div className="flex items-start mb-4">
-                  <div className="mr-4 p-3 bg-white rounded-lg shadow-sm">
+                  <div className="mr-4 p-3 bg-background rounded-lg shadow-sm">
                     {iconMap[area.icon] || <Lightbulb className="h-6 w-6 text-apple-purple" />}
                   </div>
                   <h3 className="text-xl font-semibold">{area.title}</h3>
                 </div>
-                <p className="text-gray-600">{area.description}</p>
+                <p className="text-muted-foreground">{area.description}</p>
               </div>
             ))}
           </div>

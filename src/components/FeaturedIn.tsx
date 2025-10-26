@@ -43,7 +43,7 @@ const FeaturedIn = () => {
   };
 
   return (
-    <section id="featured" className="py-20 bg-apple-light-gray">
+    <section id="featured" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center mb-8">
           <Image className="h-8 w-8 text-apple-purple mr-3" />
@@ -55,7 +55,7 @@ const FeaturedIn = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 text-gray-500 hover:text-apple-purple bg-white bg-opacity-60 rounded-full"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 text-muted-foreground hover:text-primary bg-background/60 rounded-full"
             onClick={goToPrevious}
             aria-label="Previous slide"
           >
@@ -65,7 +65,7 @@ const FeaturedIn = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 text-gray-500 hover:text-apple-purple bg-white bg-opacity-60 rounded-full"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 text-muted-foreground hover:text-primary bg-background/60 rounded-full"
             onClick={goToNext}
             aria-label="Next slide"
           >
@@ -88,7 +88,7 @@ const FeaturedIn = () => {
           ) : (
             <div className="glass-card p-8 overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="bg-gray-100 h-80 rounded-xl flex items-center justify-center overflow-hidden">
+                <div className="bg-muted h-80 rounded-xl flex items-center justify-center overflow-hidden">
                   {displayItems[activeIndex].image ? (
                     <img 
                       src={displayItems[activeIndex].image} 
@@ -96,7 +96,7 @@ const FeaturedIn = () => {
                       className="object-contain w-full h-full"
                     />
                   ) : (
-                    <div className="flex flex-col items-center text-gray-400">
+                    <div className="flex flex-col items-center text-muted-foreground">
                       <Image className="h-12 w-12 mb-2" />
                       <span>Image not available</span>
                     </div>
@@ -105,14 +105,14 @@ const FeaturedIn = () => {
                 
                 <div>
                   <h3 className="text-2xl font-semibold mb-4">{displayItems[activeIndex].title}</h3>
-                  <p className="text-gray-600 mb-6">{displayItems[activeIndex].description}</p>
+                  <p className="text-muted-foreground mb-6">{displayItems[activeIndex].description}</p>
                   
                   <div className="flex justify-center space-x-2">
                     {displayItems.map((_, index) => (
                       <button
                         key={index}
                         className={`w-3 h-3 rounded-full ${
-                          activeIndex === index ? 'bg-apple-purple' : 'bg-gray-300'
+                          activeIndex === index ? 'bg-primary' : 'bg-muted-foreground/30'
                         }`}
                         onClick={() => setActiveIndex(index)}
                         aria-label={`Go to slide ${index + 1}`}

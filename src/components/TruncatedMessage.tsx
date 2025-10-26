@@ -48,7 +48,7 @@ const TruncatedMessage: React.FC<TruncatedMessageProps> = ({
           variant="outline"
           size="sm"
           onClick={onViewFull}
-          className="text-xs h-7 px-3 bg-gray-50 hover:bg-gray-100 border-gray-200"
+          className="text-xs h-7 px-3"
         >
           <Expand className="h-3 w-3 mr-1" />
           View Full Response

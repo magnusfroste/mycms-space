@@ -66,17 +66,17 @@ const ContactForm = () => {
   };
 
   return (
-    <section id="contact" className="py-20 bg-white">
+    <section id="contact" className="py-20 bg-card">
       <div className="container mx-auto px-4 max-w-4xl">
         <h2 className="section-title">Let's Connect</h2>
         
-        <p className="text-center text-gray-600 text-lg mb-10">
+        <p className="text-center text-muted-foreground text-lg mb-10">
           Ready to explore how we can drive innovation and growth together? Let's start a conversation.
         </p>
         
         {!hasAirtableConfig && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-500">Running in demo mode. Messages will not be stored.</p>
+            <p className="text-amber-600 dark:text-amber-400">Running in demo mode. Messages will not be stored.</p>
             <Button
               onClick={() => navigate('/airtable-config')}
               className="mt-4 apple-button"
@@ -89,36 +89,21 @@ const ContactForm = () => {
         <div className="glass-card p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Your Name
               </label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-field"
-                placeholder="Your Name"
-                required
-              />
+...
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Your Email
               </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
-                placeholder="Your Email"
-                required
-              />
+...
             </div>
             
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
                 Your Message
               </label>
               <Textarea

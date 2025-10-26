@@ -191,11 +191,11 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="glass-card bg-white bg-opacity-90 backdrop-blur-xl border border-gray-200 rounded-3xl overflow-hidden shadow-apple">
+      <div className="glass-card overflow-hidden shadow-apple">
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
-          className="h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white scroll-smooth"
+          className="h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"
         >
           {messages.map((message) => (
             <div
@@ -206,7 +206,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                 className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                   message.isUser
                     ? 'bg-apple-blue text-white rounded-br-md'
-                    : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md shadow-sm'
+                    : 'bg-card border border-border text-foreground rounded-bl-md shadow-sm'
                 }`}
               >
                 {message.isUser ? (
@@ -232,10 +232,10 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
           
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-md shadow-sm px-4 py-3">
+              <div className="bg-card border border-border rounded-2xl rounded-bl-md shadow-sm px-4 py-3">
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin text-apple-purple" />
-                  <span className="text-sm text-gray-600">Magnet is thinking...</span>
+                  <span className="text-sm text-muted-foreground">Magnet is thinking...</span>
                 </div>
               </div>
             </div>
@@ -245,7 +245,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
         </div>
 
         {/* Input */}
-        <div className="p-6 bg-white border-t border-gray-100">
+        <div className="p-6 bg-card border-t border-border">
           <div className="flex items-center space-x-3">
             <div className="flex-1 relative">
               <textarea
@@ -253,7 +253,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me anything about innovation, strategy, or AI..."
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent resize-none text-sm"
+                className="w-full bg-muted border border-input rounded-2xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground"
                 rows={1}
                 disabled={isLoading}
               />
@@ -268,7 +268,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
           </div>
           
           {/* Quick Action Buttons - moved here */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-border">
             <div className="flex gap-2 justify-center flex-wrap">
               {quickActions.map((action) => (
                 <Button
@@ -277,7 +277,7 @@ const AppleChat: React.FC<AppleChatProps> = ({ webhookUrl }) => {
                   disabled={isLoading}
                   variant="outline"
                   size="sm"
-                  className="bg-white hover:bg-apple-light-blue hover:text-apple-blue border-gray-200 text-gray-700 text-xs px-3 py-1 h-7"
+                  className="hover:bg-muted hover:text-primary text-xs px-3 py-1 h-7"
                 >
                   <Zap className="h-3 w-3 mr-1" />
                   {action.label}

@@ -97,22 +97,22 @@ const ProjectShowcase = () => {
   };
 
   return (
-    <section id="projects" className="py-20 bg-apple-light-gray">
+    <section id="projects" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <h2 className="section-title">My Portfolio - Proof of Concepts & AI Initiatives</h2>
         
         {isLoading && (
           <div className="flex justify-center py-10">
             <div className="animate-pulse text-center">
-              <p className="text-gray-500">Loading projects from Airtable...</p>
+              <p className="text-muted-foreground">Loading projects from Airtable...</p>
             </div>
           </div>
         )}
         
         {error && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-red-500">Could not load projects from Airtable. Using fallback data.</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-destructive">Could not load projects from Airtable. Using fallback data.</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Error: {error instanceof Error ? error.message : 'Unknown error'}
             </p>
             <Button
@@ -126,7 +126,7 @@ const ProjectShowcase = () => {
         
         {!hasAirtableConfig && !error && !isLoading && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-500">Using demo projects. Connect your Airtable to display your own projects.</p>
+            <p className="text-amber-600 dark:text-amber-400">Using demo projects. Connect your Airtable to display your own projects.</p>
             <Button
               onClick={() => navigate('/airtable-config')}
               className="mt-4 apple-button"
@@ -138,8 +138,8 @@ const ProjectShowcase = () => {
         
         {usingFallbackData && hasAirtableConfig && !error && !isLoading && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-500">No projects found in Airtable or empty fields. Using fallback projects.</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-amber-600 dark:text-amber-400">No projects found in Airtable or empty fields. Using fallback projects.</p>
+            <p className="text-sm text-muted-foreground mt-2">
               Make sure your Airtable table has the correct structure with Title/title, Description/description, Image/image, DemoLink/demoLink, and Order/order fields.
             </p>
           </div>
@@ -159,7 +159,7 @@ const ProjectShowcase = () => {
                 <div className={`grid grid-cols-1 ${isImageOnLeft ? 'lg:grid-cols-[3fr,2fr]' : 'lg:grid-cols-[2fr,3fr]'}`}>
                   {isImageOnLeft ? (
                     <>
-                      <div className="bg-gray-100 min-h-[300px] lg:min-h-[400px] overflow-hidden">
+                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] overflow-hidden">
                         {project.image ? (
                           <img 
                             src={project.image} 
@@ -167,14 +167,14 @@ const ProjectShowcase = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                             No image available
                           </div>
                         )}
                       </div>
                       <div className="p-8 flex flex-col justify-center">
                         <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                        <p className="text-gray-600 mb-6">{project.description}</p>
+                        <p className="text-muted-foreground mb-6">{project.description}</p>
                         <div className="flex space-x-3">
                           <Button 
                             className="apple-button flex items-center gap-2" 
@@ -216,44 +216,10 @@ const ProjectShowcase = () => {
                     <>
                       <div className="p-8 flex flex-col justify-center">
                         <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                        <p className="text-gray-600 mb-6">{project.description}</p>
-                        <div className="flex space-x-3">
-                          <Button 
-                            className="apple-button flex items-center gap-2" 
-                            asChild
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent the card click from triggering
-                              if (project.demoLink.startsWith('#')) {
-                                e.preventDefault();
-                                handleDemoClick(project.title, project.demoLink);
-                              } else {
-                                handleDemoClick(project.title, project.demoLink);
-                              }
-                            }}
-                          >
-                            <a 
-                              href={project.demoLink.startsWith('#') ? undefined : project.demoLink} 
-                              target={project.demoLink.startsWith('#') ? undefined : "_blank"} 
-                              rel={project.demoLink.startsWith('#') ? undefined : "noopener noreferrer"}
-                            >
-                              Demo
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation(); // This is redundant as the parent handler would be the same
-                              handleViewMore(project);
-                            }}
-                          >
-                            View More
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <p className="text-muted-foreground mb-6">{project.description}</p>
+...
                       </div>
-                      <div className="bg-gray-100 min-h-[300px] lg:min-h-[400px] overflow-hidden">
+                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] overflow-hidden">
                         {project.image ? (
                           <img 
                             src={project.image} 
@@ -261,7 +227,7 @@ const ProjectShowcase = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                             No image available
                           </div>
                         )}
