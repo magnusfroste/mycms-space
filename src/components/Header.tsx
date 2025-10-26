@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, Atom, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +42,7 @@ const Header = () => {
   return (
     <header 
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
+        scrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}
     >
       <div className="container mx-auto px-4">
@@ -64,7 +65,7 @@ const Header = () => {
                 <a href="#contact" className="nav-link">Contact</a>
                 <a 
                   href="https://labs.froste.eu" 
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 text-purple-700 rounded-full font-medium transition-all hover:bg-purple-200"
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
                   onClick={stopSpeech}
                 >
                   <Atom size={18} />
@@ -75,23 +76,27 @@ const Header = () => {
               // Links for other pages (Labs, etc.)
               <Link 
                 to="/" 
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 text-purple-700 rounded-full font-medium transition-all hover:bg-purple-200"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
                 onClick={stopSpeech}
               >
                 <Home size={18} />
                 Home
               </Link>
             )}
+            <ThemeToggle />
           </nav>
           
-          {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden text-gray-700 focus:outline-none" 
-            onClick={toggleMenu}
-            aria-label="Toggle mobile menu"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Menu Button and Theme Toggle */}
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
+            <button 
+              className="text-foreground focus:outline-none" 
+              onClick={toggleMenu}
+              aria-label="Toggle mobile menu"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
         
         {/* Mobile Navigation */}
@@ -106,7 +111,7 @@ const Header = () => {
                 <a href="#contact" className="nav-link-mobile" onClick={toggleMenu}>Contact</a>
                 <a 
                   href="https://labs.froste.eu" 
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 text-purple-700 rounded-full font-medium"
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
                   onClick={() => {
                     stopSpeech();
                     toggleMenu();
@@ -120,7 +125,7 @@ const Header = () => {
               // Mobile links for other pages (Labs, etc.)
               <Link 
                 to="/" 
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 text-purple-700 rounded-full font-medium"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
                 onClick={() => {
                   stopSpeech();
                   toggleMenu();
