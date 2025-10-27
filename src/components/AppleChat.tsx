@@ -216,7 +216,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
-          className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"}
+          className={fullPage ? "relative z-0 flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "relative z-0 h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"}
         >
           {messages.map((message) => (
             <div
@@ -258,7 +258,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
         </div>
 
         {/* Input */}
-        <div className="p-6 bg-card border-t border-border">
+        <div className="relative z-10 p-6 bg-card border-t border-border">
           <div className="flex items-center space-x-3">
             <div className="flex-1 relative">
               <textarea
@@ -281,7 +281,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
           </div>
           
           {/* Quick Action Buttons - moved here */}
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="relative z-10 mt-4 pt-4 border-t border-border">
             <div className="flex gap-2 justify-center flex-wrap">
               {quickActions.map((action) => (
                 <Button
