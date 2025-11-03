@@ -59,13 +59,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
     }
-    return [
-      {
-        id: '1',
-        text: "How can I help you today?",
-        isUser: false
-      }
-    ];
+    return [];
   };
 
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
@@ -81,13 +75,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   // Reset chat when resetTrigger changes
   useEffect(() => {
     if (resetTrigger > 0) {
-      setMessages([
-        {
-          id: '1',
-          text: "How can I help you today?",
-          isUser: false
-        }
-      ]);
+      setMessages([]);
       setInputValue('');
       setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
       hasSentInitialMessageRef.current = false;
@@ -305,12 +293,13 @@ const AppleChat: React.FC<AppleChatProps> = ({
 
   return (
     <div className={fullPage ? "flex flex-col h-full" : "max-w-3xl mx-auto"}>
-      {/* Messages - scrollable area */}
-      <div 
-        ref={messagesContainerRef}
-        className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
-      >
-        {messages.map((message) => (
+      {/* Messages - scrollable area - only show when there are messages */}
+      {messages.length > 0 && (
+        <div 
+          ref={messagesContainerRef}
+          className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
+        >
+          {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
@@ -346,41 +335,22 @@ const AppleChat: React.FC<AppleChatProps> = ({
           </div>
         )}
         
-        <div ref={messagesEndRef} />
-      </div>
+          <div ref={messagesEndRef} />
+        </div>
+      )}
 
       {/* Input - sticky at bottom */}
       <div className={fullPage ? "sticky bottom-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
         <div className="p-6 bg-card">
-          {/* Quick Action Buttons - only show initially */}
-          {showQuickActions && messages.length === 1 && (
-            <div className="mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                {quickActions.map((action) => (
-                  <Button
-                    key={action.label}
-                    onClick={() => sendPrefilledMessage(action.message)}
-                    disabled={isLoading}
-                    variant="outline"
-                    className="h-auto py-3 px-5 text-sm font-normal justify-start rounded-2xl hover:bg-muted/80 border-border/50 text-foreground"
-                  >
-                    <span className="mr-2 text-base">{action.icon}</span>
-                    {action.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-          
           <div className="flex items-center space-x-3 max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
-                className="w-full bg-background border border-border/50 rounded-3xl px-5 py-3.5 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground shadow-sm"
-                rows={1}
+                placeholder="How can I help you today?"
+                className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
+                rows={4}
                 disabled={isLoading}
               />
             </div>
@@ -388,11 +358,31 @@ const AppleChat: React.FC<AppleChatProps> = ({
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
               size="icon"
-              className="rounded-full h-10 w-10 shadow-sm"
+              className="rounded-full h-12 w-12 shadow-sm self-end mb-1"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </div>
+
+          {/* Quick Action Buttons - show below input when no messages */}
+          {showQuickActions && messages.length === 0 && (
+            <div className="mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-4xl mx-auto">
+                {quickActions.map((action) => (
+                  <Button
+                    key={action.label}
+                    onClick={() => sendPrefilledMessage(action.message)}
+                    disabled={isLoading}
+                    variant="ghost"
+                    className="h-auto py-2 px-3 text-xs font-normal justify-start rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <span className="mr-1.5 text-sm">{action.icon}</span>
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
