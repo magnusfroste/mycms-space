@@ -73,7 +73,7 @@ const Chat = () => {
       {/* Chat Content */}
       <main className="flex-1 container mx-auto px-4 py-6 flex flex-col">
         <AppleChat
-          webhookUrl="https://agent.froste.eu/webhook/magnet"
+          webhookUrl="https://agent.froste.eu/webhook-test/magnet"
           fullPage={true}
           initialMessages={initialMessages}
           initialSessionId={initialSessionId}
