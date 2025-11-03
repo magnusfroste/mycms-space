@@ -5,6 +5,27 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { parseMarkdown } from '@/lib/markdown';
 
+// Helper to clean webhook response text
+const cleanWebhookResponse = (text: string): string => {
+  if (!text || typeof text !== 'string') return '';
+  
+  return text
+    .trim()
+    // Remove any control characters except newlines and tabs
+    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '')
+    // Normalize line breaks (convert CRLF and CR to LF)
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    // Remove excessive whitespace but preserve paragraph breaks
+    .replace(/\n{3,}/g, '\n\n')
+    // Trim each line
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n')
+    // Remove any leading/trailing whitespace
+    .trim();
+};
+
 export interface Message {
   id: string;
   text: string;
@@ -196,7 +217,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
       }
 
       let botResponse = "I'm sorry, I couldn't process that request.";
-      
+
       if (Array.isArray(data) && data.length > 0) {
         botResponse = data[0]?.output || data[0]?.message || data[0];
       } else if (data.output) {
@@ -207,6 +228,14 @@ const AppleChat: React.FC<AppleChatProps> = ({
         botResponse = data;
       } else {
         console.warn('Unexpected response format:', data);
+      }
+
+      // Clean the response text before parsing markdown
+      botResponse = cleanWebhookResponse(botResponse);
+
+      // Optional: Warn about very long responses
+      if (botResponse.length > 10000) {
+        console.warn('Very long response received:', botResponse.length, 'characters');
       }
 
       const botMessage: Message = {
