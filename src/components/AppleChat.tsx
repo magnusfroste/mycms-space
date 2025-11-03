@@ -51,6 +51,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const hasSentInitialMessageRef = useRef(false);
 
   // Reset chat when resetTrigger changes
   useEffect(() => {
@@ -64,6 +65,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
       ]);
       setInputValue('');
       setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+      hasSentInitialMessageRef.current = false;
     }
   }, [resetTrigger]);
 
@@ -90,6 +92,25 @@ const AppleChat: React.FC<AppleChatProps> = ({
       onSessionIdChange(sessionId);
     }
   }, [sessionId, onSessionIdChange]);
+
+  // Auto-send last user message if initializing with messages
+  useEffect(() => {
+    // Only run once on mount if we have initialMessages
+    if (initialMessages && initialMessages.length > 0 && !hasSentInitialMessageRef.current) {
+      const lastMessage = initialMessages[initialMessages.length - 1];
+      
+      // If last message is from user, send it to webhook
+      if (lastMessage.isUser && lastMessage.text) {
+        hasSentInitialMessageRef.current = true;
+        console.log('Auto-sending initial user message:', lastMessage.text);
+        
+        // Wait a brief moment to ensure component is fully mounted
+        setTimeout(() => {
+          sendMessageWithText(lastMessage.text);
+        }, 100);
+      }
+    }
+  }, []); // Empty deps - only run once on mount
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;
