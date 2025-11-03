@@ -92,14 +92,30 @@ const ContactForm = () => {
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Your Name
               </label>
-...
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field"
+                placeholder="Your Name"
+                required
+              />
             </div>
             
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Your Email
               </label>
-...
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field"
+                placeholder="your.email@example.com"
+                required
+              />
             </div>
             
             <div>
