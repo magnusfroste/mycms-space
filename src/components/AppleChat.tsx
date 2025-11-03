@@ -19,6 +19,7 @@ interface AppleChatProps {
   onMessagesChange?: (messages: Message[]) => void;
   initialSessionId?: string;
   onSessionIdChange?: (id: string) => void;
+  skipWebhook?: boolean;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({ 
@@ -28,7 +29,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
   resetTrigger = 0,
   onMessagesChange,
   initialSessionId,
-  onSessionIdChange
+  onSessionIdChange,
+  skipWebhook = false
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -116,6 +118,18 @@ const AppleChat: React.FC<AppleChatProps> = ({
     if (isLoading) return;
     
     setInputValue(message);
+    
+    // If skipWebhook is true, just add message without sending
+    if (skipWebhook) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: message,
+        isUser: true
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue('');
+      return;
+    }
     
     // Small delay to show the message being set, then send it
     setTimeout(() => {

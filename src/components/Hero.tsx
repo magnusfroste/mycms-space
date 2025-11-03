@@ -109,6 +109,7 @@ const Hero = () => {
                 webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3"
                 onMessagesChange={setCurrentMessages}
                 onSessionIdChange={setCurrentSessionId}
+                skipWebhook={true}
               />
             </div>
             
