@@ -62,7 +62,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
     return [
       {
         id: '1',
-        text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
+        text: "How can I help you today?",
         isUser: false
       }
     ];
@@ -84,7 +84,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
       setMessages([
         {
           id: '1',
-          text: "Hi! I'm Magnet, Magnus' digital twin. Ask me anything about innovation, product strategy or AI!",
+          text: "How can I help you today?",
           isUser: false
         }
       ]);
@@ -297,10 +297,10 @@ const AppleChat: React.FC<AppleChatProps> = ({
   };
 
   const quickActions = [
-    { label: "Toolbox", message: "tools I have access to" },
-    { label: "AI Strategy", message: "outline an ai strategy" },
-    { label: "Magnus Resume", message: "show magnus resume" },
-    { label: "AI Agents", message: "tell me about ai agents" }
+    { icon: "📋", label: "What tools do you have access to?", message: "What tools do you have access to?" },
+    { icon: "🎯", label: "Help me outline an AI strategy", message: "Help me outline an AI strategy" },
+    { icon: "👤", label: "Tell me about Magnus Froste", message: "Tell me about Magnus Froste" },
+    { icon: "🤖", label: "Explain AI agents to me", message: "Explain AI agents to me" }
   ];
 
   return (
@@ -317,10 +317,10 @@ const AppleChat: React.FC<AppleChatProps> = ({
             data-user-message={message.isUser ? 'true' : 'false'}
           >
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+              className={`max-w-xs lg:max-w-2xl px-4 py-3 rounded-2xl ${
                 message.isUser
-                  ? 'bg-apple-blue text-white rounded-br-md'
-                  : 'bg-card border border-border text-foreground rounded-bl-md shadow-sm'
+                  ? 'bg-primary text-primary-foreground rounded-br-md'
+                  : 'bg-muted/30 text-foreground rounded-bl-md'
               }`}
             >
               {message.isUser ? (
@@ -337,10 +337,10 @@ const AppleChat: React.FC<AppleChatProps> = ({
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-card border border-border rounded-2xl rounded-bl-md shadow-sm px-4 py-3">
+            <div className="bg-muted/30 rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-apple-purple" />
-                <span className="text-sm text-muted-foreground">Magnet is thinking...</span>
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Thinking...</span>
               </div>
             </div>
           </div>
@@ -354,18 +354,17 @@ const AppleChat: React.FC<AppleChatProps> = ({
         <div className="p-6 bg-card">
           {/* Quick Action Buttons - only show initially */}
           {showQuickActions && messages.length === 1 && (
-            <div className="mb-4 pb-4 border-b border-border">
-              <div className="flex gap-2 justify-center flex-wrap">
+            <div className="mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
                 {quickActions.map((action) => (
                   <Button
                     key={action.label}
                     onClick={() => sendPrefilledMessage(action.message)}
                     disabled={isLoading}
                     variant="outline"
-                    size="sm"
-                    className="hover:bg-muted hover:text-primary text-xs px-3 py-1 h-7"
+                    className="h-auto py-3 px-5 text-sm font-normal justify-start rounded-2xl hover:bg-muted/80 border-border/50 text-foreground"
                   >
-                    <Zap className="h-3 w-3 mr-1" />
+                    <span className="mr-2 text-base">{action.icon}</span>
                     {action.label}
                   </Button>
                 ))}
@@ -373,14 +372,14 @@ const AppleChat: React.FC<AppleChatProps> = ({
             </div>
           )}
           
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 max-w-4xl mx-auto">
             <div className="flex-1 relative">
               <textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about innovation, strategy, or AI..."
-                className="w-full bg-muted border border-input rounded-2xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground"
+                placeholder="Type a message..."
+                className="w-full bg-background border border-border/50 rounded-3xl px-5 py-3.5 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground shadow-sm"
                 rows={1}
                 disabled={isLoading}
               />
@@ -388,7 +387,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
             <Button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-apple-blue hover:bg-blue-600 text-white rounded-full p-3 transition-all duration-200 shadow-sm hover:shadow-md"
+              size="icon"
+              className="rounded-full h-10 w-10 shadow-sm"
             >
               <Send className="h-4 w-4" />
             </Button>
