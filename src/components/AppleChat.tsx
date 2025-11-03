@@ -297,7 +297,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
       {messages.length > 0 && (
         <div 
           ref={messagesContainerRef}
-          className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
+          className={fullPage ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
         >
           {messages.map((message) => (
           <div
@@ -306,7 +306,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
             data-user-message={message.isUser ? 'true' : 'false'}
           >
             <div
-              className={`max-w-xs lg:max-w-2xl px-4 py-3 rounded-2xl ${
+              className={`max-w-[85%] px-4 py-3 rounded-2xl ${
                 message.isUser
                   ? 'bg-primary text-primary-foreground rounded-br-md'
                   : 'bg-muted/30 text-foreground rounded-bl-md'
