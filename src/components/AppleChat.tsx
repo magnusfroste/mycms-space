@@ -306,7 +306,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
             data-user-message={message.isUser ? 'true' : 'false'}
           >
             <div
-              className={`max-w-[85%] px-4 py-3 rounded-2xl ${
+              className={`max-w-[95%] px-4 py-3 rounded-2xl ${
                 message.isUser
                   ? 'bg-primary text-primary-foreground rounded-br-md'
                   : 'bg-muted/30 text-foreground rounded-bl-md'
