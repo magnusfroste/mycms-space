@@ -147,7 +147,14 @@ const AppleChat: React.FC<AppleChatProps> = ({
         text: message,
         isUser: true
       };
-      setMessages(prev => [...prev, userMessage]);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+        if (last?.isUser && normalize(last.text) === normalize(message)) {
+          return prev; // Already present, don't append again
+        }
+        return [...prev, userMessage];
+      });
       setInputValue('');
       return;
     }
@@ -171,7 +178,14 @@ const AppleChat: React.FC<AppleChatProps> = ({
     console.log('Webhook URL:', webhookUrl);
     console.log('Session ID:', sessionId);
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+      if (last?.isUser && normalize(last.text) === normalize(messageText)) {
+        return prev; // Already present, don't append again
+      }
+      return [...prev, userMessage];
+    });
     setInputValue('');
     setIsLoading(true);
 
