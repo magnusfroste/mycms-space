@@ -342,25 +342,23 @@ const AppleChat: React.FC<AppleChatProps> = ({
       {/* Input - sticky at bottom */}
       <div className={fullPage ? "sticky bottom-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
         <div className="p-6 bg-card">
-          <div className="flex items-center space-x-3 max-w-4xl mx-auto">
-            <div className="flex-1 relative">
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="How can I help you today?"
-                className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
-                rows={4}
-                disabled={isLoading}
-              />
-            </div>
+          <div className="relative max-w-4xl mx-auto">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="How can I help you today?"
+              className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
+              rows={4}
+              disabled={isLoading}
+            />
             <Button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
               size="icon"
-              className="rounded-full h-12 w-12 shadow-sm self-end mb-1"
+              className="absolute bottom-3 right-3 rounded-full h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
             >
-              <Send className="h-5 w-5" />
+              <Send className="h-4 w-4" />
             </Button>
           </div>
 
