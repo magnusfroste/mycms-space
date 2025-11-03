@@ -1,29 +1,30 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { parseMarkdown } from '@/lib/markdown';
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Loader2, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { parseMarkdown } from "@/lib/markdown";
 
 // Helper to clean webhook response text
 const cleanWebhookResponse = (text: string): string => {
-  if (!text || typeof text !== 'string') return '';
-  
-  return text
-    .trim()
-    // Remove any control characters except newlines and tabs
-    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '')
-    // Normalize line breaks (convert CRLF and CR to LF)
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    // Remove excessive whitespace but preserve paragraph breaks
-    .replace(/\n{3,}/g, '\n\n')
-    // Trim each line
-    .split('\n')
-    .map(line => line.trim())
-    .join('\n')
-    // Remove any leading/trailing whitespace
-    .trim();
+  if (!text || typeof text !== "string") return "";
+
+  return (
+    text
+      .trim()
+      // Remove any control characters except newlines and tabs
+      .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "")
+      // Normalize line breaks (convert CRLF and CR to LF)
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      // Remove excessive whitespace but preserve paragraph breaks
+      .replace(/\n{3,}/g, "\n\n")
+      // Trim each line
+      .split("\n")
+      .map((line) => line.trim())
+      .join("\n")
+      // Remove any leading/trailing whitespace
+      .trim()
+  );
 };
 
 export interface Message {
@@ -44,8 +45,8 @@ interface AppleChatProps {
   showQuickActions?: boolean;
 }
 
-const AppleChat: React.FC<AppleChatProps> = ({ 
-  webhookUrl, 
+const AppleChat: React.FC<AppleChatProps> = ({
+  webhookUrl,
   fullPage = false,
   initialMessages,
   resetTrigger = 0,
@@ -53,7 +54,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   initialSessionId,
   onSessionIdChange,
   skipWebhook = false,
-  showQuickActions = false
+  showQuickActions = false,
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -63,10 +64,10 @@ const AppleChat: React.FC<AppleChatProps> = ({
   };
 
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState(() => 
-    initialSessionId ?? `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  const [sessionId, setSessionId] = useState(
+    () => initialSessionId ?? `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -76,7 +77,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   useEffect(() => {
     if (resetTrigger > 0) {
       setMessages([]);
-      setInputValue('');
+      setInputValue("");
       setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
       hasSentInitialMessageRef.current = false;
     }
@@ -111,12 +112,12 @@ const AppleChat: React.FC<AppleChatProps> = ({
     // Only run once on mount if we have initialMessages
     if (initialMessages && initialMessages.length > 0 && !hasSentInitialMessageRef.current) {
       const lastMessage = initialMessages[initialMessages.length - 1];
-      
+
       // If last message is from user, send it to webhook
       if (lastMessage.isUser && lastMessage.text) {
         hasSentInitialMessageRef.current = true;
-        console.log('Auto-sending initial user message:', lastMessage.text);
-        
+        console.log("Auto-sending initial user message:", lastMessage.text);
+
         // Wait a brief moment to ensure component is fully mounted
         setTimeout(() => {
           sendMessageWithText(lastMessage.text);
@@ -127,28 +128,28 @@ const AppleChat: React.FC<AppleChatProps> = ({
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;
-    
+
     setInputValue(message);
-    
+
     // If skipWebhook is true, just add message without sending
     if (skipWebhook) {
       const userMessage: Message = {
         id: Date.now().toString(),
         text: message,
-        isUser: true
+        isUser: true,
       };
-      setMessages(prev => {
+      setMessages((prev) => {
         const last = prev[prev.length - 1];
-        const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+        const normalize = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
         if (last?.isUser && normalize(last.text) === normalize(message)) {
           return prev; // Already present, don't append again
         }
         return [...prev, userMessage];
       });
-      setInputValue('');
+      setInputValue("");
       return;
     }
-    
+
     // Small delay to show the message being set, then send it
     setTimeout(() => {
       sendMessageWithText(message);
@@ -161,63 +162,63 @@ const AppleChat: React.FC<AppleChatProps> = ({
     const userMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
-      isUser: true
+      isUser: true,
     };
 
-    console.log('Sending message:', messageText);
-    console.log('Webhook URL:', webhookUrl);
-    console.log('Session ID:', sessionId);
+    console.log("Sending message:", messageText);
+    console.log("Webhook URL:", webhookUrl);
+    console.log("Session ID:", sessionId);
 
-    setMessages(prev => {
+    setMessages((prev) => {
       const last = prev[prev.length - 1];
-      const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+      const normalize = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
       if (last?.isUser && normalize(last.text) === normalize(messageText)) {
         return prev; // Already present, don't append again
       }
       return [...prev, userMessage];
     });
-    setInputValue('');
+    setInputValue("");
     setIsLoading(true);
 
     try {
-      const requestBody = { 
+      const requestBody = {
         message: messageText,
-        sessionId: sessionId
+        sessionId: sessionId,
       };
-      console.log('Request body:', JSON.stringify(requestBody));
+      console.log("Request body:", JSON.stringify(requestBody));
 
       const response = await fetch(webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
 
-      console.log('Response status:', response.status);
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to send message'}`);
+        console.error("Error response:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText || "Failed to send message"}`);
       }
 
       const responseText = await response.text();
-      console.log('Raw response text:', responseText);
+      console.log("Raw response text:", responseText);
 
-      if (!responseText || responseText.trim() === '') {
-        console.warn('Empty response from webhook');
-        throw new Error('Empty response from server');
+      if (!responseText || responseText.trim() === "") {
+        console.warn("Empty response from webhook");
+        throw new Error("Empty response from server");
       }
 
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log('Parsed response data:', data);
+        console.log("Parsed response data:", data);
       } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Response text that failed to parse:', responseText);
-        throw new Error('Invalid JSON response from server');
+        console.error("JSON parse error:", parseError);
+        console.error("Response text that failed to parse:", responseText);
+        throw new Error("Invalid JSON response from server");
       }
 
       let botResponse = "I'm sorry, I couldn't process that request.";
@@ -228,10 +229,10 @@ const AppleChat: React.FC<AppleChatProps> = ({
         botResponse = data.output;
       } else if (data.message) {
         botResponse = data.message;
-      } else if (typeof data === 'string') {
+      } else if (typeof data === "string") {
         botResponse = data;
       } else {
-        console.warn('Unexpected response format:', data);
+        console.warn("Unexpected response format:", data);
       }
 
       // Clean the response text before parsing markdown
@@ -239,30 +240,29 @@ const AppleChat: React.FC<AppleChatProps> = ({
 
       // Optional: Warn about very long responses
       if (botResponse.length > 10000) {
-        console.warn('Very long response received:', botResponse.length, 'characters');
+        console.warn("Very long response received:", botResponse.length, "characters");
       }
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse,
-        isUser: false
+        isUser: false,
       };
 
-      setMessages(prev => [...prev, botMessage]);
-
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error sending message:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+      console.error("Error sending message:", error);
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+
       const errorBotMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: `Error: ${errorMessage}. Please check the webhook configuration.`,
-        isUser: false
+        isUser: false,
       };
-      
-      setMessages(prev => [...prev, errorBotMessage]);
-      
+
+      setMessages((prev) => [...prev, errorBotMessage]);
+
       toast({
         title: "Error",
         description: `Failed to send message: ${errorMessage}`,
@@ -278,7 +278,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -287,54 +287,60 @@ const AppleChat: React.FC<AppleChatProps> = ({
   const quickActions = [
     { icon: "📋", label: "What tools do you have access to?", message: "What tools do you have access to?" },
     { icon: "🎯", label: "Help me outline an AI strategy", message: "Help me outline an AI strategy" },
-    { icon: "👤", label: "Tell me about Magnus Froste", message: "Tell me about Magnus Froste" },
-    { icon: "🤖", label: "Explain AI agents to me", message: "Explain AI agents to me" }
+    { icon: "👤", label: "Tell me about Magnus Froste", message: "Tell me about Magnus" },
+    { icon: "🤖", label: "Explain AI agents to me", message: "Explain AI agents to me" },
+    { icon: "", label: "Contact Magnus", message: "Contact Magnus" },
+    { icon: "", label: "What is Private AI?", message: "What is Private AI?" },
   ];
 
   return (
     <div className={fullPage ? "flex flex-col h-full relative" : "max-w-3xl mx-auto"}>
       {/* Messages - scrollable area - only show when there are messages */}
       {messages.length > 0 && (
-        <div 
+        <div
           ref={messagesContainerRef}
-          className={fullPage ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
+          className={
+            fullPage
+              ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"
+              : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"
+          }
         >
           {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-            data-user-message={message.isUser ? 'true' : 'false'}
-          >
             <div
-              className={`max-w-[95%] px-4 py-3 rounded-2xl ${
-                message.isUser
-                  ? 'bg-primary text-primary-foreground rounded-br-md'
-                  : 'bg-muted/30 text-foreground rounded-bl-md'
-              }`}
+              key={message.id}
+              className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+              data-user-message={message.isUser ? "true" : "false"}
             >
-              {message.isUser ? (
-                <p className="text-sm leading-relaxed text-left">{message.text}</p>
-              ) : (
-                <div 
-                  className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-                  dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
-        
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-muted/30 rounded-2xl rounded-bl-md px-4 py-3">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Thinking...</span>
+              <div
+                className={`max-w-[95%] px-4 py-3 rounded-2xl ${
+                  message.isUser
+                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    : "bg-muted/30 text-foreground rounded-bl-md"
+                }`}
+              >
+                {message.isUser ? (
+                  <p className="text-sm leading-relaxed text-left">{message.text}</p>
+                ) : (
+                  <div
+                    className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
+                  />
+                )}
               </div>
             </div>
-          </div>
-        )}
-        
+          ))}
+
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted/30 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Thinking...</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       )}
@@ -347,7 +353,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Hi, I'm Magner, a digital twin. How can I help you today?"
+              placeholder="Hi, I'm Magnet, an agent twin. How can I help you today?"
               className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
               rows={4}
               disabled={isLoading}
