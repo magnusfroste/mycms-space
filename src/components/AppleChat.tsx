@@ -17,6 +17,8 @@ interface AppleChatProps {
   initialMessages?: Message[];
   resetTrigger?: number;
   onMessagesChange?: (messages: Message[]) => void;
+  initialSessionId?: string;
+  onSessionIdChange?: (id: string) => void;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({ 
@@ -24,7 +26,9 @@ const AppleChat: React.FC<AppleChatProps> = ({
   fullPage = false,
   initialMessages,
   resetTrigger = 0,
-  onMessagesChange
+  onMessagesChange,
+  initialSessionId,
+  onSessionIdChange
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -42,7 +46,9 @@ const AppleChat: React.FC<AppleChatProps> = ({
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [sessionId, setSessionId] = useState(() => 
+    initialSessionId ?? `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +83,13 @@ const AppleChat: React.FC<AppleChatProps> = ({
       onMessagesChange(messages);
     }
   }, [messages]); // Only depend on messages, not the callback
+
+  // Notify parent of sessionId changes
+  useEffect(() => {
+    if (onSessionIdChange) {
+      onSessionIdChange(sessionId);
+    }
+  }, [sessionId, onSessionIdChange]);
 
   const sendPrefilledMessage = async (message: string) => {
     if (isLoading) return;

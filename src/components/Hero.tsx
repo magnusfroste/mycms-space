@@ -20,50 +20,24 @@ const iconMap: Record<string, React.ReactNode> = {
 const Hero = () => {
   const { data: heroData, isLoading, error } = useHero();
   const navigate = useNavigate();
-  const [hasInteracted, setHasInteracted] = useState(false);
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
+  const didNavigateRef = React.useRef(false);
 
-  // Create a wrapper component to intercept the first message
-  const ChatWrapper = () => {
-    const chatRef = React.useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-      if (!hasInteracted && chatRef.current) {
-        const observer = new MutationObserver((mutations) => {
-          // Check if messages have been added (user sent a message)
-          const hasUserMessage = chatRef.current?.querySelector('[data-user-message="true"]');
-          if (hasUserMessage && !hasInteracted) {
-            setHasInteracted(true);
-            // Small delay to allow the message to be sent, then navigate
-            setTimeout(() => {
-              navigate('/chat', { 
-                state: { 
-                  fromHero: true,
-                  messages: currentMessages 
-                } 
-              });
-            }, 500);
-          }
-        });
-
-        observer.observe(chatRef.current, {
-          childList: true,
-          subtree: true,
-        });
-
-        return () => observer.disconnect();
-      }
-    }, [hasInteracted]);
-
-    return (
-      <div ref={chatRef}>
-        <AppleChat 
-          webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3"
-          onMessagesChange={setCurrentMessages}
-        />
-      </div>
-    );
-  };
+  // Navigate to full chat after first user message
+  useEffect(() => {
+    const hasUserMsg = currentMessages.some(m => m.isUser);
+    if (hasUserMsg && !didNavigateRef.current && currentSessionId) {
+      didNavigateRef.current = true;
+      navigate('/chat', { 
+        state: { 
+          fromHero: true,
+          messages: currentMessages,
+          sessionId: currentSessionId
+        } 
+      });
+    }
+  }, [currentMessages, currentSessionId, navigate]);
 
   return (
     <>
@@ -131,7 +105,11 @@ const Hero = () => {
             
             {/* Chat Section - moved up and integrated */}
             <div className="mt-8 mb-8">
-              <ChatWrapper />
+              <AppleChat 
+                webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3"
+                onMessagesChange={setCurrentMessages}
+                onSessionIdChange={setCurrentSessionId}
+              />
             </div>
             
             <a 

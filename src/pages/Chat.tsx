@@ -27,8 +27,9 @@ const Chat = () => {
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
   
-  // Get initial messages from navigation state if available
+  // Get initial messages and sessionId from navigation state if available
   const initialMessages = location.state?.messages as Message[] | undefined;
+  const initialSessionId = location.state?.sessionId as string | undefined;
 
   const handleBack = () => {
     navigate('/');
@@ -83,6 +84,7 @@ const Chat = () => {
           webhookUrl="https://agent.froste.eu/webhook/0780c81b-27df-4ac4-9f4c-824e47677ef3"
           fullPage={true}
           initialMessages={initialMessages}
+          initialSessionId={initialSessionId}
           resetTrigger={resetTrigger}
         />
       </main>
