@@ -6,7 +6,6 @@ import AboutMe from '@/components/AboutMe';
 import FeaturedIn from '@/components/FeaturedIn';
 import ExpertiseCards from '@/components/ExpertiseCards';
 import ProjectShowcase from '@/components/ProjectShowcase';
-import ContactForm from '@/components/ContactForm';
 import Footer from '@/components/Footer';
 import { logPageVisit } from '@/lib/airtable';
 
@@ -46,7 +45,6 @@ const Index = () => {
         <FeaturedIn />
         <ExpertiseCards />
         <ProjectShowcase />
-        <ContactForm />
       </main>
       <Footer />
     </div>

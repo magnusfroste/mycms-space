@@ -62,7 +62,7 @@ const Header = () => {
                 <a href="#about" className="nav-link">About</a>
                 <a href="#expertise" className="nav-link">Expertise</a>
                 <a href="#projects" className="nav-link">Portfolio</a>
-                <a href="#contact" className="nav-link">Contact</a>
+                <Link to="/chat" className="nav-link" onClick={stopSpeech}>Agent Chat</Link>
                 <a 
                   href="https://labs.froste.eu" 
                   className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
@@ -108,7 +108,7 @@ const Header = () => {
                 <a href="#about" className="nav-link-mobile" onClick={toggleMenu}>About</a>
                 <a href="#expertise" className="nav-link-mobile" onClick={toggleMenu}>Expertise</a>
                 <a href="#projects" className="nav-link-mobile" onClick={toggleMenu}>Portfolio</a>
-                <a href="#contact" className="nav-link-mobile" onClick={toggleMenu}>Contact</a>
+                <Link to="/chat" className="nav-link-mobile" onClick={() => { stopSpeech(); toggleMenu(); }}>Agent Chat</Link>
                 <a 
                   href="https://labs.froste.eu" 
                   className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
