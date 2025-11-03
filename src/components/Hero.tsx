@@ -116,6 +116,7 @@ const Hero = () => {
                 onMessagesChange={setCurrentMessages}
                 onSessionIdChange={setCurrentSessionId}
                 skipWebhook={true}
+                showQuickActions={true}
               />
             </div>
 
