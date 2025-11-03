@@ -347,7 +347,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="How can I help you today?"
+              placeholder="Hi, I'm Magner, a digital twin. How can I help you today?"
               className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
               rows={4}
               disabled={isLoading}
