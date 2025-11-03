@@ -1,15 +1,14 @@
-
-import React, { useState, useEffect } from 'react';
-import { Menu, X, Atom, Home } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import React, { useState, useEffect } from "react";
+import { Menu, X, Atom, Home } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === "/";
 
   // Toggle mobile menu
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -24,8 +23,8 @@ const Header = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Helper function to stop any ongoing speech synthesis when navigating
@@ -40,31 +39,42 @@ const Header = () => {
   };
 
   return (
-    <header 
+    <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
+        scrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div>
-            <Link to="/" className="text-2xl font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
+            <Link
+              to="/"
+              className="text-2xl font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent"
+            >
               froste.eu
             </Link>
           </div>
-          
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-10 items-center">
             {isHomePage ? (
               // Home page links
               <>
-                <a href="#about" className="nav-link">About</a>
-                <a href="#expertise" className="nav-link">Expertise</a>
-                <a href="#projects" className="nav-link">Portfolio</a>
-                <Link to="/chat" className="nav-link" onClick={stopSpeech}>Agent Chat</Link>
-                <a 
-                  href="https://labs.froste.eu" 
+                <a href="#about" className="nav-link">
+                  About
+                </a>
+                <a href="#expertise" className="nav-link">
+                  Expertise
+                </a>
+                <a href="#projects" className="nav-link">
+                  Portfolio
+                </a>
+                <Link to="/chat" className="nav-link" onClick={stopSpeech}>
+                  Agent Chat
+                </Link>
+                <a
+                  href="https://labs.froste.eu"
                   className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
                   onClick={stopSpeech}
                 >
@@ -74,8 +84,8 @@ const Header = () => {
               </>
             ) : (
               // Links for other pages (Labs, etc.)
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
                 onClick={stopSpeech}
               >
@@ -85,32 +95,43 @@ const Header = () => {
             )}
             <ThemeToggle />
           </nav>
-          
+
           {/* Mobile Menu Button and Theme Toggle */}
           <div className="md:hidden flex items-center gap-2">
             <ThemeToggle />
-            <button 
-              className="text-foreground focus:outline-none" 
-              onClick={toggleMenu}
-              aria-label="Toggle mobile menu"
-            >
+            <button className="text-foreground focus:outline-none" onClick={toggleMenu} aria-label="Toggle mobile menu">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Navigation */}
         {isOpen && (
           <nav className="md:hidden py-4 pb-6 space-y-4 flex flex-col items-center">
             {isHomePage ? (
               // Home page mobile links
               <>
-                <a href="#about" className="nav-link-mobile" onClick={toggleMenu}>About</a>
-                <a href="#expertise" className="nav-link-mobile" onClick={toggleMenu}>Expertise</a>
-                <a href="#projects" className="nav-link-mobile" onClick={toggleMenu}>Portfolio</a>
-                <Link to="/chat" className="nav-link-mobile" onClick={() => { stopSpeech(); toggleMenu(); }}>Agent Chat</Link>
-                <a 
-                  href="https://labs.froste.eu" 
+                <a href="#about" className="nav-link-mobile" onClick={toggleMenu}>
+                  About
+                </a>
+                <a href="#expertise" className="nav-link-mobile" onClick={toggleMenu}>
+                  Expertise
+                </a>
+                <a href="#projects" className="nav-link-mobile" onClick={toggleMenu}>
+                  Portfolio
+                </a>
+                <Link
+                  to="/chat"
+                  className="nav-link-mobile"
+                  onClick={() => {
+                    stopSpeech();
+                    toggleMenu();
+                  }}
+                >
+                  Magnet
+                </Link>
+                <a
+                  href="https://labs.froste.eu"
                   className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
                   onClick={() => {
                     stopSpeech();
@@ -123,8 +144,8 @@ const Header = () => {
               </>
             ) : (
               // Mobile links for other pages (Labs, etc.)
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
                 onClick={() => {
                   stopSpeech();
