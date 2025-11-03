@@ -41,6 +41,7 @@ interface AppleChatProps {
   initialSessionId?: string;
   onSessionIdChange?: (id: string) => void;
   skipWebhook?: boolean;
+  showQuickActions?: boolean;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({ 
@@ -51,7 +52,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
   onMessagesChange,
   initialSessionId,
   onSessionIdChange,
-  skipWebhook = false
+  skipWebhook = false,
+  showQuickActions = false
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -303,53 +305,74 @@ const AppleChat: React.FC<AppleChatProps> = ({
 
   return (
     <div className={fullPage ? "flex flex-col h-full" : "max-w-3xl mx-auto"}>
-      <div className={fullPage ? "flex flex-col flex-1 glass-card overflow-hidden shadow-apple" : "glass-card overflow-hidden shadow-apple"}>
-        {/* Messages */}
-        <div 
-          ref={messagesContainerRef}
-          className={fullPage ? "relative z-0 flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "relative z-0 h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"}
-        >
-          {messages.map((message) => (
+      {/* Messages - scrollable area */}
+      <div 
+        ref={messagesContainerRef}
+        className={fullPage ? "flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
+      >
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
+            data-user-message={message.isUser ? 'true' : 'false'}
+          >
             <div
-              key={message.id}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-              data-user-message={message.isUser ? 'true' : 'false'}
+              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
+                message.isUser
+                  ? 'bg-apple-blue text-white rounded-br-md'
+                  : 'bg-card border border-border text-foreground rounded-bl-md shadow-sm'
+              }`}
             >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                  message.isUser
-                    ? 'bg-apple-blue text-white rounded-br-md'
-                    : 'bg-card border border-border text-foreground rounded-bl-md shadow-sm'
-                }`}
-              >
-                {message.isUser ? (
-                  <p className="text-sm leading-relaxed text-left">{message.text}</p>
-                ) : (
-                  <div 
-                    className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
-                  />
-                )}
+              {message.isUser ? (
+                <p className="text-sm leading-relaxed text-left">{message.text}</p>
+              ) : (
+                <div 
+                  className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
+                  dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+        
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-card border border-border rounded-2xl rounded-bl-md shadow-sm px-4 py-3">
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin text-apple-purple" />
+                <span className="text-sm text-muted-foreground">Magnet is thinking...</span>
               </div>
             </div>
-          ))}
-          
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-card border border-border rounded-2xl rounded-bl-md shadow-sm px-4 py-3">
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-apple-purple" />
-                  <span className="text-sm text-muted-foreground">Magnet is thinking...</span>
-                </div>
+          </div>
+        )}
+        
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input - sticky at bottom */}
+      <div className={fullPage ? "sticky bottom-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
+        <div className="p-6 bg-card">
+          {/* Quick Action Buttons - only show initially */}
+          {showQuickActions && messages.length === 1 && (
+            <div className="mb-4 pb-4 border-b border-border">
+              <div className="flex gap-2 justify-center flex-wrap">
+                {quickActions.map((action) => (
+                  <Button
+                    key={action.label}
+                    onClick={() => sendPrefilledMessage(action.message)}
+                    disabled={isLoading}
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-muted hover:text-primary text-xs px-3 py-1 h-7"
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    {action.label}
+                  </Button>
+                ))}
               </div>
             </div>
           )}
           
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="relative z-10 p-6 bg-card border-t border-border">
           <div className="flex items-center space-x-3">
             <div className="flex-1 relative">
               <textarea
@@ -369,25 +392,6 @@ const AppleChat: React.FC<AppleChatProps> = ({
             >
               <Send className="h-4 w-4" />
             </Button>
-          </div>
-          
-          {/* Quick Action Buttons - moved here */}
-          <div className="relative z-10 mt-4 pt-4 border-t border-border">
-            <div className="flex gap-2 justify-center flex-wrap">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.label}
-                  onClick={() => sendPrefilledMessage(action.message)}
-                  disabled={isLoading}
-                  variant="outline"
-                  size="sm"
-                  className="hover:bg-muted hover:text-primary text-xs px-3 py-1 h-7"
-                >
-                  <Zap className="h-3 w-3 mr-1" />
-                  {action.label}
-                </Button>
-              ))}
-            </div>
           </div>
         </div>
       </div>

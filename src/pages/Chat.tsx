@@ -71,13 +71,14 @@ const Chat = () => {
       </header>
 
       {/* Chat Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 flex flex-col">
+      <main className="flex-1 flex flex-col overflow-hidden">
         <AppleChat
           webhookUrl="https://agent.froste.eu/webhook/magnet"
           fullPage={true}
           initialMessages={initialMessages}
           initialSessionId={initialSessionId}
           resetTrigger={resetTrigger}
+          showQuickActions={true}
         />
       </main>
 
