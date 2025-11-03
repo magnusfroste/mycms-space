@@ -289,8 +289,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
     { icon: "🎯", label: "Help me outline an AI strategy", message: "Help me outline an AI strategy" },
     { icon: "👤", label: "Tell me about Magnus", message: "Tell me about Magnus" },
     { icon: "🤖", label: "Explain AI agents to me", message: "Explain AI agents to me" },
-    { icon: "", label: "Contact Magnus", message: "Contact Magnus" },
-    { icon: "", label: "What is Private AI?", message: "What is Private AI?" },
+    { icon: "✉️", label: "Contact Magnus", message: "Contact Magnus" },
+    { icon: "🔒", label: "What is Private AI?", message: "What is Private AI?" },
   ];
 
   return (
@@ -371,7 +371,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
           {/* Quick Action Buttons - show below input when no messages */}
           {showQuickActions && messages.length === 0 && (
             <div className="mt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-w-4xl mx-auto">
                 {quickActions.map((action) => (
                   <Button
                     key={action.label}
