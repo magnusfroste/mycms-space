@@ -292,12 +292,12 @@ const AppleChat: React.FC<AppleChatProps> = ({
   ];
 
   return (
-    <div className={fullPage ? "flex flex-col h-full" : "max-w-3xl mx-auto"}>
+    <div className={fullPage ? "flex flex-col h-full relative" : "max-w-3xl mx-auto"}>
       {/* Messages - scrollable area - only show when there are messages */}
       {messages.length > 0 && (
         <div 
           ref={messagesContainerRef}
-          className={fullPage ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
+          className={fullPage ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth" : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"}
         >
           {messages.map((message) => (
           <div
@@ -339,8 +339,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
         </div>
       )}
 
-      {/* Input - sticky at bottom */}
-      <div className={fullPage ? "sticky bottom-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
+      {/* Input - fixed at bottom */}
+      <div className={fullPage ? "shrink-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
         <div className="p-6 bg-card">
           <div className="relative max-w-4xl mx-auto">
             <textarea
