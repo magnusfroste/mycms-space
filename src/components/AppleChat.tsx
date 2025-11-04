@@ -301,53 +301,55 @@ const AppleChat: React.FC<AppleChatProps> = ({
           ref={messagesContainerRef}
           className={
             fullPage
-              ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth"
-              : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 space-y-4 bg-gradient-to-b from-muted/50 to-background scroll-smooth glass-card shadow-apple"
+              ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 flex flex-col justify-end scroll-smooth"
+              : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 flex flex-col justify-end scroll-smooth glass-card shadow-apple"
           }
         >
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
-              data-user-message={message.isUser ? "true" : "false"}
-            >
+          <div className="space-y-4">
+            {messages.map((message) => (
               <div
-                className={`max-w-[95%] px-4 py-3 rounded-2xl ${
-                  message.isUser
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-muted/30 text-foreground rounded-bl-md"
-                }`}
+                key={message.id}
+                className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+                data-user-message={message.isUser ? "true" : "false"}
               >
-                {message.isUser ? (
-                  <p className="text-sm leading-relaxed text-left">{message.text}</p>
-                ) : (
-                  <div
-                    className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-muted/30 rounded-2xl rounded-bl-md px-4 py-3">
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Thinking...</span>
+                <div
+                  className={`max-w-[95%] px-4 py-3 rounded-2xl ${
+                    message.isUser
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted/20 text-foreground rounded-bl-md"
+                  }`}
+                >
+                  {message.isUser ? (
+                    <p className="text-sm leading-relaxed text-left">{message.text}</p>
+                  ) : (
+                    <div
+                      className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
+                      dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
+                    />
+                  )}
                 </div>
               </div>
-            </div>
-          )}
+            ))}
 
-          <div ref={messagesEndRef} />
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted/20 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Thinking...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
         </div>
       )}
 
       {/* Input - fixed at bottom */}
-      <div className={fullPage ? "shrink-0 bg-background border-t border-border" : "glass-card shadow-apple mt-4"}>
-        <div className="p-6 bg-card">
+      <div className={fullPage ? "shrink-0 border-t border-border/30" : "glass-card shadow-apple mt-4"}>
+        <div className="p-6">
           <div className="relative max-w-4xl mx-auto">
             <textarea
               value={inputValue}
