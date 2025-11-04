@@ -71,6 +71,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasSentInitialMessageRef = useRef(false);
 
   // Reset chat when resetTrigger changes
@@ -89,9 +90,23 @@ const AppleChat: React.FC<AppleChatProps> = ({
     }
   };
 
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (inputValue === '' && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  }, [inputValue]);
 
   // Notify parent of messages changes
   useEffect(() => {
@@ -352,12 +367,16 @@ const AppleChat: React.FC<AppleChatProps> = ({
         <div className="p-6">
           <div className="relative max-w-4xl mx-auto">
             <textarea
+              ref={textareaRef}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                adjustTextareaHeight();
+              }}
               onKeyPress={handleKeyPress}
               placeholder="Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"
-              className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[120px]"
-              rows={4}
+              className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[52px] max-h-[200px] overflow-y-auto"
+              rows={1}
               disabled={isLoading}
             />
             <Button
