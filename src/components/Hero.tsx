@@ -1,10 +1,12 @@
-import { ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useHeroWithFallback } from "@/hooks/useHeroWithFallback";
+import { useHeroSettings } from "@/hooks/useHeroSettings";
 import { iconMap } from "@/lib/constants/iconMaps";
+import FallingStars from "@/components/animations/FallingStars";
+import ParticleField from "@/components/animations/ParticleField";
+import GradientShift from "@/components/animations/GradientShift";
 
 const Hero = () => {
-  const { hero: heroData, isLoading } = useHeroWithFallback();
+  const { data: heroData, isLoading } = useHeroSettings();
 
   return (
     <>
@@ -15,6 +17,11 @@ const Hero = () => {
         {/* Background gradient circles */}
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/20 rounded-full filter blur-3xl opacity-30"></div>
         <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-apple-blue/20 rounded-full filter blur-3xl opacity-30"></div>
+
+        {/* Animations */}
+        {heroData?.enable_animations && heroData.animation_style === 'falling-stars' && <FallingStars />}
+        {heroData?.enable_animations && heroData.animation_style === 'particles' && <ParticleField />}
+        {heroData?.enable_animations && heroData.animation_style === 'gradient-shift' && <GradientShift />}
 
         <div className="container mx-auto px-4 z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -54,21 +61,21 @@ const Hero = () => {
                 <div className="flex justify-center gap-8 mb-12 animate-fade-in">
                   <div className="flex flex-col items-center" aria-label={heroData?.feature1 || "Feature 1"}>
                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
-                      {iconMap[heroData?.feature1Icon || "Rocket"]}
+                      {iconMap[heroData?.feature1_icon || "Rocket"]}
                     </div>
                     <span className="text-foreground/80">{heroData?.feature1 || "Innovation"}</span>
                   </div>
 
                   <div className="flex flex-col items-center" aria-label={heroData?.feature2 || "Feature 2"}>
                     <div className="w-12 h-12 rounded-full bg-apple-blue/20 flex items-center justify-center mb-2">
-                      {iconMap[heroData?.feature2Icon || "BarChart"]}
+                      {iconMap[heroData?.feature2_icon || "BarChart"]}
                     </div>
                     <span className="text-foreground/80">{heroData?.feature2 || "Strategy"}</span>
                   </div>
 
                   <div className="flex flex-col items-center" aria-label={heroData?.feature3 || "Feature 3"}>
                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
-                      {iconMap[heroData?.feature3Icon || "Brain"]}
+                      {iconMap[heroData?.feature3_icon || "Brain"]}
                     </div>
                     <span className="text-foreground/80">{heroData?.feature3 || "AI Integration"}</span>
                   </div>

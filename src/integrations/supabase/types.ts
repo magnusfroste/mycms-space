@@ -41,6 +41,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_settings: {
+        Row: {
+          animation_style: string
+          created_at: string
+          enable_animations: boolean
+          feature1: string
+          feature1_icon: string
+          feature2: string
+          feature2_icon: string
+          feature3: string
+          feature3_icon: string
+          id: string
+          name: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          animation_style?: string
+          created_at?: string
+          enable_animations?: boolean
+          feature1?: string
+          feature1_icon?: string
+          feature2?: string
+          feature2_icon?: string
+          feature3?: string
+          feature3_icon?: string
+          id?: string
+          name?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          animation_style?: string
+          created_at?: string
+          enable_animations?: boolean
+          feature1?: string
+          feature1_icon?: string
+          feature2?: string
+          feature2_icon?: string
+          feature3?: string
+          feature3_icon?: string
+          id?: string
+          name?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quick_actions: {
         Row: {
           created_at: string
