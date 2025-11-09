@@ -9,7 +9,7 @@ const Hero = () => {
   return (
     <>
       <section
-        className="min-h-screen flex flex-col justify-center py-20 relative overflow-hidden"
+        className="flex flex-col justify-center py-20 relative overflow-hidden"
         aria-labelledby="hero-heading"
       >
         {/* Background gradient circles */}
