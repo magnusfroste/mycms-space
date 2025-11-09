@@ -374,7 +374,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
                 adjustTextareaHeight();
               }}
               onKeyPress={handleKeyPress}
-              placeholder="Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"
+              placeholder={messages.length > 0 ? "How can Magnet help?" : "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
               className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[52px] max-h-[200px] overflow-y-auto"
               rows={1}
               disabled={isLoading}
