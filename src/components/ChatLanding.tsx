@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import AppleChat, { Message } from "./AppleChat";
 
 const ChatLanding = () => {
@@ -24,7 +25,7 @@ const ChatLanding = () => {
   }, [currentMessages, currentSessionId, navigate]);
 
   return (
-    <section className="py-12" aria-label="Chat with Magnus">
+    <section className="pb-12" aria-label="Chat with Magnus">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <AppleChat
@@ -34,6 +35,16 @@ const ChatLanding = () => {
             skipWebhook={true}
             showQuickActions={true}
           />
+          
+          <div className="flex justify-center mt-12">
+            <a
+              href="#about"
+              className="inline-flex items-center justify-center animate-bounce"
+              aria-label="Scroll to About section"
+            >
+              <ChevronDown className="h-8 w-8 text-muted-foreground" />
+            </a>
+          </div>
         </div>
       </div>
     </section>

@@ -76,13 +76,6 @@ const Hero = () => {
               </>
             )}
 
-            <a
-              href="#about"
-              className="inline-flex items-center justify-center animate-bounce"
-              aria-label="Scroll to About section"
-            >
-              <ChevronDown className="h-8 w-8 text-muted-foreground" />
-            </a>
           </div>
         </div>
       </section>
