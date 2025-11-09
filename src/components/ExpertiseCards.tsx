@@ -1,72 +1,11 @@
-
 import React from 'react';
-import { Lightbulb, Building, LineChart, Rocket, Layers, Users } from 'lucide-react';
-import { useExpertiseAreas } from '@/lib/airtable';
+import { Lightbulb } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// Map of icon names to components
-const iconMap: Record<string, React.ReactNode> = {
-  Lightbulb: <Lightbulb className="h-6 w-6 text-apple-purple" />,
-  Building: <Building className="h-6 w-6 text-apple-blue" />,
-  LineChart: <LineChart className="h-6 w-6 text-apple-purple" />,
-  Rocket: <Rocket className="h-6 w-6 text-apple-blue" />,
-  Layers: <Layers className="h-6 w-6 text-apple-purple" />,
-  Users: <Users className="h-6 w-6 text-apple-blue" />
-};
-
-// Fallback expertise areas (used if Airtable data fails to load)
-const fallbackExpertiseAreas = [
-  {
-    id: '1',
-    title: 'Innovation Leadership',
-    description: "I'm driving technological advancement and cultural change in organizations, empowering curiosity and call to action.",
-    icon: 'Lightbulb'
-  },
-  {
-    id: '2',
-    title: 'Business Development',
-    description: "I can harness the power of unparalleled experience by actively listening to your customers, expertly identifying their pain points, and close deals with tailor-made solutions that not only meet but exceed their expectations.",
-    icon: 'Building'
-  },
-  {
-    id: '3',
-    title: 'Product Strategy',
-    description: "I can elevate your business with my 20+ years of expertise in product management and strategic market positioning. Achieve unmatched product-market fit and drive your sales to new heights.",
-    icon: 'LineChart'
-  },
-  {
-    id: '4',
-    title: 'Startup Acceleration',
-    description: "I'm mentoring and advising founders on rapid prototyping and go-to-market strategies, valuable for venture builders and new business.",
-    icon: 'Rocket'
-  },
-  {
-    id: '5',
-    title: 'Product Development',
-    description: "I leverage my expertise across diverse development journeys, from the exciting stealth start-up phase to managing complex projects in large enterprises, to drive your business success.",
-    icon: 'Layers'
-  },
-  {
-    id: '6',
-    title: 'Customer Success',
-    description: "I will help you enhance customer satisfaction by focusing on clients needs and providing exceptional value, enabling upselling as a complement to prospecting for new clients.",
-    icon: 'Users'
-  }
-];
+import { useExpertiseWithFallback } from '@/hooks/useExpertiseWithFallback';
+import { iconMap } from '@/lib/constants/iconMaps';
 
 const ExpertiseCards = () => {
-  const { data: expertiseAreas, isLoading, error } = useExpertiseAreas();
-
-  // If there's an error or no data, use fallback data
-  const areasToDisplay = error || !expertiseAreas?.length ? fallbackExpertiseAreas : expertiseAreas;
-  
-  // Log information for debugging
-  console.log('Expertise areas:', { 
-    isLoading, 
-    error: error ? String(error) : null, 
-    dataLength: expertiseAreas?.length, 
-    usingFallback: error || !expertiseAreas?.length
-  });
+  const { expertise: areasToDisplay, isLoading } = useExpertiseWithFallback();
 
   return (
     <section id="expertise" className="py-20 bg-card">

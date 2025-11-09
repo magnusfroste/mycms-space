@@ -1,22 +1,9 @@
-
 import React from 'react';
-import { Monitor, Rocket, Brain, Lightbulb, Building, LineChart, Layers, Users, Image } from 'lucide-react';
 import { useAboutMe } from '@/lib/airtable';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Card, CardContent } from '@/components/ui/card';
-
-// Map of icon names to components
-const iconMap: Record<string, React.ReactNode> = {
-  Monitor: <Monitor className="text-apple-purple h-5 w-5" />,
-  Rocket: <Rocket className="text-apple-blue h-5 w-5" />,
-  Brain: <Brain className="text-apple-purple h-5 w-5" />,
-  Lightbulb: <Lightbulb className="text-apple-purple h-5 w-5" />,
-  Building: <Building className="text-apple-blue h-5 w-5" />,
-  LineChart: <LineChart className="text-apple-purple h-5 w-5" />,
-  Layers: <Layers className="text-apple-blue h-5 w-5" />,
-  Users: <Users className="text-apple-purple h-5 w-5" />
-};
+import { iconMap } from '@/lib/constants/iconMaps';
 
 const AboutMe = () => {
   const { data: aboutMeData, isLoading, error } = useAboutMe();

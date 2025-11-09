@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Rocket, BarChart, Brain, Lightbulb, Building, LineChart, Layers, Users } from "lucide-react";
-import { useHero } from "@/lib/airtable";
+import { ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AppleChat, { Message } from "./AppleChat";
 import { useNavigate } from "react-router-dom";
-
-// Map of icon names to components
-const iconMap: Record<string, React.ReactNode> = {
-  Rocket: <Rocket className="text-apple-purple h-5 w-5" />,
-  BarChart: <BarChart className="text-apple-blue h-5 w-5" />,
-  Brain: <Brain className="text-apple-purple h-5 w-5" />,
-  Lightbulb: <Lightbulb className="text-apple-purple h-5 w-5" />,
-  Building: <Building className="text-apple-blue h-5 w-5" />,
-  LineChart: <LineChart className="text-apple-purple h-5 w-5" />,
-  Layers: <Layers className="text-apple-blue h-5 w-5" />,
-  Users: <Users className="text-apple-purple h-5 w-5" />,
-};
+import { useHeroWithFallback } from "@/hooks/useHeroWithFallback";
+import { iconMap } from "@/lib/constants/iconMaps";
 
 const Hero = () => {
-  const { data: heroData, isLoading, error } = useHero();
+  const { hero: heroData, isLoading } = useHeroWithFallback();
   const navigate = useNavigate();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);

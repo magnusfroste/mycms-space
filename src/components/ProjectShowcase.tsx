@@ -1,84 +1,25 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useProjects, Project, logPageVisit, logDemoClick } from '@/lib/airtable';
+import { Project } from '@/lib/airtable';
 import { useNavigate } from 'react-router-dom';
 import ProjectModal from './ProjectModal';
-
-const fallbackProjects = [
-  {
-    id: '1',
-    title: "PainPal - Your Child's Migraine Tracker! ✨",
-    description: "Turn migraine tracking into an exciting adventure with PainPal - the first-ever headache diary app designed specifically for kids! Making Health Tracking Fun! Remember how challenging it used to be to get kids to track their headaches? Not anymore! PainPal transforms this important task into an engaging journey.",
-    problemStatement: "Children with migraines often struggle to track their symptoms effectively, leading to difficulties in diagnosis and treatment. Traditional tracking methods are boring and not child-friendly.",
-    whyBuilt: "I built PainPal to transform the tedious task of headache tracking into a fun adventure for kids. By making the process engaging through gamification, children are more likely to consistently track their symptoms, providing better data for healthcare providers and improving treatment outcomes.",
-    image: "/lovable-uploads/feca8484-f150-45bc-ac93-4a2ac80adb7f.png",
-    demoLink: "#demo-painpal",
-    order: 1
-  },
-  {
-    id: '2',
-    title: "PenPal - Your AI Assisted Handwriting Coach",
-    description: "Unlock Your Child's Potential with PenPal! Transform your child's handwriting journey into an exciting adventure while getting rewards! This cutting-edge app uses advanced AI to analyze your kid's handwriting, pinpointing exactly what they need to practice. No more struggles or frustration when coaching your kid, - just fun, engaging challenges that keep them motivated to improve!",
-    problemStatement: "Many children struggle with handwriting, and parents often lack the tools and knowledge to help them improve effectively. Traditional practice methods can be tedious and demotivating.",
-    whyBuilt: "I created PenPal to bridge the gap between AI technology and childhood education. By leveraging AI to analyze handwriting and provide personalized guidance, PenPal makes the learning process enjoyable and effective, reducing frustration for both children and parents.",
-    image: "/lovable-uploads/2244a02e-2dae-45d0-a462-adcfe72a4045.png",
-    demoLink: "#demo-penpal",
-    order: 2
-  },
-  {
-    id: '3',
-    title: "AI Strategy Platform",
-    description: "A comprehensive platform designed to help businesses integrate AI into their operations seamlessly. Featuring strategy roadmapping, implementation guides, and ROI calculators.",
-    problemStatement: "Many businesses want to implement AI but struggle with creating effective strategies and measuring ROI. The lack of structured guidance often leads to failed AI initiatives and wasted resources.",
-    whyBuilt: "I developed this platform to demystify AI implementation for businesses of all sizes. By providing clear roadmaps, practical guides, and accurate ROI calculators, companies can make informed decisions about AI integration that align with their specific goals and resources.",
-    image: "/lovable-uploads/cac5ccde-8057-40e2-81d7-6b67c95f1e9a.png",
-    demoLink: "#demo-ai-strategy",
-    order: 3
-  }
-];
+import { useProjectsWithFallback } from '@/hooks/useProjectsWithFallback';
+import { useAirtableConfig } from '@/hooks/useAirtableConfig';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { analyticsService } from '@/services/analyticsService';
 
 const ProjectShowcase = () => {
   const navigate = useNavigate();
-  const { data: projects, isLoading, error } = useProjects();
+  const { projects: sortedProjects, isLoading, error, usingFallbackData } = useProjectsWithFallback();
+  const { isConfigured: hasAirtableConfig } = useAirtableConfig();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
-  const hasAirtableConfig = Boolean(
-    localStorage.getItem('VITE_AIRTABLE_API_KEY') && 
-    localStorage.getItem('VITE_AIRTABLE_BASE_ID')
-  );
-  
-  const displayProjects: Project[] = projects && projects.length > 0 ? projects : fallbackProjects;
-  
-  const sortedProjects = [...displayProjects].sort((a, b) => {
-    if (a.order !== undefined && b.order !== undefined) {
-      return a.order - b.order;
-    }
-    if (a.order !== undefined) return -1;
-    if (b.order !== undefined) return 1;
-    return 0;
-  });
-  
-  const usingFallbackData = !projects || projects.length === 0;
-
-  console.log('Projects from Airtable:', projects);
-  console.log('Sorted projects:', sortedProjects);
-
-  useEffect(() => {
-    if (hasAirtableConfig) {
-      logPageVisit('portfolio')
-        .then(() => console.log('Portfolio visit logged'))
-        .catch(err => console.error('Failed to log portfolio visit:', err));
-    }
-  }, [hasAirtableConfig]);
+  // Track page visit
+  useAnalytics('portfolio');
 
   const handleDemoClick = (projectTitle: string, demoLink: string) => {
-    if (hasAirtableConfig) {
-      logDemoClick(projectTitle)
-        .then(() => console.log(`Click on "${projectTitle}" demo logged`))
-        .catch(err => console.error(`Failed to log demo click for "${projectTitle}":`, err));
-    }
+    analyticsService.trackDemoClick(projectTitle);
     
     if (demoLink.startsWith('#')) {
       const element = document.querySelector(demoLink);

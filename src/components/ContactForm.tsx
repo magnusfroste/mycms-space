@@ -1,69 +1,24 @@
-
-import React, { useState } from 'react';
-import { Mail, Send } from 'lucide-react';
+import React from 'react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { sendContactMessage } from '@/lib/airtable';
 import { useNavigate } from 'react-router-dom';
+import { useContactForm } from '@/hooks/useContactForm';
 
 const ContactForm = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  
-  // Check if we have Airtable configuration
-  const hasAirtableConfig = Boolean(
-    localStorage.getItem('VITE_AIRTABLE_API_KEY') && 
-    localStorage.getItem('VITE_AIRTABLE_BASE_ID')
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      if (!hasAirtableConfig) {
-        // If no Airtable config, simulate form submission
-        setTimeout(() => {
-          toast.success("Demo mode: Message would be sent to Airtable", {
-            description: "Configure Airtable to store real messages",
-          });
-          
-          setName('');
-          setEmail('');
-          setMessage('');
-          setIsSubmitting(false);
-        }, 1500);
-        return;
-      }
-      
-      // Send message to Airtable
-      await sendContactMessage({
-        name,
-        email,
-        message
-      });
-      
-      toast.success("Message sent successfully!", {
-        description: "Thanks for reaching out. I'll get back to you soon.",
-      });
-      
-      setName('');
-      setEmail('');
-      setMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error("Failed to send message", {
-        description: error instanceof Error ? error.message : 'Please try again later',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    name,
+    setName,
+    email,
+    setEmail,
+    message,
+    setMessage,
+    isSubmitting,
+    isConfigured: hasAirtableConfig,
+    handleSubmit,
+  } = useContactForm();
 
   return (
     <section id="contact" className="py-20 bg-card">
