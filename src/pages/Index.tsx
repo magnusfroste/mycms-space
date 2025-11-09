@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
+import ChatLanding from '@/components/ChatLanding';
 import AboutMe from '@/components/AboutMe';
 import FeaturedIn from '@/components/FeaturedIn';
 import ExpertiseCards from '@/components/ExpertiseCards';
@@ -23,6 +24,7 @@ const Index = () => {
       <Header />
       <main className="flex-grow">
         <Hero />
+        <ChatLanding />
         <AboutMe />
         <FeaturedIn />
         <ExpertiseCards />

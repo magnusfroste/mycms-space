@@ -1,32 +1,10 @@
-import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import AppleChat, { Message } from "./AppleChat";
-import { useNavigate } from "react-router-dom";
 import { useHeroWithFallback } from "@/hooks/useHeroWithFallback";
 import { iconMap } from "@/lib/constants/iconMaps";
 
 const Hero = () => {
   const { hero: heroData, isLoading } = useHeroWithFallback();
-  const navigate = useNavigate();
-  const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
-  const didNavigateRef = React.useRef(false);
-
-  // Navigate to full chat after first user message
-  useEffect(() => {
-    const hasUserMsg = currentMessages.some((m) => m.isUser);
-    if (hasUserMsg && !didNavigateRef.current && currentSessionId) {
-      didNavigateRef.current = true;
-      navigate("/chat", {
-        state: {
-          fromHero: true,
-          messages: currentMessages,
-          sessionId: currentSessionId,
-        },
-      });
-    }
-  }, [currentMessages, currentSessionId, navigate]);
 
   return (
     <>
@@ -97,17 +75,6 @@ const Hero = () => {
                 </div>
               </>
             )}
-
-            {/* Chat Section - moved up and integrated */}
-            <div className="mt-8 mb-8">
-              <AppleChat
-                webhookUrl="https://agent.froste.eu/webhook/magnet"
-                onMessagesChange={setCurrentMessages}
-                onSessionIdChange={setCurrentSessionId}
-                skipWebhook={true}
-                showQuickActions={true}
-              />
-            </div>
 
             <a
               href="#about"
