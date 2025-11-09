@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Demo from "./pages/Demo";
 import N8nTest from "./pages/N8nTest";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 // Google Analytics page view tracking component
@@ -51,6 +52,7 @@ const App = () => {
               <Route path="/chat" element={<Chat />} />
               <Route path="/demo" element={<Demo />} />
               <Route path="/n8n-test" element={<N8nTest />} />
+              <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

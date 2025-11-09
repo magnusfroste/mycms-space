@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Zap } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { parseMarkdown } from "@/lib/markdown";
+import { useChatSettings } from "@/hooks/useChatSettings";
+import { useQuickActions } from "@/hooks/useQuickActions";
 
 // Helper to clean webhook response text
 const cleanWebhookResponse = (text: string): string => {
@@ -46,7 +48,7 @@ interface AppleChatProps {
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({
-  webhookUrl,
+  webhookUrl: propWebhookUrl,
   fullPage = false,
   initialMessages,
   resetTrigger = 0,
@@ -56,6 +58,13 @@ const AppleChat: React.FC<AppleChatProps> = ({
   skipWebhook = false,
   showQuickActions = false,
 }) => {
+  const { data: settings } = useChatSettings();
+  const { data: quickActionsData } = useQuickActions();
+  
+  const webhookUrl = settings?.webhook_url || propWebhookUrl;
+  const initialPlaceholder = settings?.initial_placeholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?";
+  const activePlaceholder = settings?.active_placeholder || "How can Magnet help?";
+  const quickActions = quickActionsData || [];
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
@@ -299,14 +308,6 @@ const AppleChat: React.FC<AppleChatProps> = ({
     }
   };
 
-  const quickActions = [
-    { icon: "📋", label: "What tools do you have access to?", message: "What tools do you have access to?" },
-    { icon: "🎯", label: "Help me outline an AI strategy", message: "Help me outline an AI strategy" },
-    { icon: "👤", label: "Tell me about Magnus", message: "Tell me about Magnus" },
-    { icon: "🤖", label: "Explain AI agents to me", message: "Explain AI agents to me" },
-    { icon: "✉️", label: "Contact Magnus", message: "Contact Magnus" },
-    { icon: "🔒", label: "Why you need Private AI?", message: "Why you need Private AI?" },
-  ];
 
   return (
     <div className={fullPage ? "flex flex-col h-full relative" : "max-w-3xl mx-auto"}>
@@ -374,7 +375,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
                 adjustTextareaHeight();
               }}
               onKeyPress={handleKeyPress}
-              placeholder={messages.length > 0 ? "How can Magnet help?" : "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
+              placeholder={messages.length > 0 ? activePlaceholder : initialPlaceholder}
               className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[52px] max-h-[200px] overflow-y-auto"
               rows={1}
               disabled={isLoading}
