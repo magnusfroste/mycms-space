@@ -98,6 +98,39 @@ export type Database = {
         }
         Relationships: []
       }
+      expertise_areas: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          icon: string
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          icon?: string
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          icon?: string
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hero_settings: {
         Row: {
           animation_style: string

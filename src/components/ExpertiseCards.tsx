@@ -1,11 +1,14 @@
 import React from 'react';
 import { Lightbulb } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useExpertiseWithFallback } from '@/hooks/useExpertiseWithFallback';
+import { useExpertiseAreas, useExpertiseAreasSubscription } from '@/hooks/useExpertiseSettings';
 import { iconMap } from '@/lib/constants/iconMaps';
 
 const ExpertiseCards = () => {
-  const { expertise: areasToDisplay, isLoading } = useExpertiseWithFallback();
+  const { data: areas, isLoading } = useExpertiseAreas();
+  useExpertiseAreasSubscription();
+  
+  const areasToDisplay = areas?.filter(area => area.enabled) || [];
 
   return (
     <section id="expertise" className="py-20 bg-card">
