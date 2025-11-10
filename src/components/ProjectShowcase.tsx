@@ -5,14 +5,12 @@ import { Project } from '@/lib/airtable';
 import { useNavigate } from 'react-router-dom';
 import ProjectModal from './ProjectModal';
 import { useProjectsWithFallback } from '@/hooks/useProjectsWithFallback';
-import { useAirtableConfig } from '@/hooks/useAirtableConfig';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { analyticsService } from '@/services/analyticsService';
 
 const ProjectShowcase = () => {
   const navigate = useNavigate();
   const { projects: sortedProjects, isLoading, error, usingFallbackData } = useProjectsWithFallback();
-  const { isConfigured: hasAirtableConfig } = useAirtableConfig();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
   // Track page visit
@@ -45,44 +43,38 @@ const ProjectShowcase = () => {
         {isLoading && (
           <div className="flex justify-center py-10">
             <div className="animate-pulse text-center">
-              <p className="text-muted-foreground">Loading projects from Airtable...</p>
+              <p className="text-muted-foreground">Loading projects...</p>
             </div>
           </div>
         )}
         
         {error && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-destructive">Could not load projects from Airtable. Using fallback data.</p>
+            <p className="text-destructive">Could not load projects. Using fallback data.</p>
             <p className="text-sm text-muted-foreground mt-2">
               Error: {error instanceof Error ? error.message : 'Unknown error'}
             </p>
             <Button
-              onClick={() => navigate('/airtable-config')}
+              onClick={() => navigate('/admin')}
               className="mt-4 apple-button"
             >
-              Update Airtable Configuration
+              Go to Admin Panel
             </Button>
           </div>
         )}
         
-        {!hasAirtableConfig && !error && !isLoading && (
+        {usingFallbackData && !error && !isLoading && (
           <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-600 dark:text-amber-400">Using demo projects. Connect your Airtable to display your own projects.</p>
-            <Button
-              onClick={() => navigate('/airtable-config')}
-              className="mt-4 apple-button"
-            >
-              Set Up Airtable Connection
-            </Button>
-          </div>
-        )}
-        
-        {usingFallbackData && hasAirtableConfig && !error && !isLoading && (
-          <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-600 dark:text-amber-400">No projects found in Airtable or empty fields. Using fallback projects.</p>
+            <p className="text-amber-600 dark:text-amber-400">No projects found. Using demo projects.</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Make sure your Airtable table has the correct structure with Title/title, Description/description, Image/image, DemoLink/demoLink, and Order/order fields.
+              Add your projects in the admin panel to display them here.
             </p>
+            <Button
+              onClick={() => navigate('/admin')}
+              className="mt-4 apple-button"
+            >
+              Manage Projects
+            </Button>
           </div>
         )}
         
