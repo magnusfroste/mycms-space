@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useDeleteProjectImage, useReorderProjectImages, Project, ProjectImage } from '@/hooks/useProjectSettings';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectFormData {
   title: string;
@@ -28,6 +30,7 @@ export const ProjectSettings = () => {
   const deleteProject = useDeleteProject();
   const deleteProjectImage = useDeleteProjectImage();
   const reorderProjectImages = useReorderProjectImages();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -35,6 +38,9 @@ export const ProjectSettings = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isMigrationDialogOpen, setIsMigrationDialogOpen] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<any>(null);
 
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '',
@@ -193,6 +199,63 @@ export const ProjectSettings = () => {
     });
   };
 
+  const handleMigrateFromAirtable = async () => {
+    const airtableApiKey = localStorage.getItem('VITE_AIRTABLE_API_KEY');
+    const airtableBaseId = localStorage.getItem('VITE_AIRTABLE_BASE_ID');
+    const airtableTableId = localStorage.getItem('VITE_AIRTABLE_TABLE_ID') || 'Projects';
+
+    if (!airtableApiKey || !airtableBaseId) {
+      toast({
+        title: 'Configuration Missing',
+        description: 'Please configure your Airtable API settings first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsMigrating(true);
+    setMigrationResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('migrate-airtable-projects', {
+        body: {
+          airtableApiKey,
+          airtableBaseId,
+          airtableTableId,
+        },
+      });
+
+      if (error) throw error;
+
+      setMigrationResult(data);
+      
+      if (data.success) {
+        // Refresh projects list
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        
+        toast({
+          title: 'Migration Complete',
+          description: `Successfully migrated ${data.projectsCreated} projects with ${data.imagesUploaded} images.`,
+        });
+      } else {
+        toast({
+          title: 'Migration Failed',
+          description: data.error || 'Unknown error occurred',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Migration error:', error);
+      toast({
+        title: 'Migration Error',
+        description: error.message || 'Failed to migrate projects',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="p-6">Loading projects...</div>;
   }
@@ -204,32 +267,141 @@ export const ProjectSettings = () => {
           <h2 className="text-2xl font-bold">Project Management</h2>
           <p className="text-muted-foreground">Manage your portfolio projects</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Project</DialogTitle>
-            </DialogHeader>
-            <ProjectForm
-              formData={formData}
-              setFormData={setFormData}
-              imagePreviews={imagePreviews}
-              onImageChange={handleImageChange}
-              onRemoveNewImage={handleRemoveNewImage}
-              onSubmit={handleAdd}
-              onCancel={() => {
-                setIsAddDialogOpen(false);
-                resetForm();
-              }}
-              isLoading={createProject.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={isMigrationDialogOpen} onOpenChange={setIsMigrationDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setMigrationResult(null)}>
+                <Download className="mr-2 h-4 w-4" />
+                Migrate from Airtable
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Migrate Projects from Airtable</DialogTitle>
+                <DialogDescription>
+                  This will import all projects from your Airtable base, download images, and save them to the database.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                {!isMigrating && !migrationResult && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Make sure your Airtable configuration is set up in localStorage with:
+                    </p>
+                    <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                      <li>VITE_AIRTABLE_API_KEY</li>
+                      <li>VITE_AIRTABLE_BASE_ID</li>
+                      <li>VITE_AIRTABLE_TABLE_ID (optional, defaults to "Projects")</li>
+                    </ul>
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mt-4">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        ⚠️ This will create new projects in the database. Existing projects will not be affected.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {isMigrating && (
+                  <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <p className="text-lg font-medium">Migrating projects...</p>
+                    <p className="text-sm text-muted-foreground">This may take a few minutes</p>
+                  </div>
+                )}
+
+                {migrationResult && !isMigrating && (
+                  <div className="space-y-4">
+                    <div className={`border rounded-lg p-4 ${migrationResult.success ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'}`}>
+                      <h3 className="font-semibold mb-2">
+                        {migrationResult.success ? '✓ Migration Complete' : '✗ Migration Failed'}
+                      </h3>
+                      <div className="text-sm space-y-1">
+                        <p>Projects created: {migrationResult.projectsCreated}</p>
+                        <p>Images uploaded: {migrationResult.imagesUploaded}</p>
+                      </div>
+                    </div>
+
+                    {migrationResult.projects && migrationResult.projects.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Migrated Projects:</h4>
+                        <div className="space-y-1 max-h-48 overflow-y-auto">
+                          {migrationResult.projects.map((proj: any, idx: number) => (
+                            <div key={idx} className="text-sm flex justify-between px-3 py-2 bg-muted rounded">
+                              <span>{proj.title}</span>
+                              <span className="text-muted-foreground">{proj.imageCount} images</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {migrationResult.errors && migrationResult.errors.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2 text-destructive">Errors:</h4>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {migrationResult.errors.map((error: string, idx: number) => (
+                            <div key={idx} className="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded">
+                              {error}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                {!isMigrating && !migrationResult && (
+                  <>
+                    <Button variant="outline" onClick={() => setIsMigrationDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleMigrateFromAirtable}>
+                      Start Migration
+                    </Button>
+                  </>
+                )}
+                {migrationResult && (
+                  <Button onClick={() => {
+                    setIsMigrationDialogOpen(false);
+                    setMigrationResult(null);
+                  }}>
+                    Close
+                  </Button>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Project</DialogTitle>
+              </DialogHeader>
+              <ProjectForm
+                formData={formData}
+                setFormData={setFormData}
+                imagePreviews={imagePreviews}
+                onImageChange={handleImageChange}
+                onRemoveNewImage={handleRemoveNewImage}
+                onSubmit={handleAdd}
+                onCancel={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                }}
+                isLoading={createProject.isPending}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="border rounded-lg">
