@@ -7,6 +7,7 @@ import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
 import { HeroSettings } from '@/components/admin/HeroSettings';
 import AboutMeSettings from '@/components/admin/AboutMeSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
+import FeaturedSettings from '@/components/admin/FeaturedSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
@@ -46,13 +47,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="webhook" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
             <TabsTrigger value="actions">Quick Actions</TabsTrigger>
             <TabsTrigger value="text">Chat Text</TabsTrigger>
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="about">About Me</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
+            <TabsTrigger value="featured">Featured In</TabsTrigger>
           </TabsList>
 
           <TabsContent value="webhook" className="space-y-4">
@@ -113,6 +115,16 @@ const Admin = () => {
               </p>
             </div>
             <ExpertiseSettings />
+          </TabsContent>
+
+          <TabsContent value="featured" className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Featured In</h2>
+              <p className="text-muted-foreground">
+                Manage items displayed in the Featured section
+              </p>
+            </div>
+            <FeaturedSettings />
           </TabsContent>
         </Tabs>
       </div>

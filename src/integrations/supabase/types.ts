@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_in: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          id: string
+          image_path: string | null
+          image_url: string | null
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          id?: string
+          image_path?: string | null
+          image_url?: string | null
+          order_index: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          image_path?: string | null
+          image_url?: string | null
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hero_settings: {
         Row: {
           animation_style: string

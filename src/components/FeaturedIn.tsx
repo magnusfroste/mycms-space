@@ -2,37 +2,15 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFeaturedIn } from '@/lib/airtable';
+import { useFeaturedItems } from '@/hooks/useFeaturedSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Fallback featured items if Airtable data is not available
-const fallbackItems = [
-  {
-    id: '1',
-    image: '/lovable-uploads/28138354-db3a-4afd-ba4b-aa3f24fd056c.png',
-    title: 'Innovation Panel',
-    description: 'Expert panel on driving innovation in traditional industries'
-  },
-  {
-    id: '2',
-    image: '/lovable-uploads/76c280cc-900a-4d28-b7cc-e52a7f4793b7.png',
-    title: 'Tech Conference',
-    description: 'Keynote speaker at a leading technology conference'
-  },
-  {
-    id: '3',
-    image: '/lovable-uploads/19c8a77f-19ca-4427-ae8a-b07a6070c2c0.png',
-    title: 'AI Symposium',
-    description: 'Featured speaker discussing the future of AI in business'
-  }
-];
-
 const FeaturedIn = () => {
-  const { data: featuredItems, isLoading, error } = useFeaturedIn();
+  const { data: items, isLoading } = useFeaturedItems();
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // Use fallback items if no data from Airtable
-  const displayItems = featuredItems && featuredItems.length > 0 ? featuredItems : fallbackItems;
+  // Filter enabled items and sort by order_index
+  const displayItems = items?.filter(item => item.enabled) || [];
 
   const goToPrevious = () => {
     setActiveIndex((current) => (current === 0 ? displayItems.length - 1 : current - 1));
@@ -90,9 +68,9 @@ const FeaturedIn = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="bg-muted rounded-xl p-4">
                   <div className="h-72 rounded-lg flex items-center justify-center overflow-hidden bg-background">
-                    {displayItems[activeIndex].image ? (
+                    {displayItems[activeIndex]?.image_url ? (
                       <img 
-                        src={displayItems[activeIndex].image} 
+                        src={displayItems[activeIndex].image_url} 
                         alt={displayItems[activeIndex].title}
                         className="object-contain w-full h-full rounded-lg"
                       />
@@ -106,8 +84,8 @@ const FeaturedIn = () => {
                 </div>
                 
                 <div>
-                  <h3 className="text-2xl font-semibold mb-4">{displayItems[activeIndex].title}</h3>
-                  <p className="text-muted-foreground mb-6">{displayItems[activeIndex].description}</p>
+                  <h3 className="text-2xl font-semibold mb-4">{displayItems[activeIndex]?.title}</h3>
+                  <p className="text-muted-foreground mb-6">{displayItems[activeIndex]?.description}</p>
                   
                   <div className="flex justify-center space-x-2">
                     {displayItems.map((_, index) => (
