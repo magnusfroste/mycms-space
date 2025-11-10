@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import Header from '@/components/Header';
-import Hero from '@/components/Hero';
-import ChatLanding from '@/components/ChatLanding';
+import WelcomeSection from '@/components/WelcomeSection';
 import AboutMe from '@/components/AboutMe';
 import FeaturedIn from '@/components/FeaturedIn';
 import ExpertiseCards from '@/components/ExpertiseCards';
@@ -23,8 +22,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <Hero />
-        <ChatLanding />
+        <WelcomeSection />
         <AboutMe />
         <FeaturedIn />
         <ExpertiseCards />

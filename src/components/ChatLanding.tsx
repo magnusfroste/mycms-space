@@ -29,7 +29,7 @@ const ChatLanding = () => {
   const webhookUrl = settings?.webhook_url || "https://agent.froste.eu/webhook/magnet";
 
   return (
-    <section className="pb-12" aria-label="Chat with Magnus">
+    <div className="pb-20" aria-label="Chat with Magnus">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <AppleChat
@@ -51,7 +51,7 @@ const ChatLanding = () => {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

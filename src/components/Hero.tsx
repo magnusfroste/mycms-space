@@ -1,29 +1,20 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHeroSettings } from "@/hooks/useHeroSettings";
 import { iconMap } from "@/lib/constants/iconMaps";
-import FallingStars from "@/components/animations/FallingStars";
-import ParticleField from "@/components/animations/ParticleField";
-import GradientShift from "@/components/animations/GradientShift";
 
 const Hero = () => {
   const { data: heroData, isLoading } = useHeroSettings();
 
   return (
-    <>
-      <section
-        className="flex flex-col justify-center py-20 relative overflow-hidden"
-        aria-labelledby="hero-heading"
-      >
-        {/* Background gradient circles */}
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/20 rounded-full filter blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-apple-blue/20 rounded-full filter blur-3xl opacity-30"></div>
+    <div
+      className="flex flex-col justify-center py-20 relative"
+      aria-labelledby="hero-heading"
+    >
+      {/* Background gradient circles */}
+      <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/20 rounded-full filter blur-3xl opacity-30"></div>
+      <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-apple-blue/20 rounded-full filter blur-3xl opacity-30"></div>
 
-        {/* Animations */}
-        {heroData?.enable_animations && heroData.animation_style === 'falling-stars' && <FallingStars />}
-        {heroData?.enable_animations && heroData.animation_style === 'particles' && <ParticleField />}
-        {heroData?.enable_animations && heroData.animation_style === 'gradient-shift' && <GradientShift />}
-
-        <div className="container mx-auto px-4 z-10">
+      <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {isLoading ? (
               // Loading state
@@ -83,10 +74,9 @@ const Hero = () => {
               </>
             )}
 
-          </div>
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 };
 
