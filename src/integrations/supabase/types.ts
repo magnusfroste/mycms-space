@@ -249,19 +249,28 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          section_description: string | null
+          section_subtitle: string | null
           section_title: string
+          show_section: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          section_description?: string | null
+          section_subtitle?: string | null
           section_title?: string
+          show_section?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          section_description?: string | null
+          section_subtitle?: string | null
           section_title?: string
+          show_section?: boolean
           updated_at?: string
         }
         Relationships: []

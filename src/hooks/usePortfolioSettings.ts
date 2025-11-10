@@ -5,6 +5,9 @@ import { useToast } from '@/hooks/use-toast';
 export interface PortfolioSettings {
   id: string;
   section_title: string;
+  section_subtitle: string;
+  section_description: string;
+  show_section: boolean;
   created_at: string;
   updated_at: string;
 }

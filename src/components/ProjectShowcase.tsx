@@ -74,12 +74,29 @@ const ProjectShowcase = () => {
     setSelectedProject(null);
   };
 
+  // Don't render section if hidden
+  if (portfolioSettings?.show_section === false) {
+    return null;
+  }
+
   return (
     <section id="projects" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <h2 className="section-title">
-          {portfolioSettings?.section_title || 'My Portfolio - Proof of Concepts & AI Initiatives'}
-        </h2>
+        <div className="text-center mb-8">
+          <h2 className="section-title">
+            {portfolioSettings?.section_title || 'My Portfolio - Proof of Concepts & AI Initiatives'}
+          </h2>
+          {portfolioSettings?.section_subtitle && (
+            <p className="text-xl text-muted-foreground mt-2">
+              {portfolioSettings.section_subtitle}
+            </p>
+          )}
+          {portfolioSettings?.section_description && (
+            <p className="text-base text-muted-foreground mt-4 max-w-3xl mx-auto">
+              {portfolioSettings.section_description}
+            </p>
+          )}
+        </div>
         
         {/* Category Filter */}
         {categories.length > 0 && (
