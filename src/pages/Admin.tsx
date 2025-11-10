@@ -8,6 +8,7 @@ import { HeroSettings } from '@/components/admin/HeroSettings';
 import AboutMeSettings from '@/components/admin/AboutMeSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
+import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
@@ -47,7 +48,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="webhook" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
             <TabsTrigger value="actions">Quick Actions</TabsTrigger>
             <TabsTrigger value="text">Chat Text</TabsTrigger>
@@ -55,6 +56,7 @@ const Admin = () => {
             <TabsTrigger value="about">About Me</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
             <TabsTrigger value="featured">Featured In</TabsTrigger>
+            <TabsTrigger value="projects">Projects</TabsTrigger>
           </TabsList>
 
           <TabsContent value="webhook" className="space-y-4">
@@ -125,6 +127,10 @@ const Admin = () => {
               </p>
             </div>
             <FeaturedSettings />
+          </TabsContent>
+
+          <TabsContent value="projects" className="space-y-4">
+            <ProjectSettings />
           </TabsContent>
         </Tabs>
       </div>
