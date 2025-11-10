@@ -71,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          order_index: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          order_index: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          order_index?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_settings: {
         Row: {
           active_placeholder: string
@@ -212,6 +242,116 @@ export type Database = {
           name?: string
           tagline?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      project_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_path: string
+          image_url: string
+          order_index: number
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_path: string
+          image_url: string
+          order_index?: number
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_path?: string
+          image_url?: string
+          order_index?: number
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          demo_link: string
+          description: string
+          enabled: boolean
+          id: string
+          order_index: number
+          problem_statement: string | null
+          title: string
+          updated_at: string
+          why_built: string | null
+        }
+        Insert: {
+          created_at?: string
+          demo_link?: string
+          description: string
+          enabled?: boolean
+          id?: string
+          order_index: number
+          problem_statement?: string | null
+          title: string
+          updated_at?: string
+          why_built?: string | null
+        }
+        Update: {
+          created_at?: string
+          demo_link?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          order_index?: number
+          problem_statement?: string | null
+          title?: string
+          updated_at?: string
+          why_built?: string | null
         }
         Relationships: []
       }

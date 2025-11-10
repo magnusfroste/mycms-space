@@ -1,20 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Project } from '@/lib/airtable';
 import { useNavigate } from 'react-router-dom';
 import ProjectModal from './ProjectModal';
 import { useProjectsWithFallback } from '@/hooks/useProjectsWithFallback';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { analyticsService } from '@/services/analyticsService';
+import { useCategories } from '@/hooks/useCategories';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProjectShowcase = () => {
   const navigate = useNavigate();
   const { projects: sortedProjects, isLoading, error, usingFallbackData } = useProjectsWithFallback();
+  const { data: categories = [] } = useCategories();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [projectCategories, setProjectCategories] = useState<Record<string, string[]>>({});
   
   // Track page visit
   useAnalytics('portfolio');
+
+  // Fetch project categories
+  React.useEffect(() => {
+    const fetchProjectCategories = async () => {
+      const { data } = await supabase
+        .from('project_categories')
+        .select('project_id, category_id');
+      
+      if (data) {
+        const categoriesMap: Record<string, string[]> = {};
+        data.forEach((pc: any) => {
+          if (!categoriesMap[pc.project_id]) {
+            categoriesMap[pc.project_id] = [];
+          }
+          categoriesMap[pc.project_id].push(pc.category_id);
+        });
+        setProjectCategories(categoriesMap);
+      }
+    };
+    
+    fetchProjectCategories();
+  }, []);
+
+  // Filter projects by selected category
+  const filteredProjects = useMemo(() => {
+    if (!selectedCategory) return sortedProjects;
+    
+    return sortedProjects.filter(project => 
+      projectCategories[project.id]?.includes(selectedCategory)
+    );
+  }, [sortedProjects, selectedCategory, projectCategories]);
 
   const handleDemoClick = (projectTitle: string, demoLink: string) => {
     analyticsService.trackDemoClick(projectTitle);
@@ -39,6 +76,29 @@ const ProjectShowcase = () => {
     <section id="projects" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <h2 className="section-title">My Portfolio - Proof of Concepts & AI Initiatives</h2>
+        
+        {/* Category Filter */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8 justify-center">
+            <Badge
+              variant={selectedCategory === null ? "default" : "outline"}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setSelectedCategory(null)}
+            >
+              All Projects
+            </Badge>
+            {categories.map((category) => (
+              <Badge
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setSelectedCategory(category.id)}
+              >
+                {category.name}
+              </Badge>
+            ))}
+          </div>
+        )}
         
         {isLoading && (
           <div className="flex justify-center py-10">
@@ -79,7 +139,12 @@ const ProjectShowcase = () => {
         )}
         
         <div className="space-y-16">
-          {sortedProjects.map((project, index) => {
+          {filteredProjects.length === 0 && selectedCategory && (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">No projects found in this category.</p>
+            </div>
+          )}
+          {filteredProjects.map((project, index) => {
             const isImageOnLeft = index % 2 === 0;
             
             return (

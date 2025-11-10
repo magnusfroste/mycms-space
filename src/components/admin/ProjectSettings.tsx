@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useDeleteProjectImage, useReorderProjectImages, Project, ProjectImage } from '@/hooks/useProjectSettings';
+import { useCategories, useProjectCategories, useUpdateProjectCategories } from '@/hooks/useCategories';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -25,11 +27,13 @@ interface ProjectFormData {
 
 export const ProjectSettings = () => {
   const { data: projects = [], isLoading } = useProjects();
+  const { data: categories = [] } = useCategories();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const deleteProjectImage = useDeleteProjectImage();
   const reorderProjectImages = useReorderProjectImages();
+  const updateProjectCategories = useUpdateProjectCategories();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -41,6 +45,7 @@ export const ProjectSettings = () => {
   const [isMigrationDialogOpen, setIsMigrationDialogOpen] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<any>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '',
@@ -121,12 +126,21 @@ export const ProjectSettings = () => {
 
     const maxOrder = projects.length > 0 ? Math.max(...projects.map(p => p.order_index)) : -1;
     
-    await createProject.mutateAsync({
+    const project = await createProject.mutateAsync({
       ...formData,
       order_index: maxOrder + 1,
     });
 
+    // Save categories
+    if (project && selectedCategories.length > 0) {
+      await updateProjectCategories.mutateAsync({
+        projectId: project.id,
+        categoryIds: selectedCategories,
+      });
+    }
+
     setIsAddDialogOpen(false);
+    setSelectedCategories([]);
     resetForm();
   };
 
@@ -147,8 +161,15 @@ export const ProjectSettings = () => {
       ...formData,
     });
 
+    // Update categories
+    await updateProjectCategories.mutateAsync({
+      projectId: editingProject.id,
+      categoryIds: selectedCategories,
+    });
+
     setIsEditDialogOpen(false);
     setEditingProject(null);
+    setSelectedCategories([]);
     resetForm();
   };
 
@@ -178,7 +199,7 @@ export const ProjectSettings = () => {
     ]);
   };
 
-  const openEditDialog = (project: Project) => {
+  const openEditDialog = async (project: Project) => {
     setEditingProject(project);
     setFormData({
       title: project.title,
@@ -189,6 +210,14 @@ export const ProjectSettings = () => {
       enabled: project.enabled,
     });
     setImagePreviews([]);
+    
+    // Load project categories
+    const { data: projectCats } = await supabase
+      .from('project_categories')
+      .select('category_id')
+      .eq('project_id', project.id);
+    
+    setSelectedCategories(projectCats?.map((pc: any) => pc.category_id) || []);
     setIsEditDialogOpen(true);
   };
 
@@ -396,8 +425,12 @@ export const ProjectSettings = () => {
                 onCancel={() => {
                   setIsAddDialogOpen(false);
                   resetForm();
+                  setSelectedCategories([]);
                 }}
                 isLoading={createProject.isPending}
+                categories={categories}
+                selectedCategories={selectedCategories}
+                onCategoryChange={setSelectedCategories}
               />
             </DialogContent>
           </Dialog>
@@ -520,9 +553,13 @@ export const ProjectSettings = () => {
               onCancel={() => {
                 setIsEditDialogOpen(false);
                 setEditingProject(null);
+                setSelectedCategories([]);
                 resetForm();
               }}
               isLoading={updateProject.isPending}
+              categories={categories}
+              selectedCategories={selectedCategories}
+              onCategoryChange={setSelectedCategories}
               isEdit
             />
         </DialogContent>
@@ -560,6 +597,9 @@ interface ProjectFormProps {
   onCancel: () => void;
   isLoading: boolean;
   isEdit?: boolean;
+  categories: any[];
+  selectedCategories: string[];
+  onCategoryChange: (categories: string[]) => void;
 }
 
 const ProjectForm = ({
@@ -575,7 +615,18 @@ const ProjectForm = ({
   onCancel,
   isLoading,
   isEdit = false,
+  categories,
+  selectedCategories,
+  onCategoryChange,
 }: ProjectFormProps) => {
+  const handleCategoryToggle = (categoryId: string) => {
+    if (selectedCategories.includes(categoryId)) {
+      onCategoryChange(selectedCategories.filter(id => id !== categoryId));
+    } else {
+      onCategoryChange([...selectedCategories, categoryId]);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -722,6 +773,33 @@ const ProjectForm = ({
         />
         <Label htmlFor="enabled">Enabled</Label>
       </div>
+
+      {/* Categories Selection */}
+      {categories.length > 0 && (
+        <div className="space-y-2">
+          <Label>Categories</Label>
+          <div className="border rounded-lg p-4 space-y-2 max-h-48 overflow-y-auto">
+            {categories.map((category) => (
+              <div key={category.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`category-${category.id}`}
+                  checked={selectedCategories.includes(category.id)}
+                  onCheckedChange={() => handleCategoryToggle(category.id)}
+                />
+                <Label
+                  htmlFor={`category-${category.id}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {category.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Select the categories that apply to this project
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button variant="outline" onClick={onCancel} disabled={isLoading}>
