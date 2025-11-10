@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, Project } from '@/hooks/useProjectSettings';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useDeleteProjectImage, useReorderProjectImages, Project, ProjectImage } from '@/hooks/useProjectSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProjectFormData {
@@ -18,8 +18,7 @@ interface ProjectFormData {
   problem_statement: string;
   why_built: string;
   enabled: boolean;
-  image?: File;
-  removeImage?: boolean;
+  images?: File[];
 }
 
 export const ProjectSettings = () => {
@@ -27,13 +26,15 @@ export const ProjectSettings = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const deleteProjectImage = useDeleteProjectImage();
+  const reorderProjectImages = useReorderProjectImages();
   const { toast } = useToast();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '',
@@ -53,22 +54,53 @@ export const ProjectSettings = () => {
       problem_statement: '',
       why_built: '',
     });
-    setImagePreview(null);
+    setImagePreviews([]);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, image: file, removeImage: false });
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      const currentImages = formData.images || [];
+      setFormData({ ...formData, images: [...currentImages, ...files] });
+      
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const handleRemoveImage = () => {
-    setFormData({ ...formData, image: undefined, removeImage: true });
-    setImagePreview(null);
+  const handleRemoveNewImage = (index: number) => {
+    const newImages = [...(formData.images || [])];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+    
+    const newPreviews = [...imagePreviews];
+    newPreviews.splice(index, 1);
+    setImagePreviews(newPreviews);
+  };
+
+  const handleDeleteExistingImage = async (imageId: string, imagePath: string) => {
+    await deleteProjectImage.mutateAsync({ imageId, imagePath });
+  };
+
+  const handleReorderImage = async (projectId: string, images: ProjectImage[], fromIndex: number, direction: 'up' | 'down') => {
+    const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= images.length) return;
+
+    const reorderedImages = [...images];
+    const [movedImage] = reorderedImages.splice(fromIndex, 1);
+    reorderedImages.splice(toIndex, 0, movedImage);
+
+    const updatedImages = reorderedImages.map((img, idx) => ({
+      id: img.id,
+      order_index: idx,
+    }));
+
+    await reorderProjectImages.mutateAsync({ images: updatedImages });
   };
 
   const handleAdd = async () => {
@@ -150,7 +182,7 @@ export const ProjectSettings = () => {
       why_built: project.why_built || '',
       enabled: project.enabled,
     });
-    setImagePreview(project.image_url || null);
+    setImagePreviews([]);
     setIsEditDialogOpen(true);
   };
 
@@ -186,9 +218,9 @@ export const ProjectSettings = () => {
             <ProjectForm
               formData={formData}
               setFormData={setFormData}
-              imagePreview={imagePreview}
+              imagePreviews={imagePreviews}
               onImageChange={handleImageChange}
-              onRemoveImage={handleRemoveImage}
+              onRemoveNewImage={handleRemoveNewImage}
               onSubmit={handleAdd}
               onCancel={() => {
                 setIsAddDialogOpen(false);
@@ -205,7 +237,7 @@ export const ProjectSettings = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">Order</TableHead>
-              <TableHead className="w-[80px]">Image</TableHead>
+              <TableHead className="w-[100px]">Images</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="w-[100px]">Enabled</TableHead>
@@ -245,13 +277,22 @@ export const ProjectSettings = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {project.image_url ? (
-                      <img src={project.image_url} alt={project.title} className="w-12 h-12 object-cover rounded" />
-                    ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
+                    <div className="flex gap-1">
+                      {project.images && project.images.length > 0 ? (
+                        <>
+                          <img src={project.images[0].image_url} alt={project.title} className="w-12 h-12 object-cover rounded" />
+                          {project.images.length > 1 && (
+                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs font-medium">
+                              +{project.images.length - 1}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium">{project.title}</TableCell>
                   <TableCell className="max-w-xs truncate">{project.description}</TableCell>
@@ -292,21 +333,26 @@ export const ProjectSettings = () => {
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
-          <ProjectForm
-            formData={formData}
-            setFormData={setFormData}
-            imagePreview={imagePreview}
-            onImageChange={handleImageChange}
-            onRemoveImage={handleRemoveImage}
-            onSubmit={handleEdit}
-            onCancel={() => {
-              setIsEditDialogOpen(false);
-              setEditingProject(null);
-              resetForm();
-            }}
-            isLoading={updateProject.isPending}
-            isEdit
-          />
+            <ProjectForm
+              formData={formData}
+              setFormData={setFormData}
+              imagePreviews={imagePreviews}
+              existingImages={editingProject?.images || []}
+              onImageChange={handleImageChange}
+              onRemoveNewImage={handleRemoveNewImage}
+              onDeleteExistingImage={handleDeleteExistingImage}
+              onReorderImage={(fromIndex, direction) => 
+                editingProject && handleReorderImage(editingProject.id, editingProject.images || [], fromIndex, direction)
+              }
+              onSubmit={handleEdit}
+              onCancel={() => {
+                setIsEditDialogOpen(false);
+                setEditingProject(null);
+                resetForm();
+              }}
+              isLoading={updateProject.isPending}
+              isEdit
+            />
         </DialogContent>
       </Dialog>
 
@@ -332,9 +378,12 @@ export const ProjectSettings = () => {
 interface ProjectFormProps {
   formData: ProjectFormData;
   setFormData: (data: ProjectFormData) => void;
-  imagePreview: string | null;
+  imagePreviews: string[];
+  existingImages?: ProjectImage[];
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveImage: () => void;
+  onRemoveNewImage: (index: number) => void;
+  onDeleteExistingImage?: (imageId: string, imagePath: string) => void;
+  onReorderImage?: (fromIndex: number, direction: 'up' | 'down') => void;
   onSubmit: () => void;
   onCancel: () => void;
   isLoading: boolean;
@@ -344,9 +393,12 @@ interface ProjectFormProps {
 const ProjectForm = ({
   formData,
   setFormData,
-  imagePreview,
+  imagePreviews,
+  existingImages = [],
   onImageChange,
-  onRemoveImage,
+  onRemoveNewImage,
+  onDeleteExistingImage,
+  onReorderImage,
   onSubmit,
   onCancel,
   isLoading,
@@ -408,26 +460,86 @@ const ProjectForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="image">Project Image</Label>
-        {imagePreview && (
-          <div className="relative w-full h-48 border rounded-lg overflow-hidden">
-            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-            <Button
-              variant="destructive"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={onRemoveImage}
-            >
-              Remove
-            </Button>
+        <Label htmlFor="images">Project Images</Label>
+        
+        {/* Existing Images (only in edit mode) */}
+        {isEdit && existingImages.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Existing Images</p>
+            <div className="grid grid-cols-2 gap-2">
+              {existingImages.map((image, index) => (
+                <div key={image.id} className="relative border rounded-lg overflow-hidden">
+                  <img src={image.image_url} alt={`Image ${index + 1}`} className="w-full h-32 object-cover" />
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => onReorderImage?.(index, 'up')}
+                      disabled={index === 0}
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => onReorderImage?.(index, 'down')}
+                      disabled={index === existingImages.length - 1}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => onDeleteExistingImage?.(image.id, image.image_path)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="absolute bottom-2 left-2 bg-background/80 px-2 py-1 rounded text-xs">
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* New Image Previews */}
+        {imagePreviews.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">New Images</p>
+            <div className="grid grid-cols-2 gap-2">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative border rounded-lg overflow-hidden">
+                  <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 h-7 w-7 p-0"
+                    onClick={() => onRemoveNewImage(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <div className="absolute bottom-2 left-2 bg-background/80 px-2 py-1 rounded text-xs">
+                    {index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <Input
-          id="image"
+          id="images"
           type="file"
           accept="image/*"
+          multiple
           onChange={onImageChange}
         />
+        <p className="text-xs text-muted-foreground">You can select multiple images</p>
       </div>
 
       <div className="flex items-center space-x-2">
