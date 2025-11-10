@@ -9,12 +9,14 @@ import { useProjectsWithFallback } from '@/hooks/useProjectsWithFallback';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { analyticsService } from '@/services/analyticsService';
 import { useCategories } from '@/hooks/useCategories';
+import { usePortfolioSettings } from '@/hooks/usePortfolioSettings';
 import { supabase } from '@/integrations/supabase/client';
 
 const ProjectShowcase = () => {
   const navigate = useNavigate();
   const { projects: sortedProjects, isLoading, error, usingFallbackData } = useProjectsWithFallback();
   const { data: categories = [] } = useCategories();
+  const { data: portfolioSettings } = usePortfolioSettings();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [projectCategories, setProjectCategories] = useState<Record<string, string[]>>({});
@@ -75,7 +77,9 @@ const ProjectShowcase = () => {
   return (
     <section id="projects" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <h2 className="section-title">My Portfolio - Proof of Concepts & AI Initiatives</h2>
+        <h2 className="section-title">
+          {portfolioSettings?.section_title || 'My Portfolio - Proof of Concepts & AI Initiatives'}
+        </h2>
         
         {/* Category Filter */}
         {categories.length > 0 && (

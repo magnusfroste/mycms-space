@@ -245,6 +245,27 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_settings: {
+        Row: {
+          created_at: string
+          id: string
+          section_title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section_title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section_title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_categories: {
         Row: {
           category_id: string

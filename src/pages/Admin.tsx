@@ -9,6 +9,7 @@ import AboutMeSettings from '@/components/admin/AboutMeSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
 import { ProjectSettings } from '@/components/admin/ProjectSettings';
+import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
@@ -48,7 +49,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="webhook" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
             <TabsTrigger value="actions">Quick Actions</TabsTrigger>
             <TabsTrigger value="text">Chat Text</TabsTrigger>
@@ -56,6 +57,7 @@ const Admin = () => {
             <TabsTrigger value="about">About Me</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
             <TabsTrigger value="featured">Featured In</TabsTrigger>
+            <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
           </TabsList>
 
@@ -127,6 +129,16 @@ const Admin = () => {
               </p>
             </div>
             <FeaturedSettings />
+          </TabsContent>
+
+          <TabsContent value="portfolio" className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Portfolio Settings</h2>
+              <p className="text-muted-foreground">
+                Customize the portfolio section title and settings
+              </p>
+            </div>
+            <PortfolioSettings />
           </TabsContent>
 
           <TabsContent value="projects" className="space-y-4">
