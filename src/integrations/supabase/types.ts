@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_me_settings: {
+        Row: {
+          additional_text: string
+          created_at: string
+          id: string
+          image_url: string | null
+          intro_text: string
+          name: string
+          skill1_description: string
+          skill1_icon: string
+          skill1_title: string
+          skill2_description: string
+          skill2_icon: string
+          skill2_title: string
+          skill3_description: string
+          skill3_icon: string
+          skill3_title: string
+          updated_at: string
+        }
+        Insert: {
+          additional_text?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          intro_text?: string
+          name?: string
+          skill1_description?: string
+          skill1_icon?: string
+          skill1_title?: string
+          skill2_description?: string
+          skill2_icon?: string
+          skill2_title?: string
+          skill3_description?: string
+          skill3_icon?: string
+          skill3_title?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_text?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          intro_text?: string
+          name?: string
+          skill1_description?: string
+          skill1_icon?: string
+          skill1_title?: string
+          skill2_description?: string
+          skill2_icon?: string
+          skill2_title?: string
+          skill3_description?: string
+          skill3_icon?: string
+          skill3_title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_settings: {
         Row: {
           active_placeholder: string
