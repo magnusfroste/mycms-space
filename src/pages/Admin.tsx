@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PinAuth } from '@/components/admin/PinAuth';
+import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
 import { QuickActionsManager } from '@/components/admin/QuickActionsManager';
 import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
@@ -13,23 +12,37 @@ import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const auth = sessionStorage.getItem('admin_authenticated');
-    setIsAuthenticated(auth === 'true');
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_authenticated');
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      navigate('/');
+    }
   };
 
-  if (!isAuthenticated) {
-    return <PinAuth onAuthenticated={() => setIsAuthenticated(true)} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
   }
 
   return (
