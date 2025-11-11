@@ -91,11 +91,15 @@ export const useProjects = () => {
       // Fetch all images for each project
       const projectsWithImages = await Promise.all(
         (projects || []).map(async (project: any) => {
-          const { data: images } = await (supabase as any)
+          const { data: images, error: imagesError } = await (supabase as any)
             .from('project_images')
             .select('*')
             .eq('project_id', project.id)
             .order('order_index', { ascending: true });
+
+          if (imagesError) {
+            console.error('Error fetching images for project:', project.id, imagesError);
+          }
 
           return {
             ...project,
