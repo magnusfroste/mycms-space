@@ -11,9 +11,26 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ProjectFormData {
   title: string;
@@ -24,6 +41,121 @@ interface ProjectFormData {
   enabled: boolean;
   images?: File[];
 }
+
+interface SortableProjectRowProps {
+  project: Project;
+  index: number;
+  totalProjects: number;
+  onReorder: (project: Project, direction: 'up' | 'down') => void;
+  onToggleEnabled: (project: Project) => void;
+  onEdit: (project: Project) => void;
+  onDelete: (projectId: string) => void;
+}
+
+const SortableProjectRow = ({
+  project,
+  index,
+  totalProjects,
+  onReorder,
+  onToggleEnabled,
+  onEdit,
+  onDelete,
+}: SortableProjectRowProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style}>
+      <TableCell>
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted rounded"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReorder(project, 'up')}
+            disabled={index === 0}
+            className="h-6 w-6 p-0"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReorder(project, 'down')}
+            disabled={index === totalProjects - 1}
+            className="h-6 w-6 p-0"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex gap-1">
+          {project.images && project.images.length > 0 ? (
+            <>
+              <img src={project.images[0].image_url} alt={project.title} className="w-12 h-12 object-cover rounded" />
+              {project.images.length > 1 && (
+                <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs font-medium">
+                  +{project.images.length - 1}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">{project.title}</TableCell>
+      <TableCell className="max-w-xs truncate">{project.description}</TableCell>
+      <TableCell>
+        <Switch
+          checked={project.enabled}
+          onCheckedChange={() => onToggleEnabled(project)}
+        />
+      </TableCell>
+      <TableCell>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(project)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => onDelete(project.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 export const ProjectSettings = () => {
   const { data: projects = [], isLoading } = useProjects();
@@ -36,6 +168,13 @@ export const ProjectSettings = () => {
   const updateProjectCategories = useUpdateProjectCategories();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -197,6 +336,42 @@ export const ProjectSettings = () => {
         order_index: project.order_index,
       }),
     ]);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = projects.findIndex((p) => p.id === active.id);
+    const newIndex = projects.findIndex((p) => p.id === over.id);
+
+    // Optimistically update the UI
+    const reorderedProjects = arrayMove(projects, oldIndex, newIndex);
+
+    // Update all projects with new order indices
+    try {
+      await Promise.all(
+        reorderedProjects.map((project, index) =>
+          updateProject.mutateAsync({
+            id: project.id,
+            order_index: index,
+          }, { onSuccess: () => {} }) // Prevent individual success toasts
+        )
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast({
+        title: 'Success',
+        description: 'Projects reordered successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to reorder projects: ${error.message}`,
+        variant: 'destructive',
+      });
+    }
   };
 
   const openEditDialog = async (project: Project) => {
@@ -441,6 +616,7 @@ export const ProjectSettings = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Drag</TableHead>
               <TableHead className="w-[50px]">Order</TableHead>
               <TableHead className="w-[100px]">Images</TableHead>
               <TableHead>Title</TableHead>
@@ -449,86 +625,39 @@ export const ProjectSettings = () => {
               <TableHead className="w-[200px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {projects.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No projects yet. Add your first project!
-                </TableCell>
-              </TableRow>
-            ) : (
-              projects.map((project, index) => (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReorder(project, 'up')}
-                        disabled={index === 0}
-                        className="h-6 w-6 p-0"
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReorder(project, 'down')}
-                        disabled={index === projects.length - 1}
-                        className="h-6 w-6 p-0"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {project.images && project.images.length > 0 ? (
-                        <>
-                          <img src={project.images[0].image_url} alt={project.title} className="w-12 h-12 object-cover rounded" />
-                          {project.images.length > 1 && (
-                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center text-xs font-medium">
-                              +{project.images.length - 1}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{project.title}</TableCell>
-                  <TableCell className="max-w-xs truncate">{project.description}</TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={project.enabled}
-                      onCheckedChange={() => handleToggleEnabled(project)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(project)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeleteProjectId(project.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <TableBody>
+              {projects.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No projects yet. Add your first project!
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
+              ) : (
+                <SortableContext
+                  items={projects.map(p => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {projects.map((project, index) => (
+                    <SortableProjectRow
+                      key={project.id}
+                      project={project}
+                      index={index}
+                      totalProjects={projects.length}
+                      onReorder={handleReorder}
+                      onToggleEnabled={handleToggleEnabled}
+                      onEdit={openEditDialog}
+                      onDelete={setDeleteProjectId}
+                    />
+                  ))}
+                </SortableContext>
+              )}
+            </TableBody>
+          </DndContext>
         </Table>
       </div>
 
