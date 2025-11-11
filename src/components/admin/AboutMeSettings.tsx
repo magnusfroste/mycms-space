@@ -30,6 +30,9 @@ const AboutMeSettings = () => {
     skill3_icon: 'Brain',
     image_url: '',
   });
+  
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (settings) {
@@ -48,14 +51,37 @@ const AboutMeSettings = () => {
         skill3_icon: settings.skill3_icon,
         image_url: settings.image_url,
       });
+      setImagePreview(settings.image_url);
     }
   }, [settings]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData({ ...formData, image_url: '' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      await updateSettings.mutateAsync(formData);
+      await updateSettings.mutateAsync({
+        ...formData,
+        ...(imageFile && { image: imageFile }),
+      });
+      setImageFile(null);
       toast({
         title: "Success",
         description: "About Me settings updated successfully",
@@ -98,23 +124,32 @@ const AboutMeSettings = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="image_url">Image URL</Label>
+            <Label htmlFor="image">Profile Image</Label>
             <Input
-              id="image_url"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              placeholder="https://example.com/image.jpg"
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
             />
-            {formData.image_url && (
-              <div className="mt-2">
+            {imagePreview && (
+              <div className="mt-2 relative inline-block">
                 <img 
-                  src={formData.image_url} 
+                  src={imagePreview} 
                   alt="Preview" 
                   className="w-32 h-32 object-cover rounded-lg"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-1 right-1"
+                  onClick={handleRemoveImage}
+                >
+                  Remove
+                </Button>
               </div>
             )}
           </div>

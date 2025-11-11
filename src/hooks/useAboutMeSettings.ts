@@ -17,9 +17,54 @@ export interface AboutMeSettings {
   skill3_description: string;
   skill3_icon: string;
   image_url: string;
+  image_path?: string;
   created_at: string;
   updated_at: string;
 }
+
+interface UpdateAboutMeInput {
+  name?: string;
+  intro_text?: string;
+  additional_text?: string;
+  skill1_title?: string;
+  skill1_description?: string;
+  skill1_icon?: string;
+  skill2_title?: string;
+  skill2_description?: string;
+  skill2_icon?: string;
+  skill3_title?: string;
+  skill3_description?: string;
+  skill3_icon?: string;
+  image?: File;
+}
+
+// Helper: Upload image to storage
+const uploadImageToStorage = async (file: File): Promise<{ url: string; path: string }> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `about-me-${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('about-me-images')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('about-me-images')
+    .getPublicUrl(filePath);
+
+  return { url: publicUrl, path: filePath };
+};
+
+// Helper: Delete image from storage
+const deleteImageFromStorage = async (path: string): Promise<void> => {
+  const { error } = await supabase.storage
+    .from('about-me-images')
+    .remove([path]);
+
+  if (error) throw error;
+};
 
 const DEFAULT_SETTINGS: Omit<AboutMeSettings, 'id' | 'created_at' | 'updated_at'> = {
   name: 'Magnus Froste',
@@ -90,19 +135,47 @@ export const useUpdateAboutMeSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (settings: Partial<AboutMeSettings>) => {
+    mutationFn: async (input: UpdateAboutMeInput) => {
+      const { image, ...updateData } = input;
+      
       // Check if a record exists
       const { data: existing } = await supabase
         .from('about_me_settings')
-        .select('id')
+        .select('id, image_path')
         .limit(1)
         .maybeSingle();
+
+      // Handle image upload
+      let imageUrl: string | undefined;
+      let imagePath: string | undefined;
+      
+      if (image) {
+        // Delete old image if exists
+        if (existing?.image_path) {
+          try {
+            await deleteImageFromStorage(existing.image_path);
+          } catch (error) {
+            console.error('Error deleting old image:', error);
+          }
+        }
+        
+        // Upload new image
+        const result = await uploadImageToStorage(image);
+        imageUrl = result.url;
+        imagePath = result.path;
+      }
+
+      const dataToSave = {
+        ...updateData,
+        ...(imageUrl && { image_url: imageUrl }),
+        ...(imagePath && { image_path: imagePath }),
+      };
 
       if (existing) {
         // Update existing record
         const { data, error } = await supabase
           .from('about_me_settings')
-          .update(settings)
+          .update(dataToSave)
           .eq('id', existing.id)
           .select()
           .single();
@@ -113,7 +186,7 @@ export const useUpdateAboutMeSettings = () => {
         // Insert new record
         const { data, error } = await supabase
           .from('about_me_settings')
-          .insert(settings)
+          .insert(dataToSave)
           .select()
           .single();
 

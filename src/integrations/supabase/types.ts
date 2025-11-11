@@ -19,6 +19,7 @@ export type Database = {
           additional_text: string
           created_at: string
           id: string
+          image_path: string | null
           image_url: string | null
           intro_text: string
           name: string
@@ -37,6 +38,7 @@ export type Database = {
           additional_text?: string
           created_at?: string
           id?: string
+          image_path?: string | null
           image_url?: string | null
           intro_text?: string
           name?: string
@@ -55,6 +57,7 @@ export type Database = {
           additional_text?: string
           created_at?: string
           id?: string
+          image_path?: string | null
           image_url?: string | null
           intro_text?: string
           name?: string
