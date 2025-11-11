@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { parseMarkdown } from "@/lib/markdown";
 import { useChatSettings } from "@/hooks/useChatSettings";
 import { useQuickActions } from "@/hooks/useQuickActions";
+import { iconMap } from "@/lib/constants/iconMaps";
 
 // Helper to clean webhook response text
 const cleanWebhookResponse = (text: string): string => {
@@ -394,18 +395,25 @@ const AppleChat: React.FC<AppleChatProps> = ({
           {showQuickActions && messages.length === 0 && (
             <div className="mt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-w-4xl mx-auto">
-                {quickActions.map((action) => (
-                  <Button
-                    key={action.label}
-                    onClick={() => sendPrefilledMessage(action.message)}
-                    disabled={isLoading}
-                    variant="ghost"
-                    className="h-auto py-2 px-3 text-xs font-normal justify-start rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <span className="mr-1.5 text-sm">{action.icon}</span>
-                    {action.label}
-                  </Button>
-                ))}
+                {quickActions.map((action) => {
+                  const IconComponent = iconMap[action.icon];
+                  return (
+                    <Button
+                      key={action.label}
+                      onClick={() => sendPrefilledMessage(action.message)}
+                      disabled={isLoading}
+                      variant="ghost"
+                      className="h-auto py-2 px-3 text-xs font-normal justify-start rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {IconComponent && (
+                        <span className="mr-1.5">
+                          {IconComponent}
+                        </span>
+                      )}
+                      {action.label}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           )}

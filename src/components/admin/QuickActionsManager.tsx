@@ -5,8 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { iconMap } from '@/lib/constants/iconMaps';
 import {
   useAllQuickActions,
   useCreateQuickAction,
@@ -23,11 +25,13 @@ export const QuickActionsManager = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [formData, setFormData] = useState({
-    icon: '',
+    icon: 'Sparkles',
     label: '',
     message: '',
     enabled: true,
   });
+
+  const iconOptions = Object.keys(iconMap);
 
   const handleCreate = async () => {
     if (!formData.icon || !formData.label || !formData.message) {
@@ -46,7 +50,7 @@ export const QuickActionsManager = () => {
       order_index: maxOrder + 1,
     });
 
-    setFormData({ icon: '', label: '', message: '', enabled: true });
+    setFormData({ icon: 'Sparkles', label: '', message: '', enabled: true });
     setShowNew(false);
     toast({ title: 'Created', description: 'Quick action added' });
   };
@@ -83,14 +87,25 @@ export const QuickActionsManager = () => {
       {showNew && (
         <Card className="p-4 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="new-icon">Icon (emoji)</Label>
-            <Input
-              id="new-icon"
+            <Label htmlFor="new-icon">Icon</Label>
+            <Select
               value={formData.icon}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              placeholder="💡"
-              maxLength={2}
-            />
+              onValueChange={(value) => setFormData({ ...formData, icon: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {iconOptions.map((icon) => (
+                  <SelectItem key={icon} value={icon}>
+                    <div className="flex items-center gap-2">
+                      {iconMap[icon]}
+                      <span>{icon}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="new-label">Label</Label>
@@ -128,11 +143,24 @@ export const QuickActionsManager = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Icon</Label>
-                  <Input
+                  <Select
                     value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    maxLength={2}
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, icon: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {iconOptions.map((icon) => (
+                        <SelectItem key={icon} value={icon}>
+                          <div className="flex items-center gap-2">
+                            {iconMap[icon]}
+                            <span>{icon}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Label</Label>
@@ -159,7 +187,9 @@ export const QuickActionsManager = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                  <span className="text-2xl">{action.icon}</span>
+                  <div className="text-muted-foreground">
+                    {iconMap[action.icon] || action.icon}
+                  </div>
                   <div>
                     <div className="font-medium">{action.label}</div>
                     <div className="text-sm text-muted-foreground">{action.message}</div>
