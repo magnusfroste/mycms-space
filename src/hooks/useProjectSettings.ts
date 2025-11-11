@@ -195,7 +195,8 @@ export const useUpdateProject = () => {
 
   return useMutation({
     mutationFn: async (input: UpdateProjectInput) => {
-      const { id, newImages, ...updateData } = input;
+      const { id, newImages, ...rest } = input as any;
+      const { images: _omit, ...updateData } = rest;
 
       // Update project record
       const { error: projectError } = await (supabase as any)

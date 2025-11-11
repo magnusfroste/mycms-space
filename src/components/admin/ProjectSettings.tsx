@@ -296,11 +296,13 @@ export const ProjectSettings = () => {
       return;
     }
 
+    const { images: newImages, ...rest } = formData as any;
+
     await updateProject.mutateAsync({
       id: editingProject.id,
-      ...formData,
+      ...rest,
+      newImages: newImages && newImages.length ? newImages : undefined,
     });
-
     // Update categories
     await updateProjectCategories.mutateAsync({
       projectId: editingProject.id,
