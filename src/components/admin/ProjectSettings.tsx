@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useDeleteProjectImage, useReorderProjectImages, Project, ProjectImage } from '@/hooks/useProjectSettings';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject, useDeleteProjectImage, useReorderProjectImages, useReorderProjects, Project, ProjectImage } from '@/hooks/useProjectSettings';
 import { useCategories, useProjectCategories, useUpdateProjectCategories } from '@/hooks/useCategories';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -165,6 +165,7 @@ export const ProjectSettings = () => {
   const deleteProject = useDeleteProject();
   const deleteProjectImage = useDeleteProjectImage();
   const reorderProjectImages = useReorderProjectImages();
+  const reorderProjects = useReorderProjects();
   const updateProjectCategories = useUpdateProjectCategories();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -346,6 +347,8 @@ export const ProjectSettings = () => {
     const oldIndex = projects.findIndex((p) => p.id === active.id);
     const newIndex = projects.findIndex((p) => p.id === over.id);
 
+    if (oldIndex === -1 || newIndex === -1) return;
+
     // Create snapshot for rollback on error
     const previousProjects = projects;
 
@@ -357,16 +360,14 @@ export const ProjectSettings = () => {
 
     queryClient.setQueryData(['projects'], reorderedProjects);
 
-    // Update database in background
+    // Persist to database in background using bulk reorder
     try {
-      await Promise.all(
-        reorderedProjects.map((project) =>
-          updateProject.mutateAsync({
-            id: project.id,
-            order_index: project.order_index,
-          }, { onSuccess: () => {} })
-        )
-      );
+      await reorderProjects.mutateAsync({
+        updates: reorderedProjects.map((p) => ({
+          id: p.id,
+          order_index: p.order_index,
+        })),
+      });
 
       toast({
         title: 'Success',

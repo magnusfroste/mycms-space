@@ -359,3 +359,21 @@ export const useReorderProjectImages = () => {
     },
   });
 };
+
+// Bulk reorder projects - DOES NOT invalidate cache
+export const useReorderProjects = () => {
+  return useMutation({
+    mutationFn: async ({ updates }: { updates: { id: string; order_index: number }[] }) => {
+      // Update all project order_index values in parallel
+      await Promise.all(
+        updates.map((update) =>
+          (supabase as any)
+            .from('projects')
+            .update({ order_index: update.order_index })
+            .eq('id', update.id)
+        )
+      );
+    },
+    // No onSuccess/onError - let the component handle it
+  });
+};
