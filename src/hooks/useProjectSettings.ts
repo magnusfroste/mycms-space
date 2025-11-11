@@ -81,16 +81,24 @@ export const useProjects = () => {
   return useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
+      console.log('[useProjects] Fetching projects...');
       const { data: projects, error } = await (supabase as any)
         .from('projects')
         .select('*')
         .order('order_index', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useProjects] Error fetching projects:', error);
+        throw error;
+      }
+      
+      console.log('[useProjects] Projects fetched:', projects?.length);
 
       // Fetch all images for each project
+      console.log('[useProjects] Fetching images for each project...');
       const projectsWithImages = await Promise.all(
         (projects || []).map(async (project: any) => {
+          console.log(`[useProjects] Fetching images for project ${project.id}...`);
           const { data: images, error: imagesError } = await (supabase as any)
             .from('project_images')
             .select('*')
@@ -98,7 +106,9 @@ export const useProjects = () => {
             .order('order_index', { ascending: true });
 
           if (imagesError) {
-            console.error('Error fetching images for project:', project.id, imagesError);
+            console.error(`[useProjects] Error fetching images for project ${project.id}:`, imagesError);
+          } else {
+            console.log(`[useProjects] Found ${images?.length || 0} images for project ${project.id}`);
           }
 
           return {
@@ -108,6 +118,7 @@ export const useProjects = () => {
         })
       );
 
+      console.log('[useProjects] All projects with images:', projectsWithImages.length);
       return projectsWithImages;
     },
   });
