@@ -346,26 +346,35 @@ export const ProjectSettings = () => {
     const oldIndex = projects.findIndex((p) => p.id === active.id);
     const newIndex = projects.findIndex((p) => p.id === over.id);
 
-    // Optimistically update the UI
-    const reorderedProjects = arrayMove(projects, oldIndex, newIndex);
+    // Create snapshot for rollback on error
+    const previousProjects = projects;
 
-    // Update all projects with new order indices
+    // Optimistically update the UI - update cache immediately
+    const reorderedProjects = arrayMove(projects, oldIndex, newIndex).map((p, index) => ({
+      ...p,
+      order_index: index,
+    }));
+
+    queryClient.setQueryData(['projects'], reorderedProjects);
+
+    // Update database in background
     try {
       await Promise.all(
-        reorderedProjects.map((project, index) =>
+        reorderedProjects.map((project) =>
           updateProject.mutateAsync({
             id: project.id,
-            order_index: index,
-          }, { onSuccess: () => {} }) // Prevent individual success toasts
+            order_index: project.order_index,
+          }, { onSuccess: () => {} })
         )
       );
 
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
         title: 'Success',
         description: 'Projects reordered successfully',
       });
     } catch (error: any) {
+      // Rollback on error
+      queryClient.setQueryData(['projects'], previousProjects);
       toast({
         title: 'Error',
         description: `Failed to reorder projects: ${error.message}`,
