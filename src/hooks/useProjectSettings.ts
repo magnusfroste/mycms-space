@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { compressImage } from '@/lib/utils/imageCompression';
 
 export interface ProjectImage {
   id: string;
@@ -50,13 +51,19 @@ interface UpdateProjectInput {
 
 // Helper: Upload image to storage
 export const uploadImageToStorage = async (file: File, projectId: string): Promise<{ url: string; path: string }> => {
-  const fileExt = file.name.split('.').pop();
+  // Compress image before upload
+  const compressedFile = await compressImage(file, {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+  });
+  
+  const fileExt = compressedFile.name.split('.').pop();
   const fileName = `${projectId}-${Date.now()}.${fileExt}`;
   const filePath = `${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('project-images')
-    .upload(filePath, file, { upsert: true });
+    .upload(filePath, compressedFile, { upsert: true });
 
   if (uploadError) throw uploadError;
 

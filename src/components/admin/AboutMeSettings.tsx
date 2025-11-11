@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
 
 const AboutMeSettings = () => {
@@ -125,6 +125,9 @@ const AboutMeSettings = () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="image">Profile Image</Label>
+            <div className="text-xs text-muted-foreground mb-2">
+              Images will be automatically optimized and compressed (max 1MB, 1024px)
+            </div>
             <Input
               id="image"
               type="file"
@@ -144,11 +147,11 @@ const AboutMeSettings = () => {
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
-                  className="absolute top-1 right-1"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
                   onClick={handleRemoveImage}
                 >
-                  Remove
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             )}

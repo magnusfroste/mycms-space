@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { compressImage } from "@/lib/utils/imageCompression";
 
 export interface FeaturedItem {
   id: string;
@@ -61,13 +62,19 @@ export const useCreateFeaturedItem = () => {
 
       // Upload image if provided
       if (file) {
+        // Compress image before upload
+        const compressedFile = await compressImage(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+        });
+        
         const itemId = crypto.randomUUID();
-        const fileExt = file.name.split(".").pop();
+        const fileExt = compressedFile.name.split(".").pop();
         const filePath = `${itemId}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("featured-images")
-          .upload(filePath, file, {
+          .upload(filePath, compressedFile, {
             cacheControl: "3600",
             upsert: false,
           });
@@ -142,18 +149,24 @@ export const useUpdateFeaturedItem = () => {
 
       // If new file provided, delete old and upload new
       if (file) {
+        // Compress image before upload
+        const compressedFile = await compressImage(file, {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+        });
+        
         // Delete old image if it exists
         if (oldImagePath) {
           await supabase.storage.from("featured-images").remove([oldImagePath]);
         }
 
         // Upload new image
-        const fileExt = file.name.split(".").pop();
+        const fileExt = compressedFile.name.split(".").pop();
         const filePath = `${id}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from("featured-images")
-          .upload(filePath, file, {
+          .upload(filePath, compressedFile, {
             cacheControl: "3600",
             upsert: true,
           });

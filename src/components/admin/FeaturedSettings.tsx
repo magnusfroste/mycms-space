@@ -192,7 +192,7 @@ export default function FeaturedSettings() {
                 <Upload className="w-5 h-5 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Max 5MB, JPG/PNG/WEBP format
+                Auto-optimized and compressed (max 500KB, 800px)
               </p>
             </div>
           </div>

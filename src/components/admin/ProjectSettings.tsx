@@ -903,7 +903,9 @@ const ProjectForm = ({
           multiple
           onChange={onImageChange}
         />
-        <p className="text-xs text-muted-foreground">You can select multiple images</p>
+        <p className="text-xs text-muted-foreground">
+          Multiple images supported. Auto-optimized and compressed (max 1MB each, 1920px)
+        </p>
       </div>
 
       <div className="flex items-center space-x-2">
