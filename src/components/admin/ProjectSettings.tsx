@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2, GripVertical, Search, LayoutGrid, LayoutList, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2, GripVertical, Search, LayoutGrid, LayoutList } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -240,18 +240,6 @@ const SortableProjectCard = ({
 
       {/* Hover actions */}
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-        {project.demo_link && project.demo_link !== '#' && (
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-          >
-            <a href={project.demo_link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Link
-            </a>
-          </Button>
-        )}
         <Button
           variant="outline"
           size="sm"

@@ -213,7 +213,7 @@ const ProjectShowcase = () => {
                               target={project.demoLink.startsWith('#') ? undefined : "_blank"} 
                               rel={project.demoLink.startsWith('#') ? undefined : "noopener noreferrer"}
                             >
-                              Demo
+                              Link
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </Button>
@@ -255,7 +255,7 @@ const ProjectShowcase = () => {
                               target={project.demoLink.startsWith('#') ? undefined : "_blank"} 
                               rel={project.demoLink.startsWith('#') ? undefined : "noopener noreferrer"}
                             >
-                              Demo
+                              Link
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </Button>
