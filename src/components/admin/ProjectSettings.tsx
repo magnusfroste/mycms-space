@@ -127,8 +127,8 @@ const SortableProjectRow = ({
           )}
         </div>
       </TableCell>
-      <TableCell className="font-medium">{project.title}</TableCell>
-      <TableCell className="max-w-xs truncate">{project.description}</TableCell>
+      <TableCell className="font-medium whitespace-nowrap">{project.title}</TableCell>
+      <TableCell className="max-w-[200px] truncate">{project.description}</TableCell>
       <TableCell>
         <Switch
           checked={project.enabled}
@@ -624,17 +624,17 @@ export const ProjectSettings = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg">
-        <Table>
+      <div className="border rounded-lg overflow-x-auto">
+        <Table className="min-w-[900px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Drag</TableHead>
+              <TableHead className="w-[60px]">Drag</TableHead>
               <TableHead className="w-[50px]">Order</TableHead>
               <TableHead className="w-[100px]">Images</TableHead>
-              <TableHead>Title</TableHead>
+              <TableHead className="w-[150px]">Title</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="w-[100px]">Enabled</TableHead>
-              <TableHead className="w-[200px]">Actions</TableHead>
+              <TableHead className="w-[80px]">Enabled</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <DndContext
