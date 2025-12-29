@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, X, Download, Loader2, GripVertical, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -186,6 +186,7 @@ export const ProjectSettings = () => {
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationResult, setMigrationResult] = useState<any>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '',
@@ -624,6 +625,16 @@ export const ProjectSettings = () => {
         </div>
       </div>
 
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 max-w-sm"
+        />
+      </div>
+
       <div className="border rounded-lg overflow-x-auto">
         <Table className="min-w-[900px]">
           <TableHeader>
@@ -643,31 +654,42 @@ export const ProjectSettings = () => {
             onDragEnd={handleDragEnd}
           >
             <TableBody>
-              {projects.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    No projects yet. Add your first project!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <SortableContext
-                  items={projects.map(p => p.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {projects.map((project, index) => (
-                    <SortableProjectRow
-                      key={project.id}
-                      project={project}
-                      index={index}
-                      totalProjects={projects.length}
-                      onReorder={handleReorder}
-                      onToggleEnabled={handleToggleEnabled}
-                      onEdit={openEditDialog}
-                      onDelete={setDeleteProjectId}
-                    />
-                  ))}
-                </SortableContext>
-              )}
+              {(() => {
+                const filteredProjects = projects.filter(p => 
+                  p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  p.description.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+                
+                if (filteredProjects.length === 0) {
+                  return (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        {searchQuery ? 'No projects match your search.' : 'No projects yet. Add your first project!'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+                
+                return (
+                  <SortableContext
+                    items={filteredProjects.map(p => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {filteredProjects.map((project, index) => (
+                      <SortableProjectRow
+                        key={project.id}
+                        project={project}
+                        index={index}
+                        totalProjects={filteredProjects.length}
+                        onReorder={handleReorder}
+                        onToggleEnabled={handleToggleEnabled}
+                        onEdit={openEditDialog}
+                        onDelete={setDeleteProjectId}
+                      />
+                    ))}
+                  </SortableContext>
+                );
+              })()}
             </TableBody>
           </DndContext>
         </Table>
