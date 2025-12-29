@@ -248,6 +248,39 @@ export type Database = {
         }
         Relationships: []
       }
+      nav_links: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          is_external: boolean
+          label: string
+          order_index: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_external?: boolean
+          label: string
+          order_index: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          is_external?: boolean
+          label?: string
+          order_index?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       portfolio_settings: {
         Row: {
           created_at: string

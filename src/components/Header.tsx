@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Menu, X, Atom, Home } from "lucide-react";
+import { Menu, X, Home, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useNavLinks } from "@/hooks/useNavLinks";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const { data: navLinks = [] } = useNavLinks();
 
   // Toggle mobile menu
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -38,6 +39,42 @@ const Header = () => {
     }
   };
 
+  const renderNavLink = (link: { label: string; url: string; is_external: boolean }, isMobile = false) => {
+    const className = isMobile ? "nav-link-mobile" : "nav-link";
+    const onClick = isMobile ? () => { stopSpeech(); toggleMenu(); } : stopSpeech;
+
+    if (link.is_external) {
+      return (
+        <a
+          key={link.url}
+          href={link.url}
+          className={`${className} flex items-center gap-1`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClick}
+        >
+          {link.label}
+          <ExternalLink size={14} className="opacity-50" />
+        </a>
+      );
+    }
+
+    // Check if it's an internal route (starts with /) vs anchor link (starts with #)
+    if (link.url.startsWith('/')) {
+      return (
+        <Link key={link.url} to={link.url} className={className} onClick={onClick}>
+          {link.label}
+        </Link>
+      );
+    }
+
+    return (
+      <a key={link.url} href={link.url} className={className} onClick={isMobile ? toggleMenu : undefined}>
+        {link.label}
+      </a>
+    );
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -59,31 +96,10 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-10 items-center">
             {isHomePage ? (
-              // Home page links
-              <>
-                <a href="#about" className="nav-link">
-                  About
-                </a>
-                <a href="#expertise" className="nav-link">
-                  Expertise
-                </a>
-                <a href="#projects" className="nav-link">
-                  Portfolio
-                </a>
-                <Link to="/chat" className="nav-link" onClick={stopSpeech}>
-                  Agent Chat
-                </Link>
-                <a
-                  href="https://labs.froste.eu"
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
-                  onClick={stopSpeech}
-                >
-                  <Atom size={18} />
-                  Labs
-                </a>
-              </>
+              // Dynamic nav links from database
+              navLinks.map((link) => renderNavLink(link))
             ) : (
-              // Links for other pages (Labs, etc.)
+              // Links for other pages
               <Link
                 to="/"
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium transition-all hover:bg-purple-200 dark:hover:bg-purple-900/50"
@@ -109,41 +125,10 @@ const Header = () => {
         {isOpen && (
           <nav className="md:hidden py-4 pb-6 space-y-4 flex flex-col items-center">
             {isHomePage ? (
-              // Home page mobile links
-              <>
-                <a href="#about" className="nav-link-mobile" onClick={toggleMenu}>
-                  About
-                </a>
-                <a href="#expertise" className="nav-link-mobile" onClick={toggleMenu}>
-                  Expertise
-                </a>
-                <a href="#projects" className="nav-link-mobile" onClick={toggleMenu}>
-                  Portfolio
-                </a>
-                <Link
-                  to="/chat"
-                  className="nav-link-mobile"
-                  onClick={() => {
-                    stopSpeech();
-                    toggleMenu();
-                  }}
-                >
-                  Magnet
-                </Link>
-                <a
-                  href="https://labs.froste.eu"
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
-                  onClick={() => {
-                    stopSpeech();
-                    toggleMenu();
-                  }}
-                >
-                  <Atom size={18} />
-                  Labs
-                </a>
-              </>
+              // Dynamic nav links from database
+              navLinks.map((link) => renderNavLink(link, true))
             ) : (
-              // Mobile links for other pages (Labs, etc.)
+              // Mobile links for other pages
               <Link
                 to="/"
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium"
