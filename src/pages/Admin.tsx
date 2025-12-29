@@ -9,6 +9,7 @@ import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
 import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
+import { NavSettings } from '@/components/admin/NavSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
@@ -61,8 +62,9 @@ const Admin = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="webhook" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+        <Tabs defaultValue="navigation" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-10">
+            <TabsTrigger value="navigation">Navigation</TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
             <TabsTrigger value="actions">Quick Actions</TabsTrigger>
             <TabsTrigger value="text">Chat Text</TabsTrigger>
@@ -73,6 +75,10 @@ const Admin = () => {
             <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="navigation" className="space-y-4">
+            <NavSettings />
+          </TabsContent>
 
           <TabsContent value="webhook" className="space-y-4">
             <div className="space-y-2">
