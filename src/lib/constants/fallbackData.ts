@@ -1,6 +1,19 @@
-import { Project, ExpertiseArea } from '@/lib/types/airtable';
+import { Project, ExpertiseArea } from '@/types';
 
-export const fallbackProjects: Project[] = [
+// Fallback project type for display purposes
+interface FallbackProject {
+  id: string;
+  title: string;
+  description: string;
+  problemStatement?: string;
+  whyBuilt?: string;
+  image?: string;
+  images?: string[];
+  demoLink: string;
+  order?: number;
+}
+
+export const fallbackProjects: FallbackProject[] = [
   {
     id: '1',
     title: "PainPal - Your Child's Migraine Tracker! ✨",
@@ -33,7 +46,7 @@ export const fallbackProjects: Project[] = [
   }
 ];
 
-export const fallbackExpertiseAreas: ExpertiseArea[] = [
+export const fallbackExpertiseAreas: Partial<ExpertiseArea>[] = [
   {
     id: '1',
     title: 'AI Integration',

@@ -197,25 +197,9 @@ export interface UpdateNavLinkInput {
   is_external?: boolean;
 }
 
-// Portfolio Settings Types
-export interface PortfolioSettings {
-  id: string;
-  show_section: boolean;
-  section_title: string;
-  section_subtitle: string;
-  section_description: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Nav Link Types
-export interface NavLink {
-  id: string;
-  label: string;
-  url: string;
-  order_index: number;
-  enabled: boolean;
-  is_external: boolean;
-  created_at: string;
-  updated_at: string;
+// Contact Message Type (for future Supabase implementation)
+export interface ContactMessage {
+  name: string;
+  email: string;
+  message: string;
 }

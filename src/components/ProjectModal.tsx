@@ -1,13 +1,12 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Project } from '@/lib/airtable';
+import { DisplayProject } from '@/hooks/useProjectsWithFallback';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProjectModalProps {
-  project: Project;
+  project: DisplayProject;
   isOpen: boolean;
   onClose: () => void;
 }

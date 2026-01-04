@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
-import { analyticsService } from '@/services/analyticsService';
 
-// Hook to track page visits
+// Hook to track page visits (placeholder - analytics can be reimplemented with Supabase if needed)
 export const useAnalytics = (page: string) => {
   useEffect(() => {
-    analyticsService.trackPageVisit(page);
+    console.log(`Page visited: ${page}`);
   }, [page]);
 };

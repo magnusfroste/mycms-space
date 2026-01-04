@@ -2,12 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Project } from '@/lib/airtable';
+import { DisplayProject } from '@/hooks/useProjectsWithFallback';
 import { useNavigate } from 'react-router-dom';
 import ProjectModal from './ProjectModal';
 import { useProjectsWithFallback } from '@/hooks/useProjectsWithFallback';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { analyticsService } from '@/services/analyticsService';
 import { useCategories } from '@/hooks/useCategories';
 import { usePortfolioSettings } from '@/hooks/usePortfolioSettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ const ProjectShowcase = () => {
   const { projects: sortedProjects, isLoading, error, usingFallbackData } = useProjectsWithFallback();
   const { data: categories = [] } = useCategories();
   const { data: portfolioSettings } = usePortfolioSettings();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<DisplayProject | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [projectCategories, setProjectCategories] = useState<Record<string, string[]>>({});
   
@@ -56,7 +55,7 @@ const ProjectShowcase = () => {
   }, [sortedProjects, selectedCategory, projectCategories]);
 
   const handleDemoClick = (projectTitle: string, demoLink: string) => {
-    analyticsService.trackDemoClick(projectTitle);
+    console.log(`Demo clicked: ${projectTitle}`);
     
     if (demoLink.startsWith('#')) {
       const element = document.querySelector(demoLink);
@@ -66,7 +65,7 @@ const ProjectShowcase = () => {
     }
   };
 
-  const handleViewMore = (project: Project) => {
+  const handleViewMore = (project: DisplayProject) => {
     setSelectedProject(project);
   };
 
@@ -199,7 +198,7 @@ const ProjectShowcase = () => {
                             className="apple-button flex items-center gap-2" 
                             asChild
                             onClick={(e) => {
-                              e.stopPropagation(); // Prevent the card click from triggering
+                              e.stopPropagation();
                               if (project.demoLink.startsWith('#')) {
                                 e.preventDefault();
                                 handleDemoClick(project.title, project.demoLink);
@@ -221,7 +220,7 @@ const ProjectShowcase = () => {
                             variant="outline" 
                             className="flex items-center gap-2"
                             onClick={(e) => {
-                              e.stopPropagation(); // This is redundant as the parent handler would be the same
+                              e.stopPropagation();
                               handleViewMore(project);
                             }}
                           >

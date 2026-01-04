@@ -1,11 +1,23 @@
 import { useMemo } from 'react';
 import { useProjects } from '@/hooks/useProjectSettings';
 import { fallbackProjects } from '@/lib/constants/fallbackData';
-import { sortProjectsByOrder } from '@/lib/utils/sorting';
-import { Project } from '@/lib/types/airtable';
+import { sortByOrder } from '@/lib/utils/sorting';
+
+// Display project type for UI components
+export interface DisplayProject {
+  id: string;
+  title: string;
+  description: string;
+  demoLink: string;
+  problemStatement?: string;
+  whyBuilt?: string;
+  order?: number;
+  image?: string;
+  images?: string[];
+}
 
 // Transform database projects to frontend format
-const transformProjects = (dbProjects: ReturnType<typeof useProjects>['data']): Project[] => {
+const transformProjects = (dbProjects: ReturnType<typeof useProjects>['data']): DisplayProject[] => {
   if (!dbProjects) return [];
   
   return dbProjects.map(project => ({
@@ -16,7 +28,6 @@ const transformProjects = (dbProjects: ReturnType<typeof useProjects>['data']): 
     problemStatement: project.problem_statement || undefined,
     whyBuilt: project.why_built || undefined,
     order: project.order_index,
-    // Transform images array to frontend format
     image: project.images?.[0]?.image_url,
     images: project.images?.map(img => img.image_url) || [],
   }));
@@ -30,14 +41,14 @@ export const useProjectsWithFallback = () => {
     return transformProjects(dbProjects);
   }, [dbProjects]);
 
-  const displayProjects: Project[] = useMemo(() => {
+  const displayProjects = useMemo(() => {
     return transformedProjects && transformedProjects.length > 0 
       ? transformedProjects 
       : fallbackProjects;
   }, [transformedProjects]);
 
   const sortedProjects = useMemo(() => {
-    return sortProjectsByOrder(displayProjects);
+    return sortByOrder(displayProjects);
   }, [displayProjects]);
 
   const usingFallbackData = !transformedProjects || transformedProjects.length === 0;
