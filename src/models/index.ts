@@ -84,3 +84,34 @@ export {
 } from './quickActions';
 
 export type { QuickAction } from './quickActions';
+
+// Chat Settings
+export {
+  useChatSettings,
+  useUpdateChatSettings,
+  chatSettingsKeys,
+} from './chatSettings';
+
+export type { ChatSettings } from './chatSettings';
+
+// Portfolio Settings
+export {
+  usePortfolioSettings,
+  useUpdatePortfolioSettings,
+  portfolioSettingsKeys,
+} from './portfolioSettings';
+
+export type { PortfolioSettings } from './portfolioSettings';
+
+// Nav Links
+export {
+  useNavLinks,
+  useAllNavLinks,
+  useCreateNavLink,
+  useUpdateNavLink,
+  useDeleteNavLink,
+  useReorderNavLinks,
+  navLinksKeys,
+} from './navLinks';
+
+export type { NavLink, CreateNavLinkInput, UpdateNavLinkInput } from './navLinks';
