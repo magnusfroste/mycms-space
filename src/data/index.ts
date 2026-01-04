@@ -10,3 +10,6 @@ export * from './categories';
 export * from './expertise';
 export * from './featured';
 export * from './quickActions';
+export * from './chatSettings';
+export * from './portfolioSettings';
+export * from './navLinks';
