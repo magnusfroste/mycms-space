@@ -3,11 +3,9 @@ import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useNavigate } from 'react-router-dom';
 import { useContactForm } from '@/hooks/useContactForm';
 
 const ContactForm = () => {
-  const navigate = useNavigate();
   const {
     name,
     setName,
@@ -16,7 +14,6 @@ const ContactForm = () => {
     message,
     setMessage,
     isSubmitting,
-    isConfigured: hasAirtableConfig,
     handleSubmit,
   } = useContactForm();
 
@@ -28,18 +25,6 @@ const ContactForm = () => {
         <p className="text-center text-muted-foreground text-lg mb-10">
           Ready to explore how we can drive innovation and growth together? Let's start a conversation.
         </p>
-        
-        {!hasAirtableConfig && (
-          <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-600 dark:text-amber-400">Running in demo mode. Messages will not be stored.</p>
-            <Button
-              onClick={() => navigate('/airtable-config')}
-              className="mt-4 apple-button"
-            >
-              Set Up Airtable Connection
-            </Button>
-          </div>
-        )}
         
         <div className="glass-card p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
