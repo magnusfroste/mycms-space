@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import Demo from "./pages/Demo";
+import BlockDemo from "./pages/BlockDemo";
 import N8nTest from "./pages/N8nTest";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -50,7 +50,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/chat" element={<Chat />} />
-              <Route path="/demo" element={<Demo />} />
+              <Route path="/demo" element={<BlockDemo />} />
               <Route path="/n8n-test" element={<N8nTest />} />
               <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

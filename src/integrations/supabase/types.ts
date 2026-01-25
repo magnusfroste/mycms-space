@@ -281,6 +281,39 @@ export type Database = {
         }
         Relationships: []
       }
+      page_blocks: {
+        Row: {
+          block_config: Json | null
+          block_type: string
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          order_index: number
+          page_slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          block_config?: Json | null
+          block_type: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          order_index: number
+          page_slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          block_config?: Json | null
+          block_type?: string
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          order_index?: number
+          page_slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       portfolio_settings: {
         Row: {
           created_at: string
