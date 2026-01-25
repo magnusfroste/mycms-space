@@ -115,3 +115,17 @@ export {
 } from './navLinks';
 
 export type { NavLink, CreateNavLinkInput, UpdateNavLinkInput } from './navLinks';
+
+// Page Blocks
+export {
+  usePageBlocks,
+  useAllPageBlocks,
+  useCreatePageBlock,
+  useUpdatePageBlock,
+  useDeletePageBlock,
+  useReorderPageBlocks,
+  usePageBlocksSubscription,
+  pageBlocksKeys,
+} from './pageBlocks';
+
+export type { PageBlock, CreatePageBlockInput, UpdatePageBlockInput } from './pageBlocks';

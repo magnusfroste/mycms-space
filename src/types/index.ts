@@ -203,3 +203,46 @@ export interface ContactMessage {
   email: string;
   message: string;
 }
+
+// ============================================
+// Block System Types
+// ============================================
+
+export type BlockType =
+  | 'hero'
+  | 'chat-widget'
+  | 'text-section'
+  | 'about-split'
+  | 'featured-carousel'
+  | 'expertise-grid'
+  | 'project-showcase'
+  | 'image-text'
+  | 'cta-banner'
+  | 'spacer';
+
+export interface PageBlock {
+  id: string;
+  page_slug: string;
+  block_type: BlockType;
+  block_config: Record<string, unknown>;
+  order_index: number;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePageBlockInput {
+  page_slug: string;
+  block_type: BlockType;
+  block_config?: Record<string, unknown>;
+  order_index: number;
+  enabled?: boolean;
+}
+
+export interface UpdatePageBlockInput {
+  id: string;
+  block_type?: BlockType;
+  block_config?: Record<string, unknown>;
+  order_index?: number;
+  enabled?: boolean;
+}
