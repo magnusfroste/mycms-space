@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
@@ -11,13 +12,15 @@ import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import BlockSettings from '@/components/admin/BlockSettings';
+import LandingPageEditor from '@/components/admin/LandingPageEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut, Pencil } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
+  const [showEditor, setShowEditor] = useState(false);
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
@@ -47,6 +50,11 @@ const Admin = () => {
     return <Login />;
   }
 
+  // Show full-screen editor when active
+  if (showEditor) {
+    return <LandingPageEditor onClose={() => setShowEditor(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -57,10 +65,16 @@ const Admin = () => {
             </Button>
             <h1 className="text-3xl font-bold">Admin Panel</h1>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowEditor(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Redigera Landningssidan
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="navigation" className="space-y-6">
