@@ -112,6 +112,21 @@ export interface Category {
   updated_at: string;
 }
 
+export interface CreateCategoryInput {
+  name: string;
+  slug: string;
+  order_index: number;
+  enabled?: boolean;
+}
+
+export interface UpdateCategoryInput {
+  id: string;
+  name?: string;
+  slug?: string;
+  order_index?: number;
+  enabled?: boolean;
+}
+
 // Expertise Types
 export interface ExpertiseArea {
   id: string;
