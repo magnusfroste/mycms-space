@@ -22,7 +22,7 @@ import { X } from 'lucide-react';
 import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
-
+import ImageUpload from './ImageUpload';
 interface BlockConfigPanelProps {
   block: PageBlock;
   heroData?: HeroSettings | null;
@@ -210,14 +210,12 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
           rows={4}
         />
       </div>
-      <div className="space-y-2">
-        <Label>Bild-URL</Label>
-        <Input
-          value={mergedAboutMe?.image_url || ''}
-          onChange={(e) => onAboutMeChange({ image_url: e.target.value })}
-          placeholder="https://..."
-        />
-      </div>
+      <ImageUpload
+        label="Profilbild"
+        value={mergedAboutMe?.image_url || ''}
+        onChange={(url) => onAboutMeChange({ image_url: url })}
+        bucket="about-me-images"
+      />
       <Separator />
       <SkillListEditor
         label="Kompetenser"
@@ -316,14 +314,12 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
           rows={4}
         />
       </div>
-      <div className="space-y-2">
-        <Label>Bild-URL</Label>
-        <Input
-          value={(mergedConfig.image_url as string) || ''}
-          onChange={(e) => onBlockConfigChange({ image_url: e.target.value })}
-          placeholder="https://..."
-        />
-      </div>
+      <ImageUpload
+        label="Bild"
+        value={(mergedConfig.image_url as string) || ''}
+        onChange={(url) => onBlockConfigChange({ image_url: url })}
+        bucket="about-me-images"
+      />
       <div className="space-y-2">
         <Label>Bildposition</Label>
         <Select
