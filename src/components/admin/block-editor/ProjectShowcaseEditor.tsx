@@ -85,7 +85,7 @@ const ProjectShowcaseEditor: React.FC = () => {
 
   const saveEditing = async () => {
     if (!editingId || !editData.title || !editData.description) {
-      toast({ title: 'Titel och beskrivning krävs', variant: 'destructive' });
+      toast({ title: 'Title and description required', variant: 'destructive' });
       return;
     }
     await updateProject.mutateAsync({ id: editingId, ...editData });
@@ -117,7 +117,7 @@ const ProjectShowcaseEditor: React.FC = () => {
 
   const saveNewProject = async () => {
     if (!newProjectData.title || !newProjectData.description) {
-      toast({ title: 'Titel och beskrivning krävs', variant: 'destructive' });
+      toast({ title: 'Title and description required', variant: 'destructive' });
       return;
     }
     const maxOrder = projects?.reduce((max, p) => Math.max(max, p.order_index), -1) ?? -1;
@@ -134,20 +134,20 @@ const ProjectShowcaseEditor: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Ta bort detta projekt? Alla bilder raderas också.')) {
+    if (confirm('Delete this project? All images will also be deleted.')) {
       await deleteProject.mutateAsync(id);
     }
   };
 
   const handleDeleteImage = async (image: ProjectImage) => {
-    if (confirm('Ta bort denna bild?')) {
+    if (confirm('Delete this image?')) {
       await deleteProjectImage.mutateAsync({ imageId: image.id, imagePath: image.image_path });
     }
   };
 
   const handleImageUpload = async (projectId: string, file: File) => {
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      toast({ title: 'Endast JPG, PNG, WEBP eller GIF', variant: 'destructive' });
+      toast({ title: 'Only JPG, PNG, WEBP or GIF', variant: 'destructive' });
       return;
     }
 
@@ -170,10 +170,10 @@ const ProjectShowcaseEditor: React.FC = () => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      toast({ title: 'Bild uppladdad' });
+      toast({ title: 'Image uploaded' });
     } catch (err) {
       console.error('Upload error:', err);
-      toast({ title: 'Kunde inte ladda upp bild', variant: 'destructive' });
+      toast({ title: 'Could not upload image', variant: 'destructive' });
     } finally {
       setUploadingFor(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -215,11 +215,11 @@ const ProjectShowcaseEditor: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-          Projekt ({enabledProjects.length} aktiva av {projects?.length || 0})
+          Projects ({enabledProjects.length} active of {projects?.length || 0})
         </h4>
         <Button variant="outline" size="sm" onClick={startCreating} disabled={isCreating}>
           <Plus className="h-4 w-4 mr-1" />
-          Nytt projekt
+          New Project
         </Button>
       </div>
 
@@ -229,28 +229,28 @@ const ProjectShowcaseEditor: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Plus className="h-4 w-4 text-primary" />
-              <span className="font-medium text-sm">Skapa nytt projekt</span>
+              <span className="font-medium text-sm">Create New Project</span>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Titel *</Label>
+              <Label className="text-xs">Title *</Label>
               <Input
                 value={newProjectData.title}
                 onChange={(e) => setNewProjectData({ ...newProjectData, title: e.target.value })}
-                placeholder="Projektnamn..."
+                placeholder="Project name..."
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Beskrivning *</Label>
+              <Label className="text-xs">Description *</Label>
               <Textarea
                 value={newProjectData.description}
                 onChange={(e) => setNewProjectData({ ...newProjectData, description: e.target.value })}
-                placeholder="Kort beskrivning..."
+                placeholder="Short description..."
                 rows={2}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs">Demo-länk</Label>
+                <Label className="text-xs">Demo Link</Label>
                 <Input
                   value={newProjectData.demo_link}
                   onChange={(e) => setNewProjectData({ ...newProjectData, demo_link: e.target.value })}
@@ -263,12 +263,12 @@ const ProjectShowcaseEditor: React.FC = () => {
                 <Input
                   value={newProjectData.problem_statement}
                   onChange={(e) => setNewProjectData({ ...newProjectData, problem_statement: e.target.value })}
-                  placeholder="Vilket problem löser det?"
+                  placeholder="What problem does it solve?"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Varför byggdes det?</Label>
+              <Label className="text-xs">Why was it built?</Label>
               <Input
                 value={newProjectData.why_built}
                 onChange={(e) => setNewProjectData({ ...newProjectData, why_built: e.target.value })}
@@ -278,11 +278,11 @@ const ProjectShowcaseEditor: React.FC = () => {
             <div className="flex gap-2 pt-2">
               <Button onClick={saveNewProject} size="sm" disabled={createProject.isPending}>
                 <Check className="h-4 w-4 mr-1" />
-                Skapa
+                Create
               </Button>
               <Button variant="ghost" size="sm" onClick={cancelCreating}>
                 <X className="h-4 w-4 mr-1" />
-                Avbryt
+                Cancel
               </Button>
             </div>
           </div>
@@ -296,7 +296,7 @@ const ProjectShowcaseEditor: React.FC = () => {
               <div className="space-y-3">
                 {/* Image gallery */}
                 <div className="space-y-2">
-                  <Label className="text-xs">Bilder</Label>
+                  <Label className="text-xs">Images</Label>
                   <div className="flex flex-wrap gap-2">
                     {project.images?.map((img) => (
                       <div key={img.id} className="relative group">
@@ -326,7 +326,7 @@ const ProjectShowcaseEditor: React.FC = () => {
                       ) : (
                         <>
                           <Plus className="h-4 w-4" />
-                          <span className="text-[10px]">Lägg till</span>
+                          <span className="text-[10px]">Add</span>
                         </>
                       )}
                     </Button>
@@ -334,25 +334,25 @@ const ProjectShowcaseEditor: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs">Titel</Label>
+                  <Label className="text-xs">Title</Label>
                   <Input
                     value={editData.title}
                     onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    placeholder="Projektnamn..."
+                    placeholder="Project name..."
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Beskrivning</Label>
+                  <Label className="text-xs">Description</Label>
                   <Textarea
                     value={editData.description}
                     onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    placeholder="Kort beskrivning..."
+                    placeholder="Short description..."
                     rows={2}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label className="text-xs">Demo-länk</Label>
+                    <Label className="text-xs">Demo Link</Label>
                     <Input
                       value={editData.demo_link}
                       onChange={(e) => setEditData({ ...editData, demo_link: e.target.value })}
@@ -365,12 +365,12 @@ const ProjectShowcaseEditor: React.FC = () => {
                     <Input
                       value={editData.problem_statement}
                       onChange={(e) => setEditData({ ...editData, problem_statement: e.target.value })}
-                      placeholder="Vilket problem löser det?"
+                      placeholder="What problem does it solve?"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Varför byggdes det?</Label>
+                  <Label className="text-xs">Why was it built?</Label>
                   <Input
                     value={editData.why_built}
                     onChange={(e) => setEditData({ ...editData, why_built: e.target.value })}
@@ -384,11 +384,11 @@ const ProjectShowcaseEditor: React.FC = () => {
                 <div className="flex gap-2">
                   <Button onClick={saveEditing} size="sm" disabled={updateProject.isPending}>
                     <Check className="h-4 w-4 mr-1" />
-                    Spara
+                    Save
                   </Button>
                   <Button variant="ghost" size="sm" onClick={cancelEditing}>
                     <X className="h-4 w-4 mr-1" />
-                    Avbryt
+                    Cancel
                   </Button>
                 </div>
               </div>
@@ -429,7 +429,7 @@ const ProjectShowcaseEditor: React.FC = () => {
                     )}
                     {project.images && project.images.length > 0 && (
                       <span className="text-xs text-muted-foreground">
-                        {project.images.length} bild{project.images.length !== 1 ? 'er' : ''}
+                        {project.images.length} image{project.images.length !== 1 ? 's' : ''}
                       </span>
                     )}
                     {/* Compact category select in list view */}
@@ -467,7 +467,7 @@ const ProjectShowcaseEditor: React.FC = () => {
 
         {(!projects || projects.length === 0) && (
           <div className="py-8 text-center text-muted-foreground">
-            Inga projekt hittades. Lägg till via Projekt-fliken.
+            No projects found. Add via the Projects tab.
           </div>
         )}
       </div>

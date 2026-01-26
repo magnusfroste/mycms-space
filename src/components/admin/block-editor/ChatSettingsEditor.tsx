@@ -50,11 +50,11 @@ const ChatSettingsEditor: React.FC = () => {
 
   const saveEditing = async () => {
     if (!editingId || !editData.label || !editData.message) {
-      toast({ title: 'Fyll i alla fält', variant: 'destructive' });
+      toast({ title: 'Fill in all fields', variant: 'destructive' });
       return;
     }
     await updateAction.mutateAsync({ id: editingId, ...editData });
-    toast({ title: 'Uppdaterad' });
+    toast({ title: 'Updated' });
     cancelEditing();
   };
 
@@ -62,15 +62,15 @@ const ChatSettingsEditor: React.FC = () => {
     updateSettings.mutate(
       { [field]: value },
       {
-        onSuccess: () => toast({ title: 'Sparat' }),
-        onError: () => toast({ title: 'Fel', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error', variant: 'destructive' }),
       }
     );
   };
 
   const handleCreateAction = async () => {
     if (!newAction.label || !newAction.message) {
-      toast({ title: 'Fyll i alla fält', variant: 'destructive' });
+      toast({ title: 'Fill in all fields', variant: 'destructive' });
       return;
     }
     const maxOrder = actions?.reduce((max, a) => Math.max(max, a.order_index), 0) || 0;
@@ -81,7 +81,7 @@ const ChatSettingsEditor: React.FC = () => {
     });
     setNewAction({ icon: 'Sparkles', label: '', message: '' });
     setShowNew(false);
-    toast({ title: 'Skapad' });
+    toast({ title: 'Created' });
   };
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -89,9 +89,9 @@ const ChatSettingsEditor: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Ta bort denna quick action?')) {
+    if (confirm('Delete this quick action?')) {
       await deleteAction.mutateAsync(id);
-      toast({ title: 'Borttagen' });
+      toast({ title: 'Deleted' });
     }
   };
 
@@ -110,25 +110,25 @@ const ChatSettingsEditor: React.FC = () => {
       {/* Chat Settings */}
       <div className="space-y-4">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-          Chattinställningar
+          Chat Settings
         </h4>
         <div className="space-y-2">
-          <Label htmlFor="initial_placeholder">Välkomstmeddelande</Label>
+          <Label htmlFor="initial_placeholder">Welcome Message</Label>
           <Textarea
             id="initial_placeholder"
             value={settings?.initial_placeholder || ''}
             onChange={(e) => handleSettingsUpdate('initial_placeholder', e.target.value)}
-            placeholder="Meddelande som visas innan användaren skickat något..."
+            placeholder="Message shown before user sends anything..."
             rows={2}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="active_placeholder">Aktiv placeholder</Label>
+          <Label htmlFor="active_placeholder">Active Placeholder</Label>
           <Input
             id="active_placeholder"
             value={settings?.active_placeholder || ''}
             onChange={(e) => handleSettingsUpdate('active_placeholder', e.target.value)}
-            placeholder="Placeholder-text i inputfältet..."
+            placeholder="Placeholder text in input field..."
           />
         </div>
         <div className="space-y-2">
@@ -151,7 +151,7 @@ const ChatSettingsEditor: React.FC = () => {
           </h4>
           <Button onClick={() => setShowNew(!showNew)} size="sm" variant="outline">
             <Plus className="h-4 w-4 mr-1" />
-            Lägg till
+            Add
           </Button>
         </div>
 
@@ -159,7 +159,7 @@ const ChatSettingsEditor: React.FC = () => {
           <Card className="p-4 space-y-3 bg-muted/30">
             <div className="flex gap-3 items-end">
               <div>
-                <Label className="text-xs">Ikon</Label>
+                <Label className="text-xs">Icon</Label>
                 <IconPicker value={newAction.icon} onChange={(v) => setNewAction({ ...newAction, icon: v })} />
               </div>
               <div className="flex-1">
@@ -167,24 +167,24 @@ const ChatSettingsEditor: React.FC = () => {
                 <Input
                   value={newAction.label}
                   onChange={(e) => setNewAction({ ...newAction, label: e.target.value })}
-                  placeholder="Knapptext..."
+                  placeholder="Button text..."
                 />
               </div>
             </div>
             <div>
-              <Label className="text-xs">Meddelande</Label>
+              <Label className="text-xs">Message</Label>
               <Input
                 value={newAction.message}
                 onChange={(e) => setNewAction({ ...newAction, message: e.target.value })}
-                placeholder="Meddelande som skickas..."
+                placeholder="Message to send..."
               />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleCreateAction} size="sm" disabled={createAction.isPending}>
-                Skapa
+                Create
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>
-                Avbryt
+                Cancel
               </Button>
             </div>
           </Card>
@@ -194,10 +194,10 @@ const ChatSettingsEditor: React.FC = () => {
           {actions?.map((action) => (
             <Card key={action.id} className="p-3">
               {editingId === action.id ? (
-                <div className="space-y-3">
+                  <div className="space-y-3">
                   <div className="flex gap-3 items-end">
                     <div>
-                      <Label className="text-xs">Ikon</Label>
+                      <Label className="text-xs">Icon</Label>
                       <IconPicker value={editData.icon} onChange={(v) => setEditData({ ...editData, icon: v })} />
                     </div>
                     <div className="flex-1">
@@ -209,7 +209,7 @@ const ChatSettingsEditor: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Meddelande</Label>
+                    <Label className="text-xs">Message</Label>
                     <Input
                       value={editData.message}
                       onChange={(e) => setEditData({ ...editData, message: e.target.value })}
@@ -218,11 +218,11 @@ const ChatSettingsEditor: React.FC = () => {
                   <div className="flex gap-2">
                     <Button onClick={saveEditing} size="sm" disabled={updateAction.isPending}>
                       <Check className="h-4 w-4 mr-1" />
-                      Spara
+                      Save
                     </Button>
                     <Button variant="ghost" size="sm" onClick={cancelEditing}>
                       <X className="h-4 w-4 mr-1" />
-                      Avbryt
+                      Cancel
                     </Button>
                   </div>
                 </div>

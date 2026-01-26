@@ -65,15 +65,15 @@ import { InlineBlockEditor } from './block-editor';
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
-  'about-split': 'Om mig',
-  'text-section': 'Textsektion',
+  'about-split': 'About Me',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
-  'spacer': 'Mellanrum',
-  'featured-carousel': 'Featured',
-  'expertise-grid': 'Expertis',
-  'project-showcase': 'Projekt',
-  'chat-widget': 'Chatt',
+  'image-text': 'Image & Text',
+  'spacer': 'Spacer',
+  'featured-carousel': 'Featured Carousel',
+  'expertise-grid': 'Expertise Grid',
+  'project-showcase': 'Project Showcase',
+  'chat-widget': 'Chat Widget',
 };
 
 interface VisualBlockItemProps {
@@ -216,7 +216,7 @@ const VisualBlockItem = ({
             size="sm"
             className="h-7 px-2"
             onClick={onToggleEnabled}
-            title={block.enabled ? 'Dölj block' : 'Visa block'}
+            title={block.enabled ? 'Hide block' : 'Show block'}
           >
             {block.enabled ? (
               <Eye className="h-4 w-4" />
@@ -231,7 +231,7 @@ const VisualBlockItem = ({
             onClick={onStartEdit}
           >
             <Pencil className="h-4 w-4" />
-            <span className="ml-1 text-xs">Redigera</span>
+            <span className="ml-1 text-xs">Edit</span>
           </Button>
           <Button
             variant="ghost"
@@ -302,10 +302,10 @@ const LandingPageManager = () => {
       await reorderBlocks.mutateAsync(
         reordered.map((b) => ({ id: b.id, order_index: b.order_index }))
       );
-      toast({ title: 'Ordning uppdaterad' });
+      toast({ title: 'Order updated' });
     } catch {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage('home') });
-      toast({ title: 'Fel', description: 'Kunde inte uppdatera ordningen', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not update order', variant: 'destructive' });
     }
   };
 
@@ -313,9 +313,9 @@ const LandingPageManager = () => {
   const handleToggleEnabled = async (block: PageBlock) => {
     try {
       await updateBlock.mutateAsync({ id: block.id, enabled: !block.enabled });
-      toast({ title: block.enabled ? 'Block dolt' : 'Block synligt' });
+      toast({ title: block.enabled ? 'Block hidden' : 'Block visible' });
     } catch {
-      toast({ title: 'Fel', variant: 'destructive' });
+      toast({ title: 'Error', variant: 'destructive' });
     }
   };
 
@@ -360,7 +360,7 @@ const LandingPageManager = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Laddar block...</div>;
+    return <div className="p-6">Loading blocks...</div>;
   }
 
   return (
@@ -368,15 +368,15 @@ const LandingPageManager = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Landningssida</h2>
+          <h2 className="text-2xl font-bold">Landing Page</h2>
           <p className="text-muted-foreground">
-            Dra för att ändra ordning • Klicka "Redigera" för att ändra innehåll
+            Drag to reorder • Click "Edit" to change content
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handlePreview}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Förhandsgranska
+            Preview
           </Button>
         </div>
       </div>
@@ -423,14 +423,14 @@ const LandingPageManager = () => {
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort block?</AlertDialogTitle>
+            <AlertDialogTitle>Delete block?</AlertDialogTitle>
             <AlertDialogDescription>
-              Detta döljer blocket från sidan.
+              This will hide the block from the page.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Ta bort</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
