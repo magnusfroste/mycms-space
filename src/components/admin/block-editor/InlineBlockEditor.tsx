@@ -27,6 +27,7 @@ import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatSettingsEditor from './ChatSettingsEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
+import PortfolioSettingsEditor from './PortfolioSettingsEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -403,7 +404,14 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'expertise-grid':
         return <ExpertiseAreaEditor />;
       case 'project-showcase':
-        return <ProjectShowcaseEditor />;
+        return (
+          <div className="space-y-8">
+            <PortfolioSettingsEditor />
+            <div className="border-t pt-6">
+              <ProjectShowcaseEditor />
+            </div>
+          </div>
+        );
       case 'chat-widget':
         return <ChatSettingsEditor />;
       default:
