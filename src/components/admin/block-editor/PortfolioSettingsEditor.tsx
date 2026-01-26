@@ -9,13 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { usePortfolioSettings, useUpdatePortfolioSettings } from '@/models/portfolioSettings';
-import { useCategories } from '@/models/categories';
+import CategoryManager from './CategoryManager';
 
 const PortfolioSettingsEditor: React.FC = () => {
   const { data: settings, isLoading: settingsLoading } = usePortfolioSettings();
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const updateSettings = useUpdatePortfolioSettings();
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -75,40 +74,10 @@ const PortfolioSettingsEditor: React.FC = () => {
         </div>
       </div>
 
-      {/* Categories Preview */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm text-muted-foreground uppercase tracking-wide">
-            Kategorier ({categories?.length || 0})
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Hantera kategorier via databasen
-          </p>
-        </div>
-        
-        {categoriesLoading ? (
-          <div className="flex gap-2">
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-6 w-16" />
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="font-normal">
-              All Projects
-            </Badge>
-            {categories?.map((category) => (
-              <Badge 
-                key={category.id} 
-                variant="outline"
-                className="font-normal"
-              >
-                {category.name}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
+      <Separator />
+
+      {/* Category Management */}
+      <CategoryManager />
     </div>
   );
 };
