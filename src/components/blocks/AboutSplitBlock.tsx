@@ -1,13 +1,14 @@
 // ============================================
 // About Split Block
-// Wrapper for AboutMe component
+// Wrapper for AboutMe component with configurable title
 // ============================================
 
 import React from 'react';
 import AboutMe from '@/components/AboutMe';
 
 interface AboutSplitBlockConfig {
-  data_source?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 interface AboutSplitBlockProps {
@@ -15,10 +16,14 @@ interface AboutSplitBlockProps {
 }
 
 const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
-  // Config can be extended in the future for custom data sources
-  const _typedConfig = config as AboutSplitBlockConfig;
+  const typedConfig = config as AboutSplitBlockConfig;
 
-  return <AboutMe />;
+  return (
+    <AboutMe 
+      title={typedConfig.title} 
+      subtitle={typedConfig.subtitle} 
+    />
+  );
 };
 
 export default AboutSplitBlock;
