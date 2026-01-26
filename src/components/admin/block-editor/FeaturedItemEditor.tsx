@@ -25,8 +25,8 @@ const FeaturedItemEditor: React.FC = () => {
 
   const handleAddItem = () => {
     createItem.mutate({
-      title: 'Ny featured',
-      description: 'Beskrivning',
+      title: 'New featured',
+      description: 'Description',
       enabled: true,
     });
   };
@@ -42,7 +42,7 @@ const FeaturedItemEditor: React.FC = () => {
   if (isLoading) {
     return (
       <div className="py-8 text-center text-muted-foreground">
-        Laddar featured items...
+        Loading featured items...
       </div>
     );
   }
@@ -53,7 +53,7 @@ const FeaturedItemEditor: React.FC = () => {
         <Label className="text-base font-medium">Featured Items ({sortedItems.length})</Label>
         <Button onClick={handleAddItem} size="sm" variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
-          Lägg till
+          Add
         </Button>
       </div>
 
@@ -73,7 +73,7 @@ const FeaturedItemEditor: React.FC = () => {
                     <Input
                       value={item.title}
                       onChange={(e) => handleUpdateItem(item, { title: e.target.value })}
-                      placeholder="Titel"
+                      placeholder="Title"
                       className="flex-1 font-medium"
                     />
                     <div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ const FeaturedItemEditor: React.FC = () => {
                   {/* Content row */}
                   <div className="grid gap-3 md:grid-cols-2">
                     <ImageUpload
-                      label="Bild"
+                      label="Image"
                       value={item.image_url || ''}
                       onChange={(url) => handleUpdateItem(item, { 
                         image_url: url,
@@ -106,7 +106,7 @@ const FeaturedItemEditor: React.FC = () => {
                     <Textarea
                       value={item.description}
                       onChange={(e) => handleUpdateItem(item, { description: e.target.value })}
-                      placeholder="Beskrivning"
+                      placeholder="Description"
                       rows={3}
                       className="resize-none"
                     />
@@ -120,9 +120,9 @@ const FeaturedItemEditor: React.FC = () => {
 
       {sortedItems.length === 0 && (
         <div className="py-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-          <p>Inga featured items ännu</p>
+          <p>No featured items yet</p>
           <Button onClick={handleAddItem} variant="link" className="mt-2">
-            Lägg till ditt första featured item
+            Add your first featured item
           </Button>
         </div>
       )}

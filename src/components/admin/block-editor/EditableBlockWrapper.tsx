@@ -21,15 +21,15 @@ interface EditableBlockWrapperProps {
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
-  'about-split': 'Om mig',
-  'text-section': 'Textsektion',
+  'about-split': 'About Me',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
-  'spacer': 'Mellanrum',
-  'featured-carousel': 'Featured',
-  'expertise-grid': 'Expertis',
-  'project-showcase': 'Projekt',
-  'chat-widget': 'Chatt',
+  'image-text': 'Image & Text',
+  'spacer': 'Spacer',
+  'featured-carousel': 'Featured Carousel',
+  'expertise-grid': 'Expertise Grid',
+  'project-showcase': 'Project Showcase',
+  'chat-widget': 'Chat Widget',
 };
 
 const EditableBlockWrapper: React.FC<EditableBlockWrapperProps> = ({

@@ -43,16 +43,16 @@ interface InlineBlockEditorProps {
 }
 
 const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero Block',
-  'about-split': 'Om Mig',
-  'text-section': 'Textsektion',
+  'hero': 'Hero',
+  'about-split': 'About Me',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
-  'spacer': 'Mellanrum',
+  'image-text': 'Image & Text',
+  'spacer': 'Spacer',
   'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertis Grid',
-  'project-showcase': 'Projekt Showcase',
-  'chat-widget': 'Chatt Widget',
+  'expertise-grid': 'Expertise Grid',
+  'project-showcase': 'Project Showcase',
+  'chat-widget': 'Chat Widget',
 };
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
@@ -140,7 +140,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Namn</Label>
+          <Label>Name</Label>
           <Input
             value={mergedHero?.name || ''}
             onChange={(e) => onHeroChange({ name: e.target.value })}
@@ -153,19 +153,19 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           <Textarea
             value={mergedHero?.tagline || ''}
             onChange={(e) => onHeroChange({ tagline: e.target.value })}
-            placeholder="Din tagline..."
+            placeholder="Your tagline..."
             rows={3}
           />
         </div>
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-          <Label>Aktivera animationer</Label>
+          <Label>Enable Animations</Label>
           <Switch
             checked={mergedHero?.enable_animations ?? true}
             onCheckedChange={(checked) => onHeroChange({ enable_animations: checked })}
           />
         </div>
         <div className="space-y-2">
-          <Label>Animationsstil</Label>
+          <Label>Animation Style</Label>
           <Select
             value={mergedHero?.animation_style || 'falling-stars'}
             onValueChange={(value) => onHeroChange({ animation_style: value })}
@@ -174,8 +174,8 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="falling-stars">Fallande stjärnor</SelectItem>
-              <SelectItem value="particles">Partiklar</SelectItem>
+              <SelectItem value="falling-stars">Falling Stars</SelectItem>
+              <SelectItem value="particles">Particles</SelectItem>
               <SelectItem value="gradient-shift">Gradient</SelectItem>
             </SelectContent>
           </Select>
@@ -196,20 +196,20 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Namn</Label>
+          <Label>Name</Label>
           <Input
             value={mergedAboutMe?.name || ''}
             onChange={(e) => onAboutMeChange({ name: e.target.value })}
           />
         </div>
         <ImageUpload
-          label="Profilbild"
+          label="Profile Image"
           value={mergedAboutMe?.image_url || ''}
           onChange={(url) => onAboutMeChange({ image_url: url })}
           bucket="about-me-images"
         />
         <div className="space-y-2">
-          <Label>Introduktionstext</Label>
+          <Label>Introduction Text</Label>
           <Textarea
             value={mergedAboutMe?.intro_text || ''}
             onChange={(e) => onAboutMeChange({ intro_text: e.target.value })}
@@ -217,7 +217,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <Label>Ytterligare text</Label>
+          <Label>Additional Text</Label>
           <Textarea
             value={mergedAboutMe?.additional_text || ''}
             onChange={(e) => onAboutMeChange({ additional_text: e.target.value })}
@@ -227,7 +227,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       </div>
       <div>
         <SkillListEditor
-          label="Kompetenser"
+          label="Skills"
           skills={getAboutSkills()}
           onChange={handleSkillsChange}
           maxItems={3}
@@ -239,7 +239,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   const renderTextSectionConfig = () => (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="space-y-2">
-        <Label>Titel</Label>
+        <Label>Title</Label>
         <Input
           value={(mergedConfig.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
@@ -247,7 +247,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Innehåll</Label>
+        <Label>Content</Label>
         <Textarea
           value={(mergedConfig.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
@@ -255,7 +255,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Justering</Label>
+        <Label>Alignment</Label>
         <Select
           value={(mergedConfig.alignment as string) || 'center'}
           onValueChange={(value) => onBlockConfigChange({ alignment: value })}
@@ -264,9 +264,9 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="left">Vänster</SelectItem>
+            <SelectItem value="left">Left</SelectItem>
             <SelectItem value="center">Center</SelectItem>
-            <SelectItem value="right">Höger</SelectItem>
+            <SelectItem value="right">Right</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -276,7 +276,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   const renderCtaBannerConfig = () => (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="space-y-2">
-        <Label>Titel</Label>
+        <Label>Title</Label>
         <Input
           value={(mergedConfig.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
@@ -284,7 +284,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Beskrivning</Label>
+        <Label>Description</Label>
         <Textarea
           value={(mergedConfig.description as string) || ''}
           onChange={(e) => onBlockConfigChange({ description: e.target.value })}
@@ -293,14 +293,14 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Knapptext</Label>
+          <Label>Button Text</Label>
           <Input
             value={(mergedConfig.button_text as string) || ''}
             onChange={(e) => onBlockConfigChange({ button_text: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <Label>Knapp-URL</Label>
+          <Label>Button URL</Label>
           <Input
             value={(mergedConfig.button_url as string) || ''}
             onChange={(e) => onBlockConfigChange({ button_url: e.target.value })}
@@ -315,13 +315,13 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-4">
         <ImageUpload
-          label="Bild"
+          label="Image"
           value={(mergedConfig.image_url as string) || ''}
           onChange={(url) => onBlockConfigChange({ image_url: url })}
           bucket="about-me-images"
         />
         <div className="space-y-2">
-          <Label>Bildposition</Label>
+          <Label>Image Position</Label>
           <Select
             value={(mergedConfig.image_position as string) || 'left'}
             onValueChange={(value) => onBlockConfigChange({ image_position: value })}
@@ -330,22 +330,22 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="left">Vänster</SelectItem>
-              <SelectItem value="right">Höger</SelectItem>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Titel</Label>
+          <Label>Title</Label>
           <Input
             value={(mergedConfig.title as string) || ''}
             onChange={(e) => onBlockConfigChange({ title: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <Label>Innehåll</Label>
+          <Label>Content</Label>
           <Textarea
             value={(mergedConfig.content as string) || ''}
             onChange={(e) => onBlockConfigChange({ content: e.target.value })}
@@ -359,7 +359,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   const renderSpacerConfig = () => (
     <div className="max-w-xs mx-auto space-y-4">
       <div className="space-y-2">
-        <Label>Höjd</Label>
+        <Label>Height</Label>
         <Select
           value={(mergedConfig.height as string) || 'md'}
           onValueChange={(value) => onBlockConfigChange({ height: value })}
@@ -368,10 +368,10 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="sm">Liten (2rem)</SelectItem>
+            <SelectItem value="sm">Small (2rem)</SelectItem>
             <SelectItem value="md">Medium (4rem)</SelectItem>
-            <SelectItem value="lg">Stor (6rem)</SelectItem>
-            <SelectItem value="xl">Extra stor (8rem)</SelectItem>
+            <SelectItem value="lg">Large (6rem)</SelectItem>
+            <SelectItem value="xl">Extra Large (8rem)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -381,7 +381,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   const renderReadOnlyConfig = (message: string) => (
     <div className="text-center py-8 text-muted-foreground">
       <p className="text-sm">{message}</p>
-      <p className="text-xs mt-2">Redigeras via respektive admin-sektion</p>
+      <p className="text-xs mt-2">Managed via respective admin section</p>
     </div>
   );
 
@@ -415,7 +415,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'chat-widget':
         return <ChatSettingsEditor />;
       default:
-        return <p className="text-muted-foreground">Okänd blocktyp</p>;
+        return <p className="text-muted-foreground">Unknown block type</p>;
     }
   };
 
@@ -423,11 +423,11 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     <Card className="border-primary border-2 shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-muted/30">
         <CardTitle className="text-lg font-medium">
-          Redigerar: {blockTypeLabels[block.block_type]}
+          Editing: {blockTypeLabels[block.block_type]}
         </CardTitle>
         <Button onClick={onDone} size="sm" className="gap-2">
           <Check className="h-4 w-4" />
-          Klar
+          Done
         </Button>
       </CardHeader>
       <CardContent className="pt-6">

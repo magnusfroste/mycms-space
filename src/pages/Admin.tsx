@@ -61,7 +61,7 @@ const Admin = () => {
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={handlePreview}>
               <ExternalLink className="h-4 w-4 mr-2" />
-              Förhandsgranska
+              Preview
             </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -72,12 +72,12 @@ const Admin = () => {
 
         <Tabs defaultValue="landing" className="space-y-6">
           <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="landing">Landningssida</TabsTrigger>
+            <TabsTrigger value="landing">Landing Page</TabsTrigger>
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
-            <TabsTrigger value="projects">Projekt</TabsTrigger>
-            <TabsTrigger value="expertise">Expertis</TabsTrigger>
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="expertise">Expertise</TabsTrigger>
             <TabsTrigger value="featured">Featured</TabsTrigger>
-            <TabsTrigger value="chat">Chatt</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
           </TabsList>
 
@@ -95,9 +95,9 @@ const Admin = () => {
 
           <TabsContent value="expertise" className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Expertområden</h2>
+              <h2 className="text-xl font-semibold">Expertise Areas</h2>
               <p className="text-muted-foreground">
-                Hantera expertområden som visas på sidan
+                Manage expertise areas displayed on the page
               </p>
             </div>
             <ExpertiseSettings />
@@ -107,7 +107,7 @@ const Admin = () => {
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Featured In</h2>
               <p className="text-muted-foreground">
-                Hantera featured items i karusellen
+                Manage featured items in the carousel
               </p>
             </div>
             <FeaturedSettings />
@@ -115,9 +115,9 @@ const Admin = () => {
 
           <TabsContent value="chat" className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Chattinställningar</h2>
+              <h2 className="text-xl font-semibold">Chat Settings</h2>
               <p className="text-muted-foreground">
-                Anpassa chattens utseende och quick actions
+                Customize chat appearance and quick actions
               </p>
             </div>
             <ChatTextSettings />
@@ -128,7 +128,7 @@ const Admin = () => {
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Webhook</h2>
               <p className="text-muted-foreground">
-                Konfigurera webhook URL för chattmeddelanden
+                Configure webhook URL for chat messages
               </p>
             </div>
             <WebhookSettings />

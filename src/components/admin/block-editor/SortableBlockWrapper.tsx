@@ -33,15 +33,15 @@ interface SortableBlockWrapperProps {
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
-  'about-split': 'Om mig',
-  'text-section': 'Textsektion',
+  'about-split': 'About Me',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
-  'spacer': 'Mellanrum',
-  'featured-carousel': 'Featured',
-  'expertise-grid': 'Expertis',
-  'project-showcase': 'Projekt',
-  'chat-widget': 'Chatt',
+  'image-text': 'Image & Text',
+  'spacer': 'Spacer',
+  'featured-carousel': 'Featured Carousel',
+  'expertise-grid': 'Expertise Grid',
+  'project-showcase': 'Project Showcase',
+  'chat-widget': 'Chat Widget',
 };
 
 const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
@@ -138,7 +138,7 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
             size="sm"
             className="h-7 px-2"
             onClick={onToggleEnabled}
-            title={block.enabled ? 'Dölj block' : 'Visa block'}
+            title={block.enabled ? 'Hide block' : 'Show block'}
           >
             {block.enabled ? (
               <Eye className="h-4 w-4" />
@@ -153,7 +153,7 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
             onClick={onStartEdit}
           >
             <Pencil className="h-4 w-4" />
-            <span className="ml-1 text-xs">Redigera</span>
+            <span className="ml-1 text-xs">Edit</span>
           </Button>
           <Button
             variant="ghost"

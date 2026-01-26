@@ -45,7 +45,7 @@ const ProjectCategorySelect: React.FC<ProjectCategorySelectProps> = ({
         categoryIds: newIds,
       });
     } catch (error) {
-      toast({ title: 'Kunde inte uppdatera kategorier', variant: 'destructive' });
+      toast({ title: 'Could not update categories', variant: 'destructive' });
     }
   };
 
@@ -60,9 +60,9 @@ const ProjectCategorySelect: React.FC<ProjectCategorySelectProps> = ({
           <Button variant="ghost" size="sm" className="h-6 px-2 gap-1 text-xs">
             <Tag className="h-3 w-3" />
             {selectedIds.length > 0 ? (
-              <span>{selectedIds.length} kat.</span>
+              <span>{selectedIds.length} cat.</span>
             ) : (
-              <span className="text-muted-foreground">Kategorier</span>
+              <span className="text-muted-foreground">Categories</span>
             )}
             <ChevronDown className="h-3 w-3" />
           </Button>
@@ -85,7 +85,7 @@ const ProjectCategorySelect: React.FC<ProjectCategorySelectProps> = ({
             ))}
             {(!allCategories || allCategories.length === 0) && (
               <p className="text-xs text-muted-foreground px-2 py-1">
-                Inga kategorier skapade
+                No categories created
               </p>
             )}
           </div>
@@ -96,7 +96,7 @@ const ProjectCategorySelect: React.FC<ProjectCategorySelectProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs">Kategorier</Label>
+      <Label className="text-xs">Categories</Label>
       <div className="flex flex-wrap gap-1.5">
         {allCategories?.map((category) => {
           const isSelected = selectedIds.includes(category.id);
@@ -113,7 +113,7 @@ const ProjectCategorySelect: React.FC<ProjectCategorySelectProps> = ({
         })}
         {(!allCategories || allCategories.length === 0) && (
           <span className="text-xs text-muted-foreground">
-            Inga kategorier. Skapa i Portfolio-inställningar.
+            No categories. Create in Portfolio settings.
           </span>
         )}
       </div>

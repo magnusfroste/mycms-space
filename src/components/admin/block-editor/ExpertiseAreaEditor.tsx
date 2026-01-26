@@ -25,8 +25,8 @@ const ExpertiseAreaEditor: React.FC = () => {
 
   const handleAddArea = () => {
     createArea.mutate({
-      title: 'Nytt expertområde',
-      description: 'Beskrivning av expertområdet',
+      title: 'New expertise area',
+      description: 'Description of the expertise area',
       icon: 'Lightbulb',
       order_index: areas.length,
       enabled: true,
@@ -44,7 +44,7 @@ const ExpertiseAreaEditor: React.FC = () => {
   if (isLoading) {
     return (
       <div className="py-8 text-center text-muted-foreground">
-        Laddar expertområden...
+        Loading expertise areas...
       </div>
     );
   }
@@ -52,10 +52,10 @@ const ExpertiseAreaEditor: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-base font-medium">Expertområden ({sortedAreas.length})</Label>
+        <Label className="text-base font-medium">Expertise Areas ({sortedAreas.length})</Label>
         <Button onClick={handleAddArea} size="sm" variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
-          Lägg till
+          Add
         </Button>
       </div>
 
@@ -79,7 +79,7 @@ const ExpertiseAreaEditor: React.FC = () => {
                     <Input
                       value={area.title}
                       onChange={(e) => handleUpdateArea(area.id, { title: e.target.value })}
-                      placeholder="Titel"
+                      placeholder="Title"
                       className="flex-1 font-medium"
                     />
                     <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ const ExpertiseAreaEditor: React.FC = () => {
                   <Textarea
                     value={area.description}
                     onChange={(e) => handleUpdateArea(area.id, { description: e.target.value })}
-                    placeholder="Beskrivning"
+                    placeholder="Description"
                     rows={2}
                     className="resize-none"
                   />
@@ -115,9 +115,9 @@ const ExpertiseAreaEditor: React.FC = () => {
 
       {sortedAreas.length === 0 && (
         <div className="py-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-          <p>Inga expertområden ännu</p>
+          <p>No expertise areas yet</p>
           <Button onClick={handleAddArea} variant="link" className="mt-2">
-            Lägg till ditt första expertområde
+            Add your first expertise area
           </Button>
         </div>
       )}

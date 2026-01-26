@@ -154,7 +154,7 @@ const CategoryManager: React.FC = () => {
 
   const handleCreate = async () => {
     if (!formData.name.trim()) {
-      toast({ title: 'Namn krävs', variant: 'destructive' });
+      toast({ title: 'Name required', variant: 'destructive' });
       return;
     }
 
@@ -169,15 +169,15 @@ const CategoryManager: React.FC = () => {
       });
       setFormData({ name: '', slug: '' });
       setIsCreating(false);
-      toast({ title: 'Kategori skapad' });
+      toast({ title: 'Category created' });
     } catch (error) {
-      toast({ title: 'Kunde inte skapa kategori', variant: 'destructive' });
+      toast({ title: 'Could not create category', variant: 'destructive' });
     }
   };
 
   const handleUpdate = async () => {
     if (!editingId || !formData.name.trim()) {
-      toast({ title: 'Namn krävs', variant: 'destructive' });
+      toast({ title: 'Name required', variant: 'destructive' });
       return;
     }
 
@@ -189,9 +189,9 @@ const CategoryManager: React.FC = () => {
       });
       setFormData({ name: '', slug: '' });
       setEditingId(null);
-      toast({ title: 'Kategori uppdaterad' });
+      toast({ title: 'Category updated' });
     } catch (error) {
-      toast({ title: 'Kunde inte uppdatera kategori', variant: 'destructive' });
+      toast({ title: 'Could not update category', variant: 'destructive' });
     }
   };
 
@@ -204,9 +204,9 @@ const CategoryManager: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteCategory.mutateAsync(id);
-      toast({ title: 'Kategori borttagen' });
+      toast({ title: 'Category deleted' });
     } catch (error) {
-      toast({ title: 'Kunde inte ta bort kategori', variant: 'destructive' });
+      toast({ title: 'Could not delete category', variant: 'destructive' });
     }
   };
 
@@ -214,7 +214,7 @@ const CategoryManager: React.FC = () => {
     try {
       await updateCategory.mutateAsync({ id, enabled });
     } catch (error) {
-      toast({ title: 'Kunde inte uppdatera kategori', variant: 'destructive' });
+      toast({ title: 'Could not update category', variant: 'destructive' });
     }
   };
 
@@ -229,7 +229,7 @@ const CategoryManager: React.FC = () => {
     try {
       await reorderCategories.mutateAsync(newOrder.map((c) => c.id));
     } catch (error) {
-      toast({ title: 'Kunde inte ändra ordning', variant: 'destructive' });
+      toast({ title: 'Could not reorder', variant: 'destructive' });
     }
   };
 
@@ -253,7 +253,7 @@ const CategoryManager: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label className="text-sm font-medium">
-          Kategorier ({categories?.length || 0})
+          Categories ({categories?.length || 0})
         </Label>
         {!isCreating && !editingId && (
           <Button
@@ -266,7 +266,7 @@ const CategoryManager: React.FC = () => {
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Ny kategori
+            New Category
           </Button>
         )}
       </div>
@@ -276,16 +276,16 @@ const CategoryManager: React.FC = () => {
         <Card className="border-primary/50">
           <CardContent className="pt-4 space-y-4">
             <div className="space-y-2">
-              <Label>Namn</Label>
+              <Label>Name</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="T.ex. AI & Machine Learning"
+                placeholder="e.g. AI & Machine Learning"
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label>Slug (URL-vänligt)</Label>
+              <Label>Slug (URL-friendly)</Label>
               <Input
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
@@ -295,7 +295,7 @@ const CategoryManager: React.FC = () => {
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" size="sm" onClick={cancelEdit}>
                 <X className="h-4 w-4 mr-1" />
-                Avbryt
+                Cancel
               </Button>
               <Button
                 size="sm"
@@ -303,7 +303,7 @@ const CategoryManager: React.FC = () => {
                 disabled={createCategory.isPending || updateCategory.isPending}
               >
                 <Check className="h-4 w-4 mr-1" />
-                {editingId ? 'Spara' : 'Skapa'}
+                {editingId ? 'Save' : 'Create'}
               </Button>
             </div>
           </CardContent>
@@ -338,7 +338,7 @@ const CategoryManager: React.FC = () => {
 
       {categories?.length === 0 && !isCreating && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Inga kategorier ännu. Klicka "Ny kategori" för att skapa en.
+          No categories yet. Click "New Category" to create one.
         </p>
       )}
     </div>
