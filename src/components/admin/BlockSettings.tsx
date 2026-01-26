@@ -38,6 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, GripVertical, Layout, Type, Image, MessageSquare, Grid, Layers, ArrowRight, Minus, ExternalLink } from 'lucide-react';
 import { ImageUpload } from './block-editor';
+import BlockTypePicker, { BLOCK_TYPE_OPTIONS } from './block-editor/BlockTypePicker';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -66,20 +67,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-// Block type definitions with metadata
-const BLOCK_TYPES: { type: BlockType; label: string; icon: React.ReactNode; description: string }[] = [
-  { type: 'hero', label: 'Hero', icon: <Layout className="h-4 w-4" />, description: 'Large header with tagline and features' },
-  { type: 'chat-widget', label: 'Chat Widget', icon: <MessageSquare className="h-4 w-4" />, description: 'Interactive chat component' },
-  { type: 'text-section', label: 'Text Section', icon: <Type className="h-4 w-4" />, description: 'Title and content block' },
-  { type: 'about-split', label: 'About Split', icon: <Layers className="h-4 w-4" />, description: 'Two-column about section' },
-  { type: 'featured-carousel', label: 'Featured Carousel', icon: <Image className="h-4 w-4" />, description: 'Carousel of featured items' },
-  { type: 'expertise-grid', label: 'Expertise Grid', icon: <Grid className="h-4 w-4" />, description: 'Grid of expertise areas' },
-  { type: 'project-showcase', label: 'Project Showcase', icon: <Layers className="h-4 w-4" />, description: 'Portfolio project display' },
-  { type: 'image-text', label: 'Image + Text', icon: <Image className="h-4 w-4" />, description: 'Side-by-side image and text' },
-  { type: 'cta-banner', label: 'CTA Banner', icon: <ArrowRight className="h-4 w-4" />, description: 'Call-to-action section' },
-  { type: 'spacer', label: 'Spacer', icon: <Minus className="h-4 w-4" />, description: 'Empty space for layout' },
-];
+// Use BLOCK_TYPE_OPTIONS from BlockTypePicker for consistency
 
 // Get available pages from blocks
 const getUniquePages = (blocks: PageBlock[]): string[] => {
@@ -110,7 +98,7 @@ const SortableBlockItem = ({ block, onToggleEnabled, onEdit, onDelete }: Sortabl
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const blockMeta = BLOCK_TYPES.find((bt) => bt.type === block.block_type);
+  const blockMeta = BLOCK_TYPE_OPTIONS.find((bt) => bt.type === block.block_type);
 
   return (
     <div
@@ -353,12 +341,12 @@ export const BlockSettings = () => {
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="mr-2 h-4 w-4" />
-                Lägg till block
+                Add Block
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Lägg till block</DialogTitle>
+                <DialogTitle>Add Block</DialogTitle>
               </DialogHeader>
               <BlockForm
                 formData={formData}
@@ -426,9 +414,9 @@ export const BlockSettings = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Redigera block</DialogTitle>
+            <DialogTitle>Edit Block</DialogTitle>
           </DialogHeader>
           <BlockForm
             formData={formData}
@@ -525,31 +513,11 @@ const BlockForm = ({
         </div>
       )}
 
-      {/* Block Type */}
-      <div className="space-y-2">
-        <Label>Block Type</Label>
-        <Select
-          value={formData.block_type}
-          onValueChange={(value) =>
-            setFormData({ ...formData, block_type: value as BlockType, block_config: {} })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BLOCK_TYPES.map((bt) => (
-              <SelectItem key={bt.type} value={bt.type}>
-                <div className="flex items-center gap-2">
-                  {bt.icon}
-                  <span>{bt.label}</span>
-                  <span className="text-xs text-muted-foreground">— {bt.description}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Block Type Picker with Previews */}
+      <BlockTypePicker
+        value={formData.block_type}
+        onChange={(type) => setFormData({ ...formData, block_type: type, block_config: {} })}
+      />
 
       {/* Block-specific config */}
       <BlockConfigEditor
