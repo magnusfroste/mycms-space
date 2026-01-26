@@ -19,9 +19,10 @@ import {
   useDeleteQuickAction,
 } from '@/hooks/useQuickActions';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
 import IconPicker from './IconPicker';
+import type { QuickAction } from '@/hooks/useQuickActions';
 
 const ChatSettingsEditor: React.FC = () => {
   const { data: settings, isLoading: settingsLoading } = useChatSettings();
@@ -34,6 +35,28 @@ const ChatSettingsEditor: React.FC = () => {
 
   const [showNew, setShowNew] = useState(false);
   const [newAction, setNewAction] = useState({ icon: 'Sparkles', label: '', message: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ icon: '', label: '', message: '' });
+
+  const startEditing = (action: QuickAction) => {
+    setEditingId(action.id);
+    setEditData({ icon: action.icon, label: action.label, message: action.message });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditData({ icon: '', label: '', message: '' });
+  };
+
+  const saveEditing = async () => {
+    if (!editingId || !editData.label || !editData.message) {
+      toast({ title: 'Fyll i alla fält', variant: 'destructive' });
+      return;
+    }
+    await updateAction.mutateAsync({ id: editingId, ...editData });
+    toast({ title: 'Uppdaterad' });
+    cancelEditing();
+  };
 
   const handleSettingsUpdate = (field: string, value: string) => {
     updateSettings.mutate(
@@ -169,27 +192,72 @@ const ChatSettingsEditor: React.FC = () => {
 
         <div className="space-y-2">
           {actions?.map((action) => (
-            <Card key={action.id} className="p-3 flex items-center gap-3">
-              <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-              <div className="text-muted-foreground">
-                {iconMap[action.icon] || action.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{action.label}</div>
-                <div className="text-xs text-muted-foreground truncate">{action.message}</div>
-              </div>
-              <Switch
-                checked={action.enabled}
-                onCheckedChange={(checked) => handleToggle(action.id, checked)}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-                onClick={() => handleDelete(action.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            <Card key={action.id} className="p-3">
+              {editingId === action.id ? (
+                <div className="space-y-3">
+                  <div className="flex gap-3 items-end">
+                    <div>
+                      <Label className="text-xs">Ikon</Label>
+                      <IconPicker value={editData.icon} onChange={(v) => setEditData({ ...editData, icon: v })} />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-xs">Label</Label>
+                      <Input
+                        value={editData.label}
+                        onChange={(e) => setEditData({ ...editData, label: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Meddelande</Label>
+                    <Input
+                      value={editData.message}
+                      onChange={(e) => setEditData({ ...editData, message: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={saveEditing} size="sm" disabled={updateAction.isPending}>
+                      <Check className="h-4 w-4 mr-1" />
+                      Spara
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={cancelEditing}>
+                      <X className="h-4 w-4 mr-1" />
+                      Avbryt
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                  <div className="text-muted-foreground">
+                    {iconMap[action.icon] || action.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{action.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">{action.message}</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => startEditing(action)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Switch
+                    checked={action.enabled}
+                    onCheckedChange={(checked) => handleToggle(action.id, checked)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(action.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </Card>
           ))}
         </div>
