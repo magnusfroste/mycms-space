@@ -25,6 +25,7 @@ import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
+import ChatSettingsEditor from './ChatSettingsEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -403,7 +404,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'project-showcase':
         return renderReadOnlyConfig('Projekt hanteras via Project-sektionen');
       case 'chat-widget':
-        return renderReadOnlyConfig('Chattwidget hanteras via Chat-sektionen');
+        return <ChatSettingsEditor />;
       default:
         return <p className="text-muted-foreground">Okänd blocktyp</p>;
     }
