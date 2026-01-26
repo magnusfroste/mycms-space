@@ -193,45 +193,67 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   );
 
   const renderAboutConfig = () => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
         <div className="space-y-2">
-          <Label>Name</Label>
+          <Label>Section Title</Label>
           <Input
-            value={mergedAboutMe?.name || ''}
-            onChange={(e) => onAboutMeChange({ name: e.target.value })}
-          />
-        </div>
-        <ImageUpload
-          label="Profile Image"
-          value={mergedAboutMe?.image_url || ''}
-          onChange={(url) => onAboutMeChange({ image_url: url })}
-          bucket="about-me-images"
-        />
-        <div className="space-y-2">
-          <Label>Introduction Text</Label>
-          <Textarea
-            value={mergedAboutMe?.intro_text || ''}
-            onChange={(e) => onAboutMeChange({ intro_text: e.target.value })}
-            rows={4}
+            value={(mergedConfig.title as string) || ''}
+            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+            placeholder="About Me"
           />
         </div>
         <div className="space-y-2">
-          <Label>Additional Text</Label>
-          <Textarea
-            value={mergedAboutMe?.additional_text || ''}
-            onChange={(e) => onAboutMeChange({ additional_text: e.target.value })}
-            rows={4}
+          <Label>Section Subtitle</Label>
+          <Input
+            value={(mergedConfig.subtitle as string) || ''}
+            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+            placeholder="Get to know me better"
           />
         </div>
       </div>
-      <div>
-        <SkillListEditor
-          label="Skills"
-          skills={getAboutSkills()}
-          onChange={handleSkillsChange}
-          maxItems={3}
-        />
+      <div className="border-t pt-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input
+                value={mergedAboutMe?.name || ''}
+                onChange={(e) => onAboutMeChange({ name: e.target.value })}
+              />
+            </div>
+            <ImageUpload
+              label="Profile Image"
+              value={mergedAboutMe?.image_url || ''}
+              onChange={(url) => onAboutMeChange({ image_url: url })}
+              bucket="about-me-images"
+            />
+            <div className="space-y-2">
+              <Label>Introduction Text</Label>
+              <Textarea
+                value={mergedAboutMe?.intro_text || ''}
+                onChange={(e) => onAboutMeChange({ intro_text: e.target.value })}
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Additional Text</Label>
+              <Textarea
+                value={mergedAboutMe?.additional_text || ''}
+                onChange={(e) => onAboutMeChange({ additional_text: e.target.value })}
+                rows={4}
+              />
+            </div>
+          </div>
+          <div>
+            <SkillListEditor
+              label="Skills"
+              skills={getAboutSkills()}
+              onChange={handleSkillsChange}
+              maxItems={3}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

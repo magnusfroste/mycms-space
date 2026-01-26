@@ -5,13 +5,26 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Card, CardContent } from '@/components/ui/card';
 import { iconMap } from '@/lib/constants/iconMaps';
 
-const AboutMe = () => {
+interface AboutMeProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const AboutMe: React.FC<AboutMeProps> = ({ 
+  title = 'About Me',
+  subtitle 
+}) => {
   const { data: aboutMeData, isLoading } = useAboutMeSettings();
 
   return (
     <section id="about" className="py-20 bg-card" aria-labelledby="about-heading">
       <div className="container mx-auto px-4">
-        <h2 id="about-heading" className="section-title">About Me</h2>
+        <h2 id="about-heading" className="section-title">{title}</h2>
+        {subtitle && (
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        )}
         
         {isLoading ? (
           // Loading state
