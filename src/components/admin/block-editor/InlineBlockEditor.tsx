@@ -24,6 +24,7 @@ import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
+import FeaturedItemEditor from './FeaturedItemEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -396,7 +397,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'spacer':
         return renderSpacerConfig();
       case 'featured-carousel':
-        return renderReadOnlyConfig('Featured items hanteras via Featured-sektionen');
+        return <FeaturedItemEditor />;
       case 'expertise-grid':
         return <ExpertiseAreaEditor />;
       case 'project-showcase':
