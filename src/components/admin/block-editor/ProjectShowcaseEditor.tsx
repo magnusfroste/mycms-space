@@ -31,11 +31,11 @@ import {
   X,
   ExternalLink,
   Image,
-  Upload,
   Loader2,
   Plus,
 } from 'lucide-react';
 import type { Project, ProjectImage } from '@/types';
+import ProjectCategorySelect from './ProjectCategorySelect';
 
 const ProjectShowcaseEditor: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
@@ -377,6 +377,10 @@ const ProjectShowcaseEditor: React.FC = () => {
                     placeholder="Motivation..."
                   />
                 </div>
+                
+                {/* Category Selection */}
+                <ProjectCategorySelect projectId={project.id} />
+                
                 <div className="flex gap-2">
                   <Button onClick={saveEditing} size="sm" disabled={updateProject.isPending}>
                     <Check className="h-4 w-4 mr-1" />
@@ -428,6 +432,8 @@ const ProjectShowcaseEditor: React.FC = () => {
                         {project.images.length} bild{project.images.length !== 1 ? 'er' : ''}
                       </span>
                     )}
+                    {/* Compact category select in list view */}
+                    <ProjectCategorySelect projectId={project.id} compact />
                   </div>
                 </div>
 

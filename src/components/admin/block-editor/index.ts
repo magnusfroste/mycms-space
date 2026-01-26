@@ -15,5 +15,6 @@ export { default as ChatSettingsEditor } from './ChatSettingsEditor';
 export { default as ProjectShowcaseEditor } from './ProjectShowcaseEditor';
 export { default as PortfolioSettingsEditor } from './PortfolioSettingsEditor';
 export { default as CategoryManager } from './CategoryManager';
+export { default as ProjectCategorySelect } from './ProjectCategorySelect';
 export type { FeatureItem } from './FeatureListEditor';
 export type { SkillItem } from './SkillListEditor';
