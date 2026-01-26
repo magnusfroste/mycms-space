@@ -1,17 +1,13 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
 import { QuickActionsManager } from '@/components/admin/QuickActionsManager';
 import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
-import { HeroSettings } from '@/components/admin/HeroSettings';
-import AboutMeSettings from '@/components/admin/AboutMeSettings';
+import { NavSettings } from '@/components/admin/NavSettings';
+import LandingPageManager from '@/components/admin/LandingPageManager';
+import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
-import { ProjectSettings } from '@/components/admin/ProjectSettings';
-import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
-import { NavSettings } from '@/components/admin/NavSettings';
-import BlockSettings from '@/components/admin/BlockSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, ExternalLink } from 'lucide-react';
@@ -74,84 +70,34 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="navigation" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-11">
+        <Tabs defaultValue="landing" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="landing">Landningssida</TabsTrigger>
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
-            <TabsTrigger value="blocks">Blocks</TabsTrigger>
+            <TabsTrigger value="projects">Projekt</TabsTrigger>
+            <TabsTrigger value="expertise">Expertis</TabsTrigger>
+            <TabsTrigger value="featured">Featured</TabsTrigger>
+            <TabsTrigger value="chat">Chatt</TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
-            <TabsTrigger value="actions">Quick Actions</TabsTrigger>
-            <TabsTrigger value="text">Chat Text</TabsTrigger>
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="about">About Me</TabsTrigger>
-            <TabsTrigger value="expertise">Expertise</TabsTrigger>
-            <TabsTrigger value="featured">Featured In</TabsTrigger>
-            <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="landing" className="space-y-4">
+            <LandingPageManager />
+          </TabsContent>
 
           <TabsContent value="navigation" className="space-y-4">
             <NavSettings />
           </TabsContent>
 
-          <TabsContent value="blocks" className="space-y-4">
-            <BlockSettings />
-          </TabsContent>
-
-          <TabsContent value="webhook" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Webhook Settings</h2>
-              <p className="text-muted-foreground">
-                Configure the webhook URL for chat message handling
-              </p>
-            </div>
-            <WebhookSettings />
-          </TabsContent>
-
-          <TabsContent value="actions" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Quick Actions</h2>
-              <p className="text-muted-foreground">
-                Manage quick action buttons shown in the chat interface
-              </p>
-            </div>
-            <QuickActionsManager />
-          </TabsContent>
-
-          <TabsContent value="text" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Chat Text</h2>
-              <p className="text-muted-foreground">
-                Customize placeholder text for different chat states
-              </p>
-            </div>
-            <ChatTextSettings />
-          </TabsContent>
-
-          <TabsContent value="hero" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Hero Section</h2>
-              <p className="text-muted-foreground">
-                Customize hero content and animations
-              </p>
-            </div>
-            <HeroSettings />
-          </TabsContent>
-
-          <TabsContent value="about" className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">About Me Section</h2>
-              <p className="text-muted-foreground">
-                Manage your personal information, bio, and skills
-              </p>
-            </div>
-            <AboutMeSettings />
+          <TabsContent value="projects" className="space-y-4">
+            <ProjectSettings />
           </TabsContent>
 
           <TabsContent value="expertise" className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Expertise Areas</h2>
+              <h2 className="text-xl font-semibold">Expertområden</h2>
               <p className="text-muted-foreground">
-                Manage your areas of expertise displayed on the homepage
+                Hantera expertområden som visas på sidan
               </p>
             </div>
             <ExpertiseSettings />
@@ -161,24 +107,31 @@ const Admin = () => {
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Featured In</h2>
               <p className="text-muted-foreground">
-                Manage items displayed in the Featured section
+                Hantera featured items i karusellen
               </p>
             </div>
             <FeaturedSettings />
           </TabsContent>
 
-          <TabsContent value="portfolio" className="space-y-4">
+          <TabsContent value="chat" className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Portfolio Settings</h2>
+              <h2 className="text-xl font-semibold">Chattinställningar</h2>
               <p className="text-muted-foreground">
-                Customize the portfolio section title and settings
+                Anpassa chattens utseende och quick actions
               </p>
             </div>
-            <PortfolioSettings />
+            <ChatTextSettings />
+            <QuickActionsManager />
           </TabsContent>
 
-          <TabsContent value="projects" className="space-y-4">
-            <ProjectSettings />
+          <TabsContent value="webhook" className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Webhook</h2>
+              <p className="text-muted-foreground">
+                Konfigurera webhook URL för chattmeddelanden
+              </p>
+            </div>
+            <WebhookSettings />
           </TabsContent>
         </Tabs>
       </div>
