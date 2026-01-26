@@ -28,6 +28,7 @@ import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatSettingsEditor from './ChatSettingsEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import PortfolioSettingsEditor from './PortfolioSettingsEditor';
+import QuickActionsEditor from './QuickActionsEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -505,6 +506,9 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             </div>
             <div className="border-t pt-6">
               <ChatSettingsEditor />
+            </div>
+            <div className="border-t pt-6">
+              <QuickActionsEditor />
             </div>
           </div>
         );
