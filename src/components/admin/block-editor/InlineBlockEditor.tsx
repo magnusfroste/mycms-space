@@ -422,7 +422,31 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'spacer':
         return renderSpacerConfig();
       case 'featured-carousel':
-        return <FeaturedItemEditor />;
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Title</Label>
+                <Input
+                  value={(mergedConfig.title as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+                  placeholder="Featured In..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Section Subtitle</Label>
+                <Input
+                  value={(mergedConfig.subtitle as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+                  placeholder="Where I've been featured"
+                />
+              </div>
+            </div>
+            <div className="border-t pt-6">
+              <FeaturedItemEditor />
+            </div>
+          </div>
+        );
       case 'expertise-grid':
         return (
           <div className="space-y-6">

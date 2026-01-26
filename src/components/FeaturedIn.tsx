@@ -1,11 +1,18 @@
-
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFeaturedItems } from '@/hooks/useFeaturedSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const FeaturedIn = () => {
+interface FeaturedInProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const FeaturedIn: React.FC<FeaturedInProps> = ({ 
+  title = 'Featured In...',
+  subtitle 
+}) => {
   const { data: items, isLoading } = useFeaturedItems();
   const [activeIndex, setActiveIndex] = useState(0);
   
@@ -23,10 +30,15 @@ const FeaturedIn = () => {
   return (
     <section id="featured" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-4">
           <Image className="h-8 w-8 text-apple-purple mr-3" />
-          <h2 className="section-title mb-0">Featured In...</h2>
+          <h2 className="section-title mb-0">{title}</h2>
         </div>
+        {subtitle && (
+          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        )}
         
         <div className="relative max-w-5xl mx-auto">
           {/* Carousel navigation buttons */}

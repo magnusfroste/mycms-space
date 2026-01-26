@@ -1,13 +1,14 @@
 // ============================================
 // Featured Carousel Block
-// Wrapper for FeaturedIn component
+// Wrapper for FeaturedIn component with configurable title
 // ============================================
 
 import React from 'react';
 import FeaturedIn from '@/components/FeaturedIn';
 
 interface FeaturedCarouselBlockConfig {
-  data_source?: string;
+  title?: string;
+  subtitle?: string;
 }
 
 interface FeaturedCarouselBlockProps {
@@ -15,10 +16,14 @@ interface FeaturedCarouselBlockProps {
 }
 
 const FeaturedCarouselBlock: React.FC<FeaturedCarouselBlockProps> = ({ config }) => {
-  // Config can be extended in the future
-  const _typedConfig = config as FeaturedCarouselBlockConfig;
+  const typedConfig = config as FeaturedCarouselBlockConfig;
 
-  return <FeaturedIn />;
+  return (
+    <FeaturedIn 
+      title={typedConfig.title} 
+      subtitle={typedConfig.subtitle} 
+    />
+  );
 };
 
 export default FeaturedCarouselBlock;
