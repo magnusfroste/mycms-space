@@ -4,7 +4,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useExpertiseAreas, useExpertiseAreasSubscription } from '@/hooks/useExpertiseSettings';
 import { iconMap } from '@/lib/constants/iconMaps';
 
-const ExpertiseCards = () => {
+interface ExpertiseCardsProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const ExpertiseCards: React.FC<ExpertiseCardsProps> = ({ 
+  title = 'Areas of Expertise',
+  subtitle 
+}) => {
   const { data: areas, isLoading } = useExpertiseAreas();
   useExpertiseAreasSubscription();
   
@@ -13,7 +21,12 @@ const ExpertiseCards = () => {
   return (
     <section id="expertise" className="py-20 bg-card">
       <div className="container mx-auto px-4">
-        <h2 className="section-title">Areas of Expertise</h2>
+        <h2 className="section-title">{title}</h2>
+        {subtitle && (
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            {subtitle}
+          </p>
+        )}
         
         {isLoading ? (
           // Loading state

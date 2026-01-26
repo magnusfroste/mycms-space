@@ -1,13 +1,14 @@
 // ============================================
 // Expertise Grid Block
-// Wrapper for ExpertiseCards component
+// Wrapper for ExpertiseCards component with configurable title
 // ============================================
 
 import React from 'react';
 import ExpertiseCards from '@/components/ExpertiseCards';
 
 interface ExpertiseGridBlockConfig {
-  data_source?: string;
+  title?: string;
+  subtitle?: string;
   columns?: 2 | 3;
 }
 
@@ -16,10 +17,14 @@ interface ExpertiseGridBlockProps {
 }
 
 const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
-  // Config can be extended to support different column layouts
-  const _typedConfig = config as ExpertiseGridBlockConfig;
+  const typedConfig = config as ExpertiseGridBlockConfig;
 
-  return <ExpertiseCards />;
+  return (
+    <ExpertiseCards 
+      title={typedConfig.title} 
+      subtitle={typedConfig.subtitle} 
+    />
+  );
 };
 
 export default ExpertiseGridBlock;

@@ -402,7 +402,31 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'featured-carousel':
         return <FeaturedItemEditor />;
       case 'expertise-grid':
-        return <ExpertiseAreaEditor />;
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Title</Label>
+                <Input
+                  value={(mergedConfig.title as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+                  placeholder="Areas of Expertise"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Section Subtitle</Label>
+                <Input
+                  value={(mergedConfig.subtitle as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+                  placeholder="What I specialize in"
+                />
+              </div>
+            </div>
+            <div className="border-t pt-6">
+              <ExpertiseAreaEditor />
+            </div>
+          </div>
+        );
       case 'project-showcase':
         return (
           <div className="space-y-8">
