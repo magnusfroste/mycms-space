@@ -4,7 +4,7 @@
 
 export { default as EditableBlockWrapper } from './EditableBlockWrapper';
 export { default as SortableBlockWrapper } from './SortableBlockWrapper';
-export { default as BlockConfigPanel } from './BlockConfigPanel';
+export { default as InlineBlockEditor } from './InlineBlockEditor';
 export { default as IconPicker } from './IconPicker';
 export { default as ImageUpload } from './ImageUpload';
 export { default as FeatureListEditor } from './FeatureListEditor';
