@@ -36,7 +36,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, GripVertical, Layout, Type, Image, MessageSquare, Grid, Layers, ArrowRight, Minus } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, Layout, Type, Image, MessageSquare, Grid, Layers, ArrowRight, Minus, ExternalLink } from 'lucide-react';
+import { ImageUpload } from './block-editor';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -338,37 +339,44 @@ export const BlockSettings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Page Blocks</h2>
-          <p className="text-muted-foreground">Manage content blocks for each page</p>
+          <h2 className="text-2xl font-bold">Landningssida</h2>
+          <p className="text-muted-foreground">Hantera block och deras ordning på sidan</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Block
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add Block</DialogTitle>
-            </DialogHeader>
-            <BlockForm
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleAdd}
-              onCancel={() => {
-                setIsAddDialogOpen(false);
-                resetForm();
-              }}
-              isLoading={createBlock.isPending}
-              availablePages={availablePages}
-              newPageSlug={newPageSlug}
-              setNewPageSlug={setNewPageSlug}
-              showPageSelector
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.open('/', '_blank')}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Förhandsgranska
+          </Button>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Lägg till block
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Lägg till block</DialogTitle>
+              </DialogHeader>
+              <BlockForm
+                formData={formData}
+                setFormData={setFormData}
+                onSubmit={handleAdd}
+                onCancel={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                }}
+                isLoading={createBlock.isPending}
+                availablePages={availablePages}
+                newPageSlug={newPageSlug}
+                setNewPageSlug={setNewPageSlug}
+                showPageSelector
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Page Tabs */}
@@ -420,7 +428,7 @@ export const BlockSettings = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Block</DialogTitle>
+            <DialogTitle>Redigera block</DialogTitle>
           </DialogHeader>
           <BlockForm
             formData={formData}
@@ -441,14 +449,14 @@ export const BlockSettings = () => {
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Block?</AlertDialogTitle>
+            <AlertDialogTitle>Ta bort block?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the block from the page. This action cannot be undone.
+              Detta tar bort blocket från sidan. Åtgärden kan inte ångras.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Ta bort</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -630,32 +638,30 @@ const BlockConfigEditor = ({ blockType, config, onChange }: BlockConfigEditorPro
       return (
         <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
           <div className="space-y-2">
-            <Label>Title</Label>
+            <Label>Titel</Label>
             <Input
               value={(config.title as string) || ''}
               onChange={(e) => updateConfig('title', e.target.value)}
-              placeholder="Block title"
+              placeholder="Block titel"
             />
           </div>
           <div className="space-y-2">
-            <Label>Content</Label>
+            <Label>Innehåll</Label>
             <Textarea
               value={(config.content as string) || ''}
               onChange={(e) => updateConfig('content', e.target.value)}
-              placeholder="Block content..."
+              placeholder="Skriv innehåll..."
               rows={3}
             />
           </div>
+          <ImageUpload
+            label="Bild"
+            value={(config.image_url as string) || ''}
+            onChange={(url) => updateConfig('image_url', url)}
+            bucket="about-me-images"
+          />
           <div className="space-y-2">
-            <Label>Image URL</Label>
-            <Input
-              value={(config.image_url as string) || ''}
-              onChange={(e) => updateConfig('image_url', e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Image Position</Label>
+            <Label>Bildposition</Label>
             <Select
               value={(config.image_position as string) || 'left'}
               onValueChange={(value) => updateConfig('image_position', value)}
@@ -664,8 +670,8 @@ const BlockConfigEditor = ({ blockType, config, onChange }: BlockConfigEditorPro
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="left">Left</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
+                <SelectItem value="left">Vänster</SelectItem>
+                <SelectItem value="right">Höger</SelectItem>
               </SelectContent>
             </Select>
           </div>

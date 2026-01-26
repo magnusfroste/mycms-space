@@ -12,15 +12,13 @@ import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import { PortfolioSettings } from '@/components/admin/PortfolioSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import BlockSettings from '@/components/admin/BlockSettings';
-import LandingPageEditor from '@/components/admin/LandingPageEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, Pencil } from 'lucide-react';
+import { ArrowLeft, LogOut, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
-  const [showEditor, setShowEditor] = useState(false);
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
@@ -38,6 +36,10 @@ const Admin = () => {
     }
   };
 
+  const handlePreview = () => {
+    window.open('/', '_blank');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,11 +50,6 @@ const Admin = () => {
 
   if (!user) {
     return <Login />;
-  }
-
-  // Show full-screen editor when active
-  if (showEditor) {
-    return <LandingPageEditor onClose={() => setShowEditor(false)} />;
   }
 
   return (
@@ -66,9 +63,9 @@ const Admin = () => {
             <h1 className="text-3xl font-bold">Admin Panel</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setShowEditor(true)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Redigera Landningssidan
+            <Button variant="outline" onClick={handlePreview}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Förhandsgranska
             </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
