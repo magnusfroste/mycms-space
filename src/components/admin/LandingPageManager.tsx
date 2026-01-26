@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,13 +28,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   usePageBlocks,
+  useCreatePageBlock,
   useUpdatePageBlock,
   useReorderPageBlocks,
   pageBlocksKeys,
 } from '@/models/pageBlocks';
 import { useHeroSettings } from '@/hooks/useHeroSettings';
 import { useAboutMeSettings } from '@/hooks/useAboutMeSettings';
-import type { PageBlock } from '@/types';
+import type { PageBlock, BlockType } from '@/types';
+import BlockTypePicker, { BLOCK_TYPE_OPTIONS } from './block-editor/BlockTypePicker';
 import {
   DndContext,
   closestCenter,
@@ -264,6 +272,8 @@ const LandingPageManager = () => {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
 
   // Fetch blocks for home page
   const { data: blocks = [], isLoading } = usePageBlocks('home');
@@ -271,6 +281,7 @@ const LandingPageManager = () => {
   const { data: aboutMeData } = useAboutMeSettings();
 
   // Mutations
+  const createBlock = useCreatePageBlock();
   const updateBlock = useUpdatePageBlock();
   const reorderBlocks = useReorderPageBlocks();
 
@@ -359,6 +370,24 @@ const LandingPageManager = () => {
     window.open('/', '_blank');
   };
 
+  const handleAddBlock = async () => {
+    const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
+    try {
+      await createBlock.mutateAsync({
+        page_slug: 'home',
+        block_type: newBlockType,
+        block_config: {},
+        order_index: maxOrder + 1,
+        enabled: true,
+      });
+      setIsAddDialogOpen(false);
+      setNewBlockType('text-section');
+      toast({ title: 'Block added' });
+    } catch {
+      toast({ title: 'Error adding block', variant: 'destructive' });
+    }
+  };
+
   if (isLoading) {
     return <div className="p-6">Loading blocks...</div>;
   }
@@ -374,6 +403,10 @@ const LandingPageManager = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Block
+          </Button>
           <Button variant="outline" onClick={handlePreview}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Preview
@@ -434,6 +467,27 @@ const LandingPageManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add Block Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Block</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <BlockTypePicker value={newBlockType} onChange={setNewBlockType} />
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddBlock} disabled={createBlock.isPending}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Block
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
