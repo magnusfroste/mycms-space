@@ -37,7 +37,7 @@ const PortfolioSettingsEditor: React.FC = () => {
       {/* Section Settings */}
       <div className="space-y-4">
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-          <Label>Visa Portfolio-sektionen</Label>
+          <Label>Show Portfolio Section</Label>
           <Switch
             checked={settings?.show_section ?? true}
             onCheckedChange={(checked) => handleChange('show_section', checked)}
@@ -45,7 +45,7 @@ const PortfolioSettingsEditor: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Sektionens titel</Label>
+          <Label>Section Title</Label>
           <Input
             value={settings?.section_title || ''}
             onChange={(e) => handleChange('section_title', e.target.value)}
@@ -55,7 +55,7 @@ const PortfolioSettingsEditor: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Undertitel</Label>
+          <Label>Section Subtitle</Label>
           <Input
             value={settings?.section_subtitle || ''}
             onChange={(e) => handleChange('section_subtitle', e.target.value)}
@@ -64,7 +64,7 @@ const PortfolioSettingsEditor: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Beskrivning</Label>
+          <Label>Section Description</Label>
           <Textarea
             value={settings?.section_description || ''}
             onChange={(e) => handleChange('section_description', e.target.value)}
