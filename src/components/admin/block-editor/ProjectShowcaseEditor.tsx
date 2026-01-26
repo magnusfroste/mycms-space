@@ -4,6 +4,20 @@
 // ============================================
 
 import React, { useState, useRef } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,25 +31,18 @@ import {
   useUpdateProject,
   useDeleteProject,
   useDeleteProjectImage,
+  useReorderProjects,
   uploadProjectImage,
+  projectKeys,
 } from '@/models/projects';
+import { sortByOrder } from '@/lib/utils/sorting';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { projectKeys } from '@/models/projects';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Pencil,
-  Trash2,
-  GripVertical,
-  Check,
-  X,
-  ExternalLink,
-  Image,
-  Loader2,
-  Plus,
-} from 'lucide-react';
+import { Check, X, Loader2, Plus, Pencil, Trash2, GripVertical, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import type { Project, ProjectImage } from '@/types';
 import ProjectCategorySelect from './ProjectCategorySelect';
+import SortableProjectItem from './SortableProjectItem';
 
 const ProjectShowcaseEditor: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
@@ -43,6 +50,7 @@ const ProjectShowcaseEditor: React.FC = () => {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const deleteProjectImage = useDeleteProjectImage();
+  const reorderProjects = useReorderProjects();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -64,6 +72,12 @@ const ProjectShowcaseEditor: React.FC = () => {
   });
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const enabledProjects = projects?.filter((p) => p.enabled) || [];
 
@@ -192,6 +206,37 @@ const ProjectShowcaseEditor: React.FC = () => {
     }
   };
 
+  // Sort projects by order_index
+  const sortedProjects = projects ? sortByOrder(projects) : [];
+
+  // Handle drag end for reordering
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !projects) return;
+
+    const oldIndex = sortedProjects.findIndex((p) => p.id === active.id);
+    const newIndex = sortedProjects.findIndex((p) => p.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Calculate new order
+    const reordered = [...sortedProjects];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    // Build updates with new order_index values
+    const updates = reordered.map((p, idx) => ({ id: p.id, order_index: idx }));
+
+    // Optimistic update
+    queryClient.setQueryData(projectKeys.all, reordered.map((p, idx) => ({ ...p, order_index: idx })));
+
+    try {
+      await reorderProjects.mutateAsync({ updates });
+    } catch {
+      // Rollback on error
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -289,188 +334,138 @@ const ProjectShowcaseEditor: React.FC = () => {
         </Card>
       )}
 
-      <div className="space-y-2">
-        {projects?.map((project) => (
-          <Card key={project.id} className="p-3">
-            {editingId === project.id ? (
-              <div className="space-y-3">
-                {/* Image gallery */}
-                <div className="space-y-2">
-                  <Label className="text-xs">Images</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {project.images?.map((img) => (
-                      <div key={img.id} className="relative group">
-                        <img
-                          src={img.image_url}
-                          alt=""
-                          className="w-20 h-14 object-cover rounded border"
-                        />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sortedProjects.map((p) => p.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-2">
+            {sortedProjects.map((project) => (
+              editingId === project.id ? (
+                <Card key={project.id} className="p-3">
+                  <div className="space-y-3">
+                    {/* Image gallery */}
+                    <div className="space-y-2">
+                      <Label className="text-xs">Images</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {project.images?.map((img) => (
+                          <div key={img.id} className="relative group">
+                            <img
+                              src={img.image_url}
+                              alt=""
+                              className="w-20 h-14 object-cover rounded border"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleDeleteImage(img)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
                         <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleDeleteImage(img)}
+                          variant="outline"
+                          className="w-20 h-14 flex flex-col gap-1"
+                          onClick={() => triggerUpload(project.id)}
+                          disabled={uploadingFor === project.id}
                         >
-                          <X className="h-3 w-3" />
+                          {uploadingFor === project.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="h-4 w-4" />
+                              <span className="text-[10px]">Add</span>
+                            </>
+                          )}
                         </Button>
                       </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-20 h-14 flex flex-col gap-1"
-                      onClick={() => triggerUpload(project.id)}
-                      disabled={uploadingFor === project.id}
-                    >
-                      {uploadingFor === project.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          <span className="text-[10px]">Add</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs">Title</Label>
-                  <Input
-                    value={editData.title}
-                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                    placeholder="Project name..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Description</Label>
-                  <Textarea
-                    value={editData.description}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    placeholder="Short description..."
-                    rows={2}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Demo Link</Label>
-                    <Input
-                      value={editData.demo_link}
-                      onChange={(e) => setEditData({ ...editData, demo_link: e.target.value })}
-                      placeholder="https://..."
-                      type="url"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Problem</Label>
-                    <Input
-                      value={editData.problem_statement}
-                      onChange={(e) => setEditData({ ...editData, problem_statement: e.target.value })}
-                      placeholder="What problem does it solve?"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Why was it built?</Label>
-                  <Input
-                    value={editData.why_built}
-                    onChange={(e) => setEditData({ ...editData, why_built: e.target.value })}
-                    placeholder="Motivation..."
-                  />
-                </div>
-                
-                {/* Category Selection */}
-                <ProjectCategorySelect projectId={project.id} />
-                
-                <div className="flex gap-2">
-                  <Button onClick={saveEditing} size="sm" disabled={updateProject.isPending}>
-                    <Check className="h-4 w-4 mr-1" />
-                    Save
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={cancelEditing}>
-                    <X className="h-4 w-4 mr-1" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3">
-                <GripVertical className="h-4 w-4 text-muted-foreground/50 mt-1 shrink-0" />
-
-                {/* Thumbnail */}
-                <div className="w-16 h-12 rounded bg-muted shrink-0 overflow-hidden">
-                  {project.images && project.images.length > 0 ? (
-                    <img
-                      src={project.images[0].image_url}
-                      alt={project.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Image className="h-4 w-4 text-muted-foreground/50" />
                     </div>
-                  )}
-                </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{project.title}</div>
-                  <div className="text-xs text-muted-foreground line-clamp-2">{project.description}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {project.demo_link && project.demo_link !== '#' && (
-                      <a
-                        href={project.demo_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Demo
-                      </a>
-                    )}
-                    {project.images && project.images.length > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        {project.images.length} image{project.images.length !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {/* Compact category select in list view */}
-                    <ProjectCategorySelect projectId={project.id} compact />
+                    <div className="space-y-2">
+                      <Label className="text-xs">Title</Label>
+                      <Input
+                        value={editData.title}
+                        onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                        placeholder="Project name..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Description</Label>
+                      <Textarea
+                        value={editData.description}
+                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                        placeholder="Short description..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Demo Link</Label>
+                        <Input
+                          value={editData.demo_link}
+                          onChange={(e) => setEditData({ ...editData, demo_link: e.target.value })}
+                          placeholder="https://..."
+                          type="url"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Problem</Label>
+                        <Input
+                          value={editData.problem_statement}
+                          onChange={(e) => setEditData({ ...editData, problem_statement: e.target.value })}
+                          placeholder="What problem does it solve?"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Why was it built?</Label>
+                      <Input
+                        value={editData.why_built}
+                        onChange={(e) => setEditData({ ...editData, why_built: e.target.value })}
+                        placeholder="Motivation..."
+                      />
+                    </div>
+                    
+                    {/* Category Selection */}
+                    <ProjectCategorySelect projectId={project.id} />
+                    
+                    <div className="flex gap-2">
+                      <Button onClick={saveEditing} size="sm" disabled={updateProject.isPending}>
+                        <Check className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEditing}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </Card>
+              ) : (
+                <SortableProjectItem
+                  key={project.id}
+                  project={project}
+                  onEdit={startEditing}
+                  onToggle={handleToggle}
+                  onDelete={handleDelete}
+                />
+              )
+            ))}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => startEditing(project)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Switch
-                    checked={project.enabled}
-                    onCheckedChange={(checked) => handleToggle(project.id, checked)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(project.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+            {sortedProjects.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground">
+                No projects found. Click "New Project" to add one.
               </div>
             )}
-          </Card>
-        ))}
-
-        {(!projects || projects.length === 0) && (
-          <div className="py-8 text-center text-muted-foreground">
-            No projects found. Add via the Projects tab.
           </div>
-        )}
-      </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 };
