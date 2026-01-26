@@ -1,6 +1,6 @@
 // ============================================
-// Landing Page Editor - WYSIWYG Block Editing
-// Inline editing with live preview and save
+// Landing Page Editor - Block-based WYSIWYG
+// Webflow-style editing with config panel
 // ============================================
 
 import React, { useState } from 'react';
@@ -14,14 +14,15 @@ import type { PageBlock } from '@/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-// Import editable block versions
-import EditableHeroBlock from './editable-blocks/EditableHeroBlock';
-import EditableAboutSplitBlock from './editable-blocks/EditableAboutSplitBlock';
-import EditableTextSectionBlock from './editable-blocks/EditableTextSectionBlock';
-import EditableCtaBannerBlock from './editable-blocks/EditableCtaBannerBlock';
-import EditableImageTextBlock from './editable-blocks/EditableImageTextBlock';
+// Block editor components
+import { EditableBlockWrapper, BlockConfigPanel } from './block-editor';
 
-// Non-editable blocks (data managed elsewhere)
+// Block renderers (view mode)
+import HeroBlock from '@/components/blocks/HeroBlock';
+import AboutSplitBlock from '@/components/blocks/AboutSplitBlock';
+import TextSectionBlock from '@/components/blocks/TextSectionBlock';
+import CtaBannerBlock from '@/components/blocks/CtaBannerBlock';
+import ImageTextBlock from '@/components/blocks/ImageTextBlock';
 import ChatWidgetBlock from '@/components/blocks/ChatWidgetBlock';
 import FeaturedCarouselBlock from '@/components/blocks/FeaturedCarouselBlock';
 import ExpertiseGridBlock from '@/components/blocks/ExpertiseGridBlock';
@@ -40,8 +41,9 @@ interface PendingChanges {
 
 const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
   const { toast } = useToast();
-  const [isEditMode, setIsEditMode] = useState(true);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
   
   // Fetch blocks and data
@@ -54,7 +56,9 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
   const updateAboutMe = useUpdateAboutMeSettings();
   const updateBlock = useUpdatePageBlock();
 
-  const hasChanges = Object.keys(pendingChanges).length > 0 || 
+  const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+
+  const hasChanges = 
     pendingChanges.hero || 
     pendingChanges.aboutMe ||
     (pendingChanges.blocks && Object.keys(pendingChanges.blocks).length > 0);
@@ -81,9 +85,34 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
       ...prev,
       blocks: {
         ...(prev.blocks || {}),
-        [blockId]: config
+        [blockId]: { ...(prev.blocks?.[blockId] || {}), ...config }
       }
     }));
+  };
+
+  // Toggle block enabled state
+  const handleToggleEnabled = async (block: PageBlock) => {
+    try {
+      await updateBlock.mutateAsync({
+        id: block.id,
+        enabled: !block.enabled
+      });
+      toast({ 
+        title: block.enabled ? 'Block dolt' : 'Block synligt',
+        description: `Blocket är nu ${block.enabled ? 'dolt' : 'synligt'} på sidan.`
+      });
+    } catch (error) {
+      toast({ title: 'Fel', description: 'Kunde inte uppdatera block', variant: 'destructive' });
+    }
+  };
+
+  // Delete block
+  const handleDeleteBlock = async (blockId: string) => {
+    // For now, just toggle enabled - actual delete would need confirmation
+    const block = blocks.find(b => b.id === blockId);
+    if (block) {
+      handleToggleEnabled(block);
+    }
   };
 
   // Save all pending changes
@@ -134,167 +163,166 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
     }
   };
 
-  // Render block based on type with edit capability
-  const renderBlock = (block: PageBlock) => {
-    if (!block.enabled) return null;
-
+  // Render block preview
+  const renderBlockPreview = (block: PageBlock) => {
     const blockChanges = pendingChanges.blocks?.[block.id] || {};
     const mergedConfig = { ...block.block_config, ...blockChanges };
 
     switch (block.block_type) {
       case 'hero':
-        return (
-          <EditableHeroBlock
-            key={block.id}
-            config={mergedConfig}
-            heroData={heroData}
-            pendingChanges={pendingChanges.hero}
-            isEditMode={isEditMode}
-            onChange={handleHeroChange}
-          />
-        );
-      
+        return <HeroBlock config={mergedConfig} />;
       case 'about-split':
-        return (
-          <EditableAboutSplitBlock
-            key={block.id}
-            config={mergedConfig}
-            aboutMeData={aboutMeData}
-            pendingChanges={pendingChanges.aboutMe}
-            isEditMode={isEditMode}
-            onChange={handleAboutMeChange}
-          />
-        );
-      
+        return <AboutSplitBlock config={mergedConfig} />;
       case 'text-section':
-        return (
-          <EditableTextSectionBlock
-            key={block.id}
-            blockId={block.id}
-            config={mergedConfig}
-            isEditMode={isEditMode}
-            onChange={(config) => handleBlockConfigChange(block.id, config)}
-          />
-        );
-      
+        return <TextSectionBlock config={mergedConfig} />;
       case 'cta-banner':
-        return (
-          <EditableCtaBannerBlock
-            key={block.id}
-            blockId={block.id}
-            config={mergedConfig}
-            isEditMode={isEditMode}
-            onChange={(config) => handleBlockConfigChange(block.id, config)}
-          />
-        );
-      
+        return <CtaBannerBlock config={mergedConfig} />;
       case 'image-text':
-        return (
-          <EditableImageTextBlock
-            key={block.id}
-            blockId={block.id}
-            config={mergedConfig}
-            isEditMode={isEditMode}
-            onChange={(config) => handleBlockConfigChange(block.id, config)}
-          />
-        );
-
-      // Non-editable blocks - render as-is
+        return <ImageTextBlock config={mergedConfig} />;
       case 'chat-widget':
-        return <ChatWidgetBlock key={block.id} config={mergedConfig} />;
+        return <ChatWidgetBlock config={mergedConfig} />;
       case 'featured-carousel':
-        return <FeaturedCarouselBlock key={block.id} config={mergedConfig} />;
+        return <FeaturedCarouselBlock config={mergedConfig} />;
       case 'expertise-grid':
-        return <ExpertiseGridBlock key={block.id} config={mergedConfig} />;
+        return <ExpertiseGridBlock config={mergedConfig} />;
       case 'project-showcase':
-        return <ProjectShowcaseBlock key={block.id} config={mergedConfig} />;
+        return <ProjectShowcaseBlock config={mergedConfig} />;
       case 'spacer':
-        return <SpacerBlock key={block.id} config={mergedConfig} />;
-      
+        return <SpacerBlock config={mergedConfig} />;
       default:
         return (
-          <div key={block.id} className="py-8 text-center text-muted-foreground">
-            Unknown block type: {block.block_type}
+          <div className="py-8 text-center text-muted-foreground">
+            Okänd blocktyp: {block.block_type}
           </div>
         );
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background overflow-auto">
-      {/* Editor Toolbar */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4 mr-2" />
-              Stäng
-            </Button>
-            <div className="h-6 w-px bg-border" />
-            <span className="text-sm font-medium">Redigera landningssidan</span>
-            {hasChanges && (
-              <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 rounded-full">
-                Osparade ändringar
-              </span>
-            )}
-          </div>
+  const sortedBlocks = [...blocks].sort((a, b) => a.order_index - b.order_index);
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditMode(!isEditMode)}
-            >
-              {isEditMode ? (
-                <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Förhandsgranska
-                </>
-              ) : (
-                <>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Redigera
-                </>
+  return (
+    <div className="fixed inset-0 z-50 bg-background flex">
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Editor Toolbar */}
+        <div className="bg-background/95 backdrop-blur border-b z-10">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4 mr-2" />
+                Stäng
+              </Button>
+              <div className="h-6 w-px bg-border" />
+              <span className="text-sm font-medium">Block Editor</span>
+              {hasChanges && (
+                <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 rounded-full">
+                  Osparade ändringar
+                </span>
               )}
-            </Button>
-            
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!hasChanges || isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sparar...
-                </>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsPreviewMode(!isPreviewMode);
+                  setSelectedBlockId(null);
+                }}
+              >
+                {isPreviewMode ? (
+                  <>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Redigera
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Förhandsgranska
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!hasChanges || isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sparar...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Spara & Publicera
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Page Preview with Blocks */}
+        <div className="flex-1 overflow-auto">
+          <div className={isPreviewMode ? '' : 'pb-20'}>
+            <Header />
+            <main className="flex-grow">
+              {isPreviewMode ? (
+                // Preview mode - render blocks normally
+                sortedBlocks
+                  .filter(b => b.enabled)
+                  .map(block => (
+                    <div key={block.id}>
+                      {renderBlockPreview(block)}
+                    </div>
+                  ))
               ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Spara & Publicera
-                </>
+                // Edit mode - wrap blocks with controls
+                <div className="pt-12 space-y-4">
+                  {sortedBlocks.map(block => (
+                    <EditableBlockWrapper
+                      key={block.id}
+                      block={block}
+                      isSelected={selectedBlockId === block.id}
+                      onSelect={() => setSelectedBlockId(
+                        selectedBlockId === block.id ? null : block.id
+                      )}
+                      onDelete={() => handleDeleteBlock(block.id)}
+                      onToggleEnabled={() => handleToggleEnabled(block)}
+                    >
+                      {renderBlockPreview(block)}
+                    </EditableBlockWrapper>
+                  ))}
+                </div>
               )}
-            </Button>
+            </main>
+            <Footer />
           </div>
         </div>
       </div>
 
-      {/* Page Preview/Editor */}
-      <div className={isEditMode ? 'ring-2 ring-primary/20 ring-inset' : ''}>
-        <Header />
-        <main className="flex-grow">
-          {blocks
-            .filter(b => b.enabled)
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(renderBlock)}
-        </main>
-        <Footer />
-      </div>
+      {/* Config Panel - slides in when block selected */}
+      {selectedBlock && !isPreviewMode && (
+        <BlockConfigPanel
+          block={selectedBlock}
+          heroData={heroData}
+          aboutMeData={aboutMeData}
+          pendingHeroChanges={pendingChanges.hero}
+          pendingAboutMeChanges={pendingChanges.aboutMe}
+          pendingBlockChanges={pendingChanges.blocks?.[selectedBlock.id]}
+          onHeroChange={handleHeroChange}
+          onAboutMeChange={handleAboutMeChange}
+          onBlockConfigChange={(config) => handleBlockConfigChange(selectedBlock.id, config)}
+          onClose={() => setSelectedBlockId(null)}
+        />
+      )}
 
-      {/* Edit Mode Indicator */}
-      {isEditMode && (
+      {/* Edit Mode Hint */}
+      {!isPreviewMode && !selectedBlock && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg text-sm font-medium">
-          Redigeringsläge aktivt — klicka på text för att redigera
+          Klicka på "Redigera" på ett block för att redigera dess innehåll
         </div>
       )}
     </div>
