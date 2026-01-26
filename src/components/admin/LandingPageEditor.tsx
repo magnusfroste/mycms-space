@@ -29,7 +29,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 // Block editor components
-import { BlockConfigPanel } from './block-editor';
 import SortableBlockWrapper from './block-editor/SortableBlockWrapper';
 
 // Block renderers (view mode)
@@ -58,7 +57,7 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
   const { toast } = useToast();
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
   
   // Fetch blocks and data
@@ -82,7 +81,6 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
     })
   );
 
-  const selectedBlock = blocks.find(b => b.id === selectedBlockId);
   const sortedBlocks = [...blocks].sort((a, b) => a.order_index - b.order_index);
 
   const hasChanges = 
@@ -278,7 +276,7 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
                 size="sm"
                 onClick={() => {
                   setIsPreviewMode(!isPreviewMode);
-                  setSelectedBlockId(null);
+                  setEditingBlockId(null);
                 }}
               >
                 {isPreviewMode ? (
@@ -345,10 +343,17 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
                         <SortableBlockWrapper
                           key={block.id}
                           block={block}
-                          isSelected={selectedBlockId === block.id}
-                          onSelect={() => setSelectedBlockId(
-                            selectedBlockId === block.id ? null : block.id
-                          )}
+                          isEditing={editingBlockId === block.id}
+                          heroData={heroData}
+                          aboutMeData={aboutMeData}
+                          pendingHeroChanges={pendingChanges.hero}
+                          pendingAboutMeChanges={pendingChanges.aboutMe}
+                          pendingBlockChanges={pendingChanges.blocks?.[block.id]}
+                          onHeroChange={handleHeroChange}
+                          onAboutMeChange={handleAboutMeChange}
+                          onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
+                          onStartEdit={() => setEditingBlockId(block.id)}
+                          onEndEdit={() => setEditingBlockId(null)}
                           onDelete={() => handleDeleteBlock(block.id)}
                           onToggleEnabled={() => handleToggleEnabled(block)}
                         >
@@ -365,24 +370,8 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
         </div>
       </div>
 
-      {/* Config Panel - slides in when block selected */}
-      {selectedBlock && !isPreviewMode && (
-        <BlockConfigPanel
-          block={selectedBlock}
-          heroData={heroData}
-          aboutMeData={aboutMeData}
-          pendingHeroChanges={pendingChanges.hero}
-          pendingAboutMeChanges={pendingChanges.aboutMe}
-          pendingBlockChanges={pendingChanges.blocks?.[selectedBlock.id]}
-          onHeroChange={handleHeroChange}
-          onAboutMeChange={handleAboutMeChange}
-          onBlockConfigChange={(config) => handleBlockConfigChange(selectedBlock.id, config)}
-          onClose={() => setSelectedBlockId(null)}
-        />
-      )}
-
       {/* Edit Mode Hint */}
-      {!isPreviewMode && !selectedBlock && (
+      {!isPreviewMode && !editingBlockId && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg text-sm font-medium">
           Dra i ☰ för att ändra ordning • Klicka "Redigera" för att redigera innehåll
         </div>

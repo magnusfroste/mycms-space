@@ -1,6 +1,7 @@
 // ============================================
 // Sortable Block Wrapper
 // Drag-and-drop wrapper using @dnd-kit
+// Shows either visual preview or inline editor
 // ============================================
 
 import React from 'react';
@@ -9,13 +10,23 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PageBlock } from '@/types';
+import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
+import InlineBlockEditor from './InlineBlockEditor';
 
 interface SortableBlockWrapperProps {
   block: PageBlock;
   children: React.ReactNode;
-  isSelected: boolean;
-  onSelect: () => void;
+  isEditing: boolean;
+  heroData?: HeroSettings | null;
+  aboutMeData?: AboutMeSettings | null;
+  pendingHeroChanges?: Record<string, unknown>;
+  pendingAboutMeChanges?: Record<string, unknown>;
+  pendingBlockChanges?: Record<string, unknown>;
+  onHeroChange: (changes: Record<string, unknown>) => void;
+  onAboutMeChange: (changes: Record<string, unknown>) => void;
+  onBlockConfigChange: (config: Record<string, unknown>) => void;
+  onStartEdit: () => void;
+  onEndEdit: () => void;
   onDelete: () => void;
   onToggleEnabled: () => void;
 }
@@ -36,8 +47,17 @@ const blockTypeLabels: Record<string, string> = {
 const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
   block,
   children,
-  isSelected,
-  onSelect,
+  isEditing,
+  heroData,
+  aboutMeData,
+  pendingHeroChanges,
+  pendingAboutMeChanges,
+  pendingBlockChanges,
+  onHeroChange,
+  onAboutMeChange,
+  onBlockConfigChange,
+  onStartEdit,
+  onEndEdit,
   onDelete,
   onToggleEnabled,
 }) => {
@@ -55,6 +75,26 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
     transition,
   };
 
+  // If editing, show the inline editor instead of the block preview
+  if (isEditing) {
+    return (
+      <div ref={setNodeRef} style={style} className="px-4">
+        <InlineBlockEditor
+          block={block}
+          heroData={heroData}
+          aboutMeData={aboutMeData}
+          pendingHeroChanges={pendingHeroChanges}
+          pendingAboutMeChanges={pendingAboutMeChanges}
+          pendingBlockChanges={pendingBlockChanges}
+          onHeroChange={onHeroChange}
+          onAboutMeChange={onAboutMeChange}
+          onBlockConfigChange={onBlockConfigChange}
+          onDone={onEndEdit}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -63,7 +103,6 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
         'relative group transition-all duration-200',
         'border-2 border-transparent',
         'hover:border-primary/30',
-        isSelected && 'border-primary ring-2 ring-primary/20',
         !block.enabled && 'opacity-50',
         isDragging && 'z-50 opacity-90 shadow-2xl scale-[1.02]'
       )}
@@ -75,7 +114,6 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
           'flex items-center justify-between',
           'bg-background/95 backdrop-blur border rounded-t-lg px-3 py-1.5',
           'opacity-0 group-hover:opacity-100 transition-opacity',
-          isSelected && 'opacity-100',
           isDragging && 'opacity-100'
         )}
       >
@@ -111,11 +149,8 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            className={cn(
-              'h-7 px-2',
-              isSelected && 'bg-primary text-primary-foreground hover:bg-primary/90'
-            )}
-            onClick={onSelect}
+            className="h-7 px-2 bg-primary/10 hover:bg-primary/20"
+            onClick={onStartEdit}
           >
             <Pencil className="h-4 w-4" />
             <span className="ml-1 text-xs">Redigera</span>
@@ -131,11 +166,8 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
         </div>
       </div>
 
-      {/* Block Content */}
-      <div className={cn(
-        'pointer-events-none',
-        isSelected && 'pointer-events-auto'
-      )}>
+      {/* Block Content - Visual Preview */}
+      <div className="pointer-events-none">
         {children}
       </div>
     </div>
