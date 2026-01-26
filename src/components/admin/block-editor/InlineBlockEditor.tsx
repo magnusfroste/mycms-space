@@ -23,6 +23,7 @@ import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
+import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -397,7 +398,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'featured-carousel':
         return renderReadOnlyConfig('Featured items hanteras via Featured-sektionen');
       case 'expertise-grid':
-        return renderReadOnlyConfig('Expertområden hanteras via Expertise-sektionen');
+        return <ExpertiseAreaEditor />;
       case 'project-showcase':
         return renderReadOnlyConfig('Projekt hanteras via Project-sektionen');
       case 'chat-widget':

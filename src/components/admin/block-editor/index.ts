@@ -9,5 +9,6 @@ export { default as IconPicker } from './IconPicker';
 export { default as ImageUpload } from './ImageUpload';
 export { default as FeatureListEditor } from './FeatureListEditor';
 export { default as SkillListEditor } from './SkillListEditor';
+export { default as ExpertiseAreaEditor } from './ExpertiseAreaEditor';
 export type { FeatureItem } from './FeatureListEditor';
 export type { SkillItem } from './SkillListEditor';
