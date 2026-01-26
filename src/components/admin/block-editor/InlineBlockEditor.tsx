@@ -483,7 +483,31 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           </div>
         );
       case 'chat-widget':
-        return <ChatSettingsEditor />;
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Title</Label>
+                <Input
+                  value={(mergedConfig.title as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+                  placeholder="Chat with me"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Section Subtitle</Label>
+                <Input
+                  value={(mergedConfig.subtitle as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+                  placeholder="Ask me anything"
+                />
+              </div>
+            </div>
+            <div className="border-t pt-6">
+              <ChatSettingsEditor />
+            </div>
+          </div>
+        );
       default:
         return <p className="text-muted-foreground">Unknown block type</p>;
     }

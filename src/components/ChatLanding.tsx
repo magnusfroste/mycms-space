@@ -4,7 +4,12 @@ import { ChevronDown } from "lucide-react";
 import AppleChat, { Message } from "./AppleChat";
 import { useChatSettings } from "@/hooks/useChatSettings";
 
-const ChatLanding = () => {
+interface ChatLandingProps {
+  title?: string;
+  subtitle?: string;
+}
+
+const ChatLanding: React.FC<ChatLandingProps> = ({ title, subtitle }) => {
   const navigate = useNavigate();
   const { data: settings } = useChatSettings();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
@@ -31,6 +36,16 @@ const ChatLanding = () => {
   return (
     <div className="pb-20" aria-label="Chat with Magnus">
       <div className="container mx-auto px-4">
+        {(title || subtitle) && (
+          <div className="text-center mb-8">
+            {title && <h2 className="section-title">{title}</h2>}
+            {subtitle && (
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {subtitle}
+              </p>
+            )}
+          </div>
+        )}
         <div className="max-w-4xl mx-auto">
           <AppleChat
             webhookUrl={webhookUrl}

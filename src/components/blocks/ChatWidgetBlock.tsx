@@ -1,12 +1,14 @@
 // ============================================
 // Chat Widget Block
-// Wrapper for ChatLanding component
+// Wrapper for ChatLanding component with configurable title
 // ============================================
 
 import React from 'react';
 import ChatLanding from '@/components/ChatLanding';
 
 interface ChatWidgetBlockConfig {
+  title?: string;
+  subtitle?: string;
   show_quick_actions?: boolean;
 }
 
@@ -15,10 +17,14 @@ interface ChatWidgetBlockProps {
 }
 
 const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
-  // Config can be extended in the future
-  const _typedConfig = config as ChatWidgetBlockConfig;
+  const typedConfig = config as ChatWidgetBlockConfig;
 
-  return <ChatLanding />;
+  return (
+    <ChatLanding 
+      title={typedConfig.title} 
+      subtitle={typedConfig.subtitle} 
+    />
+  );
 };
 
 export default ChatWidgetBlock;
