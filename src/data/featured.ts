@@ -52,10 +52,12 @@ export const fetchFeaturedItems = async (): Promise<FeaturedItem[]> => {
 };
 
 export const createFeaturedItem = async (input: {
-  file: File | null;
+  file?: File | null;
   title: string;
   description: string;
   enabled: boolean;
+  image_url?: string | null;
+  image_path?: string | null;
 }): Promise<FeaturedItem> => {
   const { data: existingItems } = await supabase
     .from('featured_in')
@@ -67,8 +69,8 @@ export const createFeaturedItem = async (input: {
     ? existingItems[0].order_index + 1
     : 1;
 
-  let image_url = null;
-  let image_path = null;
+  let image_url = input.image_url ?? null;
+  let image_path = input.image_path ?? null;
 
   if (input.file) {
     const itemId = crypto.randomUUID();
@@ -96,34 +98,32 @@ export const createFeaturedItem = async (input: {
 
 export const updateFeaturedItem = async (input: {
   id: string;
-  file: File | null;
-  title: string;
-  description: string;
-  enabled: boolean;
-  oldImagePath: string | null;
+  file?: File | null;
+  title?: string;
+  description?: string;
+  enabled?: boolean;
+  image_url?: string | null;
+  image_path?: string | null;
+  oldImagePath?: string | null;
 }): Promise<FeaturedItem> => {
-  let image_url = undefined;
-  let image_path = undefined;
+  const updateData: Record<string, unknown> = {};
 
+  if (input.title !== undefined) updateData.title = input.title;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.enabled !== undefined) updateData.enabled = input.enabled;
+
+  // Handle file upload
   if (input.file) {
     if (input.oldImagePath) {
       await deleteFeaturedImage(input.oldImagePath);
     }
-
     const result = await uploadFeaturedImage(input.file, input.id);
-    image_url = result.url;
-    image_path = result.path;
-  }
-
-  const updateData: any = {
-    title: input.title,
-    description: input.description,
-    enabled: input.enabled,
-  };
-
-  if (image_url !== undefined) {
-    updateData.image_url = image_url;
-    updateData.image_path = image_path;
+    updateData.image_url = result.url;
+    updateData.image_path = result.path;
+  } else if (input.image_url !== undefined) {
+    // Direct URL update (from ImageUpload component)
+    updateData.image_url = input.image_url;
+    updateData.image_path = input.image_path;
   }
 
   const { data, error } = await supabase

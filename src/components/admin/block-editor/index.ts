@@ -10,5 +10,6 @@ export { default as ImageUpload } from './ImageUpload';
 export { default as FeatureListEditor } from './FeatureListEditor';
 export { default as SkillListEditor } from './SkillListEditor';
 export { default as ExpertiseAreaEditor } from './ExpertiseAreaEditor';
+export { default as FeaturedItemEditor } from './FeaturedItemEditor';
 export type { FeatureItem } from './FeatureListEditor';
 export type { SkillItem } from './SkillListEditor';
