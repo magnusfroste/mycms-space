@@ -3,6 +3,7 @@
 // ============================================
 
 export { default as EditableBlockWrapper } from './EditableBlockWrapper';
+export { default as SortableBlockWrapper } from './SortableBlockWrapper';
 export { default as BlockConfigPanel } from './BlockConfigPanel';
 export { default as IconPicker } from './IconPicker';
 export { default as FeatureListEditor } from './FeatureListEditor';
