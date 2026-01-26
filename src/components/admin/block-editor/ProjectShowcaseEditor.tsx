@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import {
   useProjects,
+  useCreateProject,
   useUpdateProject,
   useDeleteProject,
   useDeleteProjectImage,
@@ -38,6 +39,7 @@ import type { Project, ProjectImage } from '@/types';
 
 const ProjectShowcaseEditor: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
+  const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const deleteProjectImage = useDeleteProjectImage();
@@ -45,7 +47,15 @@ const ProjectShowcaseEditor: React.FC = () => {
   const { toast } = useToast();
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [editData, setEditData] = useState({
+    title: '',
+    description: '',
+    demo_link: '',
+    problem_statement: '',
+    why_built: '',
+  });
+  const [newProjectData, setNewProjectData] = useState({
     title: '',
     description: '',
     demo_link: '',
@@ -80,6 +90,43 @@ const ProjectShowcaseEditor: React.FC = () => {
     }
     await updateProject.mutateAsync({ id: editingId, ...editData });
     cancelEditing();
+  };
+
+  const startCreating = () => {
+    setIsCreating(true);
+    setEditingId(null);
+    setNewProjectData({
+      title: '',
+      description: '',
+      demo_link: '',
+      problem_statement: '',
+      why_built: '',
+    });
+  };
+
+  const cancelCreating = () => {
+    setIsCreating(false);
+    setNewProjectData({
+      title: '',
+      description: '',
+      demo_link: '',
+      problem_statement: '',
+      why_built: '',
+    });
+  };
+
+  const saveNewProject = async () => {
+    if (!newProjectData.title || !newProjectData.description) {
+      toast({ title: 'Titel och beskrivning krävs', variant: 'destructive' });
+      return;
+    }
+    const maxOrder = projects?.reduce((max, p) => Math.max(max, p.order_index), -1) ?? -1;
+    await createProject.mutateAsync({
+      ...newProjectData,
+      order_index: maxOrder + 1,
+      enabled: true,
+    });
+    cancelCreating();
   };
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -170,8 +217,77 @@ const ProjectShowcaseEditor: React.FC = () => {
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
           Projekt ({enabledProjects.length} aktiva av {projects?.length || 0})
         </h4>
-        <p className="text-xs text-muted-foreground">Lägg till nya projekt via Projekt-fliken</p>
+        <Button variant="outline" size="sm" onClick={startCreating} disabled={isCreating}>
+          <Plus className="h-4 w-4 mr-1" />
+          Nytt projekt
+        </Button>
       </div>
+
+      {/* Create new project form */}
+      {isCreating && (
+        <Card className="p-4 border-primary/50 bg-primary/5">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Plus className="h-4 w-4 text-primary" />
+              <span className="font-medium text-sm">Skapa nytt projekt</span>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Titel *</Label>
+              <Input
+                value={newProjectData.title}
+                onChange={(e) => setNewProjectData({ ...newProjectData, title: e.target.value })}
+                placeholder="Projektnamn..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Beskrivning *</Label>
+              <Textarea
+                value={newProjectData.description}
+                onChange={(e) => setNewProjectData({ ...newProjectData, description: e.target.value })}
+                placeholder="Kort beskrivning..."
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Demo-länk</Label>
+                <Input
+                  value={newProjectData.demo_link}
+                  onChange={(e) => setNewProjectData({ ...newProjectData, demo_link: e.target.value })}
+                  placeholder="https://..."
+                  type="url"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Problem</Label>
+                <Input
+                  value={newProjectData.problem_statement}
+                  onChange={(e) => setNewProjectData({ ...newProjectData, problem_statement: e.target.value })}
+                  placeholder="Vilket problem löser det?"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Varför byggdes det?</Label>
+              <Input
+                value={newProjectData.why_built}
+                onChange={(e) => setNewProjectData({ ...newProjectData, why_built: e.target.value })}
+                placeholder="Motivation..."
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={saveNewProject} size="sm" disabled={createProject.isPending}>
+                <Check className="h-4 w-4 mr-1" />
+                Skapa
+              </Button>
+              <Button variant="ghost" size="sm" onClick={cancelCreating}>
+                <X className="h-4 w-4 mr-1" />
+                Avbryt
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div className="space-y-2">
         {projects?.map((project) => (
