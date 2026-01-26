@@ -1,13 +1,27 @@
 // ============================================
 // Landing Page Editor - Block-based WYSIWYG
-// Webflow-style editing with config panel
+// Webflow-style editing with config panel & drag-drop
 // ============================================
 
 import React, { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Save, X, Eye, Pencil, Loader2 } from 'lucide-react';
-import { usePageBlocks, useUpdatePageBlock } from '@/models/pageBlocks';
+import { usePageBlocks, useUpdatePageBlock, useReorderPageBlocks } from '@/models/pageBlocks';
 import { useHeroSettings, useUpdateHeroSettings } from '@/hooks/useHeroSettings';
 import { useAboutMeSettings, useUpdateAboutMeSettings } from '@/hooks/useAboutMeSettings';
 import type { PageBlock } from '@/types';
@@ -15,7 +29,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 // Block editor components
-import { EditableBlockWrapper, BlockConfigPanel } from './block-editor';
+import { BlockConfigPanel } from './block-editor';
+import SortableBlockWrapper from './block-editor/SortableBlockWrapper';
 
 // Block renderers (view mode)
 import HeroBlock from '@/components/blocks/HeroBlock';
@@ -55,13 +70,55 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
   const updateHero = useUpdateHeroSettings();
   const updateAboutMe = useUpdateAboutMeSettings();
   const updateBlock = useUpdatePageBlock();
+  const reorderBlocks = useReorderPageBlocks();
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+  const sortedBlocks = [...blocks].sort((a, b) => a.order_index - b.order_index);
 
   const hasChanges = 
     pendingChanges.hero || 
     pendingChanges.aboutMe ||
     (pendingChanges.blocks && Object.keys(pendingChanges.blocks).length > 0);
+
+  // Handle drag end
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedBlocks.findIndex(b => b.id === active.id);
+    const newIndex = sortedBlocks.findIndex(b => b.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Calculate new order
+    const reorderedBlocks = [...sortedBlocks];
+    const [movedBlock] = reorderedBlocks.splice(oldIndex, 1);
+    reorderedBlocks.splice(newIndex, 0, movedBlock);
+
+    // Create update array
+    const updates = reorderedBlocks.map((block, index) => ({
+      id: block.id,
+      order_index: index,
+    }));
+
+    try {
+      await reorderBlocks.mutateAsync(updates);
+      toast({ title: 'Ordning uppdaterad', description: 'Blockordningen har sparats.' });
+    } catch (error) {
+      toast({ title: 'Fel', description: 'Kunde inte uppdatera ordningen', variant: 'destructive' });
+    }
+  };
 
   // Track hero changes
   const handleHeroChange = (changes: Record<string, unknown>) => {
@@ -108,7 +165,6 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
 
   // Delete block
   const handleDeleteBlock = async (blockId: string) => {
-    // For now, just toggle enabled - actual delete would need confirmation
     const block = blocks.find(b => b.id === blockId);
     if (block) {
       handleToggleEnabled(block);
@@ -121,17 +177,14 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
     try {
       const promises: Promise<unknown>[] = [];
 
-      // Save hero changes
       if (pendingChanges.hero && heroData) {
         promises.push(updateHero.mutateAsync(pendingChanges.hero));
       }
 
-      // Save about me changes
       if (pendingChanges.aboutMe && aboutMeData) {
         promises.push(updateAboutMe.mutateAsync(pendingChanges.aboutMe));
       }
 
-      // Save block config changes
       if (pendingChanges.blocks) {
         for (const [blockId, config] of Object.entries(pendingChanges.blocks)) {
           const block = blocks.find(b => b.id === blockId);
@@ -197,8 +250,6 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
         );
     }
   };
-
-  const sortedBlocks = [...blocks].sort((a, b) => a.order_index - b.order_index);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex">
@@ -279,23 +330,34 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
                     </div>
                   ))
               ) : (
-                // Edit mode - wrap blocks with controls
-                <div className="pt-12 space-y-4">
-                  {sortedBlocks.map(block => (
-                    <EditableBlockWrapper
-                      key={block.id}
-                      block={block}
-                      isSelected={selectedBlockId === block.id}
-                      onSelect={() => setSelectedBlockId(
-                        selectedBlockId === block.id ? null : block.id
-                      )}
-                      onDelete={() => handleDeleteBlock(block.id)}
-                      onToggleEnabled={() => handleToggleEnabled(block)}
-                    >
-                      {renderBlockPreview(block)}
-                    </EditableBlockWrapper>
-                  ))}
-                </div>
+                // Edit mode - wrap blocks with sortable controls
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={sortedBlocks.map(b => b.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="pt-12 space-y-4">
+                      {sortedBlocks.map(block => (
+                        <SortableBlockWrapper
+                          key={block.id}
+                          block={block}
+                          isSelected={selectedBlockId === block.id}
+                          onSelect={() => setSelectedBlockId(
+                            selectedBlockId === block.id ? null : block.id
+                          )}
+                          onDelete={() => handleDeleteBlock(block.id)}
+                          onToggleEnabled={() => handleToggleEnabled(block)}
+                        >
+                          {renderBlockPreview(block)}
+                        </SortableBlockWrapper>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </main>
             <Footer />
@@ -322,7 +384,7 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
       {/* Edit Mode Hint */}
       {!isPreviewMode && !selectedBlock && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full shadow-lg text-sm font-medium">
-          Klicka på "Redigera" på ett block för att redigera dess innehåll
+          Dra i ☰ för att ändra ordning • Klicka "Redigera" för att redigera innehåll
         </div>
       )}
     </div>

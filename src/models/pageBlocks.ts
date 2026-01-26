@@ -79,7 +79,9 @@ export const useReorderPageBlocks = () => {
   return useMutation({
     mutationFn: pageBlocksData.reorderPageBlocks,
     onSuccess: () => {
+      // Invalidate all page block queries
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['page-blocks', 'home'] });
     },
   });
 };
