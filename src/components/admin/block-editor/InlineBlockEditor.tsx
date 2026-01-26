@@ -26,6 +26,7 @@ import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatSettingsEditor from './ChatSettingsEditor';
+import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -402,7 +403,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'expertise-grid':
         return <ExpertiseAreaEditor />;
       case 'project-showcase':
-        return renderReadOnlyConfig('Projekt hanteras via Project-sektionen');
+        return <ProjectShowcaseEditor />;
       case 'chat-widget':
         return <ChatSettingsEditor />;
       default:
