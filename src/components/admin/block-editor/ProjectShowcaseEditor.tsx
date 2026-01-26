@@ -3,7 +3,7 @@
 // Inline editing for projects in showcase block
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,15 +11,37 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { useProjects, useUpdateProject, useDeleteProject } from '@/models/projects';
+import {
+  useProjects,
+  useUpdateProject,
+  useDeleteProject,
+  useDeleteProjectImage,
+  uploadProjectImage,
+} from '@/models/projects';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { projectKeys } from '@/models/projects';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, GripVertical, Check, X, ExternalLink, Image } from 'lucide-react';
-import type { Project } from '@/types';
+import {
+  Pencil,
+  Trash2,
+  GripVertical,
+  Check,
+  X,
+  ExternalLink,
+  Image,
+  Upload,
+  Loader2,
+  Plus,
+} from 'lucide-react';
+import type { Project, ProjectImage } from '@/types';
 
 const ProjectShowcaseEditor: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const deleteProjectImage = useDeleteProjectImage();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,8 +52,10 @@ const ProjectShowcaseEditor: React.FC = () => {
     problem_statement: '',
     why_built: '',
   });
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const enabledProjects = projects?.filter(p => p.enabled) || [];
+  const enabledProjects = projects?.filter((p) => p.enabled) || [];
 
   const startEditing = (project: Project) => {
     setEditingId(project.id);
@@ -68,6 +92,59 @@ const ProjectShowcaseEditor: React.FC = () => {
     }
   };
 
+  const handleDeleteImage = async (image: ProjectImage) => {
+    if (confirm('Ta bort denna bild?')) {
+      await deleteProjectImage.mutateAsync({ imageId: image.id, imagePath: image.image_path });
+    }
+  };
+
+  const handleImageUpload = async (projectId: string, file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      toast({ title: 'Endast JPG, PNG, WEBP eller GIF', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingFor(projectId);
+    try {
+      const { url, path } = await uploadProjectImage(file, projectId);
+
+      // Get max order_index for this project
+      const project = projects?.find((p) => p.id === projectId);
+      const maxOrder = project?.images?.reduce((max, img) => Math.max(max, img.order_index), -1) ?? -1;
+
+      // Insert into project_images
+      const { error } = await supabase.from('project_images').insert({
+        project_id: projectId,
+        image_url: url,
+        image_path: path,
+        order_index: maxOrder + 1,
+      });
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      toast({ title: 'Bild uppladdad' });
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast({ title: 'Kunde inte ladda upp bild', variant: 'destructive' });
+    } finally {
+      setUploadingFor(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerUpload = (projectId: string) => {
+    setUploadingFor(projectId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && uploadingFor) {
+      handleImageUpload(uploadingFor, file);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -80,13 +157,20 @@ const ProjectShowcaseEditor: React.FC = () => {
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
           Projekt ({enabledProjects.length} aktiva av {projects?.length || 0})
         </h4>
-        <p className="text-xs text-muted-foreground">
-          Lägg till nya projekt via Projekt-fliken
-        </p>
+        <p className="text-xs text-muted-foreground">Lägg till nya projekt via Projekt-fliken</p>
       </div>
 
       <div className="space-y-2">
@@ -94,6 +178,45 @@ const ProjectShowcaseEditor: React.FC = () => {
           <Card key={project.id} className="p-3">
             {editingId === project.id ? (
               <div className="space-y-3">
+                {/* Image gallery */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Bilder</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {project.images?.map((img) => (
+                      <div key={img.id} className="relative group">
+                        <img
+                          src={img.image_url}
+                          alt=""
+                          className="w-20 h-14 object-cover rounded border"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteImage(img)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      className="w-20 h-14 flex flex-col gap-1"
+                      onClick={() => triggerUpload(project.id)}
+                      disabled={uploadingFor === project.id}
+                    >
+                      {uploadingFor === project.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          <span className="text-[10px]">Lägg till</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-xs">Titel</Label>
                   <Input
@@ -152,7 +275,7 @@ const ProjectShowcaseEditor: React.FC = () => {
             ) : (
               <div className="flex items-start gap-3">
                 <GripVertical className="h-4 w-4 text-muted-foreground/50 mt-1 shrink-0" />
-                
+
                 {/* Thumbnail */}
                 <div className="w-16 h-12 rounded bg-muted shrink-0 overflow-hidden">
                   {project.images && project.images.length > 0 ? (
@@ -172,17 +295,24 @@ const ProjectShowcaseEditor: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm truncate">{project.title}</div>
                   <div className="text-xs text-muted-foreground line-clamp-2">{project.description}</div>
-                  {project.demo_link && project.demo_link !== '#' && (
-                    <a
-                      href={project.demo_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Demo
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {project.demo_link && project.demo_link !== '#' && (
+                      <a
+                        href={project.demo_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Demo
+                      </a>
+                    )}
+                    {project.images && project.images.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {project.images.length} bild{project.images.length !== 1 ? 'er' : ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Actions */}
