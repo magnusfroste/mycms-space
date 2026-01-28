@@ -2,3 +2,6 @@ project_id = "jcsjqnjvnqqghiaawhcl"
 
 [functions.migrate-airtable-projects]
 verify_jwt = false
+
+[functions.enhance-text]
+verify_jwt = false
