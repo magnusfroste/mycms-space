@@ -43,6 +43,7 @@ import { Check, X, Loader2, Plus, Pencil, Trash2, GripVertical, ExternalLink, Im
 import type { Project, ProjectImage } from '@/types';
 import ProjectCategorySelect from './ProjectCategorySelect';
 import SortableProjectItem from './SortableProjectItem';
+import AITextEnhance from './AITextEnhance';
 
 const ProjectShowcaseEditor: React.FC = () => {
   const { data: projects, isLoading } = useProjects();
@@ -285,39 +286,60 @@ const ProjectShowcaseEditor: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Description *</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Description *</Label>
+                <AITextEnhance
+                  text={newProjectData.description}
+                  onTextChange={(text) => setNewProjectData({ ...newProjectData, description: text })}
+                  context="project description"
+                />
+              </div>
               <Textarea
                 value={newProjectData.description}
                 onChange={(e) => setNewProjectData({ ...newProjectData, description: e.target.value })}
                 placeholder="Short description..."
-                rows={2}
+                rows={4}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-xs">Demo Link</Label>
-                <Input
-                  value={newProjectData.demo_link}
-                  onChange={(e) => setNewProjectData({ ...newProjectData, demo_link: e.target.value })}
-                  placeholder="https://..."
-                  type="url"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Problem</Label>
-                <Input
-                  value={newProjectData.problem_statement}
-                  onChange={(e) => setNewProjectData({ ...newProjectData, problem_statement: e.target.value })}
-                  placeholder="What problem does it solve?"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Demo Link</Label>
+              <Input
+                value={newProjectData.demo_link}
+                onChange={(e) => setNewProjectData({ ...newProjectData, demo_link: e.target.value })}
+                placeholder="https://..."
+                type="url"
+              />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Why was it built?</Label>
-              <Input
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Problem Statement</Label>
+                <AITextEnhance
+                  text={newProjectData.problem_statement}
+                  onTextChange={(text) => setNewProjectData({ ...newProjectData, problem_statement: text })}
+                  context="problem statement"
+                />
+              </div>
+              <Textarea
+                value={newProjectData.problem_statement}
+                onChange={(e) => setNewProjectData({ ...newProjectData, problem_statement: e.target.value })}
+                placeholder="What problem does this project solve?"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Why was it built?</Label>
+                <AITextEnhance
+                  text={newProjectData.why_built}
+                  onTextChange={(text) => setNewProjectData({ ...newProjectData, why_built: text })}
+                  context="project motivation"
+                />
+              </div>
+              <Textarea
                 value={newProjectData.why_built}
                 onChange={(e) => setNewProjectData({ ...newProjectData, why_built: e.target.value })}
-                placeholder="Motivation..."
+                placeholder="Motivation and goals..."
+                rows={3}
               />
             </div>
             <div className="flex gap-2 pt-2">
@@ -396,42 +418,62 @@ const ProjectShowcaseEditor: React.FC = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Description</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Description</Label>
+                        <AITextEnhance
+                          text={editData.description}
+                          onTextChange={(text) => setEditData({ ...editData, description: text })}
+                          context="project description"
+                        />
+                      </div>
                       <Textarea
                         value={editData.description}
                         onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                         placeholder="Short description..."
-                        rows={2}
+                        rows={4}
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs">Demo Link</Label>
-                        <Input
-                          value={editData.demo_link}
-                          onChange={(e) => setEditData({ ...editData, demo_link: e.target.value })}
-                          placeholder="https://..."
-                          type="url"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Problem</Label>
-                        <Input
-                          value={editData.problem_statement}
-                          onChange={(e) => setEditData({ ...editData, problem_statement: e.target.value })}
-                          placeholder="What problem does it solve?"
-                        />
-                      </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Why was it built?</Label>
+                      <Label className="text-xs">Demo Link</Label>
                       <Input
-                        value={editData.why_built}
-                        onChange={(e) => setEditData({ ...editData, why_built: e.target.value })}
-                        placeholder="Motivation..."
+                        value={editData.demo_link}
+                        onChange={(e) => setEditData({ ...editData, demo_link: e.target.value })}
+                        placeholder="https://..."
+                        type="url"
                       />
                     </div>
-                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Problem Statement</Label>
+                        <AITextEnhance
+                          text={editData.problem_statement}
+                          onTextChange={(text) => setEditData({ ...editData, problem_statement: text })}
+                          context="problem statement"
+                        />
+                      </div>
+                      <Textarea
+                        value={editData.problem_statement}
+                        onChange={(e) => setEditData({ ...editData, problem_statement: e.target.value })}
+                        placeholder="What problem does this project solve?"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Why was it built?</Label>
+                        <AITextEnhance
+                          text={editData.why_built}
+                          onTextChange={(text) => setEditData({ ...editData, why_built: text })}
+                          context="project motivation"
+                        />
+                      </div>
+                      <Textarea
+                        value={editData.why_built}
+                        onChange={(e) => setEditData({ ...editData, why_built: e.target.value })}
+                        placeholder="Motivation and goals..."
+                        rows={3}
+                      />
+                    </div>
                     {/* Category Selection */}
                     <ProjectCategorySelect projectId={project.id} />
                     
