@@ -11,38 +11,55 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Check, ChevronDown } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Rocket, Target, TrendingUp, BarChart, LineChart, PieChart,
+  Briefcase, Building, Building2, Landmark, Award, Trophy,
+  Code, Code2, Terminal, Cpu, Database, Server, Cloud,
+  Monitor, Laptop, Smartphone, Tablet, Globe, Wifi,
+  Lightbulb, Brain, Sparkles, Zap, Star, Flame,
+  Users, User, UserCheck, UserPlus, HeartHandshake, Handshake,
+  Mail, MessageSquare, MessageCircle, Phone, Video, Mic,
+  Settings, Cog, Wrench, Hammer, Palette,
+  Shield, ShieldCheck, Lock, Key, Eye, EyeOff,
+  Search, Filter, Download, Upload, Share, ExternalLink,
+  FileText, Folder, Image, Camera, BookOpen, Newspaper,
+  Calendar, Clock, Timer, History, Hourglass,
+  Sun, Moon, Heart, Flag, Bookmark, Tag, Layers,
+  type LucideIcon,
+} from 'lucide-react';
 
-// Curated list of commonly used icons
-const availableIcons = [
+// Direct icon mapping for reliable rendering
+const iconComponents: Record<string, LucideIcon> = {
   // Business & Strategy
-  'Rocket', 'Target', 'TrendingUp', 'BarChart', 'LineChart', 'PieChart',
-  'Briefcase', 'Building', 'Building2', 'Landmark', 'Award', 'Trophy',
+  Rocket, Target, TrendingUp, BarChart, LineChart, PieChart,
+  Briefcase, Building, Building2, Landmark, Award, Trophy,
   // Tech & Development
-  'Code', 'Code2', 'Terminal', 'Cpu', 'Database', 'Server', 'Cloud',
-  'Monitor', 'Laptop', 'Smartphone', 'Tablet', 'Globe', 'Wifi',
+  Code, Code2, Terminal, Cpu, Database, Server, Cloud,
+  Monitor, Laptop, Smartphone, Tablet, Globe, Wifi,
   // Innovation & Ideas
-  'Lightbulb', 'Brain', 'Sparkles', 'Zap', 'Star', 'Flame',
+  Lightbulb, Brain, Sparkles, Zap, Star, Flame,
   // People & Teams
-  'Users', 'User', 'UserCheck', 'UserPlus', 'HeartHandshake', 'Handshake',
+  Users, User, UserCheck, UserPlus, HeartHandshake, Handshake,
   // Communication
-  'Mail', 'MessageSquare', 'MessageCircle', 'Phone', 'Video', 'Mic',
+  Mail, MessageSquare, MessageCircle, Phone, Video, Mic,
   // Tools & Settings
-  'Settings', 'Cog', 'Wrench', 'Hammer', 'Tool', 'Palette',
+  Settings, Cog, Wrench, Hammer, Palette,
   // Security
-  'Shield', 'ShieldCheck', 'Lock', 'Key', 'Eye', 'EyeOff',
+  Shield, ShieldCheck, Lock, Key, Eye, EyeOff,
   // Navigation & Actions
-  'Search', 'Filter', 'Download', 'Upload', 'Share', 'ExternalLink',
+  Search, Filter, Download, Upload, Share, ExternalLink,
   // Content
-  'FileText', 'Folder', 'Image', 'Camera', 'BookOpen', 'Newspaper',
+  FileText, Folder, Image, Camera, BookOpen, Newspaper,
   // Time & Calendar
-  'Calendar', 'Clock', 'Timer', 'History', 'Hourglass',
+  Calendar, Clock, Timer, History, Hourglass,
   // Nature & Misc
-  'Sun', 'Moon', 'Heart', 'Flag', 'Bookmark', 'Tag', 'Layers',
-];
+  Sun, Moon, Heart, Flag, Bookmark, Tag, Layers,
+};
+
+// List of available icon names
+const availableIcons = Object.keys(iconComponents);
 
 interface IconPickerProps {
   value: string;
@@ -62,14 +79,8 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
     );
   }, [search]);
 
-  const getIconComponent = (iconName: string): React.ComponentType<{ className?: string }> | null => {
-    const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName];
-    if (!IconComponent || typeof IconComponent !== 'function') return null;
-    return IconComponent;
-  };
-
   const renderIcon = (iconName: string, className?: string) => {
-    const IconComponent = getIconComponent(iconName);
+    const IconComponent = iconComponents[iconName];
     if (!IconComponent) return null;
     return <IconComponent className={className || 'h-4 w-4'} />;
   };
