@@ -99,6 +99,8 @@ export interface UpdateAboutMeInput {
   skill3_description?: string;
   skill3_icon?: string;
   image?: File;
+  image_url?: string;
+  image_path?: string;
 }
 
 // Category Types

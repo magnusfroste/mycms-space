@@ -55,7 +55,7 @@ export const fetchAboutMeSettings = async (): Promise<AboutMeSettings | null> =>
 export const updateAboutMeSettings = async (
   input: UpdateAboutMeInput
 ): Promise<AboutMeSettings> => {
-  const { image, ...updateData } = input;
+  const { image, image_url, image_path, ...updateData } = input;
 
   const { data: existing } = await supabase
     .from('about_me_settings')
@@ -63,9 +63,10 @@ export const updateAboutMeSettings = async (
     .limit(1)
     .maybeSingle();
 
-  let imageUrl: string | undefined;
-  let imagePath: string | undefined;
+  let finalImageUrl: string | undefined = image_url;
+  let finalImagePath: string | undefined = image_path;
 
+  // Handle File upload (legacy flow)
   if (image) {
     if (existing?.image_path) {
       try {
@@ -76,14 +77,14 @@ export const updateAboutMeSettings = async (
     }
 
     const result = await uploadAboutMeImage(image);
-    imageUrl = result.url;
-    imagePath = result.path;
+    finalImageUrl = result.url;
+    finalImagePath = result.path;
   }
 
   const dataToSave = {
     ...updateData,
-    ...(imageUrl && { image_url: imageUrl }),
-    ...(imagePath && { image_path: imagePath }),
+    ...(finalImageUrl !== undefined && { image_url: finalImageUrl }),
+    ...(finalImagePath !== undefined && { image_path: finalImagePath }),
   };
 
   if (existing) {

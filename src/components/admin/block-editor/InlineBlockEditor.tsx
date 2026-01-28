@@ -29,6 +29,8 @@ import ChatSettingsEditor from './ChatSettingsEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import PortfolioSettingsEditor from './PortfolioSettingsEditor';
 import QuickActionsEditor from './QuickActionsEditor';
+import { useUpdateAboutMeSettings } from '@/hooks/useAboutMeSettings';
+import { useToast } from '@/hooks/use-toast';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -68,10 +70,25 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   onBlockConfigChange,
   onDone,
 }) => {
+  const { toast } = useToast();
+  const updateAboutMe = useUpdateAboutMeSettings();
+  
   // Merge pending changes with data
   const mergedHero = heroData ? { ...heroData, ...pendingHeroChanges } : null;
   const mergedAboutMe = aboutMeData ? { ...aboutMeData, ...pendingAboutMeChanges } : null;
   const mergedConfig = { ...block.block_config, ...pendingBlockChanges };
+
+  // Direct save for image uploads (immediate feedback)
+  const handleAboutMeImageUpload = async (url: string) => {
+    try {
+      // Extract path from URL for storage reference
+      const imagePath = url ? url.split('/').pop() || undefined : undefined;
+      await updateAboutMe.mutateAsync({ image_url: url, image_path: imagePath });
+      toast({ title: 'Bild sparad', description: 'Profilbilden har uppdaterats.' });
+    } catch (error) {
+      toast({ title: 'Fel', description: 'Kunde inte spara bilden.', variant: 'destructive' });
+    }
+  };
 
   // Convert hero features to array format for editing
   const getHeroFeatures = (): FeatureItem[] => {
@@ -226,7 +243,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             <ImageUpload
               label="Profile Image"
               value={mergedAboutMe?.image_url || ''}
-              onChange={(url) => onAboutMeChange({ image_url: url })}
+              onChange={handleAboutMeImageUpload}
               bucket="about-me-images"
             />
             <div className="space-y-2">
