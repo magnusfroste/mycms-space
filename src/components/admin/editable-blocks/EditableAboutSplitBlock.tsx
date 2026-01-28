@@ -9,6 +9,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { iconMap } from '@/lib/constants/iconMaps';
 import type { AboutMeSettings } from '@/types';
 import EditableText from './EditableText';
+import AITextEnhance from '../block-editor/AITextEnhance';
 
 interface EditableAboutSplitBlockProps {
   config: Record<string, unknown>;
@@ -60,25 +61,47 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
               </div>
             )}
             
-            <p className="text-lg text-foreground/80 leading-relaxed">
-              <EditableText
-                value={getValue('intro_text', 'With over 20 years of experience in innovation strategy...')}
-                isEditMode={isEditMode}
-                onChange={(value) => onChange({ intro_text: value })}
-                placeholder="Intro text"
-                multiline
-              />
-            </p>
+            <div className="space-y-1">
+              {isEditMode && (
+                <div className="flex justify-end">
+                  <AITextEnhance
+                    text={getValue('intro_text', '')}
+                    onTextChange={(value) => onChange({ intro_text: value })}
+                    context="intro text for About Me section"
+                  />
+                </div>
+              )}
+              <p className="text-lg text-foreground/80 leading-relaxed">
+                <EditableText
+                  value={getValue('intro_text', 'With over 20 years of experience in innovation strategy...')}
+                  isEditMode={isEditMode}
+                  onChange={(value) => onChange({ intro_text: value })}
+                  placeholder="Intro text"
+                  multiline
+                />
+              </p>
+            </div>
             
-            <p className="text-lg text-foreground/80 leading-relaxed">
-              <EditableText
-                value={getValue('additional_text', 'My approach combines technical expertise...')}
-                isEditMode={isEditMode}
-                onChange={(value) => onChange({ additional_text: value })}
-                placeholder="Additional text"
-                multiline
-              />
-            </p>
+            <div className="space-y-1">
+              {isEditMode && (
+                <div className="flex justify-end">
+                  <AITextEnhance
+                    text={getValue('additional_text', '')}
+                    onTextChange={(value) => onChange({ additional_text: value })}
+                    context="additional text for About Me section"
+                  />
+                </div>
+              )}
+              <p className="text-lg text-foreground/80 leading-relaxed">
+                <EditableText
+                  value={getValue('additional_text', 'My approach combines technical expertise...')}
+                  isEditMode={isEditMode}
+                  onChange={(value) => onChange({ additional_text: value })}
+                  placeholder="Additional text"
+                  multiline
+                />
+              </p>
+            </div>
           </div>
           
           <div className="space-y-6">
@@ -96,15 +119,26 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                     placeholder="Skill 1 title"
                   />
                 </h3>
-                <p className="text-muted-foreground">
-                  <EditableText
-                    value={getValue('skill1_description', 'Description...')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill1_description: value })}
-                    placeholder="Skill 1 description"
-                    multiline
-                  />
-                </p>
+                <div className="space-y-1">
+                  {isEditMode && (
+                    <div className="flex justify-end">
+                      <AITextEnhance
+                        text={getValue('skill1_description', '')}
+                        onTextChange={(value) => onChange({ skill1_description: value })}
+                        context="skill description"
+                      />
+                    </div>
+                  )}
+                  <p className="text-muted-foreground">
+                    <EditableText
+                      value={getValue('skill1_description', 'Description...')}
+                      isEditMode={isEditMode}
+                      onChange={(value) => onChange({ skill1_description: value })}
+                      placeholder="Skill 1 description"
+                      multiline
+                    />
+                  </p>
+                </div>
               </div>
             </article>
             
@@ -122,15 +156,26 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                     placeholder="Skill 2 title"
                   />
                 </h3>
-                <p className="text-muted-foreground">
-                  <EditableText
-                    value={getValue('skill2_description', 'Description...')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill2_description: value })}
-                    placeholder="Skill 2 description"
-                    multiline
-                  />
-                </p>
+                <div className="space-y-1">
+                  {isEditMode && (
+                    <div className="flex justify-end">
+                      <AITextEnhance
+                        text={getValue('skill2_description', '')}
+                        onTextChange={(value) => onChange({ skill2_description: value })}
+                        context="skill description"
+                      />
+                    </div>
+                  )}
+                  <p className="text-muted-foreground">
+                    <EditableText
+                      value={getValue('skill2_description', 'Description...')}
+                      isEditMode={isEditMode}
+                      onChange={(value) => onChange({ skill2_description: value })}
+                      placeholder="Skill 2 description"
+                      multiline
+                    />
+                  </p>
+                </div>
               </div>
             </article>
             
@@ -148,15 +193,26 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                     placeholder="Skill 3 title"
                   />
                 </h3>
-                <p className="text-muted-foreground">
-                  <EditableText
-                    value={getValue('skill3_description', 'Description...')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill3_description: value })}
-                    placeholder="Skill 3 description"
-                    multiline
-                  />
-                </p>
+                <div className="space-y-1">
+                  {isEditMode && (
+                    <div className="flex justify-end">
+                      <AITextEnhance
+                        text={getValue('skill3_description', '')}
+                        onTextChange={(value) => onChange({ skill3_description: value })}
+                        context="skill description"
+                      />
+                    </div>
+                  )}
+                  <p className="text-muted-foreground">
+                    <EditableText
+                      value={getValue('skill3_description', 'Description...')}
+                      isEditMode={isEditMode}
+                      onChange={(value) => onChange({ skill3_description: value })}
+                      placeholder="Skill 3 description"
+                      multiline
+                    />
+                  </p>
+                </div>
               </div>
             </article>
           </div>
