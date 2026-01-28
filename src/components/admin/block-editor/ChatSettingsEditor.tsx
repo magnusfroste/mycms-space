@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
 import IconPicker from './IconPicker';
+import AITextEnhance from './AITextEnhance';
 import type { QuickAction } from '@/hooks/useQuickActions';
 
 const ChatSettingsEditor: React.FC = () => {
@@ -113,7 +114,14 @@ const ChatSettingsEditor: React.FC = () => {
           Chat Settings
         </h4>
         <div className="space-y-2">
-          <Label htmlFor="initial_placeholder">Welcome Message</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="initial_placeholder">Welcome Message</Label>
+            <AITextEnhance
+              text={settings?.initial_placeholder || ''}
+              onTextChange={(value) => handleSettingsUpdate('initial_placeholder', value)}
+              context="welcome message for chat widget"
+            />
+          </div>
           <Textarea
             id="initial_placeholder"
             value={settings?.initial_placeholder || ''}
@@ -123,7 +131,14 @@ const ChatSettingsEditor: React.FC = () => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="active_placeholder">Active Placeholder</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="active_placeholder">Active Placeholder</Label>
+            <AITextEnhance
+              text={settings?.active_placeholder || ''}
+              onTextChange={(value) => handleSettingsUpdate('active_placeholder', value)}
+              context="input placeholder for chat widget"
+            />
+          </div>
           <Input
             id="active_placeholder"
             value={settings?.active_placeholder || ''}
