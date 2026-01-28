@@ -90,50 +90,51 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
           {currentIcon || <span className="text-xs text-muted-foreground">?</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0 bg-popover z-50" align="start">
-        <div className="p-2 border-b bg-background">
+      <PopoverContent className="w-80 p-0 bg-popover z-[100]" align="start" sideOffset={4}>
+        <div className="p-3 border-b bg-background">
           <Input
             placeholder="Sök ikon (t.ex. rocket, brain)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8"
+            className="h-9"
             autoFocus
           />
         </div>
-        <ScrollArea className="h-64">
-          <div className="grid grid-cols-6 gap-1 p-2">
-            {filteredIcons.map((iconName) => {
-              const isSelected = value === iconName;
-              return (
-                <Button
-                  key={iconName}
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'h-10 w-10 p-0 flex items-center justify-center relative',
-                    isSelected && 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  )}
-                  onClick={() => {
-                    onChange(iconName);
-                    setOpen(false);
-                    setSearch('');
-                  }}
-                  title={iconName}
-                >
-                  {renderIcon(iconName, 'h-5 w-5')}
-                  {isSelected && (
-                    <Check className="h-3 w-3 absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5" />
-                  )}
-                </Button>
-              );
-            })}
-          </div>
-          {filteredIcons.length === 0 && (
+        <div className="max-h-64 overflow-y-auto p-2">
+          {filteredIcons.length > 0 ? (
+            <div className="grid grid-cols-6 gap-1.5">
+              {filteredIcons.map((iconName) => {
+                const isSelected = value === iconName;
+                return (
+                  <Button
+                    key={iconName}
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      'h-10 w-10 p-0 flex items-center justify-center relative',
+                      isSelected && 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    )}
+                    onClick={() => {
+                      onChange(iconName);
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                    title={iconName}
+                  >
+                    {renderIcon(iconName, 'h-5 w-5')}
+                    {isSelected && (
+                      <Check className="h-3 w-3 absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5" />
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+          ) : (
             <p className="text-center text-muted-foreground py-8 text-sm">
               Ingen ikon hittades för "{search}"
             </p>
           )}
-        </ScrollArea>
+        </div>
         {value && (
           <div className="p-2 border-t bg-muted/30 text-center">
             <span className="text-xs text-muted-foreground">Vald: {value}</span>
