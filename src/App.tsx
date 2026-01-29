@@ -12,13 +12,17 @@ import Chat from "./pages/Chat";
 import BlockDemo from "./pages/BlockDemo";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
-// Google Analytics page view tracking component
+// Page view tracking component (internal + Google Analytics)
 const PageTracker = () => {
   const location = useLocation();
   
+  // Internal analytics tracking
+  usePageTracking();
+  
   useEffect(() => {
-    // Track page view
+    // Google Analytics tracking (if available)
     if (typeof window.gtag === 'function') {
       window.gtag('event', 'page_view', {
         page_path: location.pathname + location.search

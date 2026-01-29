@@ -9,6 +9,7 @@ import PageManager from '@/components/admin/PageManager';
 import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, ExternalLink } from 'lucide-react';
@@ -82,8 +83,9 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="pages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-9">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="pages">Sidor</TabsTrigger>
             <TabsTrigger value="landing">Sidbyggare</TabsTrigger>
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
@@ -93,6 +95,10 @@ const Admin = () => {
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <AnalyticsDashboard />
+          </TabsContent>
 
           <TabsContent value="pages" className="space-y-4">
             <PageManager />

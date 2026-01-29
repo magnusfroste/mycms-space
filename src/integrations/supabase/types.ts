@@ -104,6 +104,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          message_count: number
+          session_end: string | null
+          session_start: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_count?: number
+          session_end?: string | null
+          session_start?: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_count?: number
+          session_end?: string | null
+          session_start?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       chat_settings: {
         Row: {
           active_placeholder: string
@@ -314,6 +341,33 @@ export type Database = {
         }
         Relationships: []
       }
+      page_views: {
+        Row: {
+          created_at: string
+          id: string
+          page_slug: string
+          referrer: string | null
+          user_agent: string | null
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_slug: string
+          referrer?: string | null
+          user_agent?: string | null
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_slug?: string
+          referrer?: string | null
+          user_agent?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       pages: {
         Row: {
           created_at: string
@@ -441,6 +495,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_views: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          project_id: string
+          visitor_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          project_id: string
+          visitor_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_views_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
