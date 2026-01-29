@@ -1,25 +1,34 @@
 import React from 'react';
+import { useParams, Navigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BlockRenderer } from '@/components/blocks';
 import { usePageBlocks, usePageBlocksSubscription } from '@/models/pageBlocks';
-import { useMainLandingPage } from '@/models/pages';
+import { usePageBySlug } from '@/models/pages';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const Index = () => {
-  // Track homepage visit
-  useAnalytics('homepage');
+const DynamicPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+  
+  // Track page visit
+  useAnalytics(slug || 'unknown');
 
-  // Get main landing page
-  const { data: mainPage } = useMainLandingPage();
-  const pageSlug = mainPage?.slug || 'home';
-
-  // Fetch blocks for main landing page
-  const { data: blocks, isLoading } = usePageBlocks(pageSlug);
+  // Fetch page metadata
+  const { data: page, isLoading: pageLoading } = usePageBySlug(slug || '');
+  
+  // Fetch blocks for this page
+  const { data: blocks, isLoading: blocksLoading } = usePageBlocks(slug || '');
   
   // Subscribe to realtime updates
-  usePageBlocksSubscription(pageSlug);
+  usePageBlocksSubscription(slug || '');
+
+  const isLoading = pageLoading || blocksLoading;
+
+  // If page doesn't exist or is not enabled, redirect to 404
+  if (!pageLoading && !page) {
+    return <Navigate to="/404" replace />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,4 +51,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default DynamicPage;
