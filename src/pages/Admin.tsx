@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
@@ -20,7 +20,28 @@ const Admin = () => {
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
   const { data: pages = [] } = usePages();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Read active tab from URL, default to dashboard
+  const tabFromUrl = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  
+  // Sync activeTab when URL changes (e.g., on refresh or back/forward)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+  
+  // Update URL when tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    const pageParam = searchParams.get('page');
+    const newParams = new URLSearchParams();
+    newParams.set('tab', tab);
+    if (pageParam) newParams.set('page', pageParam);
+    setSearchParams(newParams);
+  };
   
   // Get selected page from URL or default to first page
   const selectedPageSlug = searchParams.get('page') || 'home';
@@ -126,7 +147,7 @@ const Admin = () => {
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onLogout={handleLogout}
           onPreview={handlePreview}
         />
