@@ -234,7 +234,6 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             </Button>
           </div>
         </form>
-      </div>
     </div>
   );
 };
