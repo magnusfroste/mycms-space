@@ -7,9 +7,6 @@ import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import PageManager from '@/components/admin/PageManager';
-import { ProjectSettings } from '@/components/admin/ProjectSettings';
-import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
-import FeaturedSettings from '@/components/admin/FeaturedSettings';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -91,32 +88,6 @@ const Admin = () => {
         );
       case 'navigation':
         return <NavSettings />;
-      case 'projects':
-        return <ProjectSettings />;
-      case 'expertise':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Expertise Areas</h2>
-              <p className="text-muted-foreground">
-                Manage expertise areas displayed on the page
-              </p>
-            </div>
-            <ExpertiseSettings />
-          </div>
-        );
-      case 'featured':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Featured In</h2>
-              <p className="text-muted-foreground">
-                Manage featured items in the carousel
-              </p>
-            </div>
-            <FeaturedSettings />
-          </div>
-        );
       case 'chat':
         return (
           <div className="space-y-4">

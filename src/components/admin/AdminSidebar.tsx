@@ -3,9 +3,6 @@ import {
   FileText, 
   Layers, 
   Navigation, 
-  FolderKanban, 
-  Award, 
-  Star, 
   MessageSquare, 
   Webhook,
   ChevronLeft,
@@ -42,12 +39,6 @@ const mainNavItems = [
   { id: 'pages', label: 'Sidor', icon: FileText },
   { id: 'landing', label: 'Sidbyggare', icon: Layers },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
-];
-
-const contentNavItems = [
-  { id: 'projects', label: 'Projects', icon: FolderKanban },
-  { id: 'expertise', label: 'Expertise', icon: Award },
-  { id: 'featured', label: 'Featured', icon: Star },
 ];
 
 const settingsNavItems = [
@@ -93,25 +84,6 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: Ad
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Innehåll</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {contentNavItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => onTabChange(item.id)}
-                    isActive={activeTab === item.id}
-                    tooltip={item.label}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Inställningar</SidebarGroupLabel>
