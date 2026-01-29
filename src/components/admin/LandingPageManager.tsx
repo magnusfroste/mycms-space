@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles, X } from 'lucide-react';
+import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -303,7 +303,6 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
-  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Fetch blocks for selected page
   const { data: blocks = [], isLoading } = usePageBlocks(pageSlug);
@@ -440,39 +439,43 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Landing Page</h2>
-          <p className="text-muted-foreground">
-            Drag to reorder • Click "Edit" to change content
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            AI Sidbyggare
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Chatta med AI till vänster • Redigera block till höger
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant={isAIChatOpen ? "secondary" : "outline"} 
-            onClick={() => setIsAIChatOpen(!isAIChatOpen)}
-            className="gap-2"
-          >
-            {isAIChatOpen ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-            {isAIChatOpen ? 'Stäng AI' : 'AI Sidbyggare'}
-          </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Block
+            Lägg till block
           </Button>
-          <Button variant="outline" onClick={handlePreview}>
+          <Button variant="outline" size="sm" onClick={handlePreview}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Preview
+            Förhandsgranska
           </Button>
         </div>
       </div>
 
-      {/* Main Content with optional AI Chat */}
-      <div className={isAIChatOpen ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
-        {/* Block List */}
-        <div className={isAIChatOpen ? "lg:col-span-2 space-y-4" : "space-y-4"}>
+      {/* Two-column layout: Chat left, Canvas right */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[calc(100vh-16rem)]">
+        {/* AI Chat Panel - Left side */}
+        <div className="lg:col-span-4 lg:sticky lg:top-4 h-[calc(100vh-14rem)]">
+          <PageBuilderChat
+            currentBlocks={sortedBlocks}
+            onClose={() => {}}
+            onCreateBlock={handleAICreateBlock}
+          />
+        </div>
+
+        {/* Block Canvas - Right side */}
+        <div className="lg:col-span-8 space-y-3 overflow-y-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -482,13 +485,20 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
               items={sortedBlocks.map((b) => b.id)}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {sortedBlocks.length === 0 ? (
-                  <Card className="p-8 text-center text-muted-foreground">
-                    <p>Inga block på sidan ännu.</p>
-                    {isAIChatOpen && (
-                      <p className="text-sm mt-2">Använd AI-chatten för att skapa dina första block!</p>
-                    )}
+                  <Card className="p-12 text-center border-dashed border-2">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Sparkles className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Inga block ännu</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Beskriv din sida i chatten så skapar AI:n blocken åt dig
+                        </p>
+                      </div>
+                    </div>
                   </Card>
                 ) : (
                   sortedBlocks.map((block) => (
@@ -513,17 +523,6 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
             </SortableContext>
           </DndContext>
         </div>
-
-        {/* AI Chat Panel */}
-        {isAIChatOpen && (
-          <div className="lg:sticky lg:top-4 h-[calc(100vh-12rem)]">
-            <PageBuilderChat
-              currentBlocks={sortedBlocks}
-              onClose={() => setIsAIChatOpen(false)}
-              onCreateBlock={handleAICreateBlock}
-            />
-          </div>
-        )}
       </div>
 
       {/* Delete Confirmation */}
