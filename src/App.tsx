@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
+import DynamicPage from "./pages/DynamicPage";
 import Chat from "./pages/Chat";
 import BlockDemo from "./pages/BlockDemo";
 import Admin from "./pages/Admin";
@@ -51,7 +52,10 @@ const App = () => {
               <Route path="/chat" element={<Chat />} />
               <Route path="/demo" element={<BlockDemo />} />
               <Route path="/admin" element={<Admin />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* Dynamic page route - catches any slug */}
+              <Route path="/:slug" element={<DynamicPage />} />
+              {/* 404 fallback */}
+              <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

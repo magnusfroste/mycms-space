@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
 import { QuickActionsManager } from '@/components/admin/QuickActionsManager';
 import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
+import PageManager from '@/components/admin/PageManager';
 import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
@@ -13,11 +14,22 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { usePages } from '@/models/pages';
 
 const Admin = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
+  const { data: pages = [] } = usePages();
+  
+  // Get selected page from URL or default to first page
+  const selectedPageSlug = searchParams.get('page') || 'home';
+  const selectedPage = pages.find(p => p.slug === selectedPageSlug) || pages[0];
+  
+  const handlePageSelect = (slug: string) => {
+    setSearchParams({ page: slug });
+  };
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -70,9 +82,10 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="landing" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="landing">Landing Page</TabsTrigger>
+        <Tabs defaultValue="pages" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-8">
+            <TabsTrigger value="pages">Sidor</TabsTrigger>
+            <TabsTrigger value="landing">Sidbyggare</TabsTrigger>
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
@@ -81,8 +94,29 @@ const Admin = () => {
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="pages" className="space-y-4">
+            <PageManager />
+          </TabsContent>
+
           <TabsContent value="landing" className="space-y-4">
-            <LandingPageManager />
+            {/* Page selector for the block editor */}
+            {pages.length > 1 && (
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-muted-foreground">Redigerar:</span>
+                <select
+                  value={selectedPageSlug}
+                  onChange={(e) => handlePageSelect(e.target.value)}
+                  className="px-3 py-1.5 rounded-md border bg-background text-sm"
+                >
+                  {pages.map((page) => (
+                    <option key={page.id} value={page.slug}>
+                      {page.title} {page.is_main_landing ? '(Startsida)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <LandingPageManager pageSlug={selectedPageSlug} />
           </TabsContent>
 
           <TabsContent value="navigation" className="space-y-4">

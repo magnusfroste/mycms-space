@@ -291,7 +291,11 @@ interface PendingChanges {
   blocks?: Record<string, Record<string, unknown>>;
 }
 
-const LandingPageManager = () => {
+interface LandingPageManagerProps {
+  pageSlug?: string;
+}
+
+const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
@@ -301,8 +305,8 @@ const LandingPageManager = () => {
   const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-  // Fetch blocks for home page
-  const { data: blocks = [], isLoading } = usePageBlocks('home');
+  // Fetch blocks for selected page
+  const { data: blocks = [], isLoading } = usePageBlocks(pageSlug);
   const { data: heroData } = useHeroSettings();
   const { data: aboutMeData } = useAboutMeSettings();
 
@@ -333,7 +337,7 @@ const LandingPageManager = () => {
     }));
 
     // Optimistic update
-    queryClient.setQueryData(pageBlocksKeys.byPage('home'), reordered);
+    queryClient.setQueryData(pageBlocksKeys.byPage(pageSlug), reordered);
 
     try {
       await reorderBlocks.mutateAsync(
@@ -341,7 +345,7 @@ const LandingPageManager = () => {
       );
       toast({ title: 'Order updated' });
     } catch {
-      queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage('home') });
+      queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
       toast({ title: 'Error', description: 'Could not update order', variant: 'destructive' });
     }
   };
@@ -393,14 +397,14 @@ const LandingPageManager = () => {
   };
 
   const handlePreview = () => {
-    window.open('/', '_blank');
+    window.open(pageSlug === 'home' ? '/' : `/${pageSlug}`, '_blank');
   };
 
   const handleAddBlock = async () => {
     const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
     try {
       await createBlock.mutateAsync({
-        page_slug: 'home',
+        page_slug: pageSlug,
         block_type: newBlockType,
         block_config: {},
         order_index: maxOrder + 1,
@@ -419,7 +423,7 @@ const LandingPageManager = () => {
     const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
     try {
       await createBlock.mutateAsync({
-        page_slug: 'home',
+        page_slug: pageSlug,
         block_type: blockType as BlockType,
         block_config: config,
         order_index: maxOrder + 1,
