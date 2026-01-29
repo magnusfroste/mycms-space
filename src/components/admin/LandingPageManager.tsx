@@ -23,6 +23,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -440,91 +445,97 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Two-column layout: Chat left, Canvas right */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-0">
-        {/* AI Chat Panel - Left side (Claude-style) */}
-        <div className="lg:col-span-4 xl:col-span-3 border-r border-border flex flex-col h-full">
-          <PageBuilderChat
-            currentBlocks={sortedBlocks}
-            onClose={() => {}}
-            onCreateBlock={handleAICreateBlock}
-          />
-        </div>
+      {/* Resizable two-column layout: Chat left, Canvas right */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
+        {/* AI Chat Panel - Left side */}
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+          <div className="h-full border-r border-border flex flex-col">
+            <PageBuilderChat
+              currentBlocks={sortedBlocks}
+              onClose={() => {}}
+              onCreateBlock={handleAICreateBlock}
+            />
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
 
         {/* Block Canvas - Right side */}
-        <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-full overflow-hidden">
-          {/* Canvas Header */}
-          <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/30">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-medium text-sm">Block Canvas</span>
-              <Badge variant="secondary" className="text-xs">
-                {sortedBlocks.length} block
-              </Badge>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="mr-1 h-3 w-3" />
-                Lägg till
-              </Button>
-              <Button variant="outline" size="sm" onClick={handlePreview}>
-                <ExternalLink className="mr-1 h-3 w-3" />
-                Preview
-              </Button>
-            </div>
-          </div>
-
-          {/* Scrollable Block Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortedBlocks.map((b) => b.id)}
-                strategy={verticalListSortingStrategy}
-              >
-              <div className="space-y-3">
-                {sortedBlocks.length === 0 ? (
-                  <Card className="p-12 text-center border-dashed border-2">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Inga block ännu</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Beskriv din sida i chatten så skapar AI:n blocken åt dig
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                ) : (
-                  sortedBlocks.map((block) => (
-                    <VisualBlockItem
-                      key={block.id}
-                      block={block}
-                      isEditing={editingBlockId === block.id}
-                      heroData={heroData}
-                      aboutMeData={aboutMeData}
-                      pendingChanges={pendingChanges.blocks?.[block.id] || {}}
-                      onHeroChange={handleHeroChange}
-                      onAboutMeChange={handleAboutMeChange}
-                      onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
-                      onStartEdit={() => setEditingBlockId(block.id)}
-                      onEndEdit={() => setEditingBlockId(null)}
-                      onToggleEnabled={() => handleToggleEnabled(block)}
-                      onDelete={() => setDeleteBlockId(block.id)}
-                    />
-                  ))
-                )}
+        <ResizablePanel defaultSize={70} minSize={50}>
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* Canvas Header */}
+            <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">Block Canvas</span>
+                <Badge variant="secondary" className="text-xs">
+                  {sortedBlocks.length} block
+                </Badge>
               </div>
-            </SortableContext>
-          </DndContext>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="mr-1 h-3 w-3" />
+                  Lägg till
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePreview}>
+                  <ExternalLink className="mr-1 h-3 w-3" />
+                  Preview
+                </Button>
+              </div>
+            </div>
+
+            {/* Scrollable Block Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedBlocks.map((b) => b.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                <div className="space-y-3">
+                  {sortedBlocks.length === 0 ? (
+                    <Card className="p-12 text-center border-dashed border-2">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Sparkles className="h-8 w-8 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Inga block ännu</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Beskriv din sida i chatten så skapar AI:n blocken åt dig
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ) : (
+                    sortedBlocks.map((block) => (
+                      <VisualBlockItem
+                        key={block.id}
+                        block={block}
+                        isEditing={editingBlockId === block.id}
+                        heroData={heroData}
+                        aboutMeData={aboutMeData}
+                        pendingChanges={pendingChanges.blocks?.[block.id] || {}}
+                        onHeroChange={handleHeroChange}
+                        onAboutMeChange={handleAboutMeChange}
+                        onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
+                        onStartEdit={() => setEditingBlockId(block.id)}
+                        onEndEdit={() => setEditingBlockId(null)}
+                        onToggleEnabled={() => handleToggleEnabled(block)}
+                        onDelete={() => setDeleteBlockId(block.id)}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
+            </div>
           </div>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
