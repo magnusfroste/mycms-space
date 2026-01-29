@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { WebhookSettings } from '@/components/admin/WebhookSettings';
@@ -10,9 +11,8 @@ import { ProjectSettings } from '@/components/admin/ProjectSettings';
 import ExpertiseSettings from '@/components/admin/ExpertiseSettings';
 import FeaturedSettings from '@/components/admin/FeaturedSettings';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, ExternalLink } from 'lucide-react';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { usePages } from '@/models/pages';
@@ -23,10 +23,10 @@ const Admin = () => {
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
   const { data: pages = [] } = usePages();
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   // Get selected page from URL or default to first page
   const selectedPageSlug = searchParams.get('page') || 'home';
-  const selectedPage = pages.find(p => p.slug === selectedPageSlug) || pages[0];
   
   const handlePageSelect = (slug: string) => {
     setSearchParams({ page: slug });
@@ -61,51 +61,15 @@ const Admin = () => {
     return <Login />;
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-3xl font-bold">Admin Panel</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePreview}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="pages">Sidor</TabsTrigger>
-            <TabsTrigger value="landing">Sidbyggare</TabsTrigger>
-            <TabsTrigger value="navigation">Navigation</TabsTrigger>
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="expertise">Expertise</TabsTrigger>
-            <TabsTrigger value="featured">Featured</TabsTrigger>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="webhook">Webhook</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-4">
-            <AnalyticsDashboard />
-          </TabsContent>
-
-          <TabsContent value="pages" className="space-y-4">
-            <PageManager />
-          </TabsContent>
-
-          <TabsContent value="landing" className="space-y-4">
-            {/* Page selector for the block editor */}
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <AnalyticsDashboard />;
+      case 'pages':
+        return <PageManager />;
+      case 'landing':
+        return (
+          <div className="space-y-4">
             {pages.length > 1 && (
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm text-muted-foreground">Redigerar:</span>
@@ -123,17 +87,15 @@ const Admin = () => {
               </div>
             )}
             <LandingPageManager pageSlug={selectedPageSlug} />
-          </TabsContent>
-
-          <TabsContent value="navigation" className="space-y-4">
-            <NavSettings />
-          </TabsContent>
-
-          <TabsContent value="projects" className="space-y-4">
-            <ProjectSettings />
-          </TabsContent>
-
-          <TabsContent value="expertise" className="space-y-4">
+          </div>
+        );
+      case 'navigation':
+        return <NavSettings />;
+      case 'projects':
+        return <ProjectSettings />;
+      case 'expertise':
+        return (
+          <div className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Expertise Areas</h2>
               <p className="text-muted-foreground">
@@ -141,9 +103,11 @@ const Admin = () => {
               </p>
             </div>
             <ExpertiseSettings />
-          </TabsContent>
-
-          <TabsContent value="featured" className="space-y-4">
+          </div>
+        );
+      case 'featured':
+        return (
+          <div className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Featured In</h2>
               <p className="text-muted-foreground">
@@ -151,9 +115,11 @@ const Admin = () => {
               </p>
             </div>
             <FeaturedSettings />
-          </TabsContent>
-
-          <TabsContent value="chat" className="space-y-4">
+          </div>
+        );
+      case 'chat':
+        return (
+          <div className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Chat Settings</h2>
               <p className="text-muted-foreground">
@@ -162,9 +128,11 @@ const Admin = () => {
             </div>
             <ChatTextSettings />
             <QuickActionsManager />
-          </TabsContent>
-
-          <TabsContent value="webhook" className="space-y-4">
+          </div>
+        );
+      case 'webhook':
+        return (
+          <div className="space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Webhook</h2>
               <p className="text-muted-foreground">
@@ -172,10 +140,31 @@ const Admin = () => {
               </p>
             </div>
             <WebhookSettings />
-          </TabsContent>
-        </Tabs>
+          </div>
+        );
+      default:
+        return <AnalyticsDashboard />;
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          onLogout={handleLogout}
+          onPreview={handlePreview}
+        />
+        <SidebarInset>
+          <div className="flex-1 p-6 lg:p-8">
+            <div className="max-w-6xl mx-auto">
+              {renderContent()}
+            </div>
+          </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
