@@ -16,7 +16,8 @@ interface AirtableRecord {
     'Demo Link'?: string;
     Order?: number;
     Enabled?: boolean;
-    // Support multiple field names for images
+    // Support multiple field names for images (case-sensitive)
+    Image?: Array<{ url: string; filename: string }>;
     image?: Array<{ url: string; filename: string }>;
     Images?: Array<{ url: string; filename: string }>;
     Attachments?: Array<{ url: string; filename: string }>;
@@ -69,6 +70,7 @@ serve(async (req) => {
     if (records.length > 0) {
       const firstRecord = records[0].fields;
       console.log('First record fields:', JSON.stringify({
+        Image: firstRecord.Image,
         image: firstRecord.image,
         Images: firstRecord.Images,
         Attachments: firstRecord.Attachments,
@@ -109,8 +111,8 @@ serve(async (req) => {
           continue;
         }
 
-        // Support multiple field names for images
-        const images = fields.image || fields.Images || fields.Attachments;
+        // Support multiple field names for images (check "Image" first)
+        const images = fields.Image || fields.image || fields.Images || fields.Attachments;
         if (images && images.length > 0) {
           for (let imgIndex = 0; imgIndex < images.length; imgIndex++) {
             const img = images[imgIndex];
