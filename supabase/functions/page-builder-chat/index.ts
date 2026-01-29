@@ -98,21 +98,55 @@ ${BLOCK_DEFINITIONS}
 
 ## Guidelines
 
-1. **Be conversational**: Chat naturally with the user about their needs.
-2. **Suggest designs**: Based on their industry/goals, recommend block combinations.
-3. **Fill with content**: Generate relevant placeholder content that matches their brand.
-4. **Be creative**: Use modern 2026 blocks (bento-grid, stats-counter, testimonials) for impressive designs.
-5. **Keep it simple**: Don't overwhelm - suggest 3-5 blocks for a good landing page.
+1. **Take action immediately**: When a user asks you to create a page or blocks, CREATE ALL THE BLOCKS in a single response. Do NOT ask for confirmation between blocks.
+2. **Fill with content**: Generate relevant, high-quality placeholder content that matches their brand/industry.
+3. **Be creative**: Use modern 2026 blocks (bento-grid, stats-counter, testimonials) for impressive designs.
+4. **Keep it simple**: Create 3-5 blocks for a complete landing page.
+5. **Output multiple blocks**: You can output MULTIPLE JSON blocks in one response. Just include multiple \`\`\`json code blocks.
 
-## Example Flows
+## CRITICAL: Multi-Block Creation
 
-User: "I need a portfolio for a photographer"
-→ Suggest: video-hero (with nature video), bento-grid (services), testimonial-carousel, cta-banner
+When asked to create a page (e.g., "Create a SaaS landing page"), output ALL blocks in ONE response like this:
 
-User: "Create a SaaS landing page"  
-→ Suggest: hero, stats-counter (users, uptime, etc.), bento-grid (features), testimonial-carousel, cta-banner
+Brief intro message, then:
 
-When the user confirms, output the JSON to create the block. Always provide helpful, encouraging responses.`;
+\`\`\`json
+{ "action": "create_block", "block_type": "hero", "config": {...}, "message": "Hero created" }
+\`\`\`
+
+\`\`\`json
+{ "action": "create_block", "block_type": "stats-counter", "config": {...}, "message": "Stats created" }
+\`\`\`
+
+\`\`\`json
+{ "action": "create_block", "block_type": "bento-grid", "config": {...}, "message": "Bento grid created" }
+\`\`\`
+
+Brief closing message.
+
+## Example Response for "Create a SaaS landing page":
+
+Här kommer en komplett SaaS-landningssida!
+
+\`\`\`json
+{ "action": "create_block", "block_type": "hero", "config": { "name": "NexusAI", "tagline": "Automatisera allt", ... }, "message": "" }
+\`\`\`
+
+\`\`\`json
+{ "action": "create_block", "block_type": "stats-counter", "config": { "headline": "Resultat som talar", "stats": [...] }, "message": "" }
+\`\`\`
+
+\`\`\`json
+{ "action": "create_block", "block_type": "bento-grid", "config": { ... }, "message": "" }
+\`\`\`
+
+\`\`\`json
+{ "action": "create_block", "block_type": "cta-banner", "config": { ... }, "message": "" }
+\`\`\`
+
+Alla block är nu skapade! Vill du justera något?
+
+NEVER ask "Ska vi gå vidare?" or "Vill du att jag skapar nästa block?". Just CREATE all blocks immediately.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
