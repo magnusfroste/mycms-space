@@ -65,6 +65,7 @@ const blockTypeLabels: Record<string, string> = {
   'marquee': 'Marquee ✨',
   'stats-counter': 'Stats Counter ✨',
   'testimonial-carousel': 'Testimonials ✨',
+  'contact-form': 'Contact Form',
 };
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
@@ -929,6 +930,52 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
               <TestimonialItemEditor
                 items={testimonialItems}
                 onChange={(testimonials) => onBlockConfigChange({ testimonials })}
+              />
+            </div>
+          </div>
+        );
+      case 'contact-form':
+        return (
+          <div className="max-w-2xl mx-auto space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                value={(mergedConfig.title as string) || ''}
+                onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+                placeholder="Kontakta mig"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtitle</Label>
+              <Textarea
+                value={(mergedConfig.subtitle as string) || ''}
+                onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+                placeholder="Har du ett projekt eller en idé?"
+                rows={2}
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <Label>Show Subject Field</Label>
+              <Switch
+                checked={(mergedConfig.showSubject as boolean) !== false}
+                onCheckedChange={(checked) => onBlockConfigChange({ showSubject: checked })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Button Text</Label>
+              <Input
+                value={(mergedConfig.buttonText as string) || ''}
+                onChange={(e) => onBlockConfigChange({ buttonText: e.target.value })}
+                placeholder="Skicka meddelande"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Success Message</Label>
+              <Textarea
+                value={(mergedConfig.successMessage as string) || ''}
+                onChange={(e) => onBlockConfigChange({ successMessage: e.target.value })}
+                placeholder="Tack för ditt meddelande!"
+                rows={2}
               />
             </div>
           </div>
