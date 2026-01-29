@@ -6,6 +6,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Sanitize filename for Supabase Storage (remove special chars, spaces, etc.)
+function sanitizeFilename(filename: string): string {
+  // Get extension
+  const lastDot = filename.lastIndexOf('.');
+  const ext = lastDot > 0 ? filename.slice(lastDot) : '.jpg';
+  const name = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+  
+  // Replace Swedish chars and special characters
+  const sanitized = name
+    .replace(/[åä]/gi, 'a')
+    .replace(/[ö]/gi, 'o')
+    .replace(/[éè]/gi, 'e')
+    .replace(/\s+/g, '-')           // spaces to dashes
+    .replace(/[^a-zA-Z0-9_-]/g, '') // remove other special chars
+    .slice(0, 50);                  // limit length
+  
+  return (sanitized || 'image') + ext.toLowerCase();
+}
+
 interface AirtableRecord {
   id: string;
   fields: {
@@ -125,8 +144,9 @@ serve(async (req) => {
               const imgArrayBuffer = await imgBlob.arrayBuffer();
               const imgUint8Array = new Uint8Array(imgArrayBuffer);
               
-              // Upload to Supabase storage
-              const fileName = `${project.id}/${imgIndex}-${img.filename || 'image.jpg'}`;
+              // Upload to Supabase storage with sanitized filename
+              const safeFilename = sanitizeFilename(img.filename || 'image.jpg');
+              const fileName = `${project.id}/${imgIndex}-${safeFilename}`;
               const { error: uploadError } = await supabase.storage
                 .from('project-images')
                 .upload(fileName, imgUint8Array, {
