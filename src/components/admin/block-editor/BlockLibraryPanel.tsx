@@ -87,6 +87,7 @@ const BLOCK_CATEGORIES = [
     blocks: [
       { type: 'cta-banner', name: 'CTA Banner', description: 'Call-to-action med knapp', icon: ArrowRight },
       { type: 'chat-widget', name: 'Chat Widget', description: 'AI-chat för besökare', icon: MessageCircle },
+      { type: 'contact-form', name: 'Kontaktformulär', description: 'Formulär för kontaktförfrågningar', icon: MessageCircle },
     ],
   },
   {

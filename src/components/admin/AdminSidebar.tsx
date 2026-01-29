@@ -8,7 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  LogOut
+  LogOut,
+  Mail
 } from 'lucide-react';
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const mainNavItems = [
   { id: 'pages', label: 'Sidor', icon: FileText },
   { id: 'landing', label: 'Sidbyggare', icon: Layers },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
+  { id: 'messages', label: 'Meddelanden', icon: Mail },
 ];
 
 const settingsNavItems = [

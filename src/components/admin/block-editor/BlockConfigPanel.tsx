@@ -23,6 +23,7 @@ import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
+import ContactFormEditor from './ContactFormEditor';
 interface BlockConfigPanelProps {
   block: PageBlock;
   heroData?: HeroSettings | null;
@@ -47,6 +48,7 @@ const blockTypeLabels: Record<string, string> = {
   'expertise-grid': 'Expertis Grid',
   'project-showcase': 'Projekt Showcase',
   'chat-widget': 'Chatt Widget',
+  'contact-form': 'Kontaktformulär',
 };
 
 const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
@@ -360,6 +362,13 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
     </div>
   );
 
+  const renderContactFormConfig = () => (
+    <ContactFormEditor
+      config={mergedConfig as { title?: string; subtitle?: string; showSubject?: boolean; buttonText?: string; successMessage?: string }}
+      onChange={onBlockConfigChange}
+    />
+  );
+
   const renderReadOnlyConfig = (message: string) => (
     <div className="text-center py-8 text-muted-foreground">
       <p className="text-sm">{message}</p>
@@ -381,6 +390,8 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         return renderImageTextConfig();
       case 'spacer':
         return renderSpacerConfig();
+      case 'contact-form':
+        return renderContactFormConfig();
       case 'featured-carousel':
         return renderReadOnlyConfig('Featured items hanteras via Featured-sektionen');
       case 'expertise-grid':

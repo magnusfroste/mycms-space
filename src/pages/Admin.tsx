@@ -8,6 +8,7 @@ import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import PageManager from '@/components/admin/PageManager';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import MessagesManager from '@/components/admin/MessagesManager';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -112,6 +113,8 @@ const Admin = () => {
         return <PageManager />;
       case 'navigation':
         return <NavSettings />;
+      case 'messages':
+        return <MessagesManager />;
       case 'chat':
         return (
           <div className="space-y-4">
