@@ -59,33 +59,36 @@ const Admin = () => {
   }
 
   const renderContent = () => {
+    // Sidbyggaren gets immersive full-width layout
+    if (activeTab === 'landing') {
+      return (
+        <div className="h-[calc(100vh-2rem)]">
+          {pages.length > 1 && (
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <span className="text-sm text-muted-foreground">Redigerar:</span>
+              <select
+                value={selectedPageSlug}
+                onChange={(e) => handlePageSelect(e.target.value)}
+                className="px-3 py-1.5 rounded-md border bg-background text-sm"
+              >
+                {pages.map((page) => (
+                  <option key={page.id} value={page.slug}>
+                    {page.title} {page.is_main_landing ? '(Startsida)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <LandingPageManager pageSlug={selectedPageSlug} />
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return <AnalyticsDashboard />;
       case 'pages':
         return <PageManager />;
-      case 'landing':
-        return (
-          <div className="space-y-4">
-            {pages.length > 1 && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-sm text-muted-foreground">Redigerar:</span>
-                <select
-                  value={selectedPageSlug}
-                  onChange={(e) => handlePageSelect(e.target.value)}
-                  className="px-3 py-1.5 rounded-md border bg-background text-sm"
-                >
-                  {pages.map((page) => (
-                    <option key={page.id} value={page.slug}>
-                      {page.title} {page.is_main_landing ? '(Startsida)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <LandingPageManager pageSlug={selectedPageSlug} />
-          </div>
-        );
       case 'navigation':
         return <NavSettings />;
       case 'chat':
@@ -128,8 +131,8 @@ const Admin = () => {
           onPreview={handlePreview}
         />
         <SidebarInset>
-          <div className="flex-1 p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto">
+          <div className={activeTab === 'landing' ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+            <div className={activeTab === 'landing' ? '' : 'max-w-6xl mx-auto'}>
               {renderContent()}
             </div>
           </div>

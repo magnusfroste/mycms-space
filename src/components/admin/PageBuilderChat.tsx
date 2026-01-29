@@ -6,7 +6,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Bot, 
@@ -98,26 +97,25 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
   };
 
   return (
-    <Card className="flex flex-col h-full border-2 border-primary/20 bg-background/95 backdrop-blur">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b">
+    <div className="flex flex-col h-full bg-background">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10">
+            <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">AI Sidbyggare</CardTitle>
+            <h3 className="font-medium text-sm">AI Sidbyggare</h3>
             <p className="text-xs text-muted-foreground">Beskriv din vision</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={clearMessages} title="Rensa chat">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearMessages} title="Rensa chat">
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      {/* Messages */}
+      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {messages.length === 0 ? (
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
@@ -236,8 +234,8 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
