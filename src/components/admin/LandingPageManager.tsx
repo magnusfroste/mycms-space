@@ -439,34 +439,11 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Sidbyggare
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Chatta med AI till vänster • Redigera block till höger
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Lägg till block
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePreview}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Förhandsgranska
-          </Button>
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col">
       {/* Two-column layout: Chat left, Canvas right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[calc(100vh-16rem)]">
-        {/* AI Chat Panel - Left side */}
-        <div className="lg:col-span-4 lg:sticky lg:top-4 h-[calc(100vh-14rem)]">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 min-h-0">
+        {/* AI Chat Panel - Left side (Claude-style) */}
+        <div className="lg:col-span-4 xl:col-span-3 border-r border-border flex flex-col h-full">
           <PageBuilderChat
             currentBlocks={sortedBlocks}
             onClose={() => {}}
@@ -475,16 +452,39 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         </div>
 
         {/* Block Canvas - Right side */}
-        <div className="lg:col-span-8 space-y-3 overflow-y-auto">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={sortedBlocks.map((b) => b.id)}
-              strategy={verticalListSortingStrategy}
+        <div className="lg:col-span-8 xl:col-span-9 flex flex-col h-full overflow-hidden">
+          {/* Canvas Header */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-medium text-sm">Block Canvas</span>
+              <Badge variant="secondary" className="text-xs">
+                {sortedBlocks.length} block
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                <Plus className="mr-1 h-3 w-3" />
+                Lägg till
+              </Button>
+              <Button variant="outline" size="sm" onClick={handlePreview}>
+                <ExternalLink className="mr-1 h-3 w-3" />
+                Preview
+              </Button>
+            </div>
+          </div>
+
+          {/* Scrollable Block Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
+              <SortableContext
+                items={sortedBlocks.map((b) => b.id)}
+                strategy={verticalListSortingStrategy}
+              >
               <div className="space-y-3">
                 {sortedBlocks.length === 0 ? (
                   <Card className="p-12 text-center border-dashed border-2">
@@ -522,6 +522,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
               </div>
             </SortableContext>
           </DndContext>
+          </div>
         </div>
       </div>
 
