@@ -29,20 +29,23 @@ export const usePageBuilderChat = ({ currentBlocks, onBlockAction }: UsePageBuil
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const parseBlockAction = (content: string): BlockAction | null => {
-    // Look for JSON block in the response
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
+  // Parse ALL block actions from the response (can be multiple)
+  const parseBlockActions = (content: string): BlockAction[] => {
+    const actions: BlockAction[] = [];
+    // Find all JSON blocks in the response
+    const jsonMatches = content.matchAll(/```json\s*([\s\S]*?)\s*```/g);
+    
+    for (const match of jsonMatches) {
       try {
-        const parsed = JSON.parse(jsonMatch[1]);
+        const parsed = JSON.parse(match[1]);
         if (parsed.action && ['create_block', 'update_block', 'suggest'].includes(parsed.action)) {
-          return parsed as BlockAction;
+          actions.push(parsed as BlockAction);
         }
       } catch {
-        // Not valid JSON, ignore
+        // Not valid JSON, skip this block
       }
     }
-    return null;
+    return actions;
   };
 
   const sendMessage = useCallback(async (input: string) => {
@@ -122,10 +125,13 @@ export const usePageBuilderChat = ({ currentBlocks, onBlockAction }: UsePageBuil
         }
       }
 
-      // Check for block actions in the final response
-      const blockAction = parseBlockAction(assistantContent);
-      if (blockAction && onBlockAction) {
-        onBlockAction(blockAction);
+      // Check for block actions in the final response (can be multiple)
+      const blockActions = parseBlockActions(assistantContent);
+      if (blockActions.length > 0 && onBlockAction) {
+        // Execute all block actions sequentially
+        for (const action of blockActions) {
+          onBlockAction(action);
+        }
       }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Ett fel uppstod';
