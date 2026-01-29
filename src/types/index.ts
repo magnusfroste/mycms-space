@@ -235,7 +235,13 @@ export type BlockType =
   | 'project-showcase'
   | 'image-text'
   | 'cta-banner'
-  | 'spacer';
+  | 'spacer'
+  | 'video-hero'
+  | 'parallax-section'
+  | 'bento-grid'
+  | 'marquee'
+  | 'stats-counter'
+  | 'testimonial-carousel';
 
 export interface PageBlock {
   id: string;

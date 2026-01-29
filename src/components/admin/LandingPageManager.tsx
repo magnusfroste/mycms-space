@@ -67,6 +67,12 @@ import FeaturedCarouselBlock from '@/components/blocks/FeaturedCarouselBlock';
 import ExpertiseGridBlock from '@/components/blocks/ExpertiseGridBlock';
 import ProjectShowcaseBlock from '@/components/blocks/ProjectShowcaseBlock';
 import SpacerBlock from '@/components/blocks/SpacerBlock';
+import VideoHeroBlock from '@/components/blocks/VideoHeroBlock';
+import ParallaxSectionBlock from '@/components/blocks/ParallaxSectionBlock';
+import BentoGridBlock from '@/components/blocks/BentoGridBlock';
+import MarqueeBlock from '@/components/blocks/MarqueeBlock';
+import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
+import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
@@ -82,6 +88,12 @@ const blockTypeLabels: Record<string, string> = {
   'expertise-grid': 'Expertise Grid',
   'project-showcase': 'Project Showcase',
   'chat-widget': 'Chat Widget',
+  'video-hero': 'Video Hero ✨',
+  'parallax-section': 'Parallax ✨',
+  'bento-grid': 'Bento Grid ✨',
+  'marquee': 'Marquee ✨',
+  'stats-counter': 'Stats Counter ✨',
+  'testimonial-carousel': 'Testimonials ✨',
 };
 
 interface VisualBlockItemProps {
@@ -152,6 +164,18 @@ const VisualBlockItem = ({
         return <ProjectShowcaseBlock config={config} />;
       case 'spacer':
         return <SpacerBlock config={config} />;
+      case 'video-hero':
+        return <VideoHeroBlock config={config} />;
+      case 'parallax-section':
+        return <ParallaxSectionBlock config={config} />;
+      case 'bento-grid':
+        return <BentoGridBlock config={config} />;
+      case 'marquee':
+        return <MarqueeBlock config={config} />;
+      case 'stats-counter':
+        return <StatsCounterBlock config={config} />;
+      case 'testimonial-carousel':
+        return <TestimonialCarouselBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
