@@ -35,6 +35,7 @@ import {
   usePageBlocks,
   useCreatePageBlock,
   useUpdatePageBlock,
+  useDeletePageBlock,
   useReorderPageBlocks,
   pageBlocksKeys,
 } from '@/models/pageBlocks';
@@ -317,6 +318,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   // Mutations
   const createBlock = useCreatePageBlock();
   const updateBlock = useUpdatePageBlock();
+  const deleteBlock = useDeletePageBlock();
   const reorderBlocks = useReorderPageBlocks();
 
   const sensors = useSensors(
@@ -367,10 +369,13 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   // Delete block
   const handleDelete = async () => {
     if (!deleteBlockId) return;
-    const block = blocks.find((b) => b.id === deleteBlockId);
-    if (block) {
-      await updateBlock.mutateAsync({ id: block.id, enabled: false });
+    try {
+      await deleteBlock.mutateAsync(deleteBlockId);
+      // Also invalidate the specific page query
+      queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
       toast({ title: 'Block borttaget' });
+    } catch {
+      toast({ title: 'Kunde inte ta bort block', variant: 'destructive' });
     }
     setDeleteBlockId(null);
   };
