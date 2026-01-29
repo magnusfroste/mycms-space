@@ -28,6 +28,9 @@ import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatSettingsEditor from './ChatSettingsEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import PortfolioSettingsEditor from './PortfolioSettingsEditor';
+import BentoItemEditor from './BentoItemEditor';
+import StatsItemEditor from './StatsItemEditor';
+import TestimonialItemEditor from './TestimonialItemEditor';
 import QuickActionsEditor from './QuickActionsEditor';
 import { useUpdateAboutMeSettings } from '@/hooks/useAboutMeSettings';
 import { useToast } from '@/hooks/use-toast';
@@ -704,6 +707,16 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           </div>
         );
       case 'bento-grid':
+        const bentoItems = (mergedConfig.items as Array<{
+          id: string;
+          title: string;
+          description: string;
+          icon?: string;
+          image_url?: string;
+          size: 'small' | 'medium' | 'large';
+          gradient?: string;
+        }>) || [];
+        
         return (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
@@ -724,10 +737,11 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
                 />
               </div>
             </div>
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground">
-                Bento Grid uses default items. Custom item editing coming soon.
-              </p>
+            <div className="border-t pt-6">
+              <BentoItemEditor
+                items={bentoItems}
+                onChange={(items) => onBlockConfigChange({ items })}
+              />
             </div>
           </div>
         );
@@ -799,6 +813,15 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           </div>
         );
       case 'stats-counter':
+        const statsItems = (mergedConfig.stats as Array<{
+          id: string;
+          value: number;
+          suffix?: string;
+          prefix?: string;
+          label: string;
+          description?: string;
+        }>) || [];
+        
         return (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
@@ -843,14 +866,25 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
                 />
               </div>
             </div>
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground">
-                Stats Counter uses default statistics. Custom stat editing coming soon.
-              </p>
+            <div className="border-t pt-6">
+              <StatsItemEditor
+                items={statsItems}
+                onChange={(stats) => onBlockConfigChange({ stats })}
+              />
             </div>
           </div>
         );
       case 'testimonial-carousel':
+        const testimonialItems = (mergedConfig.testimonials as Array<{
+          id: string;
+          quote: string;
+          author: string;
+          role: string;
+          company?: string;
+          avatar_url?: string;
+          rating?: number;
+        }>) || [];
+        
         return (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
@@ -891,10 +925,11 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
                 />
               </div>
             </div>
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground">
-                Testimonial Carousel uses default testimonials. Custom testimonial editing coming soon.
-              </p>
+            <div className="border-t pt-6">
+              <TestimonialItemEditor
+                items={testimonialItems}
+                onChange={(testimonials) => onBlockConfigChange({ testimonials })}
+              />
             </div>
           </div>
         );

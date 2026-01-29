@@ -22,5 +22,8 @@ export { default as PortfolioSettingsEditor } from './PortfolioSettingsEditor';
 export { default as CategoryManager } from './CategoryManager';
 export { default as ProjectCategorySelect } from './ProjectCategorySelect';
 export { default as AITextEnhance } from './AITextEnhance';
+export { default as BentoItemEditor } from './BentoItemEditor';
+export { default as StatsItemEditor } from './StatsItemEditor';
+export { default as TestimonialItemEditor } from './TestimonialItemEditor';
 export type { FeatureItem } from './FeatureListEditor';
 export type { SkillItem } from './SkillListEditor';
