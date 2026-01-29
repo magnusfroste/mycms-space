@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.enhance-text]
 verify_jwt = false
+
+[functions.page-builder-chat]
+verify_jwt = false
