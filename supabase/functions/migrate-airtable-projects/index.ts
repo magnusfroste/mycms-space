@@ -16,7 +16,10 @@ interface AirtableRecord {
     'Demo Link'?: string;
     Order?: number;
     Enabled?: boolean;
+    // Support multiple field names for images
+    image?: Array<{ url: string; filename: string }>;
     Images?: Array<{ url: string; filename: string }>;
+    Attachments?: Array<{ url: string; filename: string }>;
     Categories?: string[];
   };
 }
@@ -61,6 +64,17 @@ serve(async (req) => {
     const records: AirtableRecord[] = airtableData.records || [];
     
     console.log(`Found ${records.length} records in Airtable`);
+    
+    // Debug: Log first record's image fields
+    if (records.length > 0) {
+      const firstRecord = records[0].fields;
+      console.log('First record fields:', JSON.stringify({
+        image: firstRecord.image,
+        Images: firstRecord.Images,
+        Attachments: firstRecord.Attachments,
+        allFieldNames: Object.keys(firstRecord)
+      }));
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -95,10 +109,11 @@ serve(async (req) => {
           continue;
         }
 
-        // Handle images if present
-        if (fields.Images && fields.Images.length > 0) {
-          for (let imgIndex = 0; imgIndex < fields.Images.length; imgIndex++) {
-            const img = fields.Images[imgIndex];
+        // Support multiple field names for images
+        const images = fields.image || fields.Images || fields.Attachments;
+        if (images && images.length > 0) {
+          for (let imgIndex = 0; imgIndex < images.length; imgIndex++) {
+            const img = images[imgIndex];
             try {
               // Download image from Airtable
               const imgResponse = await fetch(img.url);
@@ -145,7 +160,7 @@ serve(async (req) => {
         migratedProjects.push({
           id: project.id,
           title: project.title,
-          imageCount: fields.Images?.length || 0,
+          imageCount: images?.length || 0,
         });
         
       } catch (recordError) {
