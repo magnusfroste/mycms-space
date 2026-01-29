@@ -310,7 +310,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
-
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   // Fetch blocks for selected page
   const { data: blocks = [], isLoading } = usePageBlocks(pageSlug);
   const { data: heroData } = useHeroSettings();
@@ -498,6 +498,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         order_index: maxOrder + 1,
         enabled: true,
       });
+      setIsLibraryOpen(false); // Close panel after adding
       toast({ title: 'Block tillagt', description: `${blockTypeLabels[blockType] || blockType} har lagts till` });
     } catch {
       toast({ title: 'Kunde inte lägga till block', variant: 'destructive' });
@@ -506,7 +507,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Resizable three-column layout: Chat left, Canvas center, Library right */}
+      {/* Resizable layout: Chat left, Canvas center, Library right (collapsible) */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
         {/* AI Chat Panel - Left side */}
         <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
@@ -522,7 +523,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         <ResizableHandle withHandle />
 
         {/* Block Canvas - Center */}
-        <ResizablePanel defaultSize={55} minSize={35}>
+        <ResizablePanel defaultSize={isLibraryOpen ? 50 : 75} minSize={35}>
           <div className="flex flex-col h-full overflow-hidden">
             {/* Canvas Header */}
             <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/30">
@@ -560,7 +561,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                         <div>
                           <p className="font-medium">Inga block ännu</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Använd chatten eller välj block från biblioteket →
+                            Använd chatten eller klicka på knappen nedan för att lägga till block
                           </p>
                         </div>
                       </div>
@@ -587,19 +588,36 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                 </div>
               </SortableContext>
             </DndContext>
+
+              {/* Add Block Button - Below last block */}
+              <div className="flex justify-center pt-4">
+                <Button
+                  variant={isLibraryOpen ? "secondary" : "outline"}
+                  size="lg"
+                  className="gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-colors"
+                  onClick={() => setIsLibraryOpen(!isLibraryOpen)}
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Lägg till block</span>
+                </Button>
+              </div>
             </div>
           </div>
         </ResizablePanel>
 
-        <ResizableHandle withHandle />
-
-        {/* Block Library Panel - Right side */}
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-          <BlockLibraryPanel
-            onAddBlock={handleQuickAddBlock}
-            isAdding={createBlock.isPending}
-          />
-        </ResizablePanel>
+        {/* Block Library Panel - Right side (collapsible) */}
+        {isLibraryOpen && (
+          <>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+              <BlockLibraryPanel
+                onAddBlock={handleQuickAddBlock}
+                isAdding={createBlock.isPending}
+                onClose={() => setIsLibraryOpen(false)}
+              />
+            </ResizablePanel>
+          </>
+        )}
       </ResizablePanelGroup>
 
       {/* Delete Confirmation */}
