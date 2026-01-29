@@ -21,6 +21,7 @@ import BentoGridBlock from './BentoGridBlock';
 import MarqueeBlock from './MarqueeBlock';
 import StatsCounterBlock from './StatsCounterBlock';
 import TestimonialCarouselBlock from './TestimonialCarouselBlock';
+import ContactFormBlock from './ContactFormBlock';
 
 interface BlockRendererProps {
   block: PageBlock;
@@ -62,6 +63,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block }) => {
       return <StatsCounterBlock config={block_config} />;
     case 'testimonial-carousel':
       return <TestimonialCarouselBlock config={block_config} />;
+    case 'contact-form':
+      return <ContactFormBlock config={block_config} />;
     default:
       return (
         <div className="py-8 text-center text-muted-foreground">

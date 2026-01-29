@@ -241,7 +241,8 @@ export type BlockType =
   | 'bento-grid'
   | 'marquee'
   | 'stats-counter'
-  | 'testimonial-carousel';
+  | 'testimonial-carousel'
+  | 'contact-form';
 
 export interface PageBlock {
   id: string;
