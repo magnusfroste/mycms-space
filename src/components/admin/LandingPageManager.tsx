@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -76,6 +76,7 @@ import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlo
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
+import PageBuilderChat from './PageBuilderChat';
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
@@ -298,6 +299,7 @@ const LandingPageManager = () => {
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Fetch blocks for home page
   const { data: blocks = [], isLoading } = usePageBlocks('home');
@@ -412,6 +414,23 @@ const LandingPageManager = () => {
     }
   };
 
+  // AI creates a block
+  const handleAICreateBlock = async (blockType: string, config: Record<string, unknown>) => {
+    const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
+    try {
+      await createBlock.mutateAsync({
+        page_slug: 'home',
+        block_type: blockType as BlockType,
+        block_config: config,
+        order_index: maxOrder + 1,
+        enabled: true,
+      });
+      toast({ title: 'AI skapade ett block', description: `${blockType} har lagts till` });
+    } catch {
+      toast({ title: 'Kunde inte skapa block', variant: 'destructive' });
+    }
+  };
+
   if (isLoading) {
     return <div className="p-6">Loading blocks...</div>;
   }
@@ -427,6 +446,14 @@ const LandingPageManager = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant={isAIChatOpen ? "secondary" : "outline"} 
+            onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+            className="gap-2"
+          >
+            {isAIChatOpen ? <X className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+            {isAIChatOpen ? 'Stäng AI' : 'AI Sidbyggare'}
+          </Button>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Block
@@ -438,43 +465,62 @@ const LandingPageManager = () => {
         </div>
       </div>
 
-      {/* Visual Block List */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={sortedBlocks.map((b) => b.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="space-y-4">
-            {sortedBlocks.length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground">
-                <p>Inga block på sidan ännu.</p>
-              </Card>
-            ) : (
-              sortedBlocks.map((block) => (
-                <VisualBlockItem
-                  key={block.id}
-                  block={block}
-                  isEditing={editingBlockId === block.id}
-                  heroData={heroData}
-                  aboutMeData={aboutMeData}
-                  pendingChanges={pendingChanges.blocks?.[block.id] || {}}
-                  onHeroChange={handleHeroChange}
-                  onAboutMeChange={handleAboutMeChange}
-                  onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
-                  onStartEdit={() => setEditingBlockId(block.id)}
-                  onEndEdit={() => setEditingBlockId(null)}
-                  onToggleEnabled={() => handleToggleEnabled(block)}
-                  onDelete={() => setDeleteBlockId(block.id)}
-                />
-              ))
-            )}
+      {/* Main Content with optional AI Chat */}
+      <div className={isAIChatOpen ? "grid grid-cols-1 lg:grid-cols-3 gap-6" : ""}>
+        {/* Block List */}
+        <div className={isAIChatOpen ? "lg:col-span-2 space-y-4" : "space-y-4"}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedBlocks.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {sortedBlocks.length === 0 ? (
+                  <Card className="p-8 text-center text-muted-foreground">
+                    <p>Inga block på sidan ännu.</p>
+                    {isAIChatOpen && (
+                      <p className="text-sm mt-2">Använd AI-chatten för att skapa dina första block!</p>
+                    )}
+                  </Card>
+                ) : (
+                  sortedBlocks.map((block) => (
+                    <VisualBlockItem
+                      key={block.id}
+                      block={block}
+                      isEditing={editingBlockId === block.id}
+                      heroData={heroData}
+                      aboutMeData={aboutMeData}
+                      pendingChanges={pendingChanges.blocks?.[block.id] || {}}
+                      onHeroChange={handleHeroChange}
+                      onAboutMeChange={handleAboutMeChange}
+                      onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
+                      onStartEdit={() => setEditingBlockId(block.id)}
+                      onEndEdit={() => setEditingBlockId(null)}
+                      onToggleEnabled={() => handleToggleEnabled(block)}
+                      onDelete={() => setDeleteBlockId(block.id)}
+                    />
+                  ))
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+
+        {/* AI Chat Panel */}
+        {isAIChatOpen && (
+          <div className="lg:sticky lg:top-4 h-[calc(100vh-12rem)]">
+            <PageBuilderChat
+              currentBlocks={sortedBlocks}
+              onClose={() => setIsAIChatOpen(false)}
+              onCreateBlock={handleAICreateBlock}
+            />
           </div>
-        </SortableContext>
-      </DndContext>
+        )}
+      </div>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
