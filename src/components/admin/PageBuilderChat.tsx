@@ -8,10 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Bot, 
   Send, 
   Sparkles, 
-  Loader2, 
   Plus,
   Trash2,
   CheckCircle2,
@@ -119,7 +117,6 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
           {messages.length === 0 ? (
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
-                <Bot className="h-12 w-12 mx-auto text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">
                   Berätta vad du vill bygga så hjälper jag dig skapa blocken!
                 </p>
@@ -145,15 +142,10 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
                 <div
                   key={i}
                   className={cn(
-                    'flex gap-3',
+                    'flex gap-2',
                     msg.role === 'user' ? 'justify-end' : 'justify-start'
                   )}
                 >
-                  {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
                   <div
                     className={cn(
                       'rounded-2xl px-4 py-2 max-w-[80%]',
@@ -173,10 +165,7 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
                 </div>
               ))}
               {isLoading && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                  </div>
+                <div className="flex gap-2">
                   <div className="bg-muted rounded-2xl px-4 py-2">
                     <div className="flex gap-1">
                       <span className="w-2 h-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
