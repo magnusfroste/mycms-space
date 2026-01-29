@@ -102,9 +102,10 @@ const BLOCK_CATEGORIES = [
 interface BlockLibraryPanelProps {
   onAddBlock: (blockType: string) => void;
   isAdding?: boolean;
+  onClose?: () => void;
 }
 
-const BlockLibraryPanel = ({ onAddBlock, isAdding }: BlockLibraryPanelProps) => {
+const BlockLibraryPanel = ({ onAddBlock, isAdding, onClose }: BlockLibraryPanelProps) => {
   const [search, setSearch] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['hero', 'features', 'social']);
 
@@ -130,7 +131,14 @@ const BlockLibraryPanel = ({ onAddBlock, isAdding }: BlockLibraryPanelProps) => 
     <div className="h-full flex flex-col bg-background border-l border-border">
       {/* Header */}
       <div className="p-3 border-b border-border">
-        <h3 className="font-semibold text-sm mb-2">Blockbibliotek</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-sm">Blockbibliotek</h3>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
+              ×
+            </Button>
+          )}
+        </div>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
