@@ -56,6 +56,12 @@ const blockTypeLabels: Record<string, string> = {
   'expertise-grid': 'Expertise Grid',
   'project-showcase': 'Project Showcase',
   'chat-widget': 'Chat Widget',
+  'video-hero': 'Video Hero ✨',
+  'parallax-section': 'Parallax ✨',
+  'bento-grid': 'Bento Grid ✨',
+  'marquee': 'Marquee ✨',
+  'stats-counter': 'Stats Counter ✨',
+  'testimonial-carousel': 'Testimonials ✨',
 };
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
@@ -526,6 +532,369 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             </div>
             <div className="border-t pt-6">
               <QuickActionsEditor />
+            </div>
+          </div>
+        );
+      case 'video-hero':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Video URL</Label>
+                  <Input
+                    value={(mergedConfig.video_url as string) || ''}
+                    onChange={(e) => onBlockConfigChange({ video_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                  <p className="text-xs text-muted-foreground">Direct link to MP4 video file</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Headline</Label>
+                  <Input
+                    value={(mergedConfig.headline as string) || ''}
+                    onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                    placeholder="Create Something Extraordinary"
+                    className="text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subheadline</Label>
+                  <Textarea
+                    value={(mergedConfig.subheadline as string) || ''}
+                    onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+                    placeholder="Your vision, realized..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="grid gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>CTA Button Text</Label>
+                    <Input
+                      value={(mergedConfig.cta_text as string) || ''}
+                      onChange={(e) => onBlockConfigChange({ cta_text: e.target.value })}
+                      placeholder="Get Started"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CTA URL</Label>
+                    <Input
+                      value={(mergedConfig.cta_url as string) || ''}
+                      onChange={(e) => onBlockConfigChange({ cta_url: e.target.value })}
+                      placeholder="/contact"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Text Alignment</Label>
+                  <Select
+                    value={(mergedConfig.text_alignment as string) || 'center'}
+                    onValueChange={(value) => onBlockConfigChange({ text_alignment: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Overlay Opacity ({((mergedConfig.overlay_opacity as number) ?? 0.7) * 100}%)</Label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={(mergedConfig.overlay_opacity as number) ?? 0.7}
+                    onChange={(e) => onBlockConfigChange({ overlay_opacity: parseFloat(e.target.value) })}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <Label>Show Video Controls</Label>
+                  <Switch
+                    checked={(mergedConfig.show_controls as boolean) !== false}
+                    onCheckedChange={(checked) => onBlockConfigChange({ show_controls: checked })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'parallax-section':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-4">
+                <ImageUpload
+                  label="Background Image"
+                  value={(mergedConfig.background_image as string) || ''}
+                  onChange={(url) => onBlockConfigChange({ background_image: url })}
+                  bucket="about-me-images"
+                />
+                <div className="space-y-2">
+                  <Label>Headline</Label>
+                  <Input
+                    value={(mergedConfig.headline as string) || ''}
+                    onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                    placeholder="Immersive Experiences"
+                    className="text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={(mergedConfig.description as string) || ''}
+                    onChange={(e) => onBlockConfigChange({ description: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Section Height</Label>
+                  <Select
+                    value={(mergedConfig.height as string) || 'large'}
+                    onValueChange={(value) => onBlockConfigChange({ height: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="medium">Medium (60vh)</SelectItem>
+                      <SelectItem value="large">Large (80vh)</SelectItem>
+                      <SelectItem value="full">Full Screen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Parallax Speed ({(mergedConfig.parallax_speed as number) ?? 0.5})</Label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={(mergedConfig.parallax_speed as number) ?? 0.5}
+                    onChange={(e) => onBlockConfigChange({ parallax_speed: parseFloat(e.target.value) })}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Text Color</Label>
+                  <Select
+                    value={(mergedConfig.text_color as string) || 'light'}
+                    onValueChange={(value) => onBlockConfigChange({ text_color: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light (for dark backgrounds)</SelectItem>
+                      <SelectItem value="dark">Dark (for light backgrounds)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'bento-grid':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Headline</Label>
+                <Input
+                  value={(mergedConfig.headline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                  placeholder="Everything You Need"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subheadline</Label>
+                <Input
+                  value={(mergedConfig.subheadline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+                  placeholder="A complete toolkit..."
+                />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground">
+                Bento Grid uses default items. Custom item editing coming soon.
+              </p>
+            </div>
+          </div>
+        );
+      case 'marquee':
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4 max-w-xl">
+              <div className="space-y-2">
+                <Label>Headline (optional)</Label>
+                <Input
+                  value={(mergedConfig.headline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                  placeholder="TRUSTED BY INDUSTRY LEADERS"
+                />
+              </div>
+              <div className="grid gap-4 grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Speed</Label>
+                  <Select
+                    value={(mergedConfig.speed as string) || 'medium'}
+                    onValueChange={(value) => onBlockConfigChange({ speed: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="slow">Slow (40s)</SelectItem>
+                      <SelectItem value="medium">Medium (25s)</SelectItem>
+                      <SelectItem value="fast">Fast (15s)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Direction</Label>
+                  <Select
+                    value={(mergedConfig.direction as string) || 'left'}
+                    onValueChange={(value) => onBlockConfigChange({ direction: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Left</SelectItem>
+                      <SelectItem value="right">Right</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <Label>Pause on Hover</Label>
+                <Switch
+                  checked={(mergedConfig.pause_on_hover as boolean) !== false}
+                  onCheckedChange={(checked) => onBlockConfigChange({ pause_on_hover: checked })}
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <Label>Show Gradient Edges</Label>
+                <Switch
+                  checked={(mergedConfig.show_gradient as boolean) !== false}
+                  onCheckedChange={(checked) => onBlockConfigChange({ show_gradient: checked })}
+                />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground">
+                Marquee uses default text items. Custom item editing coming soon.
+              </p>
+            </div>
+          </div>
+        );
+      case 'stats-counter':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Headline</Label>
+                <Input
+                  value={(mergedConfig.headline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                  placeholder="Our Impact"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subheadline</Label>
+                <Input
+                  value={(mergedConfig.subheadline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+                  placeholder="Numbers that speak for themselves"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 grid-cols-2">
+              <div className="space-y-2">
+                <Label>Layout</Label>
+                <Select
+                  value={(mergedConfig.layout as string) || 'grid'}
+                  onValueChange={(value) => onBlockConfigChange({ layout: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="grid">Grid (2x2 on mobile)</SelectItem>
+                    <SelectItem value="inline">Inline Row</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <Label>Animate Numbers</Label>
+                <Switch
+                  checked={(mergedConfig.animate as boolean) !== false}
+                  onCheckedChange={(checked) => onBlockConfigChange({ animate: checked })}
+                />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground">
+                Stats Counter uses default statistics. Custom stat editing coming soon.
+              </p>
+            </div>
+          </div>
+        );
+      case 'testimonial-carousel':
+        return (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+              <div className="space-y-2">
+                <Label>Section Headline</Label>
+                <Input
+                  value={(mergedConfig.headline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+                  placeholder="What People Say"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subheadline</Label>
+                <Input
+                  value={(mergedConfig.subheadline as string) || ''}
+                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+                  placeholder="Trusted by industry leaders..."
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 grid-cols-2">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <Label>Autoplay</Label>
+                <Switch
+                  checked={(mergedConfig.autoplay as boolean) !== false}
+                  onCheckedChange={(checked) => onBlockConfigChange({ autoplay: checked })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Autoplay Interval (ms)</Label>
+                <Input
+                  type="number"
+                  value={(mergedConfig.autoplay_interval as number) || 5000}
+                  onChange={(e) => onBlockConfigChange({ autoplay_interval: parseInt(e.target.value) })}
+                  min={2000}
+                  max={10000}
+                  step={500}
+                />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground">
+                Testimonial Carousel uses default testimonials. Custom testimonial editing coming soon.
+              </p>
             </div>
           </div>
         );
