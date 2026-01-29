@@ -83,6 +83,7 @@ import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlo
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
 import PageBuilderChat from './PageBuilderChat';
+import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
@@ -486,12 +487,29 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
     return <div className="p-6">Loading blocks...</div>;
   }
 
+  // Quick add from library panel
+  const handleQuickAddBlock = async (blockType: string) => {
+    const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
+    try {
+      await createBlock.mutateAsync({
+        page_slug: pageSlug,
+        block_type: blockType as BlockType,
+        block_config: {},
+        order_index: maxOrder + 1,
+        enabled: true,
+      });
+      toast({ title: 'Block tillagt', description: `${blockTypeLabels[blockType] || blockType} har lagts till` });
+    } catch {
+      toast({ title: 'Kunde inte lägga till block', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
-      {/* Resizable two-column layout: Chat left, Canvas right */}
+      {/* Resizable three-column layout: Chat left, Canvas center, Library right */}
       <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
         {/* AI Chat Panel - Left side */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+        <ResizablePanel defaultSize={25} minSize={15} maxSize={40}>
           <div className="h-full border-r border-border flex flex-col">
             <PageBuilderChat
               currentBlocks={sortedBlocks}
@@ -503,8 +521,8 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
 
         <ResizableHandle withHandle />
 
-        {/* Block Canvas - Right side */}
-        <ResizablePanel defaultSize={70} minSize={50}>
+        {/* Block Canvas - Center */}
+        <ResizablePanel defaultSize={55} minSize={35}>
           <div className="flex flex-col h-full overflow-hidden">
             {/* Canvas Header */}
             <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/30">
@@ -515,16 +533,10 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                   {sortedBlocks.length} block
                 </Badge>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  Lägg till
-                </Button>
-                <Button variant="outline" size="sm" onClick={handlePreview}>
-                  <ExternalLink className="mr-1 h-3 w-3" />
-                  Preview
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={handlePreview}>
+                <ExternalLink className="mr-1 h-3 w-3" />
+                Preview
+              </Button>
             </div>
 
             {/* Scrollable Block Area */}
@@ -548,7 +560,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                         <div>
                           <p className="font-medium">Inga block ännu</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Beskriv din sida i chatten så skapar AI:n blocken åt dig
+                            Använd chatten eller välj block från biblioteket →
                           </p>
                         </div>
                       </div>
@@ -577,6 +589,16 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
             </DndContext>
             </div>
           </div>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle />
+
+        {/* Block Library Panel - Right side */}
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+          <BlockLibraryPanel
+            onAddBlock={handleQuickAddBlock}
+            isAdding={createBlock.isPending}
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
 
