@@ -15,6 +15,12 @@ import ProjectShowcaseBlock from './ProjectShowcaseBlock';
 import ImageTextBlock from './ImageTextBlock';
 import CtaBannerBlock from './CtaBannerBlock';
 import SpacerBlock from './SpacerBlock';
+import VideoHeroBlock from './VideoHeroBlock';
+import ParallaxSectionBlock from './ParallaxSectionBlock';
+import BentoGridBlock from './BentoGridBlock';
+import MarqueeBlock from './MarqueeBlock';
+import StatsCounterBlock from './StatsCounterBlock';
+import TestimonialCarouselBlock from './TestimonialCarouselBlock';
 
 interface BlockRendererProps {
   block: PageBlock;
@@ -44,6 +50,18 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block }) => {
       return <CtaBannerBlock config={block_config} />;
     case 'spacer':
       return <SpacerBlock config={block_config} />;
+    case 'video-hero':
+      return <VideoHeroBlock config={block_config} />;
+    case 'parallax-section':
+      return <ParallaxSectionBlock config={block_config} />;
+    case 'bento-grid':
+      return <BentoGridBlock config={block_config} />;
+    case 'marquee':
+      return <MarqueeBlock config={block_config} />;
+    case 'stats-counter':
+      return <StatsCounterBlock config={block_config} />;
+    case 'testimonial-carousel':
+      return <TestimonialCarouselBlock config={block_config} />;
     default:
       return (
         <div className="py-8 text-center text-muted-foreground">
