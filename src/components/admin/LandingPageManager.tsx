@@ -366,14 +366,52 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
     }
   };
 
-  // Delete block
+  // Delete block with undo capability
   const handleDelete = async () => {
     if (!deleteBlockId) return;
+    
+    // Find the block to save its data for potential undo
+    const blockToDelete = blocks.find((b) => b.id === deleteBlockId);
+    if (!blockToDelete) {
+      setDeleteBlockId(null);
+      return;
+    }
+    
+    // Store block data for undo
+    const deletedBlockData = { ...blockToDelete };
+    
     try {
       await deleteBlock.mutateAsync(deleteBlockId);
-      // Also invalidate the specific page query
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-      toast({ title: 'Block borttaget' });
+      
+      // Show toast with undo action
+      toast({
+        title: 'Block borttaget',
+        description: `"${blockToDelete.block_type}" har tagits bort`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                await createBlock.mutateAsync({
+                  page_slug: deletedBlockData.page_slug,
+                  block_type: deletedBlockData.block_type,
+                  block_config: deletedBlockData.block_config,
+                  order_index: deletedBlockData.order_index,
+                  enabled: deletedBlockData.enabled ?? true,
+                });
+                queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
+                toast({ title: 'Block återställt!' });
+              } catch {
+                toast({ title: 'Kunde inte återställa block', variant: 'destructive' });
+              }
+            }}
+          >
+            Ångra
+          </Button>
+        ),
+      });
     } catch {
       toast({ title: 'Kunde inte ta bort block', variant: 'destructive' });
     }
