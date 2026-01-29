@@ -30,9 +30,14 @@ interface AirtableRecord {
   fields: {
     Title?: string;
     Description?: string;
+    // Support both field name variants
+    Problem?: string;
     'Problem Statement'?: string;
+    Reason?: string;
     'Why Built'?: string;
+    demoLink?: string;
     'Demo Link'?: string;
+    order?: number;
     Order?: number;
     Enabled?: boolean;
     // Support multiple field names for images (case-sensitive)
@@ -110,16 +115,22 @@ serve(async (req) => {
       const fields = record.fields;
       
       try {
+        // Get values with fallbacks for different field name variants
+        const problemStatement = fields.Problem || fields['Problem Statement'] || null;
+        const whyBuilt = fields.Reason || fields['Why Built'] || null;
+        const demoLink = fields.demoLink || fields['Demo Link'] || '#';
+        const orderIndex = fields.order ?? fields.Order ?? i;
+
         // Insert project
         const { data: project, error: projectError } = await supabase
           .from('projects')
           .insert({
             title: fields.Title || 'Untitled',
             description: fields.Description || '',
-            problem_statement: fields['Problem Statement'] || null,
-            why_built: fields['Why Built'] || null,
-            demo_link: fields['Demo Link'] || '#',
-            order_index: fields.Order ?? i,
+            problem_statement: problemStatement,
+            why_built: whyBuilt,
+            demo_link: demoLink,
+            order_index: orderIndex,
             enabled: fields.Enabled !== false,
           })
           .select()
