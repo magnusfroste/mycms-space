@@ -11,10 +11,17 @@ interface Message {
 }
 
 interface BlockAction {
-  action: 'create_block' | 'update_block' | 'suggest';
+  action: 'create_block' | 'update_block' | 'suggest' | 'add_project';
   block_type?: string;
   config?: Record<string, unknown>;
   message?: string;
+  project?: {
+    title: string;
+    description: string;
+    problem_statement?: string;
+    why_built?: string;
+    demo_link?: string;
+  };
 }
 
 interface UsePageBuilderChatProps {
@@ -38,7 +45,7 @@ export const usePageBuilderChat = ({ currentBlocks, onBlockAction }: UsePageBuil
     for (const match of jsonMatches) {
       try {
         const parsed = JSON.parse(match[1]);
-        if (parsed.action && ['create_block', 'update_block', 'suggest'].includes(parsed.action)) {
+        if (parsed.action && ['create_block', 'update_block', 'suggest', 'add_project'].includes(parsed.action)) {
           actions.push(parsed as BlockAction);
         }
       } catch {

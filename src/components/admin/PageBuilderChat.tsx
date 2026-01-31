@@ -13,10 +13,14 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Globe,
+  FolderPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePageBuilderChat } from '@/hooks/usePageBuilderChat';
+import { useCreateProject } from '@/models/projects';
+import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import type { PageBlock } from '@/types';
 
@@ -32,6 +36,7 @@ const suggestedPrompts = [
   "Bygg en landningssida för en restaurang",
   "Hjälp mig med en konsultportfölj",
   "Skapa ett hero-block med video",
+  "Hämta info från https://flowwink.com och skapa ett projekt",
 ];
 
 const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
@@ -41,19 +46,36 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
 }) => {
   const [input, setInput] = useState('');
   const [pendingAction, setPendingAction] = useState<{
-    block_type: string;
-    config: Record<string, unknown>;
+    type: 'block' | 'project';
+    block_type?: string;
+    config?: Record<string, unknown>;
+    project?: {
+      title: string;
+      description: string;
+      problem_statement?: string;
+      why_built?: string;
+      demo_link?: string;
+    };
     message?: string;
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const createProject = useCreateProject();
+  const { toast } = useToast();
 
   const { messages, isLoading, error, sendMessage, clearMessages } = usePageBuilderChat({
     currentBlocks: currentBlocks.map(b => ({ block_type: b.block_type })),
     onBlockAction: (action) => {
       if (action.action === 'create_block' && action.block_type && action.config) {
         setPendingAction({
+          type: 'block',
           block_type: action.block_type,
           config: action.config,
+          message: action.message,
+        });
+      } else if (action.action === 'add_project' && action.project) {
+        setPendingAction({
+          type: 'project',
+          project: action.project,
           message: action.message,
         });
       }
@@ -78,10 +100,31 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
     sendMessage(prompt);
   };
 
-  const handleConfirmBlock = () => {
-    if (pendingAction) {
+  const handleConfirmBlock = async () => {
+    if (!pendingAction) return;
+    
+    if (pendingAction.type === 'block' && pendingAction.block_type && pendingAction.config) {
       onCreateBlock(pendingAction.block_type, pendingAction.config);
       setPendingAction(null);
+    } else if (pendingAction.type === 'project' && pendingAction.project) {
+      try {
+        await createProject.mutateAsync({
+          title: pendingAction.project.title,
+          description: pendingAction.project.description,
+          problem_statement: pendingAction.project.problem_statement,
+          why_built: pendingAction.project.why_built,
+          demo_link: pendingAction.project.demo_link || '#',
+          order_index: 999, // Will be sorted by the hook
+          enabled: true,
+        });
+        toast({
+          title: 'Projekt skapat!',
+          description: `"${pendingAction.project.title}" har lagts till i din portfolio.`,
+        });
+        setPendingAction(null);
+      } catch (err) {
+        console.error('Failed to create project:', err);
+      }
     }
   };
 
@@ -180,7 +223,7 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
         </ScrollArea>
 
         {/* Pending Block Action */}
-        {pendingAction && (
+        {pendingAction && pendingAction.type === 'block' && (
           <div className="mx-4 mb-2 p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-2">
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4 text-primary" />
@@ -192,6 +235,44 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
               <Button size="sm" onClick={handleConfirmBlock} className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 Skapa
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleRejectBlock}>
+                Avbryt
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Project Action */}
+        {pendingAction && pendingAction.type === 'project' && pendingAction.project && (
+          <div className="mx-4 mb-2 p-3 rounded-xl bg-green-500/10 border border-green-500/20 space-y-3">
+            <div className="flex items-center gap-2">
+              <FolderPlus className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium">
+                Lägg till nytt projekt?
+              </span>
+            </div>
+            <div className="space-y-1 text-sm">
+              <p className="font-medium">{pendingAction.project.title}</p>
+              <p className="text-muted-foreground text-xs line-clamp-2">
+                {pendingAction.project.description}
+              </p>
+              {pendingAction.project.demo_link && (
+                <p className="text-xs flex items-center gap-1 text-primary">
+                  <Globe className="h-3 w-3" />
+                  {pendingAction.project.demo_link}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={handleConfirmBlock} 
+                className="gap-1 bg-green-600 hover:bg-green-700"
+                disabled={createProject.isPending}
+              >
+                <CheckCircle2 className="h-3 w-3" />
+                {createProject.isPending ? 'Skapar...' : 'Lägg till'}
               </Button>
               <Button size="sm" variant="outline" onClick={handleRejectBlock}>
                 Avbryt
