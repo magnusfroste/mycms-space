@@ -164,12 +164,22 @@ export interface QuickAction {
   enabled: boolean;
 }
 
-// Chat Settings Types
+// Chat Settings Types (Legacy - kept for compatibility)
 export interface ChatSettings {
   id: string;
   webhook_url: string;
   initial_placeholder: string;
   active_placeholder: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// AI Module Settings Types (New)
+export interface AIModuleSettings {
+  id: string;
+  enabled: boolean;
+  webhook_url: string;
+  provider: string;
   created_at?: string;
   updated_at?: string;
 }

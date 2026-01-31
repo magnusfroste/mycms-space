@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
-import { WebhookSettings } from '@/components/admin/WebhookSettings';
-import { QuickActionsManager } from '@/components/admin/QuickActionsManager';
-import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
+import AIModuleSettings from '@/components/admin/AIModuleSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
@@ -116,31 +114,8 @@ const Admin = () => {
         return <NavSettings />;
       case 'messages':
         return <MessagesManager />;
-      case 'chat':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Chat Settings</h2>
-              <p className="text-muted-foreground">
-                Customize chat appearance and quick actions
-              </p>
-            </div>
-            <ChatTextSettings />
-            <QuickActionsManager />
-          </div>
-        );
-      case 'webhook':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold">Webhook</h2>
-              <p className="text-muted-foreground">
-                Configure webhook URL for chat messages
-              </p>
-            </div>
-            <WebhookSettings />
-          </div>
-        );
+      case 'ai-module':
+        return <AIModuleSettings />;
       case 'history':
         return <SettingsHistory />;
       default:

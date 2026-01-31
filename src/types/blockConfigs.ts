@@ -95,6 +95,8 @@ export interface ProjectShowcaseBlockConfig {
 export interface ChatWidgetBlockConfig {
   title?: string;
   subtitle?: string;
+  initial_placeholder?: string;
+  active_placeholder?: string;
   show_quick_actions?: boolean;
   quick_actions?: Array<{
     id: string;
