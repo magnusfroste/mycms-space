@@ -1,6 +1,7 @@
 // ============================================
 // Featured Item Editor
 // Inline editing for featured items within block editor
+// Reads/writes to block_config JSONB instead of separate table
 // ============================================
 
 import React from 'react';
@@ -11,46 +12,57 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
-import { useFeaturedItems, useCreateFeaturedItem, useUpdateFeaturedItem, useDeleteFeaturedItem } from '@/models/featured';
-import type { FeaturedItem } from '@/types';
+import type { FeaturedCarouselBlockConfig } from '@/types/blockConfigs';
 import ImageUpload from './ImageUpload';
 
-const FeaturedItemEditor: React.FC = () => {
-  const { data: items = [], isLoading } = useFeaturedItems();
-  const createItem = useCreateFeaturedItem();
-  const updateItem = useUpdateFeaturedItem();
-  const deleteItem = useDeleteFeaturedItem();
+interface FeaturedItemEditorProps {
+  config: FeaturedCarouselBlockConfig;
+  onChange: (config: FeaturedCarouselBlockConfig) => void;
+}
 
+type FeaturedItem = NonNullable<FeaturedCarouselBlockConfig['items']>[number];
+
+const FeaturedItemEditor: React.FC<FeaturedItemEditorProps> = ({
+  config,
+  onChange,
+}) => {
+  const items = config.items || [];
   const sortedItems = [...items].sort((a, b) => a.order_index - b.order_index);
 
   const handleAddItem = () => {
-    createItem.mutate({
+    const newItem: FeaturedItem = {
+      id: crypto.randomUUID(),
       title: 'New featured',
       description: 'Description',
+      order_index: items.length,
       enabled: true,
-    });
+    };
+    onChange({ ...config, items: [...items, newItem] });
   };
 
-  const handleUpdateItem = (item: FeaturedItem, updates: Partial<FeaturedItem>) => {
-    updateItem.mutate({ ...item, ...updates });
-  };
-
-  const handleDeleteItem = (item: FeaturedItem) => {
-    deleteItem.mutate({ id: item.id, imagePath: item.image_path });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        Loading featured items...
-      </div>
+  const handleUpdateItem = (id: string, updates: Partial<FeaturedItem>) => {
+    const updatedItems = items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
     );
-  }
+    onChange({ ...config, items: updatedItems });
+  };
+
+  const handleDeleteItem = (id: string) => {
+    const filteredItems = items.filter((item) => item.id !== id);
+    // Re-index after deletion
+    const reindexed = filteredItems.map((item, idx) => ({
+      ...item,
+      order_index: idx,
+    }));
+    onChange({ ...config, items: reindexed });
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-base font-medium">Featured Items ({sortedItems.length})</Label>
+        <Label className="text-base font-medium">
+          Featured Items ({sortedItems.length})
+        </Label>
         <Button onClick={handleAddItem} size="sm" variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
           Add
@@ -72,20 +84,24 @@ const FeaturedItemEditor: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <Input
                       value={item.title}
-                      onChange={(e) => handleUpdateItem(item, { title: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, { title: e.target.value })
+                      }
                       placeholder="Title"
                       className="flex-1 font-medium"
                     />
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={item.enabled}
-                        onCheckedChange={(enabled) => handleUpdateItem(item, { enabled })}
+                        onCheckedChange={(enabled) =>
+                          handleUpdateItem(item.id, { enabled })
+                        }
                       />
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteItem(item)}
+                        onClick={() => handleDeleteItem(item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -97,15 +113,19 @@ const FeaturedItemEditor: React.FC = () => {
                     <ImageUpload
                       label="Image"
                       value={item.image_url || ''}
-                      onChange={(url) => handleUpdateItem(item, { 
-                        image_url: url,
-                        image_path: url ? url.split('/').pop() || null : null
-                      })}
+                      onChange={(url) =>
+                        handleUpdateItem(item.id, {
+                          image_url: url,
+                          image_path: url ? url.split('/').pop() || undefined : undefined,
+                        })
+                      }
                       bucket="featured-images"
                     />
                     <Textarea
                       value={item.description}
-                      onChange={(e) => handleUpdateItem(item, { description: e.target.value })}
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, { description: e.target.value })
+                      }
                       placeholder="Description"
                       rows={3}
                       className="resize-none"

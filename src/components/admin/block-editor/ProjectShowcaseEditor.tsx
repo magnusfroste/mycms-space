@@ -1,6 +1,7 @@
 // ============================================
 // Project Showcase Editor
 // Inline editing for projects in showcase block
+// Reads/writes to block_config JSONB instead of separate tables
 // ============================================
 
 import React, { useState, useRef } from 'react';
@@ -18,26 +19,22 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import {
-  useProjects,
-  useCreateProject,
-  useUpdateProject,
-  useDeleteProject,
-  useDeleteProjectImage,
-  useReorderProjects,
-  uploadProjectImage,
-  projectKeys,
-} from '@/models/projects';
-import { sortByOrder } from '@/lib/utils/sorting';
-import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
-import type { Project, ProjectImage } from '@/types';
+import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { compressImage } from '@/lib/utils/imageCompression';
 import SortableProjectItem from './SortableProjectItem';
 import ProjectForm from './ProjectForm';
+
+interface ProjectShowcaseEditorProps {
+  config: ProjectShowcaseBlockConfig;
+  onChange: (config: ProjectShowcaseBlockConfig) => void;
+}
+
+type ProjectItem = NonNullable<ProjectShowcaseBlockConfig['projects']>[number];
+type ProjectImage = ProjectItem['images'][number];
 
 interface ProjectFormData {
   title: string;
@@ -55,21 +52,20 @@ const emptyFormData: ProjectFormData = {
   why_built: '',
 };
 
-const ProjectShowcaseEditor: React.FC = () => {
-  const { data: projects, isLoading } = useProjects();
-  const createProject = useCreateProject();
-  const updateProject = useUpdateProject();
-  const deleteProject = useDeleteProject();
-  const deleteProjectImage = useDeleteProjectImage();
-  const reorderProjects = useReorderProjects();
-  const queryClient = useQueryClient();
+const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
+  config,
+  onChange,
+}) => {
   const { toast } = useToast();
+  const projects = config.projects || [];
+  const sortedProjects = [...projects].sort((a, b) => a.order_index - b.order_index);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [editData, setEditData] = useState<ProjectFormData>(emptyFormData);
   const [newProjectData, setNewProjectData] = useState<ProjectFormData>(emptyFormData);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // DnD sensors
@@ -78,11 +74,15 @@ const ProjectShowcaseEditor: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const enabledProjects = projects?.filter((p) => p.enabled) || [];
-  const sortedProjects = projects ? sortByOrder(projects) : [];
+  const enabledProjects = projects.filter((p) => p.enabled);
+
+  // Helper to update projects array
+  const updateProjects = (updatedProjects: ProjectItem[]) => {
+    onChange({ ...config, projects: updatedProjects });
+  };
 
   // Edit handlers
-  const startEditing = (project: Project) => {
+  const startEditing = (project: ProjectItem) => {
     setEditingId(project.id);
     setEditData({
       title: project.title,
@@ -98,12 +98,17 @@ const ProjectShowcaseEditor: React.FC = () => {
     setEditData(emptyFormData);
   };
 
-  const saveEditing = async () => {
+  const saveEditing = () => {
     if (!editingId || !editData.title || !editData.description) {
       toast({ title: 'Title and description required', variant: 'destructive' });
       return;
     }
-    await updateProject.mutateAsync({ id: editingId, ...editData });
+    const updatedProjects = projects.map((p) =>
+      p.id === editingId
+        ? { ...p, ...editData }
+        : p
+    );
+    updateProjects(updatedProjects);
     cancelEditing();
   };
 
@@ -119,34 +124,55 @@ const ProjectShowcaseEditor: React.FC = () => {
     setNewProjectData(emptyFormData);
   };
 
-  const saveNewProject = async () => {
+  const saveNewProject = () => {
     if (!newProjectData.title || !newProjectData.description) {
       toast({ title: 'Title and description required', variant: 'destructive' });
       return;
     }
-    const maxOrder = projects?.reduce((max, p) => Math.max(max, p.order_index), -1) ?? -1;
-    await createProject.mutateAsync({
-      ...newProjectData,
-      order_index: maxOrder + 1,
+    const newProject: ProjectItem = {
+      id: crypto.randomUUID(),
+      title: newProjectData.title,
+      description: newProjectData.description,
+      demo_link: newProjectData.demo_link || '#',
+      problem_statement: newProjectData.problem_statement,
+      why_built: newProjectData.why_built,
+      order_index: projects.length,
       enabled: true,
-    });
+      images: [],
+      categories: [],
+    };
+    updateProjects([...projects, newProject]);
     cancelCreating();
   };
 
   // Toggle and delete handlers
-  const handleToggle = async (id: string, enabled: boolean) => {
-    await updateProject.mutateAsync({ id, enabled });
+  const handleToggle = (id: string, enabled: boolean) => {
+    const updatedProjects = projects.map((p) =>
+      p.id === id ? { ...p, enabled } : p
+    );
+    updateProjects(updatedProjects);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Delete this project? All images will also be deleted.')) {
-      await deleteProject.mutateAsync(id);
+  const handleDelete = (id: string) => {
+    if (confirm('Delete this project? All images will also be removed.')) {
+      const filteredProjects = projects.filter((p) => p.id !== id);
+      // Re-index
+      const reindexed = filteredProjects.map((p, idx) => ({
+        ...p,
+        order_index: idx,
+      }));
+      updateProjects(reindexed);
     }
   };
 
-  const handleDeleteImage = async (image: ProjectImage) => {
+  const handleDeleteImage = (projectId: string, image: ProjectImage) => {
     if (confirm('Delete this image?')) {
-      await deleteProjectImage.mutateAsync({ imageId: image.id, imagePath: image.image_path });
+      const updatedProjects = projects.map((p) => {
+        if (p.id !== projectId) return p;
+        const filteredImages = p.images.filter((img) => img.id !== image.id);
+        return { ...p, images: filteredImages };
+      });
+      updateProjects(updatedProjects);
     }
   };
 
@@ -158,26 +184,55 @@ const ProjectShowcaseEditor: React.FC = () => {
     }
 
     setUploadingFor(projectId);
-    try {
-      const { url, path } = await uploadProjectImage(file, projectId);
-      const project = projects?.find((p) => p.id === projectId);
-      const maxOrder = project?.images?.reduce((max, img) => Math.max(max, img.order_index), -1) ?? -1;
+    setIsSaving(true);
 
-      const { error } = await supabase.from('project_images').insert({
-        project_id: projectId,
-        image_url: url,
-        image_path: path,
-        order_index: maxOrder + 1,
+    try {
+      // Compress the image
+      const compressedFile = await compressImage(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
       });
 
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      const fileExt = compressedFile.name.split('.').pop();
+      const filePath = `${projectId}/${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('project-images')
+        .upload(filePath, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-images')
+        .getPublicUrl(filePath);
+
+      // Add image to project
+      const project = projects.find((p) => p.id === projectId);
+      const maxOrder = project?.images?.reduce((max, img) => Math.max(max, img.order_index), -1) ?? -1;
+
+      const newImage: ProjectImage = {
+        id: crypto.randomUUID(),
+        image_url: publicUrl,
+        image_path: filePath,
+        order_index: maxOrder + 1,
+      };
+
+      const updatedProjects = projects.map((p) => {
+        if (p.id !== projectId) return p;
+        return { ...p, images: [...p.images, newImage] };
+      });
+
+      updateProjects(updatedProjects);
       toast({ title: 'Image uploaded' });
     } catch (err) {
       console.error('Upload error:', err);
       toast({ title: 'Could not upload image', variant: 'destructive' });
     } finally {
       setUploadingFor(null);
+      setIsSaving(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -195,9 +250,9 @@ const ProjectShowcaseEditor: React.FC = () => {
   };
 
   // Drag and drop handler
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !projects) return;
+    if (!over || active.id === over.id) return;
 
     const oldIndex = sortedProjects.findIndex((p) => p.id === active.id);
     const newIndex = sortedProjects.findIndex((p) => p.id === over.id);
@@ -207,25 +262,41 @@ const ProjectShowcaseEditor: React.FC = () => {
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
 
-    const updates = reordered.map((p, idx) => ({ id: p.id, order_index: idx }));
-    queryClient.setQueryData(projectKeys.all, reordered.map((p, idx) => ({ ...p, order_index: idx })));
-
-    try {
-      await reorderProjects.mutateAsync({ updates });
-    } catch {
-      queryClient.invalidateQueries({ queryKey: projectKeys.all });
-    }
+    // Update order indices
+    const updated = reordered.map((p, idx) => ({ ...p, order_index: idx }));
+    updateProjects(updated);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
-  }
+  // Adapter for SortableProjectItem which expects Project type
+  const projectToLegacyFormat = (p: ProjectItem) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    demo_link: p.demo_link,
+    problem_statement: p.problem_statement || null,
+    why_built: p.why_built || null,
+    order_index: p.order_index,
+    enabled: p.enabled,
+    created_at: '',
+    updated_at: '',
+    images: p.images.map((img) => ({
+      id: img.id,
+      project_id: p.id,
+      image_url: img.image_url,
+      image_path: img.image_path,
+      order_index: img.order_index,
+      created_at: '',
+    })),
+    categories: p.categories.map((slug) => ({
+      id: slug,
+      name: slug,
+      slug,
+      order_index: 0,
+      enabled: true,
+      created_at: '',
+      updated_at: '',
+    })),
+  });
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
@@ -240,7 +311,7 @@ const ProjectShowcaseEditor: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-          Projects ({enabledProjects.length} active of {projects?.length || 0})
+          Projects ({enabledProjects.length} active of {projects.length})
         </h4>
         <Button variant="outline" size="sm" onClick={startCreating} disabled={isCreating}>
           <Plus className="h-4 w-4 mr-1" />
@@ -255,7 +326,7 @@ const ProjectShowcaseEditor: React.FC = () => {
           onChange={setNewProjectData}
           onSave={saveNewProject}
           onCancel={cancelCreating}
-          isSaving={createProject.isPending}
+          isSaving={false}
           isCreate
         />
       )}
@@ -271,18 +342,30 @@ const ProjectShowcaseEditor: React.FC = () => {
                   onChange={setEditData}
                   onSave={saveEditing}
                   onCancel={cancelEditing}
-                  isSaving={updateProject.isPending}
+                  isSaving={isSaving}
                   projectId={project.id}
-                  images={project.images}
-                  onDeleteImage={handleDeleteImage}
+                  images={project.images.map((img) => ({
+                    id: img.id,
+                    project_id: project.id,
+                    image_url: img.image_url,
+                    image_path: img.image_path,
+                    order_index: img.order_index,
+                    created_at: '',
+                  }))}
+                  onDeleteImage={(img) => handleDeleteImage(project.id, {
+                    id: img.id,
+                    image_url: img.image_url,
+                    image_path: img.image_path,
+                    order_index: img.order_index,
+                  })}
                   onUploadImage={() => triggerUpload(project.id)}
                   isUploading={uploadingFor === project.id}
                 />
               ) : (
                 <SortableProjectItem
                   key={project.id}
-                  project={project}
-                  onEdit={startEditing}
+                  project={projectToLegacyFormat(project)}
+                  onEdit={() => startEditing(project)}
                   onToggle={handleToggle}
                   onDelete={handleDelete}
                 />
