@@ -378,16 +378,16 @@ Moduler (nytt avsnitt)
 
 | Steg | Åtgärd | Status |
 |------|--------|--------|
-| 1 | Skapa `modules`-tabell | ⬜ |
-| 2 | Migrera `ai_module` → `modules` | ⬜ |
-| 3 | Skapa TypeScript-typer | ⬜ |
-| 4 | Skapa data/modules.ts | ⬜ |
-| 5 | Skapa models/modules.ts | ⬜ |
-| 6 | Uppdatera AIModuleSettings | ⬜ |
+| 1 | Skapa `modules`-tabell | ✅ |
+| 2 | Migrera `ai_module` → `modules` | ✅ |
+| 3 | Skapa TypeScript-typer | ✅ |
+| 4 | Skapa data/modules.ts | ✅ |
+| 5 | Skapa models/modules.ts | ✅ |
+| 6 | Uppdatera AIModuleSettings | ✅ |
 | 7 | Skapa ProjectsModuleSettings | ⬜ |
 | 8 | Uppdatera AdminSidebar | ⬜ |
 | 9 | Testa och verifiera | ⬜ |
-| 10 | Ta bort legacy `ai_module`-tabell | ⬜ |
+| 10 | Ta bort legacy `ai_module`-tabell | ✅ |
 | 11 | Uppdatera ProjectShowcaseBlock | ⬜ |
 | 12 | (Framtida) Dynamiska projektsidor | ⬜ |
 

@@ -74,33 +74,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ai_module: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          id: string
-          provider: string
-          updated_at: string
-          webhook_url: string
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          id?: string
-          provider?: string
-          updated_at?: string
-          webhook_url?: string
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          id?: string
-          provider?: string
-          updated_at?: string
-          webhook_url?: string
-        }
-        Relationships: []
-      }
       categories: {
         Row: {
           created_at: string
@@ -302,6 +275,33 @@ export type Database = {
           name?: string
           tagline?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      modules: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          module_config: Json | null
+          module_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_config?: Json | null
+          module_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          module_config?: Json | null
+          module_type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

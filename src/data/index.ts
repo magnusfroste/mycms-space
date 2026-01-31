@@ -9,7 +9,7 @@ export * from './aboutMe';
 export * from './categories';
 export * from './expertise';
 export * from './featured';
-export * from './aiModule';
+export * from './modules';
 export * from './portfolioSettings';
 export * from './navLinks';
 export * from './pageBlocks';
