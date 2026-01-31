@@ -181,10 +181,64 @@ export const ProjectList = () => {
 - Entity interfaces (Project, Category, etc.)
 - Input/Output types for mutations
 - Shared enums and constants
+- Block configuration types (`src/types/blockConfigs.ts`)
 
 ---
 
-## Import Patterns
+## Block-Based CMS Architecture
+
+The application uses a **JSONB-based block storage** pattern where all block content is stored in `page_blocks.block_config`. This provides:
+
+1. **Flexibility:** New block types and fields can be added without database migrations
+2. **Unified versioning:** Single trigger on `page_blocks` handles all history
+3. **AI-friendly:** Simple JSON structure for AI to read and update
+4. **Performance:** Single table for all page content
+
+### Block Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    page_blocks table                         │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ id | page_slug | block_type | block_config (JSONB)      ││
+│  │────│───────────│────────────│────────────────────────────││
+│  │ x  │ "home"    │ "hero"     │ { name, tagline, ... }    ││
+│  │ y  │ "home"    │ "about"    │ { intro_text, skills, ... }││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    BlockRenderer                             │
+│   Reads block_config and passes to appropriate component     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│         HeroBlock / AboutSplitBlock / etc.                   │
+│   Receives config prop, renders content directly             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Block Config Types
+
+All block configurations are defined in `src/types/blockConfigs.ts`:
+
+```typescript
+interface HeroBlockConfig {
+  name?: string;
+  tagline?: string;
+  features?: Array<{ text: string; icon: string }>;
+  enable_animations?: boolean;
+}
+
+interface AboutSplitBlockConfig {
+  name?: string;
+  intro_text?: string;
+  skills?: Array<{ title: string; description: string; icon: string }>;
+}
+// ... etc
+```
 
 ### Recommended: Import from Models
 ```typescript
