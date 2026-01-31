@@ -1,6 +1,7 @@
 // ============================================
 // Project Showcase Block
 // Reads projects from block_config JSONB
+// Applies global settings from ProjectsModule
 // ============================================
 
 import React, { useState, useMemo } from 'react';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import ProjectModal from '@/components/ProjectModal';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useProjectsModule } from '@/models/modules';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
 import type { DisplayProject } from '@/hooks/useProjectsWithFallback';
 
@@ -23,6 +25,9 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   const [selectedProject, setSelectedProject] = useState<DisplayProject | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
+  // Get global module settings
+  const { config: moduleConfig, isEnabled: moduleEnabled } = useProjectsModule();
+  
   useAnalytics('portfolio');
 
   const sectionTitle = typedConfig.section_title || 'Portfolio';
@@ -31,6 +36,10 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   const showSection = typedConfig.show_section ?? true;
   const categories = typedConfig.categories?.filter(c => c.enabled) || [];
   const projects = typedConfig.projects?.filter(p => p.enabled) || [];
+  
+  // Module settings with fallbacks
+  const layoutStyle = moduleConfig?.layout_style ?? 'alternating';
+  const showCategories = moduleConfig?.show_categories ?? true;
 
   // Filter projects by selected category
   const filteredProjects = useMemo(() => {
@@ -69,7 +78,8 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
     setSelectedProject(null);
   };
 
-  if (!showSection) {
+  // Hide entire section if module is disabled
+  if (!moduleEnabled || !showSection) {
     return null;
   }
 
@@ -92,8 +102,8 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
           )}
         </div>
         
-        {/* Category Filter */}
-        {categories.length > 0 && (
+        {/* Category Filter - respects module setting */}
+        {showCategories && categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8 justify-center">
             <Badge
               variant={selectedCategory === null ? 'default' : 'outline'}
@@ -138,145 +148,182 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
           </div>
         )}
         
-        <div className="space-y-16">
-          {filteredProjects.length === 0 && selectedCategory && (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">No projects found in this category.</p>
-            </div>
-          )}
-          {filteredProjects.map((project, index) => {
-            const isImageOnLeft = index % 2 === 0;
-            const projectImage = project.images?.[0]?.image_url;
-            
-            return (
-              <div 
-                key={project.id} 
-                className="glass-card overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                id={`demo-${project.title.toLowerCase().split(' ').slice(0, 2).join('-')}`}
-                onClick={() => handleViewMore(project)}
-              >
-                <div className={`grid grid-cols-1 ${isImageOnLeft ? 'lg:grid-cols-[3fr,2fr]' : 'lg:grid-cols-[2fr,3fr]'}`}>
-                  {isImageOnLeft ? (
-                    <>
-                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
-                        {projectImage ? (
-                          <img 
-                            src={projectImage} 
-                            alt={project.title}
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            No image available
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-8 flex flex-col justify-center">
-                        <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                        <p className="text-muted-foreground mb-6">{project.description}</p>
-                        <div className="flex space-x-3">
-                          <Button 
-                            className="apple-button flex items-center gap-2" 
-                            asChild
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (project.demo_link.startsWith('#')) {
-                                e.preventDefault();
-                                handleDemoClick(project.title, project.demo_link);
-                              } else {
-                                handleDemoClick(project.title, project.demo_link);
-                              }
-                            }}
-                          >
-                            <a 
-                              href={project.demo_link.startsWith('#') ? undefined : project.demo_link} 
-                              target={project.demo_link.startsWith('#') ? undefined : '_blank'} 
-                              rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
-                            >
-                              Link
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewMore(project);
-                            }}
-                          >
-                            View More
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-8 flex flex-col justify-center">
-                        <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                        <p className="text-muted-foreground mb-6">{project.description}</p>
-                        <div className="flex space-x-3">
-                          <Button 
-                            className="apple-button flex items-center gap-2" 
-                            asChild
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (project.demo_link.startsWith('#')) {
-                                e.preventDefault();
-                                handleDemoClick(project.title, project.demo_link);
-                              } else {
-                                handleDemoClick(project.title, project.demo_link);
-                              }
-                            }}
-                          >
-                            <a 
-                              href={project.demo_link.startsWith('#') ? undefined : project.demo_link} 
-                              target={project.demo_link.startsWith('#') ? undefined : '_blank'} 
-                              rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
-                            >
-                              Link
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewMore(project);
-                            }}
-                          >
-                            View More
-                            <Info className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
-                        {projectImage ? (
-                          <img 
-                            src={projectImage} 
-                            alt={project.title}
-                            className="w-full h-full object-cover rounded-xl"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            No image available
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+        {/* Layout based on module settings */}
+        {layoutStyle === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map((project) => {
+              const projectImage = project.images?.[0]?.image_url;
+              return (
+                <div
+                  key={project.id}
+                  className="glass-card overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                  onClick={() => handleViewMore(project)}
+                >
+                  <div className="aspect-video bg-muted flex items-center justify-center">
+                    {projectImage ? (
+                      <img
+                        src={projectImage}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-muted-foreground text-sm">No image</div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {project.description}
+                    </p>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Alternating layout (default) */
+          <div className="space-y-16">
+            {filteredProjects.length === 0 && selectedCategory && (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No projects found in this category.</p>
               </div>
-            );
-          })}
-        </div>
+            )}
+            {filteredProjects.map((project, index) => {
+              const isImageOnLeft = index % 2 === 0;
+              const projectImage = project.images?.[0]?.image_url;
+
+              return (
+                <div
+                  key={project.id}
+                  className="glass-card overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                  id={`demo-${project.title.toLowerCase().split(' ').slice(0, 2).join('-')}`}
+                  onClick={() => handleViewMore(project)}
+                >
+                  <div
+                    className={`grid grid-cols-1 ${isImageOnLeft ? 'lg:grid-cols-[3fr,2fr]' : 'lg:grid-cols-[2fr,3fr]'}`}
+                  >
+                    {isImageOnLeft ? (
+                      <>
+                        <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
+                          {projectImage ? (
+                            <img
+                              src={projectImage}
+                              alt={project.title}
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              No image available
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-8 flex flex-col justify-center">
+                          <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
+                          <p className="text-muted-foreground mb-6">{project.description}</p>
+                          <div className="flex space-x-3">
+                            <Button
+                              className="apple-button flex items-center gap-2"
+                              asChild
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (project.demo_link.startsWith('#')) {
+                                  e.preventDefault();
+                                  handleDemoClick(project.title, project.demo_link);
+                                } else {
+                                  handleDemoClick(project.title, project.demo_link);
+                                }
+                              }}
+                            >
+                              <a
+                                href={project.demo_link.startsWith('#') ? undefined : project.demo_link}
+                                target={project.demo_link.startsWith('#') ? undefined : '_blank'}
+                                rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
+                              >
+                                Link
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex items-center gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewMore(project);
+                              }}
+                            >
+                              View More
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-8 flex flex-col justify-center">
+                          <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
+                          <p className="text-muted-foreground mb-6">{project.description}</p>
+                          <div className="flex space-x-3">
+                            <Button
+                              className="apple-button flex items-center gap-2"
+                              asChild
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (project.demo_link.startsWith('#')) {
+                                  e.preventDefault();
+                                  handleDemoClick(project.title, project.demo_link);
+                                } else {
+                                  handleDemoClick(project.title, project.demo_link);
+                                }
+                              }}
+                            >
+                              <a
+                                href={project.demo_link.startsWith('#') ? undefined : project.demo_link}
+                                target={project.demo_link.startsWith('#') ? undefined : '_blank'}
+                                rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
+                              >
+                                Link
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex items-center gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewMore(project);
+                              }}
+                            >
+                              View More
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
+                          {projectImage ? (
+                            <img
+                              src={projectImage}
+                              alt={project.title}
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              No image available
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-      
+
       {selectedProject && (
-        <ProjectModal 
-          project={selectedProject} 
+        <ProjectModal
+          project={selectedProject}
           isOpen={!!selectedProject}
           onClose={handleCloseModal}
         />
