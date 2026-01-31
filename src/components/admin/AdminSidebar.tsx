@@ -4,6 +4,7 @@ import {
   Layers, 
   Navigation, 
   Bot,
+  FolderOpen,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -45,6 +46,7 @@ const mainNavItems = [
 
 const settingsNavItems = [
   { id: 'ai-module', label: 'AI Modul', icon: Bot },
+  { id: 'projects-module', label: 'Projekt Modul', icon: FolderOpen },
   { id: 'history', label: 'Historik', icon: History },
 ];
 
