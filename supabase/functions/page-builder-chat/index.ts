@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,6 +97,15 @@ const SYSTEM_PROMPT = `You are an AI page builder assistant. You help users crea
 
 ${BLOCK_DEFINITIONS}
 
+## Tools Available
+
+You have access to these tools:
+
+1. **scrape_website** - Fetch content from any URL to analyze and use for creating projects or content
+2. **add_project** - Add a new project to the portfolio with auto-generated content
+
+When a user asks you to fetch info from a website and create a project, use these tools!
+
 ## Guidelines
 
 1. **Take action immediately**: When a user asks you to create a page or blocks, CREATE ALL THE BLOCKS in a single response. Do NOT ask for confirmation between blocks.
@@ -103,6 +113,8 @@ ${BLOCK_DEFINITIONS}
 3. **Be creative**: Use modern 2026 blocks (bento-grid, stats-counter, testimonials) for impressive designs.
 4. **Keep it simple**: Create 3-5 blocks for a complete landing page.
 5. **Output multiple blocks**: You can output MULTIPLE JSON blocks in one response. Just include multiple \`\`\`json code blocks.
+6. **Use tools for websites**: When asked to fetch info from a website, ALWAYS use the scrape_website tool first.
+7. **Create projects from scraped data**: After scraping, use add_project to create a project with the extracted info.
 
 ## CRITICAL: Multi-Block Creation
 
@@ -124,29 +136,169 @@ Brief intro message, then:
 
 Brief closing message.
 
-## Example Response for "Create a SaaS landing page":
+## Project Creation Format
 
-Här kommer en komplett SaaS-landningssida!
-
+When creating projects, use this format:
 \`\`\`json
-{ "action": "create_block", "block_type": "hero", "config": { "name": "NexusAI", "tagline": "Automatisera allt", ... }, "message": "" }
+{
+  "action": "add_project",
+  "project": {
+    "title": "Project Name",
+    "description": "A compelling description of what the project does",
+    "problem_statement": "The problem this project solves",
+    "why_built": "Why you created this project",
+    "demo_link": "https://example.com"
+  },
+  "message": "Project added!"
+}
 \`\`\`
-
-\`\`\`json
-{ "action": "create_block", "block_type": "stats-counter", "config": { "headline": "Resultat som talar", "stats": [...] }, "message": "" }
-\`\`\`
-
-\`\`\`json
-{ "action": "create_block", "block_type": "bento-grid", "config": { ... }, "message": "" }
-\`\`\`
-
-\`\`\`json
-{ "action": "create_block", "block_type": "cta-banner", "config": { ... }, "message": "" }
-\`\`\`
-
-Alla block är nu skapade! Vill du justera något?
 
 NEVER ask "Ska vi gå vidare?" or "Vill du att jag skapar nästa block?". Just CREATE all blocks immediately.`;
+
+// Tool definitions for function calling
+const TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "scrape_website",
+      description: "Fetch and analyze content from a website URL. Returns markdown content, metadata, and links.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "The URL of the website to scrape"
+          }
+        },
+        required: ["url"],
+        additionalProperties: false
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_project",
+      description: "Add a new project to the portfolio database",
+      parameters: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            description: "Project title"
+          },
+          description: {
+            type: "string",
+            description: "Project description"
+          },
+          problem_statement: {
+            type: "string",
+            description: "The problem this project solves"
+          },
+          why_built: {
+            type: "string",
+            description: "Why the project was created"
+          },
+          demo_link: {
+            type: "string",
+            description: "URL to the project demo"
+          }
+        },
+        required: ["title", "description"],
+        additionalProperties: false
+      }
+    }
+  }
+];
+
+// Execute tool calls
+async function executeTool(name: string, args: Record<string, unknown>, supabaseUrl: string, supabaseKey: string): Promise<string> {
+  console.log(`Executing tool: ${name}`, args);
+  
+  if (name === "scrape_website") {
+    const url = args.url as string;
+    console.log(`Scraping website: ${url}`);
+    
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/firecrawl-scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ url, options: { formats: ['markdown'] } }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        console.error('Scrape failed:', data);
+        return JSON.stringify({ error: data.error || 'Failed to scrape website' });
+      }
+      
+      // Extract relevant content
+      const markdown = data.data?.markdown || data.markdown || '';
+      const metadata = data.data?.metadata || data.metadata || {};
+      
+      console.log('Scrape successful, content length:', markdown.length);
+      
+      return JSON.stringify({
+        success: true,
+        title: metadata.title || '',
+        description: metadata.description || '',
+        url: url,
+        content: markdown.substring(0, 5000), // Limit content size
+      });
+    } catch (error) {
+      console.error('Scrape error:', error);
+      return JSON.stringify({ error: `Failed to scrape: ${error}` });
+    }
+  }
+  
+  if (name === "add_project") {
+    console.log('Adding project to database');
+    
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Get max order_index
+      const { data: existingProjects } = await supabase
+        .from('projects')
+        .select('order_index')
+        .order('order_index', { ascending: false })
+        .limit(1);
+      
+      const maxOrder = existingProjects?.[0]?.order_index ?? -1;
+      
+      const { data: project, error } = await supabase
+        .from('projects')
+        .insert({
+          title: args.title as string,
+          description: args.description as string,
+          problem_statement: args.problem_statement as string || null,
+          why_built: args.why_built as string || null,
+          demo_link: args.demo_link as string || '#',
+          order_index: maxOrder + 1,
+          enabled: true,
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Insert error:', error);
+        return JSON.stringify({ error: `Failed to add project: ${error.message}` });
+      }
+      
+      console.log('Project added:', project.id);
+      return JSON.stringify({ success: true, project_id: project.id, title: project.title });
+    } catch (error) {
+      console.error('Add project error:', error);
+      return JSON.stringify({ error: `Failed to add project: ${error}` });
+    }
+  }
+  
+  return JSON.stringify({ error: `Unknown tool: ${name}` });
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -160,13 +312,21 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
+    
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase configuration missing");
+    }
 
     // Add context about current page state
     const contextMessage = currentBlocks?.length 
       ? `\n\nCurrent page has ${currentBlocks.length} blocks: ${currentBlocks.map((b: any) => b.block_type).join(", ")}`
       : "\n\nThe page is currently empty - this is a fresh start!";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Initial request with tools
+    let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -178,7 +338,8 @@ serve(async (req) => {
           { role: "system", content: SYSTEM_PROMPT + contextMessage },
           ...messages,
         ],
-        stream: true,
+        tools: TOOLS,
+        stream: false, // Need non-streaming for tool calls
       }),
     });
 
@@ -203,7 +364,81 @@ serve(async (req) => {
       });
     }
 
-    return new Response(response.body, {
+    let data = await response.json();
+    let assistantMessage = data.choices?.[0]?.message;
+    
+    // Handle tool calls in a loop
+    const conversationMessages = [
+      { role: "system", content: SYSTEM_PROMPT + contextMessage },
+      ...messages,
+    ];
+    
+    let iterations = 0;
+    const maxIterations = 5;
+    
+    while (assistantMessage?.tool_calls && iterations < maxIterations) {
+      iterations++;
+      console.log(`Processing tool calls, iteration ${iterations}`);
+      
+      conversationMessages.push(assistantMessage);
+      
+      // Execute each tool call
+      for (const toolCall of assistantMessage.tool_calls) {
+        const toolName = toolCall.function.name;
+        const toolArgs = JSON.parse(toolCall.function.arguments);
+        
+        const toolResult = await executeTool(toolName, toolArgs, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        conversationMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: toolResult,
+        });
+      }
+      
+      // Continue conversation with tool results
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: conversationMessages,
+          tools: TOOLS,
+          stream: false,
+        }),
+      });
+      
+      if (!response.ok) {
+        const t = await response.text();
+        console.error("AI gateway error in tool loop:", response.status, t);
+        break;
+      }
+      
+      data = await response.json();
+      assistantMessage = data.choices?.[0]?.message;
+    }
+    
+    // Final response - stream the last message
+    const finalContent = assistantMessage?.content || "Jag kunde inte slutföra uppgiften.";
+    
+    // Convert to SSE format for consistent frontend handling
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        // Send the content as a single chunk in SSE format
+        const sseData = JSON.stringify({
+          choices: [{ delta: { content: finalContent } }]
+        });
+        controller.enqueue(encoder.encode(`data: ${sseData}\n\n`));
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      }
+    });
+
+    return new Response(stream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
