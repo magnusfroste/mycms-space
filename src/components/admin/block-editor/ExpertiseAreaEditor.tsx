@@ -1,6 +1,7 @@
 // ============================================
 // Expertise Area Editor
 // Inline editing for expertise areas within block editor
+// Reads/writes to block_config JSONB instead of separate table
 // ============================================
 
 import React from 'react';
@@ -11,57 +12,67 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
-import { useExpertiseAreas, useCreateExpertiseArea, useUpdateExpertiseArea, useDeleteExpertiseArea } from '@/models/expertise';
-import type { ExpertiseArea } from '@/types';
+import type { ExpertiseGridBlockConfig } from '@/types/blockConfigs';
 import IconPicker from './IconPicker';
 
-const ExpertiseAreaEditor: React.FC = () => {
-  const { data: areas = [], isLoading } = useExpertiseAreas();
-  const createArea = useCreateExpertiseArea();
-  const updateArea = useUpdateExpertiseArea();
-  const deleteArea = useDeleteExpertiseArea();
+interface ExpertiseAreaEditorProps {
+  config: ExpertiseGridBlockConfig;
+  onChange: (config: ExpertiseGridBlockConfig) => void;
+}
 
-  const sortedAreas = [...areas].sort((a, b) => a.order_index - b.order_index);
+type ExpertiseItem = NonNullable<ExpertiseGridBlockConfig['items']>[number];
 
-  const handleAddArea = () => {
-    createArea.mutate({
+const ExpertiseAreaEditor: React.FC<ExpertiseAreaEditorProps> = ({
+  config,
+  onChange,
+}) => {
+  const items = config.items || [];
+  const sortedItems = [...items].sort((a, b) => a.order_index - b.order_index);
+
+  const handleAddItem = () => {
+    const newItem: ExpertiseItem = {
+      id: crypto.randomUUID(),
       title: 'New expertise area',
       description: 'Description of the expertise area',
       icon: 'Lightbulb',
-      order_index: areas.length,
+      order_index: items.length,
       enabled: true,
-    });
+    };
+    onChange({ ...config, items: [...items, newItem] });
   };
 
-  const handleUpdateArea = (id: string, updates: Partial<ExpertiseArea>) => {
-    updateArea.mutate({ id, ...updates });
-  };
-
-  const handleDeleteArea = (id: string) => {
-    deleteArea.mutate(id);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        Loading expertise areas...
-      </div>
+  const handleUpdateItem = (id: string, updates: Partial<ExpertiseItem>) => {
+    const updatedItems = items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
     );
-  }
+    onChange({ ...config, items: updatedItems });
+  };
+
+  const handleDeleteItem = (id: string) => {
+    const filteredItems = items.filter((item) => item.id !== id);
+    // Re-index after deletion
+    const reindexed = filteredItems.map((item, idx) => ({
+      ...item,
+      order_index: idx,
+    }));
+    onChange({ ...config, items: reindexed });
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-base font-medium">Expertise Areas ({sortedAreas.length})</Label>
-        <Button onClick={handleAddArea} size="sm" variant="outline" className="gap-2">
+        <Label className="text-base font-medium">
+          Expertise Areas ({sortedItems.length})
+        </Label>
+        <Button onClick={handleAddItem} size="sm" variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
           Add
         </Button>
       </div>
 
       <div className="space-y-3">
-        {sortedAreas.map((area) => (
-          <Card key={area.id} className="relative">
+        {sortedItems.map((item) => (
+          <Card key={item.id} className="relative">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 {/* Drag handle placeholder */}
@@ -73,25 +84,29 @@ const ExpertiseAreaEditor: React.FC = () => {
                   {/* Header row */}
                   <div className="flex items-center gap-3">
                     <IconPicker
-                      value={area.icon}
-                      onChange={(icon) => handleUpdateArea(area.id, { icon })}
+                      value={item.icon}
+                      onChange={(icon) => handleUpdateItem(item.id, { icon })}
                     />
                     <Input
-                      value={area.title}
-                      onChange={(e) => handleUpdateArea(area.id, { title: e.target.value })}
+                      value={item.title}
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, { title: e.target.value })
+                      }
                       placeholder="Title"
                       className="flex-1 font-medium"
                     />
                     <div className="flex items-center gap-2">
                       <Switch
-                        checked={area.enabled}
-                        onCheckedChange={(enabled) => handleUpdateArea(area.id, { enabled })}
+                        checked={item.enabled}
+                        onCheckedChange={(enabled) =>
+                          handleUpdateItem(item.id, { enabled })
+                        }
                       />
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteArea(area.id)}
+                        onClick={() => handleDeleteItem(item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -100,8 +115,10 @@ const ExpertiseAreaEditor: React.FC = () => {
 
                   {/* Description */}
                   <Textarea
-                    value={area.description}
-                    onChange={(e) => handleUpdateArea(area.id, { description: e.target.value })}
+                    value={item.description}
+                    onChange={(e) =>
+                      handleUpdateItem(item.id, { description: e.target.value })
+                    }
                     placeholder="Description"
                     rows={2}
                     className="resize-none"
@@ -113,10 +130,10 @@ const ExpertiseAreaEditor: React.FC = () => {
         ))}
       </div>
 
-      {sortedAreas.length === 0 && (
+      {sortedItems.length === 0 && (
         <div className="py-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
           <p>No expertise areas yet</p>
-          <Button onClick={handleAddArea} variant="link" className="mt-2">
+          <Button onClick={handleAddItem} variant="link" className="mt-2">
             Add your first expertise area
           </Button>
         </div>

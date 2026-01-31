@@ -348,66 +348,84 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     </div>
   );
 
-  const renderFeaturedConfig = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-        <div className="space-y-2">
-          <Label>Section Title</Label>
-          <Input
-            value={(config.title as string) || ''}
-            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-            placeholder="Featured In..."
-          />
+  const renderFeaturedConfig = () => {
+    const featuredConfig = config as FeaturedCarouselBlockConfig;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Title</Label>
+            <Input
+              value={featuredConfig.title || ''}
+              onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+              placeholder="Featured In..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Section Subtitle</Label>
+            <Input
+              value={featuredConfig.subtitle || ''}
+              onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+              placeholder="Where I've been featured"
+            />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Section Subtitle</Label>
-          <Input
-            value={(config.subtitle as string) || ''}
-            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-            placeholder="Where I've been featured"
+        <div className="border-t pt-6">
+          <FeaturedItemEditor
+            config={featuredConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
           />
         </div>
       </div>
-      <div className="border-t pt-6">
-        <FeaturedItemEditor />
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const renderExpertiseConfig = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-        <div className="space-y-2">
-          <Label>Section Title</Label>
-          <Input
-            value={(config.title as string) || ''}
-            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-            placeholder="Areas of Expertise"
-          />
+  const renderExpertiseConfig = () => {
+    const expertiseConfig = config as ExpertiseGridBlockConfig;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Title</Label>
+            <Input
+              value={expertiseConfig.title || ''}
+              onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+              placeholder="Areas of Expertise"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Section Subtitle</Label>
+            <Input
+              value={expertiseConfig.subtitle || ''}
+              onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+              placeholder="What I specialize in"
+            />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Section Subtitle</Label>
-          <Input
-            value={(config.subtitle as string) || ''}
-            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-            placeholder="What I specialize in"
+        <div className="border-t pt-6">
+          <ExpertiseAreaEditor
+            config={expertiseConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
           />
         </div>
       </div>
-      <div className="border-t pt-6">
-        <ExpertiseAreaEditor />
-      </div>
-    </div>
-  );
+    );
+  };
 
-  const renderProjectShowcaseConfig = () => (
-    <div className="space-y-8">
-      <PortfolioSettingsEditor />
-      <div className="border-t pt-6">
-        <ProjectShowcaseEditor />
+  const renderProjectShowcaseConfig = () => {
+    const projectConfig = config as ProjectShowcaseBlockConfig;
+    return (
+      <div className="space-y-8">
+        <PortfolioSettingsEditor />
+        <div className="border-t pt-6">
+          <ProjectShowcaseEditor
+            config={projectConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderChatWidgetConfig = () => (
     <div className="space-y-6">
