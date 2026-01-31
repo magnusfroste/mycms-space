@@ -107,11 +107,7 @@ const blockTypeLabels: Record<string, string> = {
 interface VisualBlockItemProps {
   block: PageBlock;
   isEditing: boolean;
-  heroData: any;
-  aboutMeData: any;
   pendingChanges: Record<string, unknown>;
-  onHeroChange: (changes: Record<string, unknown>) => void;
-  onAboutMeChange: (changes: Record<string, unknown>) => void;
   onBlockConfigChange: (config: Record<string, unknown>) => void;
   onStartEdit: () => void;
   onEndEdit: () => void;
@@ -122,11 +118,7 @@ interface VisualBlockItemProps {
 const VisualBlockItem = ({
   block,
   isEditing,
-  heroData,
-  aboutMeData,
   pendingChanges,
-  onHeroChange,
-  onAboutMeChange,
   onBlockConfigChange,
   onStartEdit,
   onEndEdit,
@@ -199,13 +191,7 @@ const VisualBlockItem = ({
       <div ref={setNodeRef} style={style}>
         <InlineBlockEditor
           block={block}
-          heroData={heroData}
-          aboutMeData={aboutMeData}
-          pendingHeroChanges={block.block_type === 'hero' ? pendingChanges : undefined}
-          pendingAboutMeChanges={block.block_type === 'about-split' ? pendingChanges : undefined}
-          pendingBlockChanges={pendingChanges}
-          onHeroChange={onHeroChange}
-          onAboutMeChange={onAboutMeChange}
+          pendingChanges={pendingChanges}
           onBlockConfigChange={onBlockConfigChange}
           onDone={onEndEdit}
         />
@@ -572,11 +558,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                         key={block.id}
                         block={block}
                         isEditing={editingBlockId === block.id}
-                        heroData={heroData}
-                        aboutMeData={aboutMeData}
                         pendingChanges={pendingChanges.blocks?.[block.id] || {}}
-                        onHeroChange={handleHeroChange}
-                        onAboutMeChange={handleAboutMeChange}
                         onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
                         onStartEdit={() => setEditingBlockId(block.id)}
                         onEndEdit={() => setEditingBlockId(null)}

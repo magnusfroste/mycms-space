@@ -10,20 +10,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
+import type { PageBlock } from '@/types';
 import InlineBlockEditor from './InlineBlockEditor';
 
 interface SortableBlockWrapperProps {
   block: PageBlock;
   children: React.ReactNode;
   isEditing: boolean;
-  heroData?: HeroSettings | null;
-  aboutMeData?: AboutMeSettings | null;
-  pendingHeroChanges?: Record<string, unknown>;
-  pendingAboutMeChanges?: Record<string, unknown>;
   pendingBlockChanges?: Record<string, unknown>;
-  onHeroChange: (changes: Record<string, unknown>) => void;
-  onAboutMeChange: (changes: Record<string, unknown>) => void;
   onBlockConfigChange: (config: Record<string, unknown>) => void;
   onStartEdit: () => void;
   onEndEdit: () => void;
@@ -48,13 +42,7 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
   block,
   children,
   isEditing,
-  heroData,
-  aboutMeData,
-  pendingHeroChanges,
-  pendingAboutMeChanges,
   pendingBlockChanges,
-  onHeroChange,
-  onAboutMeChange,
   onBlockConfigChange,
   onStartEdit,
   onEndEdit,
@@ -81,13 +69,7 @@ const SortableBlockWrapper: React.FC<SortableBlockWrapperProps> = ({
       <div ref={setNodeRef} style={style} className="px-4">
         <InlineBlockEditor
           block={block}
-          heroData={heroData}
-          aboutMeData={aboutMeData}
-          pendingHeroChanges={pendingHeroChanges}
-          pendingAboutMeChanges={pendingAboutMeChanges}
-          pendingBlockChanges={pendingBlockChanges}
-          onHeroChange={onHeroChange}
-          onAboutMeChange={onAboutMeChange}
+          pendingChanges={pendingBlockChanges}
           onBlockConfigChange={onBlockConfigChange}
           onDone={onEndEdit}
         />

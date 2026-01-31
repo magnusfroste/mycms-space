@@ -1,7 +1,7 @@
 // ============================================
 // Inline Block Editor
 // In-place content editing for blocks
-// Shows form fields where the block is, not in a drawer
+// All data now stored in block_config JSONB
 // ============================================
 
 import React from 'react';
@@ -19,7 +19,15 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Check, X } from 'lucide-react';
-import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
+import type { PageBlock } from '@/types';
+import type {
+  HeroBlockConfig,
+  AboutSplitBlockConfig,
+  ExpertiseGridBlockConfig,
+  FeaturedCarouselBlockConfig,
+  ChatWidgetBlockConfig,
+  ProjectShowcaseBlockConfig,
+} from '@/types/blockConfigs';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
@@ -32,18 +40,11 @@ import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
 import QuickActionsEditor from './QuickActionsEditor';
-import { useUpdateAboutMeSettings } from '@/hooks/useAboutMeSettings';
 import { useToast } from '@/hooks/use-toast';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
-  heroData?: HeroSettings | null;
-  aboutMeData?: AboutMeSettings | null;
-  pendingHeroChanges?: Record<string, unknown>;
-  pendingAboutMeChanges?: Record<string, unknown>;
-  pendingBlockChanges?: Record<string, unknown>;
-  onHeroChange: (changes: Record<string, unknown>) => void;
-  onAboutMeChange: (changes: Record<string, unknown>) => void;
+  pendingChanges?: Record<string, unknown>;
   onBlockConfigChange: (config: Record<string, unknown>) => void;
   onDone: () => void;
 }
@@ -70,205 +71,124 @@ const blockTypeLabels: Record<string, string> = {
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   block,
-  heroData,
-  aboutMeData,
-  pendingHeroChanges,
-  pendingAboutMeChanges,
-  pendingBlockChanges,
-  onHeroChange,
-  onAboutMeChange,
+  pendingChanges,
   onBlockConfigChange,
   onDone,
 }) => {
   const { toast } = useToast();
-  const updateAboutMe = useUpdateAboutMeSettings();
   
-  // Merge pending changes with data
-  const mergedHero = heroData ? { ...heroData, ...pendingHeroChanges } : null;
-  const mergedAboutMe = aboutMeData ? { ...aboutMeData, ...pendingAboutMeChanges } : null;
-  const mergedConfig = { ...block.block_config, ...pendingBlockChanges };
+  // Merge pending changes with block config
+  const config = { ...block.block_config, ...pendingChanges };
 
-  // Direct save for image uploads (immediate feedback)
-  const handleAboutMeImageUpload = async (url: string) => {
-    try {
-      // Extract path from URL for storage reference
-      const imagePath = url ? url.split('/').pop() || undefined : undefined;
-      await updateAboutMe.mutateAsync({ image_url: url, image_path: imagePath });
-      toast({ title: 'Bild sparad', description: 'Profilbilden har uppdaterats.' });
-    } catch (error) {
-      toast({ title: 'Fel', description: 'Kunde inte spara bilden.', variant: 'destructive' });
-    }
+  // Type-safe config getters
+  const getHeroConfig = (): HeroBlockConfig => config as HeroBlockConfig;
+  const getAboutConfig = (): AboutSplitBlockConfig => config as AboutSplitBlockConfig;
+
+  // Handle hero feature changes
+  const handleHeroFeaturesChange = (features: FeatureItem[]) => {
+    onBlockConfigChange({ features });
   };
 
-  // Convert hero features to array format for editing
-  const getHeroFeatures = (): FeatureItem[] => {
-    if (!mergedHero) return [];
-    return [
-      { text: mergedHero.feature1 || '', icon: mergedHero.feature1_icon || 'Rocket' },
-      { text: mergedHero.feature2 || '', icon: mergedHero.feature2_icon || 'BarChart' },
-      { text: mergedHero.feature3 || '', icon: mergedHero.feature3_icon || 'Brain' },
-    ].filter(f => f.text);
+  // Handle about skills changes
+  const handleAboutSkillsChange = (skills: SkillItem[]) => {
+    onBlockConfigChange({ skills });
   };
 
-  // Convert about skills to array format
-  const getAboutSkills = (): SkillItem[] => {
-    if (!mergedAboutMe) return [];
-    return [
-      { 
-        title: mergedAboutMe.skill1_title || '', 
-        description: mergedAboutMe.skill1_description || '', 
-        icon: mergedAboutMe.skill1_icon || 'Monitor' 
-      },
-      { 
-        title: mergedAboutMe.skill2_title || '', 
-        description: mergedAboutMe.skill2_description || '', 
-        icon: mergedAboutMe.skill2_icon || 'Rocket' 
-      },
-      { 
-        title: mergedAboutMe.skill3_title || '', 
-        description: mergedAboutMe.skill3_description || '', 
-        icon: mergedAboutMe.skill3_icon || 'Brain' 
-      },
-    ].filter(s => s.title);
-  };
-
-  // Handle feature changes
-  const handleFeaturesChange = (features: FeatureItem[]) => {
-    const changes: Record<string, string> = {};
-    features.forEach((feature, index) => {
-      const num = index + 1;
-      changes[`feature${num}`] = feature.text;
-      changes[`feature${num}_icon`] = feature.icon;
-    });
-    for (let i = features.length + 1; i <= 3; i++) {
-      changes[`feature${i}`] = '';
-      changes[`feature${i}_icon`] = '';
-    }
-    onHeroChange(changes);
-  };
-
-  // Handle skill changes
-  const handleSkillsChange = (skills: SkillItem[]) => {
-    const changes: Record<string, string> = {};
-    skills.forEach((skill, index) => {
-      const num = index + 1;
-      changes[`skill${num}_title`] = skill.title;
-      changes[`skill${num}_description`] = skill.description;
-      changes[`skill${num}_icon`] = skill.icon;
-    });
-    for (let i = skills.length + 1; i <= 3; i++) {
-      changes[`skill${i}_title`] = '';
-      changes[`skill${i}_description`] = '';
-      changes[`skill${i}_icon`] = '';
-    }
-    onAboutMeChange(changes);
-  };
-
-  const renderHeroConfig = () => (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label>Name</Label>
-          <Input
-            value={mergedHero?.name || ''}
-            onChange={(e) => onHeroChange({ name: e.target.value })}
-            placeholder="Magnus Froste"
-            className="text-lg"
-          />
+  const renderHeroConfig = () => {
+    const heroConfig = getHeroConfig();
+    const features = heroConfig.features || [];
+    
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Name</Label>
+            <Input
+              value={heroConfig.name || ''}
+              onChange={(e) => onBlockConfigChange({ name: e.target.value })}
+              placeholder="Magnus Froste"
+              className="text-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Tagline</Label>
+            <Textarea
+              value={heroConfig.tagline || ''}
+              onChange={(e) => onBlockConfigChange({ tagline: e.target.value })}
+              placeholder="Your tagline..."
+              rows={3}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <Label>Enable Animations</Label>
+            <Switch
+              checked={heroConfig.enable_animations ?? true}
+              onCheckedChange={(checked) => onBlockConfigChange({ enable_animations: checked })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Animation Style</Label>
+            <Select
+              value={heroConfig.animation_style || 'falling-stars'}
+              onValueChange={(value) => onBlockConfigChange({ animation_style: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="falling-stars">Falling Stars</SelectItem>
+                <SelectItem value="particles">Particles</SelectItem>
+                <SelectItem value="gradient-shift">Gradient</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Tagline</Label>
-          <Textarea
-            value={mergedHero?.tagline || ''}
-            onChange={(e) => onHeroChange({ tagline: e.target.value })}
-            placeholder="Your tagline..."
-            rows={3}
-          />
-        </div>
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-          <Label>Enable Animations</Label>
-          <Switch
-            checked={mergedHero?.enable_animations ?? true}
-            onCheckedChange={(checked) => onHeroChange({ enable_animations: checked })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Animation Style</Label>
-          <Select
-            value={mergedHero?.animation_style || 'falling-stars'}
-            onValueChange={(value) => onHeroChange({ animation_style: value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="falling-stars">Falling Stars</SelectItem>
-              <SelectItem value="particles">Particles</SelectItem>
-              <SelectItem value="gradient-shift">Gradient</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div>
-        <FeatureListEditor
-          label="Features"
-          features={getHeroFeatures()}
-          onChange={handleFeaturesChange}
-          maxItems={3}
-        />
-      </div>
-    </div>
-  );
-
-  const renderAboutConfig = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-        <div className="space-y-2">
-          <Label>Section Title</Label>
-          <Input
-            value={(mergedConfig.title as string) || ''}
-            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-            placeholder="About Me"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Section Subtitle</Label>
-          <Input
-            value={(mergedConfig.subtitle as string) || ''}
-            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-            placeholder="Get to know me better"
+        <div>
+          <FeatureListEditor
+            label="Features"
+            features={features}
+            onChange={handleHeroFeaturesChange}
+            maxItems={3}
           />
         </div>
       </div>
-      <div className="border-t pt-6">
+    );
+  };
+
+  const renderAboutConfig = () => {
+    const aboutConfig = getAboutConfig();
+    const skills = aboutConfig.skills || [];
+    
+    return (
+      <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Name</Label>
               <Input
-                value={mergedAboutMe?.name || ''}
-                onChange={(e) => onAboutMeChange({ name: e.target.value })}
+                value={aboutConfig.name || ''}
+                onChange={(e) => onBlockConfigChange({ name: e.target.value })}
               />
             </div>
             <ImageUpload
               label="Profile Image"
-              value={mergedAboutMe?.image_url || ''}
-              onChange={handleAboutMeImageUpload}
+              value={aboutConfig.image_url || ''}
+              onChange={(url) => onBlockConfigChange({ image_url: url })}
               bucket="about-me-images"
             />
             <div className="space-y-2">
               <Label>Introduction Text</Label>
               <Textarea
-                value={mergedAboutMe?.intro_text || ''}
-                onChange={(e) => onAboutMeChange({ intro_text: e.target.value })}
+                value={aboutConfig.intro_text || ''}
+                onChange={(e) => onBlockConfigChange({ intro_text: e.target.value })}
                 rows={4}
               />
             </div>
             <div className="space-y-2">
               <Label>Additional Text</Label>
               <Textarea
-                value={mergedAboutMe?.additional_text || ''}
-                onChange={(e) => onAboutMeChange({ additional_text: e.target.value })}
+                value={aboutConfig.additional_text || ''}
+                onChange={(e) => onBlockConfigChange({ additional_text: e.target.value })}
                 rows={4}
               />
             </div>
@@ -276,22 +196,22 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           <div>
             <SkillListEditor
               label="Skills"
-              skills={getAboutSkills()}
-              onChange={handleSkillsChange}
+              skills={skills}
+              onChange={handleAboutSkillsChange}
               maxItems={3}
             />
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderTextSectionConfig = () => (
     <div className="max-w-2xl mx-auto space-y-4">
       <div className="space-y-2">
         <Label>Title</Label>
         <Input
-          value={(mergedConfig.title as string) || ''}
+          value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
           className="text-lg"
         />
@@ -299,7 +219,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-2">
         <Label>Content</Label>
         <Textarea
-          value={(mergedConfig.content as string) || ''}
+          value={(config.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
           rows={8}
         />
@@ -307,7 +227,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-2">
         <Label>Alignment</Label>
         <Select
-          value={(mergedConfig.alignment as string) || 'center'}
+          value={(config.alignment as string) || 'center'}
           onValueChange={(value) => onBlockConfigChange({ alignment: value })}
         >
           <SelectTrigger className="w-40">
@@ -328,7 +248,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-2">
         <Label>Title</Label>
         <Input
-          value={(mergedConfig.title as string) || ''}
+          value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
           className="text-xl font-semibold"
         />
@@ -336,7 +256,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-2">
         <Label>Description</Label>
         <Textarea
-          value={(mergedConfig.description as string) || ''}
+          value={(config.description as string) || ''}
           onChange={(e) => onBlockConfigChange({ description: e.target.value })}
           rows={3}
         />
@@ -345,14 +265,14 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         <div className="space-y-2">
           <Label>Button Text</Label>
           <Input
-            value={(mergedConfig.button_text as string) || ''}
+            value={(config.button_text as string) || ''}
             onChange={(e) => onBlockConfigChange({ button_text: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label>Button URL</Label>
           <Input
-            value={(mergedConfig.button_url as string) || ''}
+            value={(config.button_url as string) || ''}
             onChange={(e) => onBlockConfigChange({ button_url: e.target.value })}
             placeholder="/contact"
           />
@@ -366,14 +286,14 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-4">
         <ImageUpload
           label="Image"
-          value={(mergedConfig.image_url as string) || ''}
+          value={(config.image_url as string) || ''}
           onChange={(url) => onBlockConfigChange({ image_url: url })}
           bucket="about-me-images"
         />
         <div className="space-y-2">
           <Label>Image Position</Label>
           <Select
-            value={(mergedConfig.image_position as string) || 'left'}
+            value={(config.image_position as string) || 'left'}
             onValueChange={(value) => onBlockConfigChange({ image_position: value })}
           >
             <SelectTrigger>
@@ -390,14 +310,14 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         <div className="space-y-2">
           <Label>Title</Label>
           <Input
-            value={(mergedConfig.title as string) || ''}
+            value={(config.title as string) || ''}
             onChange={(e) => onBlockConfigChange({ title: e.target.value })}
           />
         </div>
         <div className="space-y-2">
           <Label>Content</Label>
           <Textarea
-            value={(mergedConfig.content as string) || ''}
+            value={(config.content as string) || ''}
             onChange={(e) => onBlockConfigChange({ content: e.target.value })}
             rows={6}
           />
@@ -411,7 +331,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       <div className="space-y-2">
         <Label>Height</Label>
         <Select
-          value={(mergedConfig.height as string) || 'md'}
+          value={(config.height as string) || 'md'}
           onValueChange={(value) => onBlockConfigChange({ height: value })}
         >
           <SelectTrigger>
@@ -428,10 +348,534 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     </div>
   );
 
-  const renderReadOnlyConfig = (message: string) => (
-    <div className="text-center py-8 text-muted-foreground">
-      <p className="text-sm">{message}</p>
-      <p className="text-xs mt-2">Managed via respective admin section</p>
+  const renderFeaturedConfig = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+        <div className="space-y-2">
+          <Label>Section Title</Label>
+          <Input
+            value={(config.title as string) || ''}
+            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+            placeholder="Featured In..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Section Subtitle</Label>
+          <Input
+            value={(config.subtitle as string) || ''}
+            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+            placeholder="Where I've been featured"
+          />
+        </div>
+      </div>
+      <div className="border-t pt-6">
+        <FeaturedItemEditor />
+      </div>
+    </div>
+  );
+
+  const renderExpertiseConfig = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+        <div className="space-y-2">
+          <Label>Section Title</Label>
+          <Input
+            value={(config.title as string) || ''}
+            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+            placeholder="Areas of Expertise"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Section Subtitle</Label>
+          <Input
+            value={(config.subtitle as string) || ''}
+            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+            placeholder="What I specialize in"
+          />
+        </div>
+      </div>
+      <div className="border-t pt-6">
+        <ExpertiseAreaEditor />
+      </div>
+    </div>
+  );
+
+  const renderProjectShowcaseConfig = () => (
+    <div className="space-y-8">
+      <PortfolioSettingsEditor />
+      <div className="border-t pt-6">
+        <ProjectShowcaseEditor />
+      </div>
+    </div>
+  );
+
+  const renderChatWidgetConfig = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+        <div className="space-y-2">
+          <Label>Section Title</Label>
+          <Input
+            value={(config.title as string) || ''}
+            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+            placeholder="Chat with me"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Section Subtitle</Label>
+          <Input
+            value={(config.subtitle as string) || ''}
+            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+            placeholder="Ask me anything"
+          />
+        </div>
+      </div>
+      <div className="border-t pt-6">
+        <ChatSettingsEditor />
+      </div>
+      <div className="border-t pt-6">
+        <QuickActionsEditor />
+      </div>
+    </div>
+  );
+
+  const renderVideoHeroConfig = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Video URL</Label>
+            <Input
+              value={(config.video_url as string) || ''}
+              onChange={(e) => onBlockConfigChange({ video_url: e.target.value })}
+              placeholder="https://..."
+            />
+            <p className="text-xs text-muted-foreground">Direct link to MP4 video file</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input
+              value={(config.headline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+              placeholder="Create Something Extraordinary"
+              className="text-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subheadline</Label>
+            <Textarea
+              value={(config.subheadline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+              placeholder="Your vision, realized..."
+              rows={2}
+            />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="grid gap-4 grid-cols-2">
+            <div className="space-y-2">
+              <Label>CTA Button Text</Label>
+              <Input
+                value={(config.cta_text as string) || ''}
+                onChange={(e) => onBlockConfigChange({ cta_text: e.target.value })}
+                placeholder="Get Started"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CTA URL</Label>
+              <Input
+                value={(config.cta_url as string) || ''}
+                onChange={(e) => onBlockConfigChange({ cta_url: e.target.value })}
+                placeholder="/contact"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Text Alignment</Label>
+            <Select
+              value={(config.text_alignment as string) || 'center'}
+              onValueChange={(value) => onBlockConfigChange({ text_alignment: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="center">Center</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Overlay Opacity ({((config.overlay_opacity as number) ?? 0.7) * 100}%)</Label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={(config.overlay_opacity as number) ?? 0.7}
+              onChange={(e) => onBlockConfigChange({ overlay_opacity: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <Label>Show Video Controls</Label>
+            <Switch
+              checked={(config.show_controls as boolean) !== false}
+              onCheckedChange={(checked) => onBlockConfigChange({ show_controls: checked })}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderParallaxConfig = () => (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4">
+          <ImageUpload
+            label="Background Image"
+            value={(config.background_image as string) || ''}
+            onChange={(url) => onBlockConfigChange({ background_image: url })}
+            bucket="about-me-images"
+          />
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input
+              value={(config.headline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+              placeholder="Immersive Experiences"
+              className="text-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea
+              value={(config.description as string) || ''}
+              onChange={(e) => onBlockConfigChange({ description: e.target.value })}
+              rows={3}
+            />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Section Height</Label>
+            <Select
+              value={(config.height as string) || 'large'}
+              onValueChange={(value) => onBlockConfigChange({ height: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="medium">Medium (60vh)</SelectItem>
+                <SelectItem value="large">Large (80vh)</SelectItem>
+                <SelectItem value="full">Full Screen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Parallax Speed ({(config.parallax_speed as number) ?? 0.5})</Label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={(config.parallax_speed as number) ?? 0.5}
+              onChange={(e) => onBlockConfigChange({ parallax_speed: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Text Color</Label>
+            <Select
+              value={(config.text_color as string) || 'light'}
+              onValueChange={(value) => onBlockConfigChange({ text_color: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light (for dark backgrounds)</SelectItem>
+                <SelectItem value="dark">Dark (for light backgrounds)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderBentoGridConfig = () => {
+    const bentoItems = (config.items as Array<{
+      id: string;
+      title: string;
+      description: string;
+      icon?: string;
+      image_url?: string;
+      size: 'small' | 'medium' | 'large';
+      gradient?: string;
+    }>) || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Headline</Label>
+            <Input
+              value={(config.headline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+              placeholder="Everything You Need"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subheadline</Label>
+            <Input
+              value={(config.subheadline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+              placeholder="A complete toolkit..."
+            />
+          </div>
+        </div>
+        <div className="border-t pt-6">
+          <BentoItemEditor
+            items={bentoItems}
+            onChange={(items) => onBlockConfigChange({ items })}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderMarqueeConfig = () => (
+    <div className="space-y-6">
+      <div className="space-y-4 max-w-xl">
+        <div className="space-y-2">
+          <Label>Headline (optional)</Label>
+          <Input
+            value={(config.headline as string) || ''}
+            onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+            placeholder="TRUSTED BY INDUSTRY LEADERS"
+          />
+        </div>
+        <div className="grid gap-4 grid-cols-2">
+          <div className="space-y-2">
+            <Label>Speed</Label>
+            <Select
+              value={(config.speed as string) || 'medium'}
+              onValueChange={(value) => onBlockConfigChange({ speed: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="slow">Slow (40s)</SelectItem>
+                <SelectItem value="medium">Medium (25s)</SelectItem>
+                <SelectItem value="fast">Fast (15s)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Direction</Label>
+            <Select
+              value={(config.direction as string) || 'left'}
+              onValueChange={(value) => onBlockConfigChange({ direction: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <Label>Pause on Hover</Label>
+          <Switch
+            checked={(config.pause_on_hover as boolean) !== false}
+            onCheckedChange={(checked) => onBlockConfigChange({ pause_on_hover: checked })}
+          />
+        </div>
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <Label>Show Gradient Edges</Label>
+          <Switch
+            checked={(config.show_gradient as boolean) !== false}
+            onCheckedChange={(checked) => onBlockConfigChange({ show_gradient: checked })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStatsCounterConfig = () => {
+    const statsItems = (config.stats as Array<{
+      id: string;
+      value: number;
+      suffix?: string;
+      prefix?: string;
+      label: string;
+      description?: string;
+    }>) || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Headline</Label>
+            <Input
+              value={(config.headline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+              placeholder="Our Impact"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subheadline</Label>
+            <Input
+              value={(config.subheadline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+              placeholder="Numbers that speak for themselves"
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 grid-cols-2">
+          <div className="space-y-2">
+            <Label>Layout</Label>
+            <Select
+              value={(config.layout as string) || 'grid'}
+              onValueChange={(value) => onBlockConfigChange({ layout: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="grid">Grid (2x2 on mobile)</SelectItem>
+                <SelectItem value="inline">Inline Row</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <Label>Animate Numbers</Label>
+            <Switch
+              checked={(config.animate as boolean) !== false}
+              onCheckedChange={(checked) => onBlockConfigChange({ animate: checked })}
+            />
+          </div>
+        </div>
+        <div className="border-t pt-6">
+          <StatsItemEditor
+            items={statsItems}
+            onChange={(stats) => onBlockConfigChange({ stats })}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderTestimonialConfig = () => {
+    const testimonialItems = (config.testimonials as Array<{
+      id: string;
+      quote: string;
+      author: string;
+      role: string;
+      company?: string;
+      avatar_url?: string;
+      rating?: number;
+    }>) || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Headline</Label>
+            <Input
+              value={(config.headline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
+              placeholder="What People Say"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subheadline</Label>
+            <Input
+              value={(config.subheadline as string) || ''}
+              onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
+              placeholder="Trusted by industry leaders..."
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 grid-cols-2">
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <Label>Autoplay</Label>
+            <Switch
+              checked={(config.autoplay as boolean) !== false}
+              onCheckedChange={(checked) => onBlockConfigChange({ autoplay: checked })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Autoplay Interval (ms)</Label>
+            <Input
+              type="number"
+              value={(config.autoplay_interval as number) || 5000}
+              onChange={(e) => onBlockConfigChange({ autoplay_interval: parseInt(e.target.value) })}
+              min={2000}
+              max={15000}
+              step={1000}
+            />
+          </div>
+        </div>
+        <div className="border-t pt-6">
+          <TestimonialItemEditor
+            items={testimonialItems}
+            onChange={(testimonials) => onBlockConfigChange({ testimonials })}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderContactFormConfig = () => (
+    <div className="max-w-2xl space-y-4">
+      <div className="space-y-2">
+        <Label>Form Title</Label>
+        <Input
+          value={(config.title as string) || ''}
+          onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+          placeholder="Get in Touch"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Subtitle</Label>
+        <Input
+          value={(config.subtitle as string) || ''}
+          onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+          placeholder="We'd love to hear from you"
+        />
+      </div>
+      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        <Label>Show Subject Field</Label>
+        <Switch
+          checked={(config.showSubject as boolean) ?? true}
+          onCheckedChange={(checked) => onBlockConfigChange({ showSubject: checked })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Button Text</Label>
+        <Input
+          value={(config.buttonText as string) || ''}
+          onChange={(e) => onBlockConfigChange({ buttonText: e.target.value })}
+          placeholder="Send Message"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Success Message</Label>
+        <Textarea
+          value={(config.successMessage as string) || ''}
+          onChange={(e) => onBlockConfigChange({ successMessage: e.target.value })}
+          placeholder="Thanks for reaching out! We'll get back to you soon."
+          rows={2}
+        />
+      </div>
     </div>
   );
 
@@ -450,553 +894,48 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
       case 'spacer':
         return renderSpacerConfig();
       case 'featured-carousel':
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Title</Label>
-                <Input
-                  value={(mergedConfig.title as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-                  placeholder="Featured In..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Section Subtitle</Label>
-                <Input
-                  value={(mergedConfig.subtitle as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-                  placeholder="Where I've been featured"
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <FeaturedItemEditor />
-            </div>
-          </div>
-        );
+        return renderFeaturedConfig();
       case 'expertise-grid':
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Title</Label>
-                <Input
-                  value={(mergedConfig.title as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-                  placeholder="Areas of Expertise"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Section Subtitle</Label>
-                <Input
-                  value={(mergedConfig.subtitle as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-                  placeholder="What I specialize in"
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <ExpertiseAreaEditor />
-            </div>
-          </div>
-        );
+        return renderExpertiseConfig();
       case 'project-showcase':
-        return (
-          <div className="space-y-8">
-            <PortfolioSettingsEditor />
-            <div className="border-t pt-6">
-              <ProjectShowcaseEditor />
-            </div>
-          </div>
-        );
+        return renderProjectShowcaseConfig();
       case 'chat-widget':
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Title</Label>
-                <Input
-                  value={(mergedConfig.title as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-                  placeholder="Chat with me"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Section Subtitle</Label>
-                <Input
-                  value={(mergedConfig.subtitle as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-                  placeholder="Ask me anything"
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <ChatSettingsEditor />
-            </div>
-            <div className="border-t pt-6">
-              <QuickActionsEditor />
-            </div>
-          </div>
-        );
+        return renderChatWidgetConfig();
       case 'video-hero':
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Video URL</Label>
-                  <Input
-                    value={(mergedConfig.video_url as string) || ''}
-                    onChange={(e) => onBlockConfigChange({ video_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                  <p className="text-xs text-muted-foreground">Direct link to MP4 video file</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Headline</Label>
-                  <Input
-                    value={(mergedConfig.headline as string) || ''}
-                    onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                    placeholder="Create Something Extraordinary"
-                    className="text-lg"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Subheadline</Label>
-                  <Textarea
-                    value={(mergedConfig.subheadline as string) || ''}
-                    onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
-                    placeholder="Your vision, realized..."
-                    rows={2}
-                  />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="grid gap-4 grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>CTA Button Text</Label>
-                    <Input
-                      value={(mergedConfig.cta_text as string) || ''}
-                      onChange={(e) => onBlockConfigChange({ cta_text: e.target.value })}
-                      placeholder="Get Started"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>CTA URL</Label>
-                    <Input
-                      value={(mergedConfig.cta_url as string) || ''}
-                      onChange={(e) => onBlockConfigChange({ cta_url: e.target.value })}
-                      placeholder="/contact"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Text Alignment</Label>
-                  <Select
-                    value={(mergedConfig.text_alignment as string) || 'center'}
-                    onValueChange={(value) => onBlockConfigChange({ text_alignment: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Overlay Opacity ({((mergedConfig.overlay_opacity as number) ?? 0.7) * 100}%)</Label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={(mergedConfig.overlay_opacity as number) ?? 0.7}
-                    onChange={(e) => onBlockConfigChange({ overlay_opacity: parseFloat(e.target.value) })}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <Label>Show Video Controls</Label>
-                  <Switch
-                    checked={(mergedConfig.show_controls as boolean) !== false}
-                    onCheckedChange={(checked) => onBlockConfigChange({ show_controls: checked })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return renderVideoHeroConfig();
       case 'parallax-section':
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-4">
-                <ImageUpload
-                  label="Background Image"
-                  value={(mergedConfig.background_image as string) || ''}
-                  onChange={(url) => onBlockConfigChange({ background_image: url })}
-                  bucket="about-me-images"
-                />
-                <div className="space-y-2">
-                  <Label>Headline</Label>
-                  <Input
-                    value={(mergedConfig.headline as string) || ''}
-                    onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                    placeholder="Immersive Experiences"
-                    className="text-lg"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea
-                    value={(mergedConfig.description as string) || ''}
-                    onChange={(e) => onBlockConfigChange({ description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Section Height</Label>
-                  <Select
-                    value={(mergedConfig.height as string) || 'large'}
-                    onValueChange={(value) => onBlockConfigChange({ height: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="medium">Medium (60vh)</SelectItem>
-                      <SelectItem value="large">Large (80vh)</SelectItem>
-                      <SelectItem value="full">Full Screen</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Parallax Speed ({(mergedConfig.parallax_speed as number) ?? 0.5})</Label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={(mergedConfig.parallax_speed as number) ?? 0.5}
-                    onChange={(e) => onBlockConfigChange({ parallax_speed: parseFloat(e.target.value) })}
-                    className="w-full"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Text Color</Label>
-                  <Select
-                    value={(mergedConfig.text_color as string) || 'light'}
-                    onValueChange={(value) => onBlockConfigChange({ text_color: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light (for dark backgrounds)</SelectItem>
-                      <SelectItem value="dark">Dark (for light backgrounds)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return renderParallaxConfig();
       case 'bento-grid':
-        const bentoItems = (mergedConfig.items as Array<{
-          id: string;
-          title: string;
-          description: string;
-          icon?: string;
-          image_url?: string;
-          size: 'small' | 'medium' | 'large';
-          gradient?: string;
-        }>) || [];
-        
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Headline</Label>
-                <Input
-                  value={(mergedConfig.headline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                  placeholder="Everything You Need"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Subheadline</Label>
-                <Input
-                  value={(mergedConfig.subheadline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
-                  placeholder="A complete toolkit..."
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <BentoItemEditor
-                items={bentoItems}
-                onChange={(items) => onBlockConfigChange({ items })}
-              />
-            </div>
-          </div>
-        );
+        return renderBentoGridConfig();
       case 'marquee':
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4 max-w-xl">
-              <div className="space-y-2">
-                <Label>Headline (optional)</Label>
-                <Input
-                  value={(mergedConfig.headline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                  placeholder="TRUSTED BY INDUSTRY LEADERS"
-                />
-              </div>
-              <div className="grid gap-4 grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Speed</Label>
-                  <Select
-                    value={(mergedConfig.speed as string) || 'medium'}
-                    onValueChange={(value) => onBlockConfigChange({ speed: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="slow">Slow (40s)</SelectItem>
-                      <SelectItem value="medium">Medium (25s)</SelectItem>
-                      <SelectItem value="fast">Fast (15s)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Direction</Label>
-                  <Select
-                    value={(mergedConfig.direction as string) || 'left'}
-                    onValueChange={(value) => onBlockConfigChange({ direction: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Left</SelectItem>
-                      <SelectItem value="right">Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <Label>Pause on Hover</Label>
-                <Switch
-                  checked={(mergedConfig.pause_on_hover as boolean) !== false}
-                  onCheckedChange={(checked) => onBlockConfigChange({ pause_on_hover: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <Label>Show Gradient Edges</Label>
-                <Switch
-                  checked={(mergedConfig.show_gradient as boolean) !== false}
-                  onCheckedChange={(checked) => onBlockConfigChange({ show_gradient: checked })}
-                />
-              </div>
-            </div>
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground">
-                Marquee uses default text items. Custom item editing coming soon.
-              </p>
-            </div>
-          </div>
-        );
+        return renderMarqueeConfig();
       case 'stats-counter':
-        const statsItems = (mergedConfig.stats as Array<{
-          id: string;
-          value: number;
-          suffix?: string;
-          prefix?: string;
-          label: string;
-          description?: string;
-        }>) || [];
-        
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Headline</Label>
-                <Input
-                  value={(mergedConfig.headline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                  placeholder="Our Impact"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Subheadline</Label>
-                <Input
-                  value={(mergedConfig.subheadline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
-                  placeholder="Numbers that speak for themselves"
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 grid-cols-2">
-              <div className="space-y-2">
-                <Label>Layout</Label>
-                <Select
-                  value={(mergedConfig.layout as string) || 'grid'}
-                  onValueChange={(value) => onBlockConfigChange({ layout: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="grid">Grid (2x2 on mobile)</SelectItem>
-                    <SelectItem value="inline">Inline Row</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <Label>Animate Numbers</Label>
-                <Switch
-                  checked={(mergedConfig.animate as boolean) !== false}
-                  onCheckedChange={(checked) => onBlockConfigChange({ animate: checked })}
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <StatsItemEditor
-                items={statsItems}
-                onChange={(stats) => onBlockConfigChange({ stats })}
-              />
-            </div>
-          </div>
-        );
+        return renderStatsCounterConfig();
       case 'testimonial-carousel':
-        const testimonialItems = (mergedConfig.testimonials as Array<{
-          id: string;
-          quote: string;
-          author: string;
-          role: string;
-          company?: string;
-          avatar_url?: string;
-          rating?: number;
-        }>) || [];
-        
-        return (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-              <div className="space-y-2">
-                <Label>Section Headline</Label>
-                <Input
-                  value={(mergedConfig.headline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ headline: e.target.value })}
-                  placeholder="What People Say"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Subheadline</Label>
-                <Input
-                  value={(mergedConfig.subheadline as string) || ''}
-                  onChange={(e) => onBlockConfigChange({ subheadline: e.target.value })}
-                  placeholder="Trusted by industry leaders..."
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 grid-cols-2">
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <Label>Autoplay</Label>
-                <Switch
-                  checked={(mergedConfig.autoplay as boolean) !== false}
-                  onCheckedChange={(checked) => onBlockConfigChange({ autoplay: checked })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Autoplay Interval (ms)</Label>
-                <Input
-                  type="number"
-                  value={(mergedConfig.autoplay_interval as number) || 5000}
-                  onChange={(e) => onBlockConfigChange({ autoplay_interval: parseInt(e.target.value) })}
-                  min={2000}
-                  max={10000}
-                  step={500}
-                />
-              </div>
-            </div>
-            <div className="border-t pt-6">
-              <TestimonialItemEditor
-                items={testimonialItems}
-                onChange={(testimonials) => onBlockConfigChange({ testimonials })}
-              />
-            </div>
-          </div>
-        );
+        return renderTestimonialConfig();
       case 'contact-form':
+        return renderContactFormConfig();
+      default:
         return (
-          <div className="max-w-2xl mx-auto space-y-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={(mergedConfig.title as string) || ''}
-                onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-                placeholder="Kontakta mig"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Textarea
-                value={(mergedConfig.subtitle as string) || ''}
-                onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-                placeholder="Har du ett projekt eller en idé?"
-                rows={2}
-              />
-            </div>
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Label>Show Subject Field</Label>
-              <Switch
-                checked={(mergedConfig.showSubject as boolean) !== false}
-                onCheckedChange={(checked) => onBlockConfigChange({ showSubject: checked })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Button Text</Label>
-              <Input
-                value={(mergedConfig.buttonText as string) || ''}
-                onChange={(e) => onBlockConfigChange({ buttonText: e.target.value })}
-                placeholder="Skicka meddelande"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Success Message</Label>
-              <Textarea
-                value={(mergedConfig.successMessage as string) || ''}
-                onChange={(e) => onBlockConfigChange({ successMessage: e.target.value })}
-                placeholder="Tack för ditt meddelande!"
-                rows={2}
-              />
-            </div>
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">Unknown block type: {block.block_type}</p>
           </div>
         );
-      default:
-        return <p className="text-muted-foreground">Unknown block type</p>;
     }
   };
 
   return (
-    <Card className="border-primary border-2 shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-muted/30">
-        <CardTitle className="text-lg font-medium">
-          Editing: {blockTypeLabels[block.block_type]}
+    <Card className="border-2 border-primary/50 bg-card/95">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 bg-primary/5">
+        <CardTitle className="text-base font-medium">
+          Redigerar: {blockTypeLabels[block.block_type] || block.block_type}
         </CardTitle>
-        <Button onClick={onDone} size="sm" className="gap-2">
-          <Check className="h-4 w-4" />
-          Done
+        <Button variant="ghost" size="sm" onClick={onDone} className="h-8">
+          <Check className="h-4 w-4 mr-1" />
+          Klar
         </Button>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="p-4">
         {renderConfigByType()}
       </CardContent>
     </Card>
