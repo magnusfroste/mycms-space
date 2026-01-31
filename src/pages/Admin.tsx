@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import AIModuleSettings from '@/components/admin/AIModuleSettings';
+import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
@@ -116,6 +117,8 @@ const Admin = () => {
         return <MessagesManager />;
       case 'ai-module':
         return <AIModuleSettings />;
+      case 'projects-module':
+        return <ProjectsModuleSettings />;
       case 'history':
         return <SettingsHistory />;
       default:
