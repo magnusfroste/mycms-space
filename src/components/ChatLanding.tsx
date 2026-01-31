@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import AppleChat, { Message } from "./AppleChat";
-import { useAIModule } from "@/hooks/useAIModule";
+import { useAIModule } from "@/models/modules";
 
 interface ChatLandingProps {
   title?: string;
@@ -11,7 +11,7 @@ interface ChatLandingProps {
 
 const ChatLanding: React.FC<ChatLandingProps> = ({ title, subtitle }) => {
   const navigate = useNavigate();
-  const { data: aiModule } = useAIModule();
+  const { config } = useAIModule();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const didNavigateRef = React.useRef(false);
@@ -31,7 +31,7 @@ const ChatLanding: React.FC<ChatLandingProps> = ({ title, subtitle }) => {
     }
   }, [currentMessages, currentSessionId, navigate]);
 
-  const webhookUrl = aiModule?.webhook_url || "https://agent.froste.eu/webhook/magnet";
+  const webhookUrl = config?.webhook_url || "https://agent.froste.eu/webhook/magnet";
 
   return (
     <div className="pb-20" aria-label="Chat with Magnus">

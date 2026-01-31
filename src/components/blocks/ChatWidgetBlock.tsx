@@ -1,13 +1,13 @@
 // ============================================
 // Chat Widget Block
-// Reads config from block_config JSONB + global settings from ai_module
+// Reads config from block_config JSONB + global settings from modules
 // ============================================
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import AppleChat, { Message } from '@/components/AppleChat';
-import { useAIModule } from '@/models/aiModule';
+import { useAIModule } from '@/models/modules';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';
 
 interface ChatWidgetBlockProps {
@@ -17,7 +17,7 @@ interface ChatWidgetBlockProps {
 const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const typedConfig = config as ChatWidgetBlockConfig;
   const navigate = useNavigate();
-  const { data: aiModule } = useAIModule();
+  const { config: aiConfig, isEnabled: isModuleEnabled } = useAIModule();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const didNavigateRef = React.useRef(false);
@@ -30,9 +30,8 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const initialPlaceholder = typedConfig.initial_placeholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?";
   const activePlaceholder = typedConfig.active_placeholder || "How can Magnet help?";
 
-  // Global config (from ai_module)
-  const webhookUrl = aiModule?.webhook_url || 'https://agent.froste.eu/webhook/magnet';
-  const isModuleEnabled = aiModule?.enabled ?? true;
+  // Global config (from modules)
+  const webhookUrl = aiConfig?.webhook_url || 'https://agent.froste.eu/webhook/magnet';
 
   // Navigate to full chat after first user message
   useEffect(() => {

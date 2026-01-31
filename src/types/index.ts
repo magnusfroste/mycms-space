@@ -164,25 +164,9 @@ export interface QuickAction {
   enabled: boolean;
 }
 
-// AI Module Settings Types
-export interface AIModuleSettings {
-  id: string;
-  enabled: boolean;
-  webhook_url: string;
-  provider: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// AI Module Settings Types (New)
-export interface AIModuleSettings {
-  id: string;
-  enabled: boolean;
-  webhook_url: string;
-  provider: string;
-  created_at?: string;
-  updated_at?: string;
-}
+// AI Module Settings (legacy - use types/modules.ts instead)
+// Re-export for backward compatibility
+export type { AIModuleConfig as AIModuleSettings } from './modules';
 
 // Portfolio Settings Types
 export interface PortfolioSettings {

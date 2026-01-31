@@ -6,6 +6,6 @@
 export {
   useAIModule,
   useUpdateAIModule,
-} from '@/models/aiModule';
+} from '@/models/modules';
 
-export type { AIModuleSettings } from '@/models/aiModule';
+export type { AIModuleConfig as AIModuleSettings } from '@/types/modules';

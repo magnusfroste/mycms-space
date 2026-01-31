@@ -73,14 +73,24 @@ export {
 
 export type { FeaturedItem } from './featured';
 
-// AI Module (replaces legacy chat_settings + quick_actions)
+// Modules (unified module system - replaces ai_module, etc.)
 export {
+  useModule,
+  useAllModules,
+  useUpdateModule,
   useAIModule,
   useUpdateAIModule,
-  aiModuleKeys,
-} from './aiModule';
+  useProjectsModule,
+  useUpdateProjectsModule,
+  modulesKeys,
+} from './modules';
 
-export type { AIModuleSettings } from '@/types';
+export type {
+  Module,
+  ModuleType,
+  AIModuleConfig,
+  ProjectsModuleConfig,
+} from './modules';
 
 // Portfolio Settings
 export {

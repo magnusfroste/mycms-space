@@ -1,6 +1,6 @@
 // ============================================
 // AI Module Settings
-// Global AI configuration (webhook, enabled, provider)
+// Global AI configuration using unified modules system
 // ============================================
 
 import React from 'react';
@@ -10,17 +10,29 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAIModule, useUpdateAIModule } from '@/models/aiModule';
+import { useAIModule, useUpdateAIModule } from '@/models/modules';
+import type { AIModuleConfig } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
 
 const AIModuleSettings: React.FC = () => {
-  const { data: settings, isLoading } = useAIModule();
-  const updateSettings = useUpdateAIModule();
+  const { data: module, config, isLoading } = useAIModule();
+  const updateModule = useUpdateAIModule();
   const { toast } = useToast();
 
-  const handleUpdate = (field: string, value: string | boolean) => {
-    updateSettings.mutate(
-      { [field]: value },
+  const handleToggle = (enabled: boolean) => {
+    updateModule.mutate(
+      { enabled },
+      {
+        onSuccess: () => toast({ title: 'Sparad' }),
+        onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
+      }
+    );
+  };
+
+  const handleConfigUpdate = (field: keyof AIModuleConfig, value: string) => {
+    if (!config) return;
+    updateModule.mutate(
+      { module_config: { ...config, [field]: value } },
       {
         onSuccess: () => toast({ title: 'Sparad' }),
         onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
@@ -70,8 +82,8 @@ const AIModuleSettings: React.FC = () => {
             </div>
             <Switch
               id="enabled"
-              checked={settings?.enabled ?? true}
-              onCheckedChange={(checked) => handleUpdate('enabled', checked)}
+              checked={module?.enabled ?? true}
+              onCheckedChange={handleToggle}
             />
           </div>
         </CardContent>
@@ -94,8 +106,8 @@ const AIModuleSettings: React.FC = () => {
             <Input
               id="webhook_url"
               type="url"
-              value={settings?.webhook_url || ''}
-              onChange={(e) => handleUpdate('webhook_url', e.target.value)}
+              value={config?.webhook_url || ''}
+              onChange={(e) => handleConfigUpdate('webhook_url', e.target.value)}
               placeholder="https://agent.froste.eu/webhook/magnet"
             />
           </div>
@@ -103,8 +115,8 @@ const AIModuleSettings: React.FC = () => {
             <Label htmlFor="provider">Provider</Label>
             <Input
               id="provider"
-              value={settings?.provider || 'n8n'}
-              onChange={(e) => handleUpdate('provider', e.target.value)}
+              value={config?.provider || 'n8n'}
+              onChange={(e) => handleConfigUpdate('provider', e.target.value)}
               placeholder="n8n"
             />
             <p className="text-xs text-muted-foreground">
