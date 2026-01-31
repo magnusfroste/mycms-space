@@ -33,13 +33,12 @@ import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
-import ChatSettingsEditor from './ChatSettingsEditor';
+import ChatWidgetEditor from './ChatWidgetEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import PortfolioSettingsEditor from './PortfolioSettingsEditor';
 import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
-import QuickActionsEditor from './QuickActionsEditor';
 import { useToast } from '@/hooks/use-toast';
 
 interface InlineBlockEditorProps {
@@ -427,34 +426,37 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     );
   };
 
-  const renderChatWidgetConfig = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
-        <div className="space-y-2">
-          <Label>Section Title</Label>
-          <Input
-            value={(config.title as string) || ''}
-            onChange={(e) => onBlockConfigChange({ title: e.target.value })}
-            placeholder="Chat with me"
+  const renderChatWidgetConfig = () => {
+    const chatConfig = config as ChatWidgetBlockConfig;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Title</Label>
+            <Input
+              value={chatConfig.title || ''}
+              onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+              placeholder="Chat with me"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Section Subtitle</Label>
+            <Input
+              value={chatConfig.subtitle || ''}
+              onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+              placeholder="Ask me anything"
+            />
+          </div>
+        </div>
+        <div className="border-t pt-6">
+          <ChatWidgetEditor
+            config={chatConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Section Subtitle</Label>
-          <Input
-            value={(config.subtitle as string) || ''}
-            onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
-            placeholder="Ask me anything"
-          />
-        </div>
       </div>
-      <div className="border-t pt-6">
-        <ChatSettingsEditor />
-      </div>
-      <div className="border-t pt-6">
-        <QuickActionsEditor />
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderVideoHeroConfig = () => (
     <div className="space-y-6">

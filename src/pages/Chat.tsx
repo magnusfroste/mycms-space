@@ -4,7 +4,7 @@ import { ArrowLeft, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppleChat from "@/components/AppleChat";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useChatSettings } from "@/hooks/useChatSettings";
+import { useAIModule } from "@/models/aiModule";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ interface Message {
 const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: settings } = useChatSettings();
+  const { data: aiModule } = useAIModule();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
@@ -33,7 +33,7 @@ const Chat = () => {
   const initialMessages = location.state?.messages as Message[] | undefined;
   const initialSessionId = location.state?.sessionId as string | undefined;
   
-  const webhookUrl = settings?.webhook_url || "https://agent.froste.eu/webhook/magnet";
+  const webhookUrl = aiModule?.webhook_url || "https://agent.froste.eu/webhook/magnet";
 
   const handleBack = () => {
     navigate("/");

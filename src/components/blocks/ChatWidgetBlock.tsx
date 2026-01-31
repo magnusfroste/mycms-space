@@ -1,13 +1,13 @@
 // ============================================
 // Chat Widget Block
-// Reads quick actions from block_config JSONB
+// Reads config from block_config JSONB + global settings from ai_module
 // ============================================
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import AppleChat, { Message } from '@/components/AppleChat';
-import { useChatSettings } from '@/hooks/useChatSettings';
+import { useAIModule } from '@/models/aiModule';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';
 
 interface ChatWidgetBlockProps {
@@ -17,15 +17,22 @@ interface ChatWidgetBlockProps {
 const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const typedConfig = config as ChatWidgetBlockConfig;
   const navigate = useNavigate();
-  const { data: settings } = useChatSettings();
+  const { data: aiModule } = useAIModule();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const didNavigateRef = React.useRef(false);
 
+  // Block-level config (per-instance)
   const title = typedConfig.title;
   const subtitle = typedConfig.subtitle;
   const showQuickActions = typedConfig.show_quick_actions ?? true;
   const quickActions = typedConfig.quick_actions?.filter(qa => qa.enabled) || [];
+  const initialPlaceholder = typedConfig.initial_placeholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?";
+  const activePlaceholder = typedConfig.active_placeholder || "How can Magnet help?";
+
+  // Global config (from ai_module)
+  const webhookUrl = aiModule?.webhook_url || 'https://agent.froste.eu/webhook/magnet';
+  const isModuleEnabled = aiModule?.enabled ?? true;
 
   // Navigate to full chat after first user message
   useEffect(() => {
@@ -42,7 +49,10 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
     }
   }, [currentMessages, currentSessionId, navigate]);
 
-  const webhookUrl = settings?.webhook_url || 'https://agent.froste.eu/webhook/magnet';
+  // Don't render if module is disabled
+  if (!isModuleEnabled) {
+    return null;
+  }
 
   return (
     <div className="pb-20" aria-label="Chat Widget">
@@ -60,6 +70,9 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
         <div className="max-w-4xl mx-auto">
           <AppleChat
             webhookUrl={webhookUrl}
+            initialPlaceholder={initialPlaceholder}
+            activePlaceholder={activePlaceholder}
+            quickActions={quickActions}
             onMessagesChange={setCurrentMessages}
             onSessionIdChange={setCurrentSessionId}
             skipWebhook={true}

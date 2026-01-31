@@ -3,8 +3,7 @@ import {
   FileText, 
   Layers, 
   Navigation, 
-  MessageSquare, 
-  Webhook,
+  Bot,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -45,8 +44,7 @@ const mainNavItems = [
 ];
 
 const settingsNavItems = [
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'webhook', label: 'Webhook', icon: Webhook },
+  { id: 'ai-module', label: 'AI Modul', icon: Bot },
   { id: 'history', label: 'Historik', icon: History },
 ];
 

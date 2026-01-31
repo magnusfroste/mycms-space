@@ -3,8 +3,6 @@ import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { parseMarkdown } from "@/lib/markdown";
-import { useChatSettings } from "@/hooks/useChatSettings";
-import { useQuickActions } from "@/hooks/useQuickActions";
 import { iconMap } from "@/lib/constants/iconMaps";
 
 // Helper to clean webhook response text
@@ -36,8 +34,20 @@ export interface Message {
   isUser: boolean;
 }
 
+export interface QuickActionConfig {
+  id: string;
+  label: string;
+  message: string;
+  icon: string;
+  order_index: number;
+  enabled: boolean;
+}
+
 interface AppleChatProps {
   webhookUrl: string;
+  initialPlaceholder?: string;
+  activePlaceholder?: string;
+  quickActions?: QuickActionConfig[];
   fullPage?: boolean;
   initialMessages?: Message[];
   resetTrigger?: number;
@@ -49,7 +59,10 @@ interface AppleChatProps {
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({
-  webhookUrl: propWebhookUrl,
+  webhookUrl,
+  initialPlaceholder = "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?",
+  activePlaceholder = "How can Magnet help?",
+  quickActions = [],
   fullPage = false,
   initialMessages,
   resetTrigger = 0,
@@ -59,13 +72,6 @@ const AppleChat: React.FC<AppleChatProps> = ({
   skipWebhook = false,
   showQuickActions = false,
 }) => {
-  const { data: settings } = useChatSettings();
-  const { data: quickActionsData } = useQuickActions();
-  
-  const webhookUrl = settings?.webhook_url || propWebhookUrl;
-  const initialPlaceholder = settings?.initial_placeholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?";
-  const activePlaceholder = settings?.active_placeholder || "How can Magnet help?";
-  const quickActions = quickActionsData || [];
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
       return initialMessages;
