@@ -6,7 +6,7 @@ import { QuickActionsManager } from '@/components/admin/QuickActionsManager';
 import { ChatTextSettings } from '@/components/admin/ChatTextSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
-import PageManager from '@/components/admin/PageManager';
+import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import MessagesManager from '@/components/admin/MessagesManager';
 import { SettingsHistory } from '@/components/admin/SettingsHistory';
@@ -111,7 +111,7 @@ const Admin = () => {
       case 'dashboard':
         return <AnalyticsDashboard />;
       case 'pages':
-        return <PageManager />;
+        return <ClassicPageBuilder />;
       case 'navigation':
         return <NavSettings />;
       case 'messages':
@@ -158,8 +158,8 @@ const Admin = () => {
           onPreview={handlePreview}
         />
         <SidebarInset>
-          <div className={activeTab === 'landing' ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
-            <div className={activeTab === 'landing' ? '' : 'max-w-6xl mx-auto'}>
+          <div className={activeTab === 'landing' || activeTab === 'pages' ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+            <div className={activeTab === 'landing' || activeTab === 'pages' ? '' : 'max-w-6xl mx-auto'}>
               {renderContent()}
             </div>
           </div>
