@@ -158,33 +158,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_settings: {
-        Row: {
-          active_placeholder: string
-          created_at: string
-          id: string
-          initial_placeholder: string
-          updated_at: string
-          webhook_url: string
-        }
-        Insert: {
-          active_placeholder?: string
-          created_at?: string
-          id?: string
-          initial_placeholder?: string
-          updated_at?: string
-          webhook_url?: string
-        }
-        Update: {
-          active_placeholder?: string
-          created_at?: string
-          id?: string
-          initial_placeholder?: string
-          updated_at?: string
-          webhook_url?: string
-        }
-        Relationships: []
-      }
       contact_messages: {
         Row: {
           created_at: string
@@ -627,36 +600,6 @@ export type Database = {
           title?: string
           updated_at?: string
           why_built?: string | null
-        }
-        Relationships: []
-      }
-      quick_actions: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          icon: string
-          id: string
-          label: string
-          message: string
-          order_index: number
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          icon: string
-          id?: string
-          label: string
-          message: string
-          order_index: number
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          icon?: string
-          id?: string
-          label?: string
-          message?: string
-          order_index?: number
         }
         Relationships: []
       }
