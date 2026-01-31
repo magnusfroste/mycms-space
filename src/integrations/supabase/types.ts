@@ -633,6 +633,33 @@ export type Database = {
         }
         Relationships: []
       }
+      settings_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          old_data: Json
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          old_data: Json
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          old_data?: Json
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

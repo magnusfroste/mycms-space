@@ -9,7 +9,8 @@ import {
   ChevronRight,
   ExternalLink,
   LogOut,
-  Mail
+  Mail,
+  History
 } from 'lucide-react';
 import {
   Sidebar,
@@ -46,6 +47,7 @@ const mainNavItems = [
 const settingsNavItems = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'webhook', label: 'Webhook', icon: Webhook },
+  { id: 'history', label: 'Historik', icon: History },
 ];
 
 export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: AdminSidebarProps) {

@@ -9,6 +9,7 @@ import LandingPageManager from '@/components/admin/LandingPageManager';
 import PageManager from '@/components/admin/PageManager';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import MessagesManager from '@/components/admin/MessagesManager';
+import { SettingsHistory } from '@/components/admin/SettingsHistory';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -140,6 +141,8 @@ const Admin = () => {
             <WebhookSettings />
           </div>
         );
+      case 'history':
+        return <SettingsHistory />;
       default:
         return <AnalyticsDashboard />;
     }
