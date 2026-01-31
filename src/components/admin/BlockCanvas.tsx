@@ -49,6 +49,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
+import { getDefaultBlockConfig } from '@/lib/constants/blockDefaults';
 
 // Block renderers
 import HeroBlock from '@/components/blocks/HeroBlock';
@@ -421,11 +422,14 @@ export const BlockCanvas = ({
 
   const handleQuickAddBlock = async (blockType: string) => {
     const maxOrder = blocks.reduce((max, b) => Math.max(max, b.order_index), -1);
+    // Get generic default config for new blocks (existing blocks remain untouched)
+    const defaultConfig = getDefaultBlockConfig(blockType as BlockType);
+    
     try {
       await createBlock.mutateAsync({
         page_slug: pageSlug,
         block_type: blockType as BlockType,
-        block_config: {},
+        block_config: defaultConfig,
         order_index: maxOrder + 1,
         enabled: true,
       });
