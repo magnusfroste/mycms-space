@@ -1,6 +1,7 @@
 // ============================================
 // Block Config Panel
 // Side panel for editing block configuration
+// All data now stored in block_config JSONB
 // ============================================
 
 import React from 'react';
@@ -19,20 +20,19 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { X } from 'lucide-react';
-import type { PageBlock, HeroSettings, AboutMeSettings } from '@/types';
+import type { PageBlock } from '@/types';
+import type {
+  HeroBlockConfig,
+  AboutSplitBlockConfig,
+} from '@/types/blockConfigs';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
 import ContactFormEditor from './ContactFormEditor';
+
 interface BlockConfigPanelProps {
   block: PageBlock;
-  heroData?: HeroSettings | null;
-  aboutMeData?: AboutMeSettings | null;
-  pendingHeroChanges?: Record<string, unknown>;
-  pendingAboutMeChanges?: Record<string, unknown>;
-  pendingBlockChanges?: Record<string, unknown>;
-  onHeroChange: (changes: Record<string, unknown>) => void;
-  onAboutMeChange: (changes: Record<string, unknown>) => void;
+  pendingChanges?: Record<string, unknown>;
   onBlockConfigChange: (config: Record<string, unknown>) => void;
   onClose: () => void;
 }
@@ -53,194 +53,144 @@ const blockTypeLabels: Record<string, string> = {
 
 const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   block,
-  heroData,
-  aboutMeData,
-  pendingHeroChanges,
-  pendingAboutMeChanges,
-  pendingBlockChanges,
-  onHeroChange,
-  onAboutMeChange,
+  pendingChanges,
   onBlockConfigChange,
   onClose,
 }) => {
-  // Merge pending changes with data
-  const mergedHero = heroData ? { ...heroData, ...pendingHeroChanges } : null;
-  const mergedAboutMe = aboutMeData ? { ...aboutMeData, ...pendingAboutMeChanges } : null;
-  const mergedConfig = { ...block.block_config, ...pendingBlockChanges };
+  // Merge pending changes with block config
+  const config = { ...block.block_config, ...pendingChanges };
 
-  // Convert hero features to array format for editing
-  const getHeroFeatures = (): FeatureItem[] => {
-    if (!mergedHero) return [];
-    return [
-      { text: mergedHero.feature1 || '', icon: mergedHero.feature1_icon || 'Rocket' },
-      { text: mergedHero.feature2 || '', icon: mergedHero.feature2_icon || 'BarChart' },
-      { text: mergedHero.feature3 || '', icon: mergedHero.feature3_icon || 'Brain' },
-    ].filter(f => f.text); // Filter out empty ones
+  // Type-safe config getters
+  const getHeroConfig = (): HeroBlockConfig => config as HeroBlockConfig;
+  const getAboutConfig = (): AboutSplitBlockConfig => config as AboutSplitBlockConfig;
+
+  // Handle hero feature changes
+  const handleHeroFeaturesChange = (features: FeatureItem[]) => {
+    onBlockConfigChange({ features });
   };
 
-  // Convert about skills to array format
-  const getAboutSkills = (): SkillItem[] => {
-    if (!mergedAboutMe) return [];
-    return [
-      { 
-        title: mergedAboutMe.skill1_title || '', 
-        description: mergedAboutMe.skill1_description || '', 
-        icon: mergedAboutMe.skill1_icon || 'Monitor' 
-      },
-      { 
-        title: mergedAboutMe.skill2_title || '', 
-        description: mergedAboutMe.skill2_description || '', 
-        icon: mergedAboutMe.skill2_icon || 'Rocket' 
-      },
-      { 
-        title: mergedAboutMe.skill3_title || '', 
-        description: mergedAboutMe.skill3_description || '', 
-        icon: mergedAboutMe.skill3_icon || 'Brain' 
-      },
-    ].filter(s => s.title);
+  // Handle about skills changes
+  const handleAboutSkillsChange = (skills: SkillItem[]) => {
+    onBlockConfigChange({ skills });
   };
 
-  // Handle feature changes - convert back to individual fields
-  const handleFeaturesChange = (features: FeatureItem[]) => {
-    const changes: Record<string, string> = {};
-    features.forEach((feature, index) => {
-      const num = index + 1;
-      changes[`feature${num}`] = feature.text;
-      changes[`feature${num}_icon`] = feature.icon;
-    });
-    // Clear remaining slots if fewer features
-    for (let i = features.length + 1; i <= 3; i++) {
-      changes[`feature${i}`] = '';
-      changes[`feature${i}_icon`] = '';
-    }
-    onHeroChange(changes);
+  const renderHeroConfig = () => {
+    const heroConfig = getHeroConfig();
+    const features = heroConfig.features || [];
+    
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Namn</Label>
+          <Input
+            value={heroConfig.name || ''}
+            onChange={(e) => onBlockConfigChange({ name: e.target.value })}
+            placeholder="Magnus Froste"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Tagline</Label>
+          <Textarea
+            value={heroConfig.tagline || ''}
+            onChange={(e) => onBlockConfigChange({ tagline: e.target.value })}
+            placeholder="Din tagline..."
+            rows={2}
+          />
+        </div>
+        <Separator />
+        <FeatureListEditor
+          label="Features"
+          features={features}
+          onChange={handleHeroFeaturesChange}
+          maxItems={3}
+        />
+        <Separator />
+        <div className="space-y-2">
+          <Label>Animationsstil</Label>
+          <Select
+            value={heroConfig.animation_style || 'falling-stars'}
+            onValueChange={(value) => onBlockConfigChange({ animation_style: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="falling-stars">Fallande stjärnor</SelectItem>
+              <SelectItem value="particles">Partiklar</SelectItem>
+              <SelectItem value="gradient-shift">Gradient</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center justify-between">
+          <Label>Aktivera animationer</Label>
+          <Switch
+            checked={heroConfig.enable_animations ?? true}
+            onCheckedChange={(checked) => onBlockConfigChange({ enable_animations: checked })}
+          />
+        </div>
+      </div>
+    );
   };
 
-  // Handle skill changes - convert back to individual fields
-  const handleSkillsChange = (skills: SkillItem[]) => {
-    const changes: Record<string, string> = {};
-    skills.forEach((skill, index) => {
-      const num = index + 1;
-      changes[`skill${num}_title`] = skill.title;
-      changes[`skill${num}_description`] = skill.description;
-      changes[`skill${num}_icon`] = skill.icon;
-    });
-    // Clear remaining slots if fewer skills
-    for (let i = skills.length + 1; i <= 3; i++) {
-      changes[`skill${i}_title`] = '';
-      changes[`skill${i}_description`] = '';
-      changes[`skill${i}_icon`] = '';
-    }
-    onAboutMeChange(changes);
+  const renderAboutConfig = () => {
+    const aboutConfig = getAboutConfig();
+    const skills = aboutConfig.skills || [];
+    
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Namn</Label>
+          <Input
+            value={aboutConfig.name || ''}
+            onChange={(e) => onBlockConfigChange({ name: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Introduktionstext</Label>
+          <Textarea
+            value={aboutConfig.intro_text || ''}
+            onChange={(e) => onBlockConfigChange({ intro_text: e.target.value })}
+            rows={4}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Ytterligare text</Label>
+          <Textarea
+            value={aboutConfig.additional_text || ''}
+            onChange={(e) => onBlockConfigChange({ additional_text: e.target.value })}
+            rows={4}
+          />
+        </div>
+        <ImageUpload
+          label="Profilbild"
+          value={aboutConfig.image_url || ''}
+          onChange={(url) => onBlockConfigChange({ image_url: url })}
+          bucket="about-me-images"
+        />
+        <Separator />
+        <SkillListEditor
+          label="Kompetenser"
+          skills={skills}
+          onChange={handleAboutSkillsChange}
+          maxItems={3}
+        />
+      </div>
+    );
   };
-
-  const renderHeroConfig = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Namn</Label>
-        <Input
-          value={mergedHero?.name || ''}
-          onChange={(e) => onHeroChange({ name: e.target.value })}
-          placeholder="Magnus Froste"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Tagline</Label>
-        <Textarea
-          value={mergedHero?.tagline || ''}
-          onChange={(e) => onHeroChange({ tagline: e.target.value })}
-          placeholder="Din tagline..."
-          rows={2}
-        />
-      </div>
-      <Separator />
-      <FeatureListEditor
-        label="Features"
-        features={getHeroFeatures()}
-        onChange={handleFeaturesChange}
-        maxItems={3}
-      />
-      <Separator />
-      <div className="space-y-2">
-        <Label>Animationsstil</Label>
-        <Select
-          value={mergedHero?.animation_style || 'falling-stars'}
-          onValueChange={(value) => onHeroChange({ animation_style: value })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="falling-stars">Fallande stjärnor</SelectItem>
-            <SelectItem value="particles">Partiklar</SelectItem>
-            <SelectItem value="gradient-shift">Gradient</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex items-center justify-between">
-        <Label>Aktivera animationer</Label>
-        <Switch
-          checked={mergedHero?.enable_animations ?? true}
-          onCheckedChange={(checked) => onHeroChange({ enable_animations: checked })}
-        />
-      </div>
-    </div>
-  );
-
-  const renderAboutConfig = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Namn</Label>
-        <Input
-          value={mergedAboutMe?.name || ''}
-          onChange={(e) => onAboutMeChange({ name: e.target.value })}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Introduktionstext</Label>
-        <Textarea
-          value={mergedAboutMe?.intro_text || ''}
-          onChange={(e) => onAboutMeChange({ intro_text: e.target.value })}
-          rows={4}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Ytterligare text</Label>
-        <Textarea
-          value={mergedAboutMe?.additional_text || ''}
-          onChange={(e) => onAboutMeChange({ additional_text: e.target.value })}
-          rows={4}
-        />
-      </div>
-      <ImageUpload
-        label="Profilbild"
-        value={mergedAboutMe?.image_url || ''}
-        onChange={(url) => onAboutMeChange({ image_url: url })}
-        bucket="about-me-images"
-      />
-      <Separator />
-      <SkillListEditor
-        label="Kompetenser"
-        skills={getAboutSkills()}
-        onChange={handleSkillsChange}
-        maxItems={3}
-      />
-    </div>
-  );
 
   const renderTextSectionConfig = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Titel</Label>
         <Input
-          value={(mergedConfig.title as string) || ''}
+          value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Innehåll</Label>
         <Textarea
-          value={(mergedConfig.content as string) || ''}
+          value={(config.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
           rows={6}
         />
@@ -248,7 +198,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <div className="space-y-2">
         <Label>Justering</Label>
         <Select
-          value={(mergedConfig.alignment as string) || 'center'}
+          value={(config.alignment as string) || 'center'}
           onValueChange={(value) => onBlockConfigChange({ alignment: value })}
         >
           <SelectTrigger>
@@ -269,14 +219,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <div className="space-y-2">
         <Label>Titel</Label>
         <Input
-          value={(mergedConfig.title as string) || ''}
+          value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Beskrivning</Label>
         <Textarea
-          value={(mergedConfig.description as string) || ''}
+          value={(config.description as string) || ''}
           onChange={(e) => onBlockConfigChange({ description: e.target.value })}
           rows={3}
         />
@@ -284,14 +234,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <div className="space-y-2">
         <Label>Knapptext</Label>
         <Input
-          value={(mergedConfig.button_text as string) || ''}
+          value={(config.button_text as string) || ''}
           onChange={(e) => onBlockConfigChange({ button_text: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Knapp-URL</Label>
         <Input
-          value={(mergedConfig.button_url as string) || ''}
+          value={(config.button_url as string) || ''}
           onChange={(e) => onBlockConfigChange({ button_url: e.target.value })}
           placeholder="/contact"
         />
@@ -304,28 +254,28 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <div className="space-y-2">
         <Label>Titel</Label>
         <Input
-          value={(mergedConfig.title as string) || ''}
+          value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Innehåll</Label>
         <Textarea
-          value={(mergedConfig.content as string) || ''}
+          value={(config.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
           rows={4}
         />
       </div>
       <ImageUpload
         label="Bild"
-        value={(mergedConfig.image_url as string) || ''}
+        value={(config.image_url as string) || ''}
         onChange={(url) => onBlockConfigChange({ image_url: url })}
         bucket="about-me-images"
       />
       <div className="space-y-2">
         <Label>Bildposition</Label>
         <Select
-          value={(mergedConfig.image_position as string) || 'left'}
+          value={(config.image_position as string) || 'left'}
           onValueChange={(value) => onBlockConfigChange({ image_position: value })}
         >
           <SelectTrigger>
@@ -345,7 +295,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <div className="space-y-2">
         <Label>Höjd</Label>
         <Select
-          value={(mergedConfig.height as string) || 'md'}
+          value={(config.height as string) || 'md'}
           onValueChange={(value) => onBlockConfigChange({ height: value })}
         >
           <SelectTrigger>
@@ -364,15 +314,15 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
 
   const renderContactFormConfig = () => (
     <ContactFormEditor
-      config={mergedConfig as { title?: string; subtitle?: string; showSubject?: boolean; buttonText?: string; successMessage?: string }}
+      config={config as { title?: string; subtitle?: string; showSubject?: boolean; buttonText?: string; successMessage?: string }}
       onChange={onBlockConfigChange}
     />
   );
 
-  const renderReadOnlyConfig = (message: string) => (
+  const renderInfoMessage = (message: string) => (
     <div className="text-center py-8 text-muted-foreground">
       <p className="text-sm">{message}</p>
-      <p className="text-xs mt-2">Redigeras via respektive admin-sektion</p>
+      <p className="text-xs mt-2">Använd inline-redigering för fullständiga alternativ</p>
     </div>
   );
 
@@ -393,13 +343,13 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       case 'contact-form':
         return renderContactFormConfig();
       case 'featured-carousel':
-        return renderReadOnlyConfig('Featured items hanteras via Featured-sektionen');
+        return renderInfoMessage('Featured items redigeras via inline-editorn');
       case 'expertise-grid':
-        return renderReadOnlyConfig('Expertområden hanteras via Expertise-sektionen');
+        return renderInfoMessage('Expertområden redigeras via inline-editorn');
       case 'project-showcase':
-        return renderReadOnlyConfig('Projekt hanteras via Project-sektionen');
+        return renderInfoMessage('Projekt redigeras via inline-editorn');
       case 'chat-widget':
-        return renderReadOnlyConfig('Chattwidget hanteras via Chat-sektionen');
+        return renderInfoMessage('Chatt-inställningar redigeras via inline-editorn');
       default:
         return <p className="text-muted-foreground">Okänd blocktyp</p>;
     }

@@ -344,13 +344,7 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ onClose }) => {
                           key={block.id}
                           block={block}
                           isEditing={editingBlockId === block.id}
-                          heroData={heroData}
-                          aboutMeData={aboutMeData}
-                          pendingHeroChanges={pendingChanges.hero}
-                          pendingAboutMeChanges={pendingChanges.aboutMe}
                           pendingBlockChanges={pendingChanges.blocks?.[block.id]}
-                          onHeroChange={handleHeroChange}
-                          onAboutMeChange={handleAboutMeChange}
                           onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
                           onStartEdit={() => setEditingBlockId(block.id)}
                           onEndEdit={() => setEditingBlockId(null)}

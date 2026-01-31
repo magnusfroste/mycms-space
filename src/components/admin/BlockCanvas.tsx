@@ -1,6 +1,7 @@
 // ============================================
 // Block Canvas Component
 // Reusable visual block editor canvas
+// All block data now comes from block_config JSONB
 // ============================================
 
 import { useState } from 'react';
@@ -17,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles, Layers } from 'lucide-react';
+import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Layers } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -28,8 +29,7 @@ import {
   useReorderPageBlocks,
   pageBlocksKeys,
 } from '@/models/pageBlocks';
-import { useHeroSettings } from '@/hooks/useHeroSettings';
-import { useAboutMeSettings } from '@/hooks/useAboutMeSettings';
+import { useUpdateBlockConfig } from '@/models/blockContent';
 import type { PageBlock, BlockType } from '@/types';
 import {
   DndContext,
@@ -96,11 +96,7 @@ export const blockTypeLabels: Record<string, string> = {
 interface VisualBlockItemProps {
   block: PageBlock;
   isEditing: boolean;
-  heroData: any;
-  aboutMeData: any;
   pendingChanges: Record<string, unknown>;
-  onHeroChange: (changes: Record<string, unknown>) => void;
-  onAboutMeChange: (changes: Record<string, unknown>) => void;
   onBlockConfigChange: (config: Record<string, unknown>) => void;
   onStartEdit: () => void;
   onEndEdit: () => void;
@@ -111,11 +107,7 @@ interface VisualBlockItemProps {
 const VisualBlockItem = ({
   block,
   isEditing,
-  heroData,
-  aboutMeData,
   pendingChanges,
-  onHeroChange,
-  onAboutMeChange,
   onBlockConfigChange,
   onStartEdit,
   onEndEdit,
@@ -188,13 +180,7 @@ const VisualBlockItem = ({
       <div ref={setNodeRef} style={style}>
         <InlineBlockEditor
           block={block}
-          heroData={heroData}
-          aboutMeData={aboutMeData}
-          pendingHeroChanges={block.block_type === 'hero' ? pendingChanges : undefined}
-          pendingAboutMeChanges={block.block_type === 'about-split' ? pendingChanges : undefined}
-          pendingBlockChanges={pendingChanges}
-          onHeroChange={onHeroChange}
-          onAboutMeChange={onAboutMeChange}
+          pendingChanges={pendingChanges}
           onBlockConfigChange={onBlockConfigChange}
           onDone={onEndEdit}
         />
@@ -278,8 +264,6 @@ const VisualBlockItem = ({
 };
 
 interface PendingChanges {
-  hero?: Record<string, unknown>;
-  aboutMe?: Record<string, unknown>;
   blocks?: Record<string, Record<string, unknown>>;
 }
 
@@ -304,13 +288,12 @@ export const BlockCanvas = ({
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   const { data: blocks = [], isLoading } = usePageBlocks(pageSlug);
-  const { data: heroData } = useHeroSettings();
-  const { data: aboutMeData } = useAboutMeSettings();
 
   const createBlock = useCreatePageBlock();
   const updateBlock = useUpdatePageBlock();
   const deleteBlock = useDeletePageBlock();
   const reorderBlocks = useReorderPageBlocks();
+  const updateBlockConfig = useUpdateBlockConfig();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -402,20 +385,6 @@ export const BlockCanvas = ({
     setDeleteBlockId(null);
   };
 
-  const handleHeroChange = (changes: Record<string, unknown>) => {
-    setPendingChanges((prev) => ({
-      ...prev,
-      hero: { ...(prev.hero || {}), ...changes },
-    }));
-  };
-
-  const handleAboutMeChange = (changes: Record<string, unknown>) => {
-    setPendingChanges((prev) => ({
-      ...prev,
-      aboutMe: { ...(prev.aboutMe || {}), ...changes },
-    }));
-  };
-
   const handleBlockConfigChange = (blockId: string, config: Record<string, unknown>) => {
     setPendingChanges((prev) => ({
       ...prev,
@@ -424,6 +393,26 @@ export const BlockCanvas = ({
         [blockId]: { ...(prev.blocks?.[blockId] || {}), ...config },
       },
     }));
+  };
+
+  // Save pending changes when exiting edit mode
+  const handleEndEdit = async (blockId: string) => {
+    const changes = pendingChanges.blocks?.[blockId];
+    if (changes && Object.keys(changes).length > 0) {
+      try {
+        await updateBlockConfig.mutateAsync({ blockId, config: changes });
+        toast({ title: 'Ändringar sparade' });
+      } catch {
+        toast({ title: 'Kunde inte spara ändringar', variant: 'destructive' });
+      }
+    }
+    // Clear pending changes for this block
+    setPendingChanges((prev) => {
+      const newBlocks = { ...prev.blocks };
+      delete newBlocks[blockId];
+      return { ...prev, blocks: newBlocks };
+    });
+    setEditingBlockId(null);
   };
 
   const handlePreview = () => {
@@ -513,14 +502,10 @@ export const BlockCanvas = ({
                       key={block.id}
                       block={block}
                       isEditing={editingBlockId === block.id}
-                      heroData={heroData}
-                      aboutMeData={aboutMeData}
                       pendingChanges={pendingChanges.blocks?.[block.id] || {}}
-                      onHeroChange={handleHeroChange}
-                      onAboutMeChange={handleAboutMeChange}
                       onBlockConfigChange={(config) => handleBlockConfigChange(block.id, config)}
                       onStartEdit={() => setEditingBlockId(block.id)}
-                      onEndEdit={() => setEditingBlockId(null)}
+                      onEndEdit={() => handleEndEdit(block.id)}
                       onToggleEnabled={() => handleToggleEnabled(block)}
                       onDelete={() => setDeleteBlockId(block.id)}
                     />
