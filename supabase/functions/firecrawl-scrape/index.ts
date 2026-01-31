@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
         onlyMainContent: options?.onlyMainContent ?? true,
         waitFor: options?.waitFor,
         location: options?.location,
+        maxAge: 0, // Always get fresh content, don't use cached results
       }),
     });
 
