@@ -154,22 +154,22 @@ export interface FeaturedItem {
   updated_at: string;
 }
 
-// Quick Actions Types
+// Quick Actions Types (now stored in block_config)
 export interface QuickAction {
   id: string;
   icon: string;
   label: string;
   message: string;
-  order_index: number;
+  order_index?: number;
   enabled: boolean;
 }
 
-// Chat Settings Types (Legacy - kept for compatibility)
-export interface ChatSettings {
+// AI Module Settings Types
+export interface AIModuleSettings {
   id: string;
+  enabled: boolean;
   webhook_url: string;
-  initial_placeholder: string;
-  active_placeholder: string;
+  provider: string;
   created_at?: string;
   updated_at?: string;
 }

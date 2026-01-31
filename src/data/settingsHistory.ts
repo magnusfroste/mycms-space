@@ -19,7 +19,7 @@ export const tableLabels: Record<string, string> = {
   about_me_settings: 'Om mig',
   hero_settings: 'Hero',
   portfolio_settings: 'Portfolio',
-  chat_settings: 'Chat',
+  ai_module: 'AI Modul',
   page_blocks: 'Sidblock',
   projects: 'Projekt',
 };
@@ -83,7 +83,7 @@ export const restoreHistoryEntry = async (
   const { id, created_at, updated_at, ...restoreData } = old_data as Record<string, unknown>;
 
   const { error } = await supabase
-    .from(table_name as 'about_me_settings' | 'hero_settings' | 'portfolio_settings' | 'chat_settings' | 'page_blocks' | 'projects')
+    .from(table_name as 'about_me_settings' | 'hero_settings' | 'portfolio_settings' | 'ai_module' | 'page_blocks' | 'projects')
     .update(restoreData)
     .eq('id', record_id);
 

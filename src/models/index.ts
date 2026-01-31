@@ -73,26 +73,14 @@ export {
 
 export type { FeaturedItem } from './featured';
 
-// Quick Actions
+// AI Module (replaces legacy chat_settings + quick_actions)
 export {
-  useQuickActions,
-  useAllQuickActions,
-  useCreateQuickAction,
-  useUpdateQuickAction,
-  useDeleteQuickAction,
-  quickActionKeys,
-} from './quickActions';
+  useAIModule,
+  useUpdateAIModule,
+  aiModuleKeys,
+} from './aiModule';
 
-export type { QuickAction } from './quickActions';
-
-// Chat Settings
-export {
-  useChatSettings,
-  useUpdateChatSettings,
-  chatSettingsKeys,
-} from './chatSettings';
-
-export type { ChatSettings } from './chatSettings';
+export type { AIModuleSettings } from '@/types';
 
 // Portfolio Settings
 export {
