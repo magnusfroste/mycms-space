@@ -1,324 +1,464 @@
+# Modules-arkitektur - Komplett Plan
 
-# AI Chat Modul - Konsolidering och Modularisering ✅ IMPLEMENTERAD
+## Översikt
 
-## Nuläge
-
-Idag är chat-relaterade inställningar fragmenterade över:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    NUVARANDE STRUKTUR                            │
-├─────────────────────────────────────────────────────────────────┤
-│  Admin-meny "Chat"                                               │
-│  └── ChatTextSettings → chat_settings.initial_placeholder       │
-│  └── ChatTextSettings → chat_settings.active_placeholder        │
-│  └── QuickActionsManager → quick_actions-tabell                 │
-│                                                                  │
-│  Admin-meny "Webhook"                                            │
-│  └── WebhookSettings → chat_settings.webhook_url                │
-│                                                                  │
-│  ChatWidgetBlock (block_config)                                  │
-│  └── quick_actions[] (ej synkade med quick_actions-tabellen)    │
-│  └── title, subtitle, show_quick_actions                        │
-│                                                                  │
-│  AppleChat.tsx                                                   │
-│  └── Läser från chat_settings (global)                          │
-│  └── Läser från quick_actions-tabell (global)                   │
-│  └── IGNORERAR block_config helt!                               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Problem
-
-1. **Två menyval** i admin (Chat + Webhook) för samma sak
-2. **Quick actions** finns i både `quick_actions`-tabell OCH `block_config`
-3. **AppleChat** läser från fel ställe (gamla tabeller istället för block_config)
-4. **Ingen modulär design** - svårt att aktivera/inaktivera chat-funktionalitet
-
----
-
-## Ny Modell: AI Chat Modul
+Centraliserad modul-hantering med en generell `modules`-tabell som ersätter individuella modultabeller och ger en konsekvent, skalbar arkitektur.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                        AI MODUL                                  │
-│                   (Global konfiguration)                         │
+│                     MODULES-ARKITEKTUR                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Tekniska inställningar (kräver aldrig per-block anpassning)    │
-│  ├── enabled: boolean           ← Aktivera/inaktivera modulen   │
-│  ├── webhook_url: string        ← n8n/AI webhook                │
-│  ├── ai_provider: string        ← Framtida: val av AI-modell    │
-│  └── rate_limit: number         ← Framtida: begränsningar       │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    CHAT WIDGET BLOCK                             │
-│              (Per-block i page_blocks.block_config)              │
-├─────────────────────────────────────────────────────────────────┤
-│  Innehåll och presentation (unikt per block-instans)            │
-│  ├── title: string              ← Rubrik ovanför chatten        │
-│  ├── subtitle: string           ← Underrubrik                   │
-│  ├── initial_placeholder        ← Välkomstmeddelande            │
-│  ├── active_placeholder         ← Placeholder under konvo       │
-│  ├── show_quick_actions         ← Visa snabbknappar             │
-│  └── quick_actions[]            ← Per-block snabbknappar        │
+│                                                                  │
+│  modules-tabell (generell)                                       │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ id | module_type | enabled | module_config (JSONB)          ││
+│  ├─────────────────────────────────────────────────────────────┤│
+│  │ 1  | 'ai'        | true    | {webhook_url, provider}        ││
+│  │ 2  | 'projects'  | true    | {layout_style, show_categories}││
+│  │ 3  | 'newsletter'| false   | {provider, api_key_ref}        ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  page_blocks.block_config (JSONB)                                │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Allt block-specifikt innehåll:                              ││
+│  │ - Chat: title, subtitle, placeholders, quick_actions        ││
+│  │ - Projects: section_title, projects[], categories[]         ││
+│  │ - Hero: name, tagline, features[]                           ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Implementationsplan
+## Fas 1: Skapa modules-tabell
 
-### Fas 1: Skapa ny modul-tabell
-
-**Steg 1: Databasmigrering**
-- Skapa `ai_module`-tabell för globala AI-inställningar
-- Migrera `webhook_url` från `chat_settings`
-- Lägg till `enabled`-flagga för att aktivera/inaktivera modulen
+### 1.1 Databasmigrering
 
 ```sql
-CREATE TABLE ai_module (
+-- Skapa generell modules-tabell
+CREATE TABLE public.modules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  module_type TEXT NOT NULL UNIQUE,
+  module_config JSONB DEFAULT '{}',
   enabled BOOLEAN DEFAULT true,
-  webhook_url TEXT NOT NULL,
-  provider TEXT DEFAULT 'n8n',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Migrera befintlig webhook_url
-INSERT INTO ai_module (webhook_url)
-SELECT webhook_url FROM chat_settings LIMIT 1;
+-- RLS policies
+ALTER TABLE public.modules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read modules"
+ON public.modules FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated can manage modules"
+ON public.modules FOR ALL USING (true) WITH CHECK (true);
+
+-- Trigger för updated_at
+CREATE TRIGGER update_modules_updated_at
+BEFORE UPDATE ON public.modules
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger för versionshistorik
+CREATE TRIGGER log_modules_changes
+BEFORE UPDATE OR DELETE ON public.modules
+FOR EACH ROW EXECUTE FUNCTION log_settings_change();
 ```
 
-### Fas 2: Flytta placeholders till block_config
-
-**Steg 2: Migrera chat-inställningar till block**
-- Uppdatera befintliga chat-widget block med `initial_placeholder` och `active_placeholder`
-- Migrera `quick_actions` från tabellen till varje chat-widget blocks config
+### 1.2 Migrera ai_module → modules
 
 ```sql
--- Migrera placeholders från chat_settings till chat-widget block
-UPDATE page_blocks pb
-SET block_config = jsonb_set(
-  jsonb_set(
-    pb.block_config,
-    '{initial_placeholder}',
-    to_jsonb((SELECT initial_placeholder FROM chat_settings LIMIT 1))
+-- Migrera befintlig ai_module-data
+INSERT INTO public.modules (module_type, module_config, enabled)
+SELECT 
+  'ai',
+  jsonb_build_object(
+    'webhook_url', webhook_url,
+    'provider', provider
   ),
-  '{active_placeholder}',
-  to_jsonb((SELECT active_placeholder FROM chat_settings LIMIT 1))
-)
-WHERE pb.block_type = 'chat-widget';
+  enabled
+FROM public.ai_module
+LIMIT 1;
 
--- Migrera quick_actions till block_config
-UPDATE page_blocks pb
-SET block_config = jsonb_set(
-  pb.block_config,
-  '{quick_actions}',
-  (SELECT jsonb_agg(...) FROM quick_actions WHERE enabled = true)
-)
-WHERE pb.block_type = 'chat-widget';
+-- Skapa projects-modul (om den inte finns)
+INSERT INTO public.modules (module_type, module_config, enabled)
+VALUES (
+  'projects',
+  jsonb_build_object(
+    'layout_style', 'alternating',
+    'show_categories', true,
+    'link_to_detail_pages', true,
+    'items_per_page', 6
+  ),
+  true
+) ON CONFLICT (module_type) DO NOTHING;
 ```
 
-### Fas 3: Konsolidera admin-UI
+### 1.3 Ta bort legacy ai_module-tabell
 
-**Steg 3: Skapa AIModuleSettings-komponent**
-- Ny komponent: `src/components/admin/AIModuleSettings.tsx`
-- Innehåller:
-  - Modulens on/off-switch
-  - Webhook URL-konfiguration
-  - Framtida: AI-provider val
-
-**Steg 4: Uppdatera AdminSidebar**
-- Ta bort "Chat" och "Webhook" från menyn
-- Lägg till "AI Modul" under Inställningar
-- Flytta "Chat"-specifik konfiguration till block-editorn
-
-```typescript
-// Före
-const settingsNavItems = [
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'webhook', label: 'Webhook', icon: Webhook },
-  { id: 'history', label: 'Historik', icon: History },
-];
-
-// Efter
-const settingsNavItems = [
-  { id: 'ai-module', label: 'AI Modul', icon: Bot },
-  { id: 'history', label: 'Historik', icon: History },
-];
+```sql
+-- Efter verifiering att migreringen lyckades
+DROP TABLE IF EXISTS public.ai_module;
 ```
-
-### Fas 4: Uppdatera ChatWidgetBlock och AppleChat
-
-**Steg 5: Uppdatera ChatWidgetBlock**
-- Läsa `initial_placeholder` och `active_placeholder` från `config`
-- Läsa `quick_actions` från `config.quick_actions[]`
-- Hämta `webhook_url` från `ai_module` via ny hook
-
-**Steg 6: Uppdatera AppleChat**
-- Ta bort `useChatSettings()`-hook
-- Ta bort `useQuickActions()`-hook
-- Ta emot allt som props från ChatWidgetBlock
-
-```typescript
-// Före (AppleChat)
-const { data: settings } = useChatSettings();
-const { data: quickActionsData } = useQuickActions();
-const webhookUrl = settings?.webhook_url || propWebhookUrl;
-
-// Efter (AppleChat)
-interface AppleChatProps {
-  webhookUrl: string;
-  initialPlaceholder: string;
-  activePlaceholder: string;
-  quickActions: QuickAction[];
-  // ...
-}
-```
-
-### Fas 5: Uppdatera block-editor
-
-**Steg 7: Förbättra ChatWidgetEditor**
-- Inline-redigering av placeholders
-- Inline-redigering av quick actions (redan påbörjat i `QuickActionsList`)
-- Ingen koppling till externa tabeller
 
 ---
 
-## Ny Admin-struktur
+## Fas 2: TypeScript-typer
+
+### 2.1 Ny typfil: src/types/modules.ts
+
+```typescript
+// ============================================
+// Module Types
+// Generell modul-konfiguration
+// ============================================
+
+// Bas-modul
+export interface Module {
+  id: string;
+  module_type: ModuleType;
+  module_config: ModuleConfigType;
+  enabled: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Tillgängliga modultyper
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics';
+
+// AI-modul config
+export interface AIModuleConfig {
+  webhook_url: string;
+  provider: 'n8n' | 'custom' | 'lovable';
+}
+
+// Projekt-modul config
+export interface ProjectsModuleConfig {
+  layout_style: 'alternating' | 'grid' | 'carousel' | 'masonry';
+  show_categories: boolean;
+  link_to_detail_pages: boolean;
+  items_per_page: number;
+}
+
+// Newsletter-modul config (framtida)
+export interface NewsletterModuleConfig {
+  provider: 'mailchimp' | 'convertkit' | 'custom';
+  api_key_ref?: string;
+  list_id?: string;
+}
+
+// Union-typ för alla configs
+export type ModuleConfigType = 
+  | AIModuleConfig 
+  | ProjectsModuleConfig 
+  | NewsletterModuleConfig;
+
+// Type-safe mapping
+export interface ModuleTypeConfigMap {
+  'ai': AIModuleConfig;
+  'projects': ProjectsModuleConfig;
+  'newsletter': NewsletterModuleConfig;
+}
+
+// Helper för att hämta config-typ
+export type ConfigForModule<T extends ModuleType> = ModuleTypeConfigMap[T];
+
+// Default configs
+export const defaultModuleConfigs: ModuleTypeConfigMap = {
+  'ai': {
+    webhook_url: '',
+    provider: 'n8n',
+  },
+  'projects': {
+    layout_style: 'alternating',
+    show_categories: true,
+    link_to_detail_pages: true,
+    items_per_page: 6,
+  },
+  'newsletter': {
+    provider: 'mailchimp',
+  },
+};
+```
+
+---
+
+## Fas 3: Data Layer
+
+### 3.1 src/data/modules.ts
+
+```typescript
+// ============================================
+// Data Layer: Modules
+// Pure Supabase API calls
+// ============================================
+
+import { supabase } from '@/integrations/supabase/client';
+import type { Module, ModuleType, ModuleConfigType } from '@/types/modules';
+
+export const fetchModule = async <T extends ModuleType>(
+  moduleType: T
+): Promise<Module | null> => {
+  const { data, error } = await supabase
+    .from('modules')
+    .select('*')
+    .eq('module_type', moduleType)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as Module | null;
+};
+
+export const fetchAllModules = async (): Promise<Module[]> => {
+  const { data, error } = await supabase
+    .from('modules')
+    .select('*')
+    .order('module_type');
+
+  if (error) throw error;
+  return (data || []) as Module[];
+};
+
+export const updateModule = async <T extends ModuleType>(
+  moduleType: T,
+  updates: Partial<{ enabled: boolean; module_config: ModuleConfigType }>
+): Promise<Module> => {
+  const { data, error } = await supabase
+    .from('modules')
+    .update(updates)
+    .eq('module_type', moduleType)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Module;
+};
+
+export const createModule = async (
+  moduleType: ModuleType,
+  config: ModuleConfigType,
+  enabled = true
+): Promise<Module> => {
+  const { data, error } = await supabase
+    .from('modules')
+    .insert({
+      module_type: moduleType,
+      module_config: config,
+      enabled,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Module;
+};
+```
+
+---
+
+## Fas 4: Model Layer
+
+### 4.1 src/models/modules.ts
+
+```typescript
+// ============================================
+// Model Layer: Modules
+// React Query hooks + business logic
+// ============================================
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import * as modulesData from '@/data/modules';
+import type { Module, ModuleType, ConfigForModule } from '@/types/modules';
+
+// Query keys
+export const modulesKeys = {
+  all: ['modules'] as const,
+  byType: (type: ModuleType) => ['modules', type] as const,
+};
+
+// Fetch single module by type
+export const useModule = <T extends ModuleType>(moduleType: T) => {
+  return useQuery({
+    queryKey: modulesKeys.byType(moduleType),
+    queryFn: () => modulesData.fetchModule(moduleType),
+  });
+};
+
+// Fetch all modules
+export const useAllModules = () => {
+  return useQuery({
+    queryKey: modulesKeys.all,
+    queryFn: modulesData.fetchAllModules,
+  });
+};
+
+// Update module
+export const useUpdateModule = <T extends ModuleType>(moduleType: T) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (updates: Partial<{ enabled: boolean; module_config: ConfigForModule<T> }>) =>
+      modulesData.updateModule(moduleType, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: modulesKeys.byType(moduleType) });
+      queryClient.invalidateQueries({ queryKey: modulesKeys.all });
+    },
+  });
+};
+
+// Convenience hooks för specifika moduler
+export const useAIModule = () => useModule('ai');
+export const useProjectsModule = () => useModule('projects');
+
+// Type-safe config accessor
+export const getModuleConfig = <T extends ModuleType>(
+  module: Module | null | undefined,
+  moduleType: T
+): ConfigForModule<T> | null => {
+  if (!module || module.module_type !== moduleType) return null;
+  return module.module_config as ConfigForModule<T>;
+};
+```
+
+---
+
+## Fas 5: Uppdatera komponenter
+
+### 5.1 Skapa ModuleSettings.tsx (generell)
+
+```typescript
+// src/components/admin/ModuleSettings.tsx
+// Generell modul-editor som renderar rätt UI baserat på module_type
+```
+
+### 5.2 Uppdatera AdminSidebar
+
+```text
+Moduler (nytt avsnitt)
+├── AI Modul
+├── Projekt  ← NY
+└── (framtida moduler)
+```
+
+### 5.3 Migrera AIModuleSettings
+
+- Uppdatera för att använda `useModule('ai')` istället för `useAIModule()`
+- Samma UI, ny datakälla
+
+### 5.4 Skapa ProjectsModuleSettings
+
+- Layout-väljare (alternating/grid/carousel/masonry)
+- Kategorifilter on/off
+- Länk till detaljsidor on/off
+
+---
+
+## Fas 6: Dynamiska projektsidor (framtida)
+
+### 6.1 Route: /projekt/[slug]
+
+```typescript
+// src/pages/ProjectDetail.tsx
+// Läser projekt från page_blocks där block_type = 'project-showcase'
+// Hittar projekt via slug i block_config.projects[]
+```
+
+### 6.2 SEO-optimering
+
+- Generera meta-tags från projektdata
+- Strukturerad data (JSON-LD)
+- Canonical URLs
+
+---
+
+## Migreringsplan
+
+### Steg-för-steg
+
+| Steg | Åtgärd | Status |
+|------|--------|--------|
+| 1 | Skapa `modules`-tabell | ⬜ |
+| 2 | Migrera `ai_module` → `modules` | ⬜ |
+| 3 | Skapa TypeScript-typer | ⬜ |
+| 4 | Skapa data/modules.ts | ⬜ |
+| 5 | Skapa models/modules.ts | ⬜ |
+| 6 | Uppdatera AIModuleSettings | ⬜ |
+| 7 | Skapa ProjectsModuleSettings | ⬜ |
+| 8 | Uppdatera AdminSidebar | ⬜ |
+| 9 | Testa och verifiera | ⬜ |
+| 10 | Ta bort legacy `ai_module`-tabell | ⬜ |
+| 11 | Uppdatera ProjectShowcaseBlock | ⬜ |
+| 12 | (Framtida) Dynamiska projektsidor | ⬜ |
+
+---
+
+## Fördelar med denna arkitektur
+
+| Aspekt | Fördel |
+|--------|--------|
+| **Skalbarhet** | Nya moduler = ny rad i tabellen |
+| **Konsistens** | Samma mönster som page_blocks (type + config) |
+| **Versionshistorik** | Automatisk via befintlig trigger |
+| **Type Safety** | Generiska TypeScript-typer |
+| **Enkel admin** | En vy för alla moduler |
+| **AI-vänlig** | Enhetligt JSONB-interface |
+
+---
+
+## Arkitektur efter implementation
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  ADMIN SIDEBAR                                                   │
+│                        SUPABASE TABLES                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Huvudmeny                                                       │
-│  ├── Dashboard                                                   │
-│  ├── Sidor                                                       │
-│  ├── Sidbyggare  ← Redigera chat-widget blocks inline           │
-│  ├── Navigation                                                  │
-│  └── Meddelanden                                                 │
 │                                                                  │
-│  Moduler                                                         │
-│  └── AI Modul    ← Webhook + on/off + framtida provider         │
+│  modules                    page_blocks                          │
+│  ────────                   ───────────                          │
+│  module_type (unique)       page_slug                            │
+│  module_config (JSONB)      block_type                           │
+│  enabled                    block_config (JSONB)                 │
+│                             enabled                              │
 │                                                                  │
-│  System                                                          │
-│  └── Historik                                                    │
+│  settings_history (versionshistorik för båda)                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      CODE ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  src/types/modules.ts      ← Type definitions                   │
+│  src/data/modules.ts       ← Supabase API calls                 │
+│  src/models/modules.ts     ← React Query hooks                  │
+│  src/components/admin/     ← Module settings UI                 │
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Tekniska Detaljer
+## Nästa steg
 
-### Ny TypeScript-typ
+När planen är godkänd, börja med:
 
-```typescript
-// src/types/index.ts
-export interface AIModuleSettings {
-  id: string;
-  enabled: boolean;
-  webhook_url: string;
-  provider: 'n8n' | 'custom';
-  created_at?: string;
-  updated_at?: string;
-}
-```
-
-### Ny Hook
-
-```typescript
-// src/models/aiModule.ts
-export const useAIModule = () => {
-  return useQuery({
-    queryKey: ['ai-module'],
-    queryFn: fetchAIModuleSettings,
-  });
-};
-
-export const useUpdateAIModule = () => {
-  return useMutation({
-    mutationFn: updateAIModuleSettings,
-    onSuccess: () => queryClient.invalidateQueries(['ai-module']),
-  });
-};
-```
-
-### Uppdaterad ChatWidgetBlockConfig
-
-```typescript
-// src/types/blockConfigs.ts
-export interface ChatWidgetBlockConfig {
-  title?: string;
-  subtitle?: string;
-  initial_placeholder?: string;  // ← NY
-  active_placeholder?: string;   // ← NY
-  show_quick_actions?: boolean;
-  quick_actions?: Array<{
-    id: string;
-    label: string;
-    message: string;
-    icon: string;
-    order_index: number;
-    enabled: boolean;
-  }>;
-}
-```
+1. **Databasmigrering** - Skapa `modules`-tabellen
+2. **TypeScript-typer** - `src/types/modules.ts`
+3. **Data + Model layers** - `src/data/modules.ts` + `src/models/modules.ts`
+4. **Migrera AI-modul** - Uppdatera komponenter att använda ny struktur
 
 ---
 
-## Dataflöde efter refaktorering
+## Legacy-tabeller att fasa ut
 
-```text
-┌─────────────────┐      ┌─────────────────┐
-│  ai_module      │      │  page_blocks    │
-│  ───────────    │      │  ───────────    │
-│  webhook_url    │      │  block_config   │
-│  enabled        │      │  ├── title      │
-│  provider       │      │  ├── subtitle   │
-└────────┬────────┘      │  ├── placeholders│
-         │               │  └── quick_actions│
-         │               └────────┬────────┘
-         │                        │
-         ▼                        ▼
-    ┌─────────────────────────────────────┐
-    │           ChatWidgetBlock           │
-    │  ─────────────────────────────────  │
-    │  const { data: aiModule } = useAIModule()  │
-    │  const config = block.block_config  │
-    └─────────────────────┬───────────────┘
-                          │
-                          ▼
-    ┌─────────────────────────────────────┐
-    │            AppleChat                │
-    │  ─────────────────────────────────  │
-    │  webhookUrl={aiModule.webhook_url}  │
-    │  placeholders={config...}           │
-    │  quickActions={config.quick_actions}│
-    └─────────────────────────────────────┘
-```
+| Tabell | Status | Åtgärd |
+|--------|--------|--------|
+| `ai_module` | Aktiv | Migrera → `modules`, sedan drop |
+| `portfolio_settings` | Aktiv | Flytta till `modules.projects.module_config` |
+| `chat_settings` | ✅ Borttagen | - |
+| `quick_actions` | ✅ Borttagen | - |
 
 ---
 
-## Sammanfattning
-
-| Före | Efter |
-|------|-------|
-| 2 menyval (Chat + Webhook) | 1 menyval (AI Modul) |
-| `chat_settings`-tabell | `ai_module`-tabell (endast tekniskt) |
-| `quick_actions`-tabell | Inbäddat i `block_config.quick_actions[]` |
-| Placeholders globala | Placeholders per chat-widget block |
-| AppleChat läser från 3 källor | AppleChat tar emot allt som props |
-
----
-
-## Nästa Steg (efter godkännande)
-
-1. Skapa `ai_module`-tabell och migrera webhook_url
-2. Migrera placeholders + quick_actions till chat-widget block_config
-3. Skapa `AIModuleSettings.tsx`-komponent
-4. Uppdatera `AdminSidebar` med ny struktur
-5. Refaktorera `ChatWidgetBlock` och `AppleChat`
-6. Ta bort legacy-tabeller (`chat_settings`, `quick_actions`) eller arkivera
+*Senast uppdaterad: 2026-01-31*
