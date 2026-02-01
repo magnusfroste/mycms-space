@@ -14,6 +14,7 @@ import {
   Globe,
   PenSquare,
   BookOpen,
+  Plug,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -50,7 +51,8 @@ const mainNavItems = [
 
 const settingsNavItems = [
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
-  { id: 'ai-module', label: 'AI Module', icon: Bot },
+  { id: 'integrations', label: 'Integrations', icon: Plug },
+  { id: 'ai-module', label: 'AI Chat', icon: Bot },
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'history', label: 'History', icon: History },

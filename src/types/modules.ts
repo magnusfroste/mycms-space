@@ -78,6 +78,7 @@ export interface IntegrationMeta {
   description: string;
   icon: string;
   available: boolean; // Is this integration implemented?
+  docs?: string; // Link to documentation
 }
 
 export const integrationsMeta: IntegrationMeta[] = [
@@ -87,6 +88,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     description: 'Connect to an n8n workflow via webhook for full AI agent control',
     icon: 'Webhook',
     available: true,
+    docs: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/',
   },
   {
     type: 'lovable',
