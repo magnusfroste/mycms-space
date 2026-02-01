@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { parseMarkdown } from "@/lib/markdown";
 import { iconMap } from "@/lib/constants/iconMaps";
+import type { AIIntegrationType, AIIntegration } from "@/types/modules";
+import { supabase } from "@/integrations/supabase/client";
 
 // Helper to clean webhook response text
 const cleanWebhookResponse = (text: string): string => {
@@ -71,6 +73,8 @@ interface AppleChatProps {
   skipWebhook?: boolean;
   showQuickActions?: boolean;
   siteContext?: SiteContext | null;
+  integration?: AIIntegrationType;
+  integrationConfig?: AIIntegration;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({
@@ -87,6 +91,8 @@ const AppleChat: React.FC<AppleChatProps> = ({
   skipWebhook = false,
   showQuickActions = false,
   siteContext = null,
+  integration = 'n8n',
+  integrationConfig,
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -228,6 +234,33 @@ const AppleChat: React.FC<AppleChatProps> = ({
     setIsLoading(true);
 
     try {
+      // Use edge function for non-n8n integrations
+      if (integration !== 'n8n') {
+        const { data, error } = await supabase.functions.invoke('ai-chat', {
+          body: {
+            message: messageText,
+            sessionId: sessionId,
+            integration: integration,
+            integrationConfig: integrationConfig,
+            siteContext: siteContext,
+          },
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to get AI response');
+        }
+
+        const botResponse = cleanWebhookResponse(data?.output || data?.message || 'No response');
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: botResponse,
+          isUser: false,
+        };
+        setMessages((prev) => [...prev, botMessage]);
+        return;
+      }
+
+      // Original n8n webhook logic
       const requestBody: Record<string, unknown> = {
         message: messageText,
         sessionId: sessionId,
