@@ -35,6 +35,7 @@ import {
   Check,
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import AITextEnhance from './AITextEnhance';
 import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
 import ReactMarkdown from 'react-markdown';
@@ -235,14 +236,21 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="content">Content (Markdown)</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowPreview(!showPreview)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    {showPreview ? 'Edit' : 'Preview'}
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <AITextEnhance
+                      text={content}
+                      onTextChange={setContent}
+                      context="Blog post content in Markdown format"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPreview(!showPreview)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      {showPreview ? 'Edit' : 'Preview'}
+                    </Button>
+                  </div>
                 </div>
                 {showPreview ? (
                   <Card className="min-h-[400px]">
@@ -262,7 +270,14 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="excerpt">Excerpt</Label>
+                  <AITextEnhance
+                    text={excerpt}
+                    onTextChange={setExcerpt}
+                    context="Blog post excerpt/summary"
+                  />
+                </div>
                 <Textarea
                   id="excerpt"
                   placeholder="Brief summary of the post (optional)..."
