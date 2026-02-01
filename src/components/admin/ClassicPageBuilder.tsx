@@ -158,7 +158,7 @@ const ClassicPageBuilder = () => {
   };
 
   if (isLoading) {
-    return <div className="p-4">Laddar sidor...</div>;
+    return <div className="p-4">Loading pages...</div>;
   }
 
   return (
@@ -170,25 +170,25 @@ const ClassicPageBuilder = () => {
             {/* Header */}
             <div className="p-4 border-b bg-background">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-lg">Sidor</h2>
+                <h2 className="font-semibold text-lg">Pages</h2>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" onClick={resetForm}>
                       <Plus className="h-4 w-4 mr-1" />
-                      Ny
+                      New
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Skapa ny sida</DialogTitle>
+                      <DialogTitle>Create New Page</DialogTitle>
                       <DialogDescription>
-                        Skapa en ny sida som du kan fylla med block
+                        Create a new page that you can fill with blocks
                       </DialogDescription>
                     </DialogHeader>
                     
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="title">Titel</Label>
+                        <Label htmlFor="title">Title</Label>
                         <Input
                           id="title"
                           value={formData.title}
@@ -199,7 +199,7 @@ const ClassicPageBuilder = () => {
                               slug: formData.slug || generateSlug(e.target.value),
                             });
                           }}
-                          placeholder="Min nya sida"
+                          placeholder="My new page"
                         />
                       </div>
                       
@@ -211,24 +211,24 @@ const ClassicPageBuilder = () => {
                             id="slug"
                             value={formData.slug}
                             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                            placeholder="min-nya-sida"
+                            placeholder="my-new-page"
                           />
                         </div>
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="description">Beskrivning (valfri)</Label>
+                        <Label htmlFor="description">Description (optional)</Label>
                         <Textarea
                           id="description"
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="En kort beskrivning..."
+                          placeholder="A short description..."
                           rows={2}
                         />
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="enabled">Aktiverad</Label>
+                        <Label htmlFor="enabled">Enabled</Label>
                         <Switch
                           id="enabled"
                           checked={formData.enabled}
@@ -238,16 +238,16 @@ const ClassicPageBuilder = () => {
                     </div>
                     
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Avbryt</Button>
+                      <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                       <Button onClick={handleCreate} disabled={!formData.title || !formData.slug}>
-                        Skapa sida
+                        Create Page
                       </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>
               <p className="text-xs text-muted-foreground">
-                Välj en sida för att redigera dess block
+                Select a page to edit its blocks
               </p>
             </div>
 
@@ -278,7 +278,7 @@ const ClassicPageBuilder = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm truncate">{page.title}</span>
                         {page.is_main_landing && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0">Start</Badge>
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">Home</Badge>
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">/{page.slug}</span>
@@ -304,7 +304,7 @@ const ClassicPageBuilder = () => {
                     onClick={() => openEditDialog(selectedPage)}
                   >
                     <Edit2 className="h-3 w-3 mr-1" />
-                    Redigera info
+                    Edit Info
                   </Button>
                   
                   <Button
@@ -315,7 +315,7 @@ const ClassicPageBuilder = () => {
                   >
                     <a href={selectedPage.is_main_landing ? '/' : `/${selectedPage.slug}`} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-3 w-3 mr-1" />
-                      Öppna
+                      Open
                     </a>
                   </Button>
                 </div>
@@ -329,7 +329,7 @@ const ClassicPageBuilder = () => {
                       onClick={() => handleSetMainLanding(selectedPage)}
                     >
                       <Home className="h-3 w-3 mr-1" />
-                      Sätt som start
+                      Set as Home
                     </Button>
                   )}
                   
@@ -341,7 +341,7 @@ const ClassicPageBuilder = () => {
                       onClick={() => handleRemoveFromNav(selectedPage)}
                     >
                       <X className="h-3 w-3 mr-1" />
-                      Ta bort från meny
+                      Remove from Nav
                     </Button>
                   ) : (
                     <Button
@@ -351,7 +351,7 @@ const ClassicPageBuilder = () => {
                       onClick={() => handleAddToNav(selectedPage)}
                     >
                       <LinkIcon className="h-3 w-3 mr-1" />
-                      Lägg till i meny
+                      Add to Nav
                     </Button>
                   )}
                   
@@ -360,23 +360,23 @@ const ClassicPageBuilder = () => {
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive hover:text-destructive">
                           <Trash2 className="h-3 w-3 mr-1" />
-                          Ta bort
+                          Delete
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Ta bort sida?</AlertDialogTitle>
+                          <AlertDialogTitle>Delete page?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Detta tar bort "{selectedPage.title}" och alla dess block permanent.
+                            This will permanently delete "{selectedPage.title}" and all its blocks.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(selectedPage)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Ta bort
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -401,7 +401,7 @@ const ClassicPageBuilder = () => {
             <div className="h-full flex items-center justify-center text-muted-foreground">
               <div className="text-center">
                 <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Välj en sida för att redigera dess block</p>
+                <p>Select a page to edit its blocks</p>
               </div>
             </div>
           )}
@@ -412,12 +412,12 @@ const ClassicPageBuilder = () => {
       <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Redigera sida</DialogTitle>
+            <DialogTitle>Edit Page</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-title">Titel</Label>
+              <Label htmlFor="edit-title">Title</Label>
               <Input
                 id="edit-title"
                 value={formData.title}
@@ -437,12 +437,12 @@ const ClassicPageBuilder = () => {
                 />
               </div>
               {editingPage?.slug === 'home' && (
-                <p className="text-xs text-muted-foreground">Startsidans slug kan inte ändras</p>
+                <p className="text-xs text-muted-foreground">The home page slug cannot be changed</p>
               )}
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Beskrivning</Label>
+              <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
@@ -452,7 +452,7 @@ const ClassicPageBuilder = () => {
             </div>
             
             <div className="flex items-center justify-between">
-              <Label htmlFor="edit-enabled">Aktiverad</Label>
+              <Label htmlFor="edit-enabled">Enabled</Label>
               <Switch
                 id="edit-enabled"
                 checked={formData.enabled}
@@ -462,8 +462,8 @@ const ClassicPageBuilder = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPage(null)}>Avbryt</Button>
-            <Button onClick={handleUpdate}>Spara ändringar</Button>
+            <Button variant="outline" onClick={() => setEditingPage(null)}>Cancel</Button>
+            <Button onClick={handleUpdate}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
