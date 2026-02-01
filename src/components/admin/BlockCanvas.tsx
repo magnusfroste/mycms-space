@@ -170,7 +170,7 @@ const VisualBlockItem = ({
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
-            Okänd blocktyp: {block.block_type}
+            Unknown block type: {block.block_type}
           </div>
         );
     }
@@ -229,7 +229,7 @@ const VisualBlockItem = ({
             size="sm"
             className="h-7 px-2"
             onClick={onToggleEnabled}
-            title={block.enabled ? 'Dölj block' : 'Visa block'}
+            title={block.enabled ? 'Hide block' : 'Show block'}
           >
             {block.enabled ? (
               <Eye className="h-4 w-4" />
@@ -244,7 +244,7 @@ const VisualBlockItem = ({
             onClick={onStartEdit}
           >
             <Pencil className="h-4 w-4" />
-            <span className="ml-1 text-xs">Redigera</span>
+            <span className="ml-1 text-xs">Edit</span>
           </Button>
           <Button
             variant="ghost"
@@ -434,9 +434,9 @@ export const BlockCanvas = ({
         enabled: true,
       });
       setIsLibraryOpen(false);
-      toast({ title: 'Block tillagt', description: `${blockTypeLabels[blockType] || blockType} har lagts till` });
+      toast({ title: 'Block added', description: `${blockTypeLabels[blockType] || blockType} has been added` });
     } catch {
-      toast({ title: 'Kunde inte lägga till block', variant: 'destructive' });
+      toast({ title: 'Could not add block', variant: 'destructive' });
     }
   };
 
@@ -465,7 +465,7 @@ export const BlockCanvas = ({
         </div>
         <Button variant="outline" size="sm" onClick={handlePreview}>
           <ExternalLink className="mr-1 h-3 w-3" />
-          Förhandsgranska
+          Preview
         </Button>
       </div>
 
@@ -493,9 +493,9 @@ export const BlockCanvas = ({
                         <Layers className="h-8 w-8 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">Inga block ännu</p>
+                        <p className="font-medium">No blocks yet</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Klicka på knappen nedan för att lägga till block
+                          Click the button below to add blocks
                         </p>
                       </div>
                     </div>
@@ -529,7 +529,7 @@ export const BlockCanvas = ({
                 onClick={() => setIsLibraryOpen(!isLibraryOpen)}
               >
                 <Plus className="h-5 w-5" />
-                <span>Lägg till block</span>
+                <span>Add Block</span>
               </Button>
             </div>
           )}
@@ -551,14 +551,14 @@ export const BlockCanvas = ({
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort block?</AlertDialogTitle>
+            <AlertDialogTitle>Delete block?</AlertDialogTitle>
             <AlertDialogDescription>
-              Blocket tas bort från sidan. Du kan ångra direkt efter.
+              The block will be removed from the page. You can undo immediately after.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Ta bort</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
