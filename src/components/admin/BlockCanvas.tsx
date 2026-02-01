@@ -69,6 +69,7 @@ import MarqueeBlock from '@/components/blocks/MarqueeBlock';
 import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
 import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
 import ContactFormBlock from '@/components/blocks/ContactFormBlock';
+import BlogBlock from '@/components/blocks/BlogBlock';
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
@@ -92,6 +93,7 @@ export const blockTypeLabels: Record<string, string> = {
   'stats-counter': 'Stats ✨',
   'testimonial-carousel': 'Testimonials ✨',
   'contact-form': 'Contact Form',
+  'blog': 'Blog Posts',
 };
 
 interface VisualBlockItemProps {
@@ -167,6 +169,8 @@ const VisualBlockItem = ({
         return <TestimonialCarouselBlock config={config} />;
       case 'contact-form':
         return <ContactFormBlock config={config} />;
+      case 'blog':
+        return <BlogBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
