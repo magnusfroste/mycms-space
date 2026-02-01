@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +14,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
-import type { AIIntegrationType, N8nIntegration, LovableIntegration, AIModuleConfig } from '@/types/modules';
+import type { AIIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
+
+// Secret names for each integration
+const integrationSecrets: Partial<Record<AIIntegrationType, string>> = {
+  openai: 'OPENAI_API_KEY',
+  gemini: 'GEMINI_API_KEY',
+};
 import { useToast } from '@/hooks/use-toast';
 
 // Integration icons
@@ -115,7 +121,8 @@ const IntegrationsManager: React.FC = () => {
   const currentIntegrationConfig = config?.integration || defaultIntegrations.n8n;
 
   // Check if an integration is properly configured
-  const isIntegrationConfigured = (type: AIIntegrationType): boolean => {
+  // Note: For OpenAI/Gemini we show "Requires secret" since we can't check Supabase secrets from client
+  const isIntegrationConfigured = (type: AIIntegrationType): boolean | 'requires_secret' => {
     switch (type) {
       case 'n8n': {
         const webhookUrl = config?.integration?.type === 'n8n' 
@@ -128,8 +135,8 @@ const IntegrationsManager: React.FC = () => {
         return true;
       case 'openai':
       case 'gemini':
-        // Future: check for API key
-        return false;
+        // These require Supabase secrets - we can't verify from client
+        return 'requires_secret';
       case 'ollama': {
         // Check for base_url
         if (config?.integration?.type === 'ollama') {
@@ -193,10 +200,15 @@ const IntegrationsManager: React.FC = () => {
                 {/* Connection status indicator */}
                 {isAvailable && (
                   <div className="mt-3">
-                    {isConfigured ? (
+                    {isConfigured === true ? (
                       <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
                         <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
                         Connected
+                      </Badge>
+                    ) : isConfigured === 'requires_secret' ? (
+                      <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
+                        <Key className="h-3 w-3 mr-1" />
+                        Requires secret
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
@@ -256,6 +268,20 @@ const IntegrationsManager: React.FC = () => {
                           <LovableConfig
                             config={currentIntegrationConfig as LovableIntegration}
                             onUpdate={(field, value) => handleIntegrationFieldUpdate('lovable', field, value)}
+                          />
+                        )}
+                        
+                        {integration.type === 'openai' && (
+                          <OpenAIConfig
+                            config={currentIntegrationConfig as OpenAIIntegration}
+                            onUpdate={(field, value) => handleIntegrationFieldUpdate('openai', field, value)}
+                          />
+                        )}
+                        
+                        {integration.type === 'gemini' && (
+                          <GeminiConfig
+                            config={currentIntegrationConfig as GeminiIntegration}
+                            onUpdate={(field, value) => handleIntegrationFieldUpdate('gemini', field, value)}
                           />
                         )}
                       </div>
@@ -372,6 +398,85 @@ const LovableConfig: React.FC<LovableConfigProps> = ({ config, onUpdate }) => {
           <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Powerful)</option>
           <option value="openai/gpt-5-mini">GPT-5 Mini</option>
           <option value="openai/gpt-5">GPT-5</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// OpenAI Configuration Component
+// ============================================
+interface OpenAIConfigProps {
+  config: OpenAIIntegration;
+  onUpdate: (field: string, value: string) => void;
+}
+
+const OpenAIConfig: React.FC<OpenAIConfigProps> = ({ config, onUpdate }) => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-2">
+          <Key className="h-4 w-4 text-blue-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
+            <p className="text-blue-700 dark:text-blue-300 mt-1">
+              Add your OpenAI API key as a Supabase secret named <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">OPENAI_API_KEY</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="openai_model">Model</Label>
+        <select
+          id="openai_model"
+          value={config.model || 'gpt-4o'}
+          onChange={(e) => onUpdate('model', e.target.value)}
+          className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+        >
+          <option value="gpt-4o">GPT-4o (Recommended)</option>
+          <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// Gemini Configuration Component
+// ============================================
+interface GeminiConfigProps {
+  config: GeminiIntegration;
+  onUpdate: (field: string, value: string) => void;
+}
+
+const GeminiConfig: React.FC<GeminiConfigProps> = ({ config, onUpdate }) => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-2">
+          <Key className="h-4 w-4 text-blue-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
+            <p className="text-blue-700 dark:text-blue-300 mt-1">
+              Add your Google AI API key as a Supabase secret named <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">GEMINI_API_KEY</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="gemini_model">Model</Label>
+        <select
+          id="gemini_model"
+          value={config.model || 'gemini-1.5-flash'}
+          onChange={(e) => onUpdate('model', e.target.value)}
+          className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+        >
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash (Latest)</option>
         </select>
       </div>
     </div>
