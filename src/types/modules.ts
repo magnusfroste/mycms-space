@@ -20,6 +20,11 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
 export interface AIModuleConfig {
   webhook_url: string;
   provider: 'n8n' | 'custom' | 'lovable';
+  // Context sources - which pages and blog posts to include
+  include_page_context: boolean;
+  selected_page_slugs: string[]; // Empty = all pages
+  include_blog_context: boolean;
+  selected_blog_ids: string[]; // Empty = all published blogs
 }
 
 // Projects Module Config
@@ -107,6 +112,10 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
   ai: {
     webhook_url: '',
     provider: 'n8n',
+    include_page_context: false,
+    selected_page_slugs: [],
+    include_blog_context: false,
+    selected_blog_ids: [],
   },
   projects: {
     layout_style: 'alternating',

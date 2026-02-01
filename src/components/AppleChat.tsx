@@ -43,6 +43,20 @@ export interface QuickActionConfig {
   enabled: boolean;
 }
 
+export interface SiteContext {
+  pages?: Array<{
+    slug: string;
+    title: string;
+    content: string;
+  }>;
+  blogs?: Array<{
+    slug: string;
+    title: string;
+    excerpt?: string;
+    content: string;
+  }>;
+}
+
 interface AppleChatProps {
   webhookUrl: string;
   initialPlaceholder?: string;
@@ -56,6 +70,7 @@ interface AppleChatProps {
   onSessionIdChange?: (id: string) => void;
   skipWebhook?: boolean;
   showQuickActions?: boolean;
+  siteContext?: SiteContext | null;
 }
 
 const AppleChat: React.FC<AppleChatProps> = ({
@@ -71,6 +86,7 @@ const AppleChat: React.FC<AppleChatProps> = ({
   onSessionIdChange,
   skipWebhook = false,
   showQuickActions = false,
+  siteContext = null,
 }) => {
   const getInitialMessages = () => {
     if (initialMessages && initialMessages.length > 0) {
@@ -212,10 +228,16 @@ const AppleChat: React.FC<AppleChatProps> = ({
     setIsLoading(true);
 
     try {
-      const requestBody = {
+      const requestBody: Record<string, unknown> = {
         message: messageText,
         sessionId: sessionId,
       };
+
+      // Include site context if available
+      if (siteContext && (siteContext.pages?.length || siteContext.blogs?.length)) {
+        requestBody.siteContext = siteContext;
+      }
+
       console.log("Request body:", JSON.stringify(requestBody));
 
       const response = await fetch(webhookUrl, {
