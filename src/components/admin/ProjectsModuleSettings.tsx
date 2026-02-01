@@ -16,9 +16,9 @@ import type { ProjectsModuleConfig } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
 
 const layoutOptions = [
-  { value: 'alternating', label: 'Alternerande (vänster/höger)' },
-  { value: 'grid', label: 'Rutnät' },
-  { value: 'carousel', label: 'Karusell' },
+  { value: 'alternating', label: 'Alternating (left/right)' },
+  { value: 'grid', label: 'Grid' },
+  { value: 'carousel', label: 'Carousel' },
   { value: 'masonry', label: 'Masonry' },
 ];
 
@@ -31,8 +31,8 @@ const ProjectsModuleSettings: React.FC = () => {
     updateModule.mutate(
       { enabled },
       {
-        onSuccess: () => toast({ title: 'Sparad' }),
-        onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
       }
     );
   };
@@ -45,8 +45,8 @@ const ProjectsModuleSettings: React.FC = () => {
     updateModule.mutate(
       { module_config: { ...config, [field]: value } },
       {
-        onSuccess: () => toast({ title: 'Sparad' }),
-        onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
       }
     );
   };
@@ -65,9 +65,9 @@ const ProjectsModuleSettings: React.FC = () => {
       <div className="flex items-center gap-3 mb-6">
         <FolderOpen className="h-8 w-8 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">Projekt Modul</h2>
+          <h2 className="text-2xl font-bold">Projects Module</h2>
           <p className="text-muted-foreground">
-            Globala inställningar för projektvisning
+            Global settings for project display
           </p>
         </div>
       </div>
@@ -77,18 +77,18 @@ const ProjectsModuleSettings: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Power className="h-5 w-5" />
-            Modulstatus
+            Module Status
           </CardTitle>
           <CardDescription>
-            Aktivera eller inaktivera projekt-modulen globalt
+            Enable or disable the projects module globally
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="enabled">Aktiverad</Label>
+              <Label htmlFor="enabled">Enabled</Label>
               <p className="text-sm text-muted-foreground">
-                När inaktiverad visas inte projektsektioner på sidan
+                When disabled, project sections won't be shown on the page
               </p>
             </div>
             <Switch
@@ -105,21 +105,21 @@ const ProjectsModuleSettings: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LayoutGrid className="h-5 w-5" />
-            Visningsinställningar
+            Display Settings
           </CardTitle>
           <CardDescription>
-            Styr hur projekt visas på sidan
+            Control how projects are displayed on the page
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="layout_style">Layoutstil</Label>
+            <Label htmlFor="layout_style">Layout Style</Label>
             <Select
               value={config?.layout_style || 'alternating'}
               onValueChange={(value) => handleConfigUpdate('layout_style', value as ProjectsModuleConfig['layout_style'])}
             >
               <SelectTrigger id="layout_style">
-                <SelectValue placeholder="Välj layoutstil" />
+                <SelectValue placeholder="Select layout style" />
               </SelectTrigger>
               <SelectContent>
                 {layoutOptions.map((option) => (
@@ -133,9 +133,9 @@ const ProjectsModuleSettings: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="show_categories">Visa kategorier</Label>
+              <Label htmlFor="show_categories">Show Categories</Label>
               <p className="text-sm text-muted-foreground">
-                Visar kategori-taggar på projektkort
+                Display category tags on project cards
               </p>
             </div>
             <Switch
@@ -147,9 +147,9 @@ const ProjectsModuleSettings: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="link_to_detail_pages">Länka till detaljsidor</Label>
+              <Label htmlFor="link_to_detail_pages">Link to Detail Pages</Label>
               <p className="text-sm text-muted-foreground">
-                Gör projektkort klickbara med egen detaljsida
+                Make project cards clickable with their own detail page
               </p>
             </div>
             <Switch
@@ -166,29 +166,29 @@ const ProjectsModuleSettings: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Tags className="h-5 w-5" />
-            Kategorier
+            Categories
           </CardTitle>
           <CardDescription>
-            Kategorier hanteras nu direkt i Project Showcase-blocket
+            Categories are now managed directly in the Project Showcase block
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Redigera ett Project Showcase-block för att hantera kategorier.
+            Edit a Project Showcase block to manage categories.
           </p>
         </CardContent>
       </Card>
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-muted-foreground">Framtida funktioner</CardTitle>
+          <CardTitle className="text-muted-foreground">Future Features</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Projekt per sida</li>
-            <li>• Animationseffekter</li>
-            <li>• Filterinställningar</li>
-            <li>• Sorteringsalternativ</li>
+            <li>• Projects per page</li>
+            <li>• Animation effects</li>
+            <li>• Filter settings</li>
+            <li>• Sorting options</li>
           </ul>
         </CardContent>
       </Card>

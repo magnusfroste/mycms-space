@@ -327,14 +327,14 @@ export const BlockSettings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Landningssida</h2>
-          <p className="text-muted-foreground">Hantera block och deras ordning på sidan</p>
+          <h2 className="text-2xl font-bold">Landing Page</h2>
+          <p className="text-muted-foreground">Manage blocks and their order on the page</p>
         </div>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.open('/', '_blank')}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Förhandsgranska
+            Preview
           </Button>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -437,14 +437,14 @@ export const BlockSettings = () => {
       <AlertDialog open={!!deleteBlockId} onOpenChange={() => setDeleteBlockId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort block?</AlertDialogTitle>
+            <AlertDialogTitle>Delete block?</AlertDialogTitle>
             <AlertDialogDescription>
-              Detta tar bort blocket från sidan. Åtgärden kan inte ångras.
+              This will remove the block from the page. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Ta bort</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -606,30 +606,30 @@ const BlockConfigEditor = ({ blockType, config, onChange }: BlockConfigEditorPro
       return (
         <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
           <div className="space-y-2">
-            <Label>Titel</Label>
+            <Label>Title</Label>
             <Input
               value={(config.title as string) || ''}
               onChange={(e) => updateConfig('title', e.target.value)}
-              placeholder="Block titel"
+              placeholder="Block title"
             />
           </div>
           <div className="space-y-2">
-            <Label>Innehåll</Label>
+            <Label>Content</Label>
             <Textarea
               value={(config.content as string) || ''}
               onChange={(e) => updateConfig('content', e.target.value)}
-              placeholder="Skriv innehåll..."
+              placeholder="Write content..."
               rows={3}
             />
           </div>
           <ImageUpload
-            label="Bild"
+            label="Image"
             value={(config.image_url as string) || ''}
             onChange={(url) => updateConfig('image_url', url)}
             bucket="about-me-images"
           />
           <div className="space-y-2">
-            <Label>Bildposition</Label>
+            <Label>Image Position</Label>
             <Select
               value={(config.image_position as string) || 'left'}
               onValueChange={(value) => updateConfig('image_position', value)}
@@ -638,8 +638,8 @@ const BlockConfigEditor = ({ blockType, config, onChange }: BlockConfigEditorPro
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="left">Vänster</SelectItem>
-                <SelectItem value="right">Höger</SelectItem>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
               </SelectContent>
             </Select>
           </div>

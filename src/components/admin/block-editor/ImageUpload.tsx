@@ -39,13 +39,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     // Validate file type
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      setError('Endast JPG, PNG, WEBP eller GIF tillåtna');
+      setError('Only JPG, PNG, WEBP or GIF allowed');
       return;
     }
 
     // Validate file size (max 10MB before compression)
     if (file.size > 10 * 1024 * 1024) {
-      setError('Bilden får max vara 10MB');
+      setError('Image must be max 10MB');
       return;
     }
 
@@ -78,7 +78,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       onChange(publicUrl);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Kunde inte ladda upp bilden');
+      setError('Could not upload image');
     } finally {
       setIsUploading(false);
       // Reset input
@@ -131,12 +131,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           {isUploading ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Laddar upp...</span>
+              <span className="text-sm">Uploading...</span>
             </>
           ) : (
             <>
               <ImageIcon className="h-8 w-8" />
-              <span className="text-sm">Klicka för att ladda upp bild</span>
+              <span className="text-sm">Click to upload image</span>
               <span className="text-xs">JPG, PNG, WEBP (max 10MB)</span>
             </>
           )}
@@ -165,12 +165,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           {isUploading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Laddar upp...
+              Uploading...
             </>
           ) : (
             <>
               <Upload className="h-4 w-4 mr-2" />
-              Byt bild
+              Change image
             </>
           )}
         </Button>

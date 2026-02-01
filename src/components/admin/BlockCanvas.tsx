@@ -76,22 +76,22 @@ import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
 
 export const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
-  'about-split': 'Om mig',
-  'text-section': 'Textsektion',
+  'about-split': 'About Me',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
+  'image-text': 'Image & Text',
   'spacer': 'Spacer',
-  'featured-carousel': 'Utvalda',
-  'expertise-grid': 'Expertis',
-  'project-showcase': 'Projekt',
+  'featured-carousel': 'Featured',
+  'expertise-grid': 'Expertise',
+  'project-showcase': 'Projects',
   'chat-widget': 'Chat',
   'video-hero': 'Video Hero ✨',
   'parallax-section': 'Parallax ✨',
   'bento-grid': 'Bento Grid ✨',
   'marquee': 'Marquee ✨',
-  'stats-counter': 'Statistik ✨',
+  'stats-counter': 'Stats ✨',
   'testimonial-carousel': 'Testimonials ✨',
-  'contact-form': 'Kontaktformulär',
+  'contact-form': 'Contact Form',
 };
 
 interface VisualBlockItemProps {
@@ -322,19 +322,19 @@ export const BlockCanvas = ({
       await reorderBlocks.mutateAsync(
         reordered.map((b) => ({ id: b.id, order_index: b.order_index }))
       );
-      toast({ title: 'Ordning uppdaterad' });
+      toast({ title: 'Order updated' });
     } catch {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-      toast({ title: 'Fel', description: 'Kunde inte uppdatera ordning', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not update order', variant: 'destructive' });
     }
   };
 
   const handleToggleEnabled = async (block: PageBlock) => {
     try {
       await updateBlock.mutateAsync({ id: block.id, enabled: !block.enabled });
-      toast({ title: block.enabled ? 'Block dolt' : 'Block synligt' });
+      toast({ title: block.enabled ? 'Block hidden' : 'Block visible' });
     } catch {
-      toast({ title: 'Fel', variant: 'destructive' });
+      toast({ title: 'Error', variant: 'destructive' });
     }
   };
 
@@ -354,8 +354,8 @@ export const BlockCanvas = ({
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
       
       toast({
-        title: 'Block borttaget',
-        description: `"${blockTypeLabels[blockToDelete.block_type] || blockToDelete.block_type}" har tagits bort`,
+        title: 'Block deleted',
+        description: `"${blockTypeLabels[blockToDelete.block_type] || blockToDelete.block_type}" has been removed`,
         action: (
           <Button
             variant="outline"
@@ -370,18 +370,18 @@ export const BlockCanvas = ({
                   enabled: deletedBlockData.enabled ?? true,
                 });
                 queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-                toast({ title: 'Block återställt!' });
+                toast({ title: 'Block restored!' });
               } catch {
-                toast({ title: 'Kunde inte återställa block', variant: 'destructive' });
+                toast({ title: 'Could not restore block', variant: 'destructive' });
               }
             }}
           >
-            Ångra
+            Undo
           </Button>
         ),
       });
     } catch {
-      toast({ title: 'Kunde inte ta bort block', variant: 'destructive' });
+      toast({ title: 'Could not delete block', variant: 'destructive' });
     }
     setDeleteBlockId(null);
   };
@@ -402,9 +402,9 @@ export const BlockCanvas = ({
     if (changes && Object.keys(changes).length > 0) {
       try {
         await updateBlockConfig.mutateAsync({ blockId, config: changes });
-        toast({ title: 'Ändringar sparade' });
+        toast({ title: 'Changes saved' });
       } catch {
-        toast({ title: 'Kunde inte spara ändringar', variant: 'destructive' });
+        toast({ title: 'Could not save changes', variant: 'destructive' });
       }
     }
     // Clear pending changes for this block
@@ -444,7 +444,7 @@ export const BlockCanvas = ({
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
         <Layers className="h-8 w-8 animate-pulse mr-2" />
-        Laddar block...
+        Loading blocks...
       </div>
     );
   }

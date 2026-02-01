@@ -101,10 +101,10 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
       });
       // Also update local state for immediate UI feedback
       onChange({ ...config, projects: updatedProjects });
-      toast({ title: 'Ändringar sparade' });
+      toast({ title: 'Changes saved' });
     } catch (err) {
       console.error('Save error:', err);
-      toast({ title: 'Kunde inte spara ändringar', variant: 'destructive' });
+      toast({ title: 'Could not save changes', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -353,11 +353,11 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
       {
         onSuccess: () => {
           onChange({ ...config, categories: updatedCategories });
-          toast({ title: 'Kategorier sparade' });
+          toast({ title: 'Categories saved' });
           setIsSaving(false);
         },
         onError: () => {
-          toast({ title: 'Kunde inte spara kategorier', variant: 'destructive' });
+          toast({ title: 'Could not save categories', variant: 'destructive' });
           setIsSaving(false);
         },
       }
@@ -383,10 +383,10 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
           <Button variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
               <Tags className="h-4 w-4" />
-              Hantera kategorier ({(config.categories || []).length})
+              Manage Categories ({(config.categories || []).length})
             </span>
             <span className="text-muted-foreground text-xs">
-              {showCategories ? 'Dölj' : 'Visa'}
+              {showCategories ? 'Hide' : 'Show'}
             </span>
           </Button>
         </CollapsibleTrigger>

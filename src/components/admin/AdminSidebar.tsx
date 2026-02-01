@@ -39,17 +39,17 @@ interface AdminSidebarProps {
 
 const mainNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'pages', label: 'Sidor', icon: FileText },
-  { id: 'landing', label: 'Sidbyggare', icon: Layers },
+  { id: 'pages', label: 'Pages', icon: FileText },
+  { id: 'landing', label: 'Page Builder', icon: Layers },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
-  { id: 'messages', label: 'Meddelanden', icon: Mail },
+  { id: 'messages', label: 'Messages', icon: Mail },
 ];
 
 const settingsNavItems = [
-  { id: 'global-blocks', label: 'Globala Block', icon: Globe },
-  { id: 'ai-module', label: 'AI Modul', icon: Bot },
-  { id: 'projects-module', label: 'Projekt Modul', icon: FolderOpen },
-  { id: 'history', label: 'Historik', icon: History },
+  { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
+  { id: 'ai-module', label: 'AI Module', icon: Bot },
+  { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
+  { id: 'history', label: 'History', icon: History },
 ];
 
 export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: AdminSidebarProps) {
@@ -71,7 +71,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: Ad
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Huvudmeny</SidebarGroupLabel>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
@@ -92,7 +92,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: Ad
 
 
         <SidebarGroup>
-          <SidebarGroupLabel>Inställningar</SidebarGroupLabel>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {settingsNavItems.map((item) => (
@@ -115,15 +115,15 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: Ad
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onPreview} tooltip="Förhandsgranska">
+            <SidebarMenuButton onClick={onPreview} tooltip="Preview">
               <ExternalLink className="h-4 w-4" />
               <span>Preview</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onLogout} tooltip="Logga ut">
+            <SidebarMenuButton onClick={onLogout} tooltip="Log out">
               <LogOut className="h-4 w-4" />
-              <span>Logga ut</span>
+              <span>Log out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

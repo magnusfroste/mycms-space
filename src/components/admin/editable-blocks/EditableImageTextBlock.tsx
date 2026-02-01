@@ -114,7 +114,7 @@ const EditableImageTextBlock: React.FC<EditableImageTextBlockProps> = ({
                 value={content}
                 isEditMode={isEditMode}
                 onChange={(value) => onChange({ ...config, content: value })}
-                placeholder="Lägg till innehåll..."
+                placeholder="Add content..."
                 multiline
               />
             </p>

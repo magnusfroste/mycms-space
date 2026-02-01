@@ -21,7 +21,7 @@ const EditableText: React.FC<EditableTextProps> = ({
   isEditMode,
   onChange,
   className = '',
-  placeholder = 'Klicka för att redigera...',
+  placeholder = 'Click to edit...',
   multiline = false,
   as: Component = 'span',
 }) => {

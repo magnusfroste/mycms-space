@@ -51,7 +51,7 @@ const EditableTextSectionBlock: React.FC<EditableTextSectionBlockProps> = ({
               value={title}
               isEditMode={isEditMode}
               onChange={(value) => onChange({ ...config, title: value })}
-              placeholder="Lägg till rubrik..."
+              placeholder="Add heading..."
             />
           </h2>
           <p className="text-lg leading-relaxed text-muted-foreground">
@@ -59,7 +59,7 @@ const EditableTextSectionBlock: React.FC<EditableTextSectionBlockProps> = ({
               value={content}
               isEditMode={isEditMode}
               onChange={(value) => onChange({ ...config, content: value })}
-              placeholder="Lägg till innehåll..."
+              placeholder="Add content..."
               multiline
             />
           </p>

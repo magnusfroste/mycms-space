@@ -214,9 +214,9 @@ const CategoryManagerInline: React.FC<CategoryManagerInlineProps> = ({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Kategorier</CardTitle>
+        <CardTitle className="text-base">Categories</CardTitle>
         <CardDescription>
-          Hantera kategorier för projekten
+          Manage categories for projects
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -225,13 +225,13 @@ const CategoryManagerInline: React.FC<CategoryManagerInlineProps> = ({
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Ny kategori..."
+            placeholder="New category..."
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             className="flex-1"
           />
           <Button onClick={handleAdd} disabled={!newName.trim()} size="sm">
             <Plus className="h-4 w-4 mr-1" />
-            Lägg till
+            Add
           </Button>
         </div>
 
@@ -253,7 +253,7 @@ const CategoryManagerInline: React.FC<CategoryManagerInlineProps> = ({
 
         {sortedCategories.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">
-            Inga kategorier ännu. Lägg till en ovan.
+            No categories yet. Add one above.
           </p>
         )}
       </CardContent>
