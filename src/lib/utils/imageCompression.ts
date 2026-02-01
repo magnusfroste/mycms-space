@@ -11,7 +11,7 @@ const DEFAULT_OPTIONS: CompressionOptions = {
   maxSizeMB: 1,
   maxWidthOrHeight: 1920,
   useWebWorker: true,
-  fileType: 'image/jpeg',
+  fileType: 'image/webp',
 };
 
 export const compressImage = async (
