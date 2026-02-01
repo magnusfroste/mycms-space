@@ -59,7 +59,7 @@ export interface SiteContext {
   }>;
 }
 
-interface AppleChatProps {
+interface ChatInterfaceProps {
   webhookUrl: string;
   initialPlaceholder?: string;
   activePlaceholder?: string;
@@ -77,7 +77,7 @@ interface AppleChatProps {
   integrationConfig?: AIIntegration;
 }
 
-const AppleChat: React.FC<AppleChatProps> = ({
+const ChatInterface: React.FC<ChatInterfaceProps> = ({
   webhookUrl,
   initialPlaceholder = "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?",
   activePlaceholder = "How can Magnet help?",
@@ -484,4 +484,4 @@ const AppleChat: React.FC<AppleChatProps> = ({
   );
 };
 
-export default AppleChat;
+export default ChatInterface;

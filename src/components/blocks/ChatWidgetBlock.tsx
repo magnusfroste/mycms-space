@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import AppleChat, { Message } from '@/components/AppleChat';
+import ChatInterface, { Message } from '@/components/ChatInterface';
 import { useAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';
@@ -69,7 +69,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
           </div>
         )}
         <div className="max-w-4xl mx-auto">
-          <AppleChat
+          <ChatInterface
             webhookUrl={webhookUrl}
             initialPlaceholder={initialPlaceholder}
             activePlaceholder={activePlaceholder}

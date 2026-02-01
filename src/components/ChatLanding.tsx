@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import AppleChat, { Message } from "./AppleChat";
+import ChatInterface, { Message } from "./ChatInterface";
 import { useAIModule } from "@/models/modules";
 
 interface ChatLandingProps {
@@ -47,7 +47,7 @@ const ChatLanding: React.FC<ChatLandingProps> = ({ title, subtitle }) => {
           </div>
         )}
         <div className="max-w-4xl mx-auto">
-          <AppleChat
+          <ChatInterface
             webhookUrl={webhookUrl}
             onMessagesChange={setCurrentMessages}
             onSessionIdChange={setCurrentSessionId}
