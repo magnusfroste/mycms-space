@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AppleChat from "@/components/AppleChat";
+import ChatInterface from "@/components/ChatInterface";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
@@ -128,7 +128,7 @@ const Chat = () => {
 
       {/* Chat Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <AppleChat
+        <ChatInterface
           webhookUrl={webhookUrl}
           fullPage={true}
           initialMessages={initialMessages}
