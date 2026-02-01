@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
-import ChatInterface, { Message } from '@/components/ChatInterface';
+import { ChatInterface, Message } from '@/components/chat';
 import { useAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';

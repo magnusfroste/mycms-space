@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import ChatInterface, { Message } from "./ChatInterface";
+import { ChatInterface, Message } from "./chat";
 import { useAIModule } from "@/models/modules";
 
 interface ChatLandingProps {
