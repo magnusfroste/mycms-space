@@ -3,76 +3,6 @@
 // Re-export all models for clean imports
 // ============================================
 
-// Projects
-export {
-  useProjects,
-  useCreateProject,
-  useUpdateProject,
-  useDeleteProject,
-  useDeleteProjectImage,
-  useReorderProjectImages,
-  useReorderProjects,
-  uploadProjectImage,
-  deleteProjectImageFromStorage,
-  projectKeys,
-} from './projects';
-
-export type { Project, ProjectImage, CreateProjectInput, UpdateProjectInput } from './projects';
-
-// Hero
-export {
-  useHeroSettings,
-  useUpdateHeroSettings,
-  defaultHeroSettings,
-  heroKeys,
-} from './hero';
-
-export type { HeroSettings } from './hero';
-
-// About Me
-export {
-  useAboutMeSettings,
-  useUpdateAboutMeSettings,
-  DEFAULT_ABOUT_ME_SETTINGS,
-  aboutMeKeys,
-} from './aboutMe';
-
-export type { AboutMeSettings, UpdateAboutMeInput } from './aboutMe';
-
-// Categories
-export {
-  useCategories,
-  useProjectCategories,
-  useUpdateProjectCategories,
-  categoryKeys,
-} from './categories';
-
-export type { Category } from './categories';
-
-// Expertise
-export {
-  useExpertiseAreas,
-  useCreateExpertiseArea,
-  useUpdateExpertiseArea,
-  useDeleteExpertiseArea,
-  useExpertiseAreasSubscription,
-  expertiseKeys,
-} from './expertise';
-
-export type { ExpertiseArea } from './expertise';
-
-// Featured
-export {
-  useFeaturedItems,
-  useCreateFeaturedItem,
-  useUpdateFeaturedItem,
-  useDeleteFeaturedItem,
-  useReorderFeaturedItem,
-  featuredKeys,
-} from './featured';
-
-export type { FeaturedItem } from './featured';
-
 // Modules (unified module system - replaces ai_module, etc.)
 export {
   useModule,
@@ -91,15 +21,6 @@ export type {
   AIModuleConfig,
   ProjectsModuleConfig,
 } from './modules';
-
-// Portfolio Settings
-export {
-  usePortfolioSettings,
-  useUpdatePortfolioSettings,
-  portfolioSettingsKeys,
-} from './portfolioSettings';
-
-export type { PortfolioSettings } from './portfolioSettings';
 
 // Nav Links
 export {
@@ -143,3 +64,46 @@ export type {
   BlockConfigType,
   ConfigForBlockType,
 } from '@/types/blockConfigs';
+
+// Analytics
+export {
+  useAnalyticsSummary,
+  analyticsKeys,
+  trackPageView,
+  trackProjectView,
+  trackChatSession,
+  updateChatSession,
+  getVisitorId,
+} from './analytics';
+
+export type { AnalyticsSummary } from './analytics';
+
+// Contact Messages
+export {
+  useContactMessages,
+  useMarkMessageAsRead,
+  useDeleteContactMessage,
+  useCreateContactMessage,
+  useContactMessagesSubscription,
+  contactMessagesKeys,
+} from './contactMessages';
+
+export type { ContactMessage, CreateContactMessageInput } from './contactMessages';
+
+// Settings History
+export {
+  useSettingsHistory,
+  settingsHistoryKeys,
+} from './settingsHistory';
+
+// Pages
+export {
+  usePages,
+  useMainLandingPage,
+  useCreatePage,
+  useUpdatePage,
+  useDeletePage,
+  pagesKeys,
+} from './pages';
+
+export type { Page, CreatePageInput, UpdatePageInput } from './pages';

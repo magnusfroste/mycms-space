@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { useProjectsModule, useUpdateProjectsModule } from '@/models/modules';
 import type { ProjectsModuleConfig } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
-import CategoryManager from './block-editor/CategoryManager';
 
 const layoutOptions = [
   { value: 'alternating', label: 'Alternerande (vänster/höger)' },
@@ -162,7 +161,7 @@ const ProjectsModuleSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Category Management */}
+      {/* Category Management - now in block_config */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -170,11 +169,13 @@ const ProjectsModuleSettings: React.FC = () => {
             Kategorier
           </CardTitle>
           <CardDescription>
-            Skapa och hantera kategorier för att organisera projekt
+            Kategorier hanteras nu direkt i Project Showcase-blocket
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CategoryManager />
+          <p className="text-sm text-muted-foreground">
+            Redigera ett Project Showcase-block för att hantera kategorier.
+          </p>
         </CardContent>
       </Card>
 

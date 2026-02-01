@@ -35,7 +35,6 @@ import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatWidgetEditor from './ChatWidgetEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
-import PortfolioSettingsEditor from './PortfolioSettingsEditor';
 import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
@@ -414,15 +413,12 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   const renderProjectShowcaseConfig = () => {
     const projectConfig = config as ProjectShowcaseBlockConfig;
     return (
-      <div className="space-y-8">
-        <PortfolioSettingsEditor />
-        <div className="border-t pt-6">
-          <ProjectShowcaseEditor
-            config={projectConfig}
-            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
-            blockId={block.id}
-          />
-        </div>
+      <div className="space-y-6">
+        <ProjectShowcaseEditor
+          config={projectConfig}
+          onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          blockId={block.id}
+        />
       </div>
     );
   };

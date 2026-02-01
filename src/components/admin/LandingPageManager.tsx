@@ -39,8 +39,6 @@ import {
   useReorderPageBlocks,
   pageBlocksKeys,
 } from '@/models/pageBlocks';
-import { useHeroSettings } from '@/hooks/useHeroSettings';
-import { useAboutMeSettings } from '@/hooks/useAboutMeSettings';
 import type { PageBlock, BlockType } from '@/types';
 import BlockTypePicker, { BLOCK_TYPE_OPTIONS } from './block-editor/BlockTypePicker';
 import {
@@ -297,10 +295,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newBlockType, setNewBlockType] = useState<BlockType>('text-section');
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  
   // Fetch blocks for selected page
   const { data: blocks = [], isLoading } = usePageBlocks(pageSlug);
-  const { data: heroData } = useHeroSettings();
-  const { data: aboutMeData } = useAboutMeSettings();
 
   // Mutations
   const createBlock = useCreatePageBlock();

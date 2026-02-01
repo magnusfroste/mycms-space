@@ -3,13 +3,10 @@
 // Re-export all data layer functions
 // ============================================
 
-export * from './projects';
-export * from './hero';
-export * from './aboutMe';
-export * from './categories';
-export * from './expertise';
-export * from './featured';
 export * from './modules';
-export * from './portfolioSettings';
 export * from './navLinks';
 export * from './pageBlocks';
+export * from './analytics';
+export * from './contactMessages';
+export * from './settingsHistory';
+export * from './pages';
