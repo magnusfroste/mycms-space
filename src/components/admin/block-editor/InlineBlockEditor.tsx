@@ -420,6 +420,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
           <ProjectShowcaseEditor
             config={projectConfig}
             onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+            blockId={block.id}
           />
         </div>
       </div>

@@ -25,12 +25,15 @@ import { Plus } from 'lucide-react';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
+import { useUpdateBlockConfig } from '@/models/blockContent';
+import { useQueryClient } from '@tanstack/react-query';
 import SortableProjectItem from './SortableProjectItem';
 import ProjectForm from './ProjectForm';
 
 interface ProjectShowcaseEditorProps {
   config: ProjectShowcaseBlockConfig;
   onChange: (config: ProjectShowcaseBlockConfig) => void;
+  blockId?: string; // Pass block ID to enable auto-save
 }
 
 type ProjectItem = NonNullable<ProjectShowcaseBlockConfig['projects']>[number];
@@ -55,8 +58,11 @@ const emptyFormData: ProjectFormData = {
 const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
   config,
   onChange,
+  blockId,
 }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const updateBlockConfig = useUpdateBlockConfig();
   const projects = config.projects || [];
   const sortedProjects = [...projects].sort((a, b) => a.order_index - b.order_index);
 
@@ -76,9 +82,34 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
 
   const enabledProjects = projects.filter((p) => p.enabled);
 
-  // Helper to update projects array
+  // Auto-save helper - saves directly to database if blockId is provided
+  const saveToDatabase = async (updatedProjects: ProjectItem[]) => {
+    if (!blockId) {
+      // Fallback to onChange only if no blockId
+      onChange({ ...config, projects: updatedProjects });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateBlockConfig.mutateAsync({
+        blockId,
+        config: { projects: updatedProjects },
+      });
+      // Also update local state for immediate UI feedback
+      onChange({ ...config, projects: updatedProjects });
+      toast({ title: 'Ändringar sparade' });
+    } catch (err) {
+      console.error('Save error:', err);
+      toast({ title: 'Kunde inte spara ändringar', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Helper to update projects array (now auto-saves)
   const updateProjects = (updatedProjects: ProjectItem[]) => {
-    onChange({ ...config, projects: updatedProjects });
+    saveToDatabase(updatedProjects);
   };
 
   // Edit handlers
