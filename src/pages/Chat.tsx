@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ChatInterface from "@/components/ChatInterface";
+import { ChatInterface } from "@/components/chat";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
