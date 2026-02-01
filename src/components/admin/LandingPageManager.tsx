@@ -79,10 +79,11 @@ import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
 import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
 import BlogBlock from '@/components/blocks/BlogBlock';
 
-// Inline editor
+// Inline editor components
 import { InlineBlockEditor } from './block-editor';
 import PageBuilderChat from './PageBuilderChat';
 import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
+import ContactFormBlock from '@/components/blocks/ContactFormBlock';
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
@@ -176,6 +177,8 @@ const VisualBlockItem = ({
         return <StatsCounterBlock config={config} />;
       case 'testimonial-carousel':
         return <TestimonialCarouselBlock config={config} />;
+      case 'contact-form':
+        return <ContactFormBlock config={config} />;
       case 'blog':
         return <BlogBlock config={config} />;
       default:
