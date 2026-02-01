@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -114,6 +114,34 @@ const IntegrationsManager: React.FC = () => {
   const activeIntegration = config?.active_integration || 'n8n';
   const currentIntegrationConfig = config?.integration || defaultIntegrations.n8n;
 
+  // Check if an integration is properly configured
+  const isIntegrationConfigured = (type: AIIntegrationType): boolean => {
+    switch (type) {
+      case 'n8n': {
+        const webhookUrl = config?.integration?.type === 'n8n' 
+          ? (config.integration as N8nIntegration).webhook_url 
+          : config?.webhook_url;
+        return !!webhookUrl && webhookUrl.trim().length > 0;
+      }
+      case 'lovable':
+        // Lovable is always configured (no API key needed)
+        return true;
+      case 'openai':
+      case 'gemini':
+        // Future: check for API key
+        return false;
+      case 'ollama': {
+        // Check for base_url
+        if (config?.integration?.type === 'ollama') {
+          return !!(config.integration as any).base_url;
+        }
+        return false;
+      }
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-3 mb-6">
@@ -132,6 +160,7 @@ const IntegrationsManager: React.FC = () => {
           const isActive = activeIntegration === integration.type;
           const isExpanded = expandedIntegration === integration.type;
           const isAvailable = integration.available;
+          const isConfigured = isIntegrationConfigured(integration.type);
           
           return (
             <Card 
@@ -160,6 +189,23 @@ const IntegrationsManager: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Connection status indicator */}
+                {isAvailable && (
+                  <div className="mt-3">
+                    {isConfigured ? (
+                      <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                        <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
+                        Connected
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Not configured
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </CardHeader>
               
               <CardContent className="space-y-4">
