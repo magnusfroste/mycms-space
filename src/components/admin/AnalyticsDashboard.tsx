@@ -113,7 +113,7 @@ export const AnalyticsDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <TrendingUp className="h-5 w-5" />
-              Populära sidor
+              Popular Pages
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -136,12 +136,12 @@ export const AnalyticsDashboard = () => {
                       </span>
                       <span className="font-medium">/{page.page_slug}</span>
                     </div>
-                    <span className="text-muted-foreground">{page.count} besök</span>
+                    <span className="text-muted-foreground">{page.count} views</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">Ingen data ännu</p>
+              <p className="text-muted-foreground text-sm">No data yet</p>
             )}
           </CardContent>
         </Card>
@@ -179,7 +179,7 @@ export const AnalyticsDashboard = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">Ingen data ännu</p>
+              <p className="text-muted-foreground text-sm">No data yet</p>
             )}
           </CardContent>
         </Card>
@@ -188,7 +188,7 @@ export const AnalyticsDashboard = () => {
       {/* Views over time */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Besök över tid</CardTitle>
+          <CardTitle className="text-lg">Views Over Time</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -205,14 +205,14 @@ export const AnalyticsDashboard = () => {
                     style={{ height: `${Math.max(height, 4)}%` }}
                   >
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                      {day.date}: {day.views} besök
+                      {day.date}: {day.views} views
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">Ingen data ännu</p>
+            <p className="text-muted-foreground text-sm">No data yet</p>
           )}
         </CardContent>
       </Card>
