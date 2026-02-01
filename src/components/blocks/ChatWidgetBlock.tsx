@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import AppleChat, { Message } from '@/components/AppleChat';
 import { useAIModule } from '@/models/modules';
+import { useAIChatContext } from '@/hooks/useAIChatContext';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';
 
 interface ChatWidgetBlockProps {
@@ -18,6 +19,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const typedConfig = config as ChatWidgetBlockConfig;
   const navigate = useNavigate();
   const { config: aiConfig, isEnabled: isModuleEnabled } = useAIModule();
+  const { contextData } = useAIChatContext();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const didNavigateRef = React.useRef(false);
@@ -76,6 +78,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
             onSessionIdChange={setCurrentSessionId}
             skipWebhook={true}
             showQuickActions={showQuickActions}
+            siteContext={contextData}
           />
           
           <div className="flex justify-center mt-12">

@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MessageSquarePlus } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppleChat from "@/components/AppleChat";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAIModule } from "@/models/modules";
+import { useAIChatContext } from "@/hooks/useAIChatContext";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +28,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
+  const { contextData, contextSummary, hasContext } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
@@ -62,6 +65,12 @@ const Chat = () => {
             <h1 className="text-lg font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
               Chat with Magnet
             </h1>
+            {hasContext && (
+              <Badge variant="secondary" className="text-xs gap-1">
+                <Database className="h-3 w-3" />
+                {contextSummary}
+              </Badge>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -83,6 +92,7 @@ const Chat = () => {
           initialSessionId={initialSessionId}
           resetTrigger={resetTrigger}
           showQuickActions={true}
+          siteContext={contextData}
         />
       </main>
 
