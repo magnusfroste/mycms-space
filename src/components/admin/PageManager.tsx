@@ -131,35 +131,35 @@ const PageManager = () => {
   };
 
   if (isLoading) {
-    return <div className="p-4">Laddar sidor...</div>;
+    return <div className="p-4">Loading pages...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Sidor</h2>
-          <p className="text-muted-foreground">Hantera dina sidor och välj vilken som ska vara startsidan</p>
+          <h2 className="text-2xl font-bold">Pages</h2>
+          <p className="text-muted-foreground">Manage your pages and choose which one is the home page</p>
         </div>
         
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
-              Ny sida
+              New Page
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Skapa ny sida</DialogTitle>
+              <DialogTitle>Create New Page</DialogTitle>
               <DialogDescription>
-                Skapa en ny sida som du kan fylla med block
+                Create a new page that you can fill with blocks
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Titel</Label>
+                <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -170,7 +170,7 @@ const PageManager = () => {
                       slug: formData.slug || generateSlug(e.target.value),
                     });
                   }}
-                  placeholder="Min nya sida"
+                  placeholder="My new page"
                 />
               </div>
               
@@ -182,24 +182,24 @@ const PageManager = () => {
                     id="slug"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="min-nya-sida"
+                    placeholder="my-new-page"
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="description">Beskrivning (valfri)</Label>
+                <Label htmlFor="description">Description (optional)</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="En kort beskrivning av sidan..."
+                  placeholder="A short description of the page..."
                   rows={2}
                 />
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="enabled">Aktiverad</Label>
+                <Label htmlFor="enabled">Enabled</Label>
                 <Switch
                   id="enabled"
                   checked={formData.enabled}
@@ -208,7 +208,7 @@ const PageManager = () => {
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="is_main">Sätt som startsida</Label>
+                <Label htmlFor="is_main">Set as Home Page</Label>
                 <Switch
                   id="is_main"
                   checked={formData.is_main_landing}
@@ -218,9 +218,9 @@ const PageManager = () => {
             </div>
             
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Avbryt</Button>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
               <Button onClick={handleCreate} disabled={!formData.title || !formData.slug}>
-                Skapa sida
+                Create Page
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -231,12 +231,12 @@ const PageManager = () => {
       <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Redigera sida</DialogTitle>
+            <DialogTitle>Edit Page</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-title">Titel</Label>
+              <Label htmlFor="edit-title">Title</Label>
               <Input
                 id="edit-title"
                 value={formData.title}
@@ -256,12 +256,12 @@ const PageManager = () => {
                 />
               </div>
               {editingPage?.slug === 'home' && (
-                <p className="text-xs text-muted-foreground">Startsidans slug kan inte ändras</p>
+                <p className="text-xs text-muted-foreground">The home page slug cannot be changed</p>
               )}
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Beskrivning</Label>
+              <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
@@ -271,7 +271,7 @@ const PageManager = () => {
             </div>
             
             <div className="flex items-center justify-between">
-              <Label htmlFor="edit-enabled">Aktiverad</Label>
+              <Label htmlFor="edit-enabled">Enabled</Label>
               <Switch
                 id="edit-enabled"
                 checked={formData.enabled}
@@ -281,8 +281,8 @@ const PageManager = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPage(null)}>Avbryt</Button>
-            <Button onClick={handleUpdate}>Spara ändringar</Button>
+            <Button variant="outline" onClick={() => setEditingPage(null)}>Cancel</Button>
+            <Button onClick={handleUpdate}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -306,10 +306,10 @@ const PageManager = () => {
                 </div>
                 <div className="flex gap-1">
                   {page.is_main_landing && (
-                    <Badge variant="default" className="text-xs">Startsida</Badge>
+                    <Badge variant="default" className="text-xs">Home</Badge>
                   )}
                   {!page.enabled && (
-                    <Badge variant="secondary" className="text-xs">Inaktiv</Badge>
+                    <Badge variant="secondary" className="text-xs">Inactive</Badge>
                   )}
                 </div>
               </div>
@@ -329,7 +329,7 @@ const PageManager = () => {
                   onClick={() => openEditDialog(page)}
                 >
                   <Edit2 className="h-3 w-3 mr-1" />
-                  Redigera
+                  Edit
                 </Button>
                 
                 <Button
@@ -339,7 +339,7 @@ const PageManager = () => {
                 >
                   <a href={page.is_main_landing ? '/' : `/${page.slug}`} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-3 w-3 mr-1" />
-                    Visa
+                    View
                   </a>
                 </Button>
                 
@@ -350,7 +350,7 @@ const PageManager = () => {
                     onClick={() => handleSetMainLanding(page)}
                   >
                     <Home className="h-3 w-3 mr-1" />
-                    Sätt som start
+                    Set as Home
                   </Button>
                 )}
                 
@@ -361,7 +361,7 @@ const PageManager = () => {
                     onClick={() => handleRemoveFromNav(page)}
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Ta bort från meny
+                    Remove from Nav
                   </Button>
                 ) : (
                   <Button
@@ -370,7 +370,7 @@ const PageManager = () => {
                     onClick={() => handleAddToNav(page)}
                   >
                     <LinkIcon className="h-3 w-3 mr-1" />
-                    Lägg till i meny
+                    Add to Nav
                   </Button>
                 )}
                 
@@ -379,23 +379,23 @@ const PageManager = () => {
                     <AlertDialogTrigger asChild>
                       <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
                         <Trash2 className="h-3 w-3 mr-1" />
-                        Ta bort
+                        Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Ta bort sida?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete page?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Detta kommer ta bort sidan "{page.title}" och alla dess block permanent.
+                          This will permanently delete "{page.title}" and all its blocks.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDelete(page)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          Ta bort
+                          Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

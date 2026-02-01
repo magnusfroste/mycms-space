@@ -106,7 +106,7 @@ const EditableImageTextBlock: React.FC<EditableImageTextBlockProps> = ({
                 value={title}
                 isEditMode={isEditMode}
                 onChange={(value) => onChange({ ...config, title: value })}
-                placeholder="Lägg till rubrik..."
+                placeholder="Add title..."
               />
             </h2>
             <p className="text-lg leading-relaxed text-muted-foreground">

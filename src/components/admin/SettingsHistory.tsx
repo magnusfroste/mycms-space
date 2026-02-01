@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { sv } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { History, RotateCcw, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,9 +97,9 @@ export const SettingsHistory = () => {
       <div className="flex items-center gap-3">
         <History className="h-6 w-6 text-primary" />
         <div>
-          <h2 className="text-2xl font-semibold">Versionshistorik</h2>
+          <h2 className="text-2xl font-semibold">Version History</h2>
           <p className="text-sm text-muted-foreground">
-            Alla ändringar sparas automatiskt. Återställ till tidigare versioner med ett klick.
+            All changes are saved automatically. Restore to previous versions with one click.
           </p>
         </div>
       </div>
@@ -108,8 +108,8 @@ export const SettingsHistory = () => {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Ingen historik ännu</p>
-            <p className="text-sm">Ändringar kommer att sparas automatiskt härifrån</p>
+            <p>No history yet</p>
+            <p className="text-sm">Changes will be saved automatically from here</p>
           </CardContent>
         </Card>
       ) : (
@@ -128,7 +128,7 @@ export const SettingsHistory = () => {
                         {tableLabels[tableName] || tableName}
                       </CardTitle>
                       <CardDescription>
-                        {entries.length} {entries.length === 1 ? 'ändring' : 'ändringar'}
+                        {entries.length} {entries.length === 1 ? 'change' : 'changes'}
                       </CardDescription>
                     </div>
                     {entries.length > 3 && (
@@ -140,12 +140,12 @@ export const SettingsHistory = () => {
                         {isExpanded ? (
                           <>
                             <ChevronUp className="h-4 w-4 mr-1" />
-                            Visa mindre
+                            Show less
                           </>
                         ) : (
                           <>
                             <ChevronDown className="h-4 w-4 mr-1" />
-                            Visa alla ({entries.length})
+                            Show all ({entries.length})
                           </>
                         )}
                       </Button>
@@ -161,7 +161,7 @@ export const SettingsHistory = () => {
                       >
                         <div className="flex items-center gap-3">
                           <Badge variant="outline" className="font-mono text-xs">
-                            {format(new Date(entry.changed_at), 'dd MMM HH:mm', { locale: sv })}
+                            {format(new Date(entry.changed_at), 'dd MMM HH:mm', { locale: enUS })}
                           </Badge>
                           {entry.record_id && tableName === 'page_blocks' && (
                             <span className="text-xs text-muted-foreground">
@@ -176,7 +176,7 @@ export const SettingsHistory = () => {
                             onClick={() => handlePreview(entry)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            Visa
+                            View
                           </Button>
                           <Button
                             variant="outline"
@@ -185,7 +185,7 @@ export const SettingsHistory = () => {
                             disabled={restoreMutation.isPending}
                           >
                             <RotateCcw className="h-4 w-4 mr-1" />
-                            Återställ
+                            Restore
                           </Button>
                         </div>
                       </div>
@@ -203,14 +203,14 @@ export const SettingsHistory = () => {
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>
-              Förhandsgranska data
+              Preview Data
             </DialogTitle>
             <DialogDescription>
               {selectedEntry && (
                 <>
                   {tableLabels[selectedEntry.table_name] || selectedEntry.table_name}
                   {' • '}
-                  {format(new Date(selectedEntry.changed_at), 'PPpp', { locale: sv })}
+                  {format(new Date(selectedEntry.changed_at), 'PPpp', { locale: enUS })}
                 </>
               )}
             </DialogDescription>
@@ -222,7 +222,7 @@ export const SettingsHistory = () => {
           </ScrollArea>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPreview(false)}>
-              Stäng
+              Close
             </Button>
             <Button
               onClick={() => {
@@ -231,7 +231,7 @@ export const SettingsHistory = () => {
               }}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Återställ denna version
+              Restore this version
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -241,18 +241,18 @@ export const SettingsHistory = () => {
       <AlertDialog open={showRestoreConfirm} onOpenChange={setShowRestoreConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Återställ data?</AlertDialogTitle>
+            <AlertDialogTitle>Restore data?</AlertDialogTitle>
             <AlertDialogDescription>
-              Detta kommer att ersätta nuvarande data med den valda versionen från{' '}
-              {selectedEntry && format(new Date(selectedEntry.changed_at), 'PPpp', { locale: sv })}.
+              This will replace current data with the selected version from{' '}
+              {selectedEntry && format(new Date(selectedEntry.changed_at), 'PPpp', { locale: enUS })}.
               <br /><br />
-              <strong>OBS:</strong> Den nuvarande versionen sparas också i historiken så du kan ångra om det behövs.
+              <strong>Note:</strong> The current version will also be saved in history so you can undo if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRestore} disabled={restoreMutation.isPending}>
-              {restoreMutation.isPending ? 'Återställer...' : 'Återställ'}
+              {restoreMutation.isPending ? 'Restoring...' : 'Restore'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

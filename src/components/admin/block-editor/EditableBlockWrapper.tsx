@@ -81,7 +81,7 @@ const EditableBlockWrapper: React.FC<EditableBlockWrapperProps> = ({
             size="sm"
             className="h-7 px-2"
             onClick={onToggleEnabled}
-            title={block.enabled ? 'Dölj block' : 'Visa block'}
+            title={block.enabled ? 'Hide block' : 'Show block'}
           >
             {block.enabled ? (
               <Eye className="h-4 w-4" />
@@ -99,7 +99,7 @@ const EditableBlockWrapper: React.FC<EditableBlockWrapperProps> = ({
             onClick={onSelect}
           >
             <Pencil className="h-4 w-4" />
-            <span className="ml-1 text-xs">Redigera</span>
+            <span className="ml-1 text-xs">Edit</span>
           </Button>
           <Button
             variant="ghost"
