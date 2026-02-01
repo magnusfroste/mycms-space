@@ -1,11 +1,10 @@
 // ============================================
 // AI Module Settings
-// Global AI configuration with integration system
+// Chat behavior and context configuration
 // ============================================
 
-import React, { useState, useMemo } from 'react';
-import { Bot, Webhook, Power, FileText, Newspaper, Check, Eye, Copy, Sparkles, Server, ChevronDown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import { Bot, Power, FileText, Newspaper, Check, Plug } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -13,38 +12,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
-import { useAIChatContext } from '@/hooks/useAIChatContext';
-import type { AIModuleConfig, AIIntegrationType, N8nIntegration, LovableIntegration, integrationsMeta, defaultIntegrations } from '@/types/modules';
+import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
+import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
-
-// Integration icons
-const integrationIcons: Record<AIIntegrationType, React.ReactNode> = {
-  n8n: <Webhook className="h-4 w-4" />,
-  lovable: <Sparkles className="h-4 w-4" />,
-  openai: <Bot className="h-4 w-4" />,
-  gemini: <Sparkles className="h-4 w-4" />,
-  ollama: <Server className="h-4 w-4" />,
-};
-
-// Import integration metadata
-import { integrationsMeta as integrationsMetaData, defaultIntegrations as defaultIntegrationsData } from '@/types/modules';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const AIModuleSettings: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
   const updateModule = useUpdateAIModule();
   const { toast } = useToast();
-  const [showPayloadPreview, setShowPayloadPreview] = useState(false);
+  const [, setSearchParams] = useSearchParams();
   
   // Fetch pages and blog posts for selection
   const { data: pages = [] } = usePages();
   const { data: blogPosts = [] } = useBlogPosts();
-  
-  // Get context data for preview
-  const { contextData, hasContext } = useAIChatContext();
 
   const handleToggle = (enabled: boolean) => {
     updateModule.mutate(
@@ -68,22 +52,11 @@ const AIModuleSettings: React.FC = () => {
   };
 
   const handleIntegrationChange = (integrationType: AIIntegrationType) => {
-    const newIntegration = defaultIntegrationsData[integrationType];
+    const newIntegration = defaultIntegrations[integrationType];
     handleConfigUpdate({
       active_integration: integrationType,
       integration: { ...newIntegration, enabled: true },
-      // Also update legacy fields for backwards compatibility
       provider: integrationType === 'n8n' ? 'n8n' : integrationType === 'lovable' ? 'lovable' : 'custom',
-    });
-  };
-
-  const handleIntegrationFieldUpdate = (field: string, value: string) => {
-    if (!config?.integration) return;
-    const updatedIntegration = { ...config.integration, [field]: value };
-    handleConfigUpdate({
-      integration: updatedIntegration,
-      // Also sync webhook_url for n8n
-      ...(field === 'webhook_url' ? { webhook_url: value } : {}),
     });
   };
 
@@ -120,23 +93,8 @@ const AIModuleSettings: React.FC = () => {
     handleConfigUpdate({ selected_blog_ids: [] });
   };
 
-  // Generate sample payload for preview
-  const samplePayload = useMemo(() => {
-    const payload: Record<string, unknown> = {
-      message: "What services do you offer?",
-      sessionId: "session_1234567890_abc123def",
-    };
-
-    if (hasContext && contextData) {
-      payload.siteContext = contextData;
-    }
-
-    return payload;
-  }, [hasContext, contextData]);
-
-  const copyPayload = () => {
-    navigator.clipboard.writeText(JSON.stringify(samplePayload, null, 2));
-    toast({ title: 'Copied to clipboard' });
+  const goToIntegrations = () => {
+    setSearchParams({ tab: 'integrations' });
   };
 
   if (isLoading) {
@@ -152,17 +110,17 @@ const AIModuleSettings: React.FC = () => {
   const selectedBlogIds = config?.selected_blog_ids || [];
   const publishedPosts = blogPosts.filter((p) => p.status === 'published');
   const activeIntegration = config?.active_integration || 'n8n';
-  const currentIntegration = config?.integration || defaultIntegrationsData.n8n;
-  const availableIntegrations = integrationsMetaData.filter((i) => i.available);
+  const availableIntegrations = integrationsMeta.filter((i) => i.available);
+  const activeIntegrationMeta = integrationsMeta.find((i) => i.type === activeIntegration);
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
         <Bot className="h-8 w-8 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">AI Module</h2>
+          <h2 className="text-2xl font-bold">AI Chat</h2>
           <p className="text-muted-foreground">
-            Configure AI chat integrations and context
+            Configure chat widget behavior and context
           </p>
         </div>
       </div>
@@ -199,11 +157,11 @@ const AIModuleSettings: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {integrationIcons[activeIntegration]}
+            <Plug className="h-5 w-5" />
             Integration
           </CardTitle>
           <CardDescription>
-            Choose how to connect your AI backend
+            Choose which AI backend to use for chat
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -216,68 +174,21 @@ const AIModuleSettings: React.FC = () => {
               <SelectContent className="bg-popover border z-50">
                 {availableIntegrations.map((integration) => (
                   <SelectItem key={integration.type} value={integration.type}>
-                    <div className="flex items-center gap-2">
-                      {integrationIcons[integration.type]}
-                      <div>
-                        <span className="font-medium">{integration.name}</span>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-                {integrationsMetaData.filter((i) => !i.available).map((integration) => (
-                  <SelectItem key={integration.type} value={integration.type} disabled>
-                    <div className="flex items-center gap-2 opacity-50">
-                      {integrationIcons[integration.type]}
-                      <span>{integration.name}</span>
-                      <Badge variant="outline" className="text-xs ml-2">Coming soon</Badge>
-                    </div>
+                    <span className="font-medium">{integration.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
-          {/* Integration-specific fields */}
-          {activeIntegration === 'n8n' && (
-            <div className="space-y-4 pt-2 border-t">
+          
+          {activeIntegrationMeta && (
+            <div className="flex items-center justify-between pt-2 border-t">
               <p className="text-sm text-muted-foreground">
-                Connect to an n8n workflow via webhook. Your n8n agent will receive messages and context.
+                {activeIntegrationMeta.description}
               </p>
-              <div className="space-y-2">
-                <Label htmlFor="webhook_url">Webhook URL</Label>
-                <Input
-                  id="webhook_url"
-                  type="url"
-                  value={(currentIntegration as N8nIntegration).webhook_url || config?.webhook_url || ''}
-                  onChange={(e) => handleIntegrationFieldUpdate('webhook_url', e.target.value)}
-                  placeholder="https://your-n8n.example.com/webhook/ai-chat"
-                />
-              </div>
-            </div>
-          )}
-
-          {activeIntegration === 'lovable' && (
-            <div className="space-y-4 pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
-                Use Lovable's built-in AI gateway. No API key needed - powered by Gemini/GPT models.
-              </p>
-              <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
-                <Select 
-                  value={(currentIntegration as LovableIntegration).model || 'google/gemini-2.5-flash'}
-                  onValueChange={(v) => handleIntegrationFieldUpdate('model', v)}
-                >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border z-50">
-                    <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast)</SelectItem>
-                    <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (Powerful)</SelectItem>
-                    <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
-                    <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Button variant="outline" size="sm" onClick={goToIntegrations}>
+                Configure
+              </Button>
             </div>
           )}
         </CardContent>
@@ -291,7 +202,7 @@ const AIModuleSettings: React.FC = () => {
             Page Context
           </CardTitle>
           <CardDescription>
-            Include content from selected pages in requests
+            Include content from selected pages in AI requests
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -360,7 +271,7 @@ const AIModuleSettings: React.FC = () => {
             Blog Context
           </CardTitle>
           <CardDescription>
-            Include content from selected blog posts in requests
+            Include content from selected blog posts in AI requests
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -425,49 +336,6 @@ const AIModuleSettings: React.FC = () => {
             </div>
           )}
         </CardContent>
-      </Card>
-
-      {/* Payload Preview */}
-      <Card>
-        <CardHeader>
-          <Collapsible open={showPayloadPreview} onOpenChange={setShowPayloadPreview}>
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between cursor-pointer">
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Payload Preview
-                </CardTitle>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showPayloadPreview ? 'rotate-180' : ''}`} />
-              </div>
-            </CollapsibleTrigger>
-            <CardDescription>
-              See what data will be sent to the {activeIntegration === 'n8n' ? 'webhook' : 'AI'}
-            </CardDescription>
-            <CollapsibleContent>
-              <CardContent className="pt-4">
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={copyPayload}
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy
-                  </Button>
-                  <pre className="bg-muted/50 p-4 rounded-lg overflow-x-auto text-xs font-mono max-h-96 overflow-y-auto">
-                    {JSON.stringify(samplePayload, null, 2)}
-                  </pre>
-                </div>
-                {hasContext && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    ✓ Site context includes {contextData?.pages.length || 0} page(s) with {contextData?.pages.reduce((sum, p) => sum + p.blocks.length, 0) || 0} block(s) and {contextData?.blogs.length || 0} blog post(s)
-                  </p>
-                )}
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardHeader>
       </Card>
     </div>
   );

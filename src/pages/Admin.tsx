@@ -6,6 +6,7 @@ import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
 import BlogModuleSettings from '@/components/admin/BlogModuleSettings';
 import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
+import IntegrationsManager from '@/components/admin/IntegrationsManager';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
@@ -122,6 +123,8 @@ const Admin = () => {
         return <MessagesManager />;
       case 'global-blocks':
         return <GlobalBlocksSettings />;
+      case 'integrations':
+        return <IntegrationsManager />;
       case 'ai-module':
         return <AIModuleSettings />;
       case 'projects-module':
