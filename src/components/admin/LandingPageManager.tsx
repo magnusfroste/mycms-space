@@ -77,6 +77,7 @@ import BentoGridBlock from '@/components/blocks/BentoGridBlock';
 import MarqueeBlock from '@/components/blocks/MarqueeBlock';
 import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
 import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
+import BlogBlock from '@/components/blocks/BlogBlock';
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
@@ -100,6 +101,7 @@ const blockTypeLabels: Record<string, string> = {
   'marquee': 'Marquee ✨',
   'stats-counter': 'Stats Counter ✨',
   'testimonial-carousel': 'Testimonials ✨',
+  'blog': 'Blog Posts',
 };
 
 interface VisualBlockItemProps {
@@ -174,6 +176,8 @@ const VisualBlockItem = ({
         return <StatsCounterBlock config={config} />;
       case 'testimonial-carousel':
         return <TestimonialCarouselBlock config={config} />;
+      case 'blog':
+        return <BlogBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
