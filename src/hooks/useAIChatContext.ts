@@ -140,7 +140,16 @@ export const useAIChatContext = () => {
 
   // Compile context data with block content
   const contextData = useMemo((): AIContextData | null => {
+    console.log("[AIContext] Building context:", {
+      includePageContext,
+      includeBlogContext,
+      selectedPages: selectedPages.length,
+      selectedBlogs: selectedBlogs.length,
+      allBlocksCount: allBlocks.length,
+    });
+    
     if (!includePageContext && !includeBlogContext) {
+      console.log("[AIContext] No context enabled, returning null");
       return null;
     }
 
