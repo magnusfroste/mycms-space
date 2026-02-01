@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import AIModuleSettings from '@/components/admin/AIModuleSettings';
 import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
+import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
@@ -115,6 +116,8 @@ const Admin = () => {
         return <NavSettings />;
       case 'messages':
         return <MessagesManager />;
+      case 'global-blocks':
+        return <GlobalBlocksSettings />;
       case 'ai-module':
         return <AIModuleSettings />;
       case 'projects-module':

@@ -3,6 +3,7 @@ import { Menu, X, Home, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavLinks } from "@/hooks/useNavLinks";
+import { useHeaderModule } from "@/models/modules";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +11,7 @@ const Header = () => {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const { data: navLinks = [] } = useNavLinks();
+  const { config: headerConfig, isLoading } = useHeaderModule();
 
   // Toggle mobile menu
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -75,22 +77,47 @@ const Header = () => {
     );
   };
 
+  // Determine header background based on settings
+  const getHeaderBackground = () => {
+    if (headerConfig?.transparent_on_hero && !scrolled && isHomePage) {
+      return "bg-transparent";
+    }
+    return scrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent";
+  };
+
+  // Render logo (image or text)
+  const renderLogo = () => {
+    if (headerConfig?.logo_image_url) {
+      return (
+        <Link to="/">
+          <img 
+            src={headerConfig.logo_image_url} 
+            alt={headerConfig.logo_text || 'Logo'} 
+            className="h-8 w-auto"
+          />
+        </Link>
+      );
+    }
+    
+    return (
+      <Link
+        to="/"
+        className="text-2xl font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent"
+      >
+        {headerConfig?.logo_text || 'froste.eu'}
+      </Link>
+    );
+  };
+
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
-      }`}
+      className={`${headerConfig?.sticky !== false ? 'sticky' : 'relative'} top-0 z-50 transition-all duration-300 ${getHeaderBackground()}`}
     >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div>
-            <Link
-              to="/"
-              className="text-2xl font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent"
-            >
-              froste.eu
-            </Link>
+            {renderLogo()}
           </div>
 
           {/* Desktop Navigation */}
@@ -109,12 +136,12 @@ const Header = () => {
                 Home
               </Link>
             )}
-            <ThemeToggle />
+            {headerConfig?.show_theme_toggle !== false && <ThemeToggle />}
           </nav>
 
           {/* Mobile Menu Button and Theme Toggle */}
           <div className="md:hidden flex items-center gap-2">
-            <ThemeToggle />
+            {headerConfig?.show_theme_toggle !== false && <ThemeToggle />}
             <button className="text-foreground focus:outline-none" onClick={toggleMenu} aria-label="Toggle mobile menu">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>

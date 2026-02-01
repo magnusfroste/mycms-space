@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -44,12 +44,36 @@ export interface AnalyticsModuleConfig {
   track_chat_sessions: boolean;
 }
 
+// Header Module Config
+export interface HeaderModuleConfig {
+  logo_text: string;
+  logo_image_url?: string;
+  show_theme_toggle: boolean;
+  sticky: boolean;
+  transparent_on_hero: boolean;
+}
+
+// Footer Module Config  
+export interface SocialLink {
+  platform: 'github' | 'linkedin' | 'twitter' | 'instagram' | 'youtube' | 'custom';
+  url: string;
+  label?: string;
+}
+
+export interface FooterModuleConfig {
+  copyright_text: string;
+  show_social_links: boolean;
+  social_links: SocialLink[];
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
   | ProjectsModuleConfig
   | NewsletterModuleConfig
-  | AnalyticsModuleConfig;
+  | AnalyticsModuleConfig
+  | HeaderModuleConfig
+  | FooterModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -57,6 +81,8 @@ export interface ModuleTypeConfigMap {
   projects: ProjectsModuleConfig;
   newsletter: NewsletterModuleConfig;
   analytics: AnalyticsModuleConfig;
+  header: HeaderModuleConfig;
+  footer: FooterModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -82,6 +108,22 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
     track_project_views: true,
     track_chat_sessions: true,
   },
+  header: {
+    logo_text: 'froste.eu',
+    logo_image_url: '',
+    show_theme_toggle: true,
+    sticky: true,
+    transparent_on_hero: false,
+  },
+  footer: {
+    copyright_text: '© {year} Magnus Froste. All rights reserved.',
+    show_social_links: true,
+    social_links: [
+      { platform: 'github', url: 'https://github.com/magnusfroste' },
+      { platform: 'linkedin', url: 'https://linkedin.com/in/magnusfroste' },
+      { platform: 'twitter', url: 'https://twitter.com/magnusfroste' },
+    ],
+  },
 };
 
 // Type guard for module config
@@ -91,4 +133,12 @@ export const isAIModuleConfig = (config: ModuleConfigType): config is AIModuleCo
 
 export const isProjectsModuleConfig = (config: ModuleConfigType): config is ProjectsModuleConfig => {
   return 'layout_style' in config;
+};
+
+export const isHeaderModuleConfig = (config: ModuleConfigType): config is HeaderModuleConfig => {
+  return 'logo_text' in config;
+};
+
+export const isFooterModuleConfig = (config: ModuleConfigType): config is FooterModuleConfig => {
+  return 'copyright_text' in config;
 };
