@@ -133,9 +133,17 @@ export const useChatMessages = ({
           sessionId: sessionId,
         };
 
+        // Always include siteContext if it has any data
         if (siteContext && (siteContext.pages?.length || siteContext.blogs?.length)) {
           requestBody.siteContext = siteContext;
         }
+
+        console.log("[Chat] Sending to n8n webhook:", {
+          url: webhookUrl,
+          hasContext: !!requestBody.siteContext,
+          pagesCount: siteContext?.pages?.length || 0,
+          blogsCount: siteContext?.blogs?.length || 0,
+        });
 
         const response = await fetch(webhookUrl, {
           method: "POST",
