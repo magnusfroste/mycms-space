@@ -177,7 +177,7 @@ const VisualBlockItem = ({
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
-            Okänd blocktyp: {block.block_type}
+            Unknown block type: {block.block_type}
           </div>
         );
     }
@@ -370,8 +370,8 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
       
       // Show toast with undo action
       toast({
-        title: 'Block borttaget',
-        description: `"${blockToDelete.block_type}" har tagits bort`,
+        title: 'Block deleted',
+        description: `"${blockToDelete.block_type}" has been removed`,
         action: (
           <Button
             variant="outline"
@@ -386,18 +386,18 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                   enabled: deletedBlockData.enabled ?? true,
                 });
                 queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-                toast({ title: 'Block återställt!' });
+                toast({ title: 'Block restored!' });
               } catch {
-                toast({ title: 'Kunde inte återställa block', variant: 'destructive' });
+                toast({ title: 'Could not restore block', variant: 'destructive' });
               }
             }}
           >
-            Ångra
+            Undo
           </Button>
         ),
       });
     } catch {
-      toast({ title: 'Kunde inte ta bort block', variant: 'destructive' });
+      toast({ title: 'Could not delete block', variant: 'destructive' });
     }
     setDeleteBlockId(null);
   };
@@ -460,9 +460,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         order_index: maxOrder + 1,
         enabled: true,
       });
-      toast({ title: 'AI skapade ett block', description: `${blockType} har lagts till` });
+      toast({ title: 'AI created a block', description: `${blockType} has been added` });
     } catch {
-      toast({ title: 'Kunde inte skapa block', variant: 'destructive' });
+      toast({ title: 'Could not create block', variant: 'destructive' });
     }
   };
 
@@ -482,9 +482,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         enabled: true,
       });
       setIsLibraryOpen(false); // Close panel after adding
-      toast({ title: 'Block tillagt', description: `${blockTypeLabels[blockType] || blockType} har lagts till` });
+      toast({ title: 'Block added', description: `${blockTypeLabels[blockType] || blockType} has been added` });
     } catch {
-      toast({ title: 'Kunde inte lägga till block', variant: 'destructive' });
+      toast({ title: 'Could not add block', variant: 'destructive' });
     }
   };
 
@@ -542,9 +542,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                           <Sparkles className="h-8 w-8 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">Inga block ännu</p>
+                          <p className="font-medium">No blocks yet</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Använd chatten eller klicka på knappen nedan för att lägga till block
+                            Use the chat or click the button below to add blocks
                           </p>
                         </div>
                       </div>
@@ -577,7 +577,7 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
                   onClick={() => setIsLibraryOpen(!isLibraryOpen)}
                 >
                   <Plus className="h-5 w-5" />
-                  <span>Lägg till block</span>
+                  <span>Add Block</span>
                 </Button>
               </div>
             </div>

@@ -30,12 +30,12 @@ interface PageBuilderChatProps {
 }
 
 const suggestedPrompts = [
-  "Skapa en modern SaaS-landningssida",
-  "Jag behöver en portfolio för en fotograf",
-  "Bygg en landningssida för en restaurang",
-  "Hjälp mig med en konsultportfölj",
-  "Skapa ett hero-block med video",
-  "Hämta info från https://flowwink.com och skapa ett projekt",
+  "Create a modern SaaS landing page",
+  "I need a portfolio for a photographer",
+  "Build a landing page for a restaurant",
+  "Help me with a consulting portfolio",
+  "Create a hero block with video",
+  "Fetch info from https://flowwink.com and create a project",
 ];
 
 const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
@@ -107,8 +107,8 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
     } else if (pendingAction.type === 'project' && pendingAction.project) {
       // Projects are now created via block_config - just show a message
       toast({
-        title: 'Projekt hanteras via block-editorn',
-        description: 'Redigera Project Showcase-blocket för att lägga till projekt.',
+        title: 'Projects are managed via block editor',
+        description: 'Edit the Project Showcase block to add projects.',
       });
       setPendingAction(null);
     }
@@ -132,11 +132,11 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             <Sparkles className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h3 className="font-medium text-sm">AI Sidbyggare</h3>
-            <p className="text-xs text-muted-foreground">Beskriv din vision</p>
+            <h3 className="font-medium text-sm">AI Page Builder</h3>
+            <p className="text-xs text-muted-foreground">Describe your vision</p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearMessages} title="Rensa chat">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearMessages} title="Clear chat">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -147,11 +147,11 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             <div className="space-y-6 py-4">
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Berätta vad du vill bygga så hjälper jag dig skapa blocken!
+                  Tell me what you want to build and I'll help you create the blocks!
                 </p>
               </div>
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium px-1">Förslag:</p>
+                <p className="text-xs text-muted-foreground font-medium px-1">Suggestions:</p>
                 <div className="flex flex-wrap gap-2">
                   {suggestedPrompts.map((prompt, i) => (
                     <button
@@ -214,16 +214,16 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             <div className="flex items-center gap-2">
               <Plus className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">
-                Skapa {pendingAction.block_type} block?
+                Create {pendingAction.block_type} block?
               </span>
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleConfirmBlock} className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                Skapa
+                Create
               </Button>
               <Button size="sm" variant="outline" onClick={handleRejectBlock}>
-                Avbryt
+                Cancel
               </Button>
             </div>
           </div>
@@ -235,7 +235,7 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             <div className="flex items-center gap-2">
               <FolderPlus className="h-4 w-4 text-green-600" />
               <span className="text-sm font-medium">
-                Lägg till nytt projekt?
+                Add new project?
               </span>
             </div>
             <div className="space-y-1 text-sm">
@@ -257,10 +257,10 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
                 className="gap-1 bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle2 className="h-3 w-3" />
-                Lägg till
+                Add
               </Button>
               <Button size="sm" variant="outline" onClick={handleRejectBlock}>
-                Avbryt
+                Cancel
               </Button>
             </div>
           </div>
@@ -280,7 +280,7 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Beskriv vad du vill bygga..."
+              placeholder="Describe what you want to build..."
               disabled={isLoading}
               className="flex-1"
             />
