@@ -73,12 +73,13 @@ export type AIIntegration =
 
 // Integration metadata for UI
 export interface IntegrationMeta {
-  type: AIIntegrationType;
+  type: AIIntegrationType | UtilityIntegrationType;
   name: string;
   description: string;
   icon: string;
   available: boolean; // Is this integration implemented?
   docs?: string; // Link to documentation
+  category: 'ai' | 'utility';
 }
 
 export const integrationsMeta: IntegrationMeta[] = [
@@ -89,6 +90,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     icon: 'Webhook',
     available: true,
     docs: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/',
+    category: 'ai',
   },
   {
     type: 'lovable',
@@ -96,6 +98,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     description: 'Built-in AI using Lovable gateway (no API key needed)',
     icon: 'Sparkles',
     available: true,
+    category: 'ai',
   },
   {
     type: 'openai',
@@ -104,6 +107,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     icon: 'Bot',
     available: true,
     docs: 'https://platform.openai.com/docs',
+    category: 'ai',
   },
   {
     type: 'gemini',
@@ -112,6 +116,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     icon: 'Sparkles',
     available: true,
     docs: 'https://ai.google.dev/docs',
+    category: 'ai',
   },
   {
     type: 'ollama',
@@ -119,8 +124,43 @@ export const integrationsMeta: IntegrationMeta[] = [
     description: 'Connect to a self-hosted Ollama instance',
     icon: 'Server',
     available: false,
+    category: 'ai',
+  },
+  {
+    type: 'firecrawl',
+    name: 'Firecrawl',
+    description: 'Web scraping and content extraction API',
+    icon: 'Globe',
+    available: true,
+    docs: 'https://docs.firecrawl.dev',
+    category: 'utility',
   },
 ];
+
+// ============================================
+// Utility Integration Types
+// ============================================
+
+export type UtilityIntegrationType = 'firecrawl';
+
+export interface UtilityIntegrationBase {
+  type: UtilityIntegrationType;
+  enabled: boolean;
+}
+
+export interface FirecrawlIntegration extends UtilityIntegrationBase {
+  type: 'firecrawl';
+  // API key is stored in Supabase secrets
+}
+
+export type UtilityIntegration = FirecrawlIntegration;
+
+export const defaultUtilityIntegrations: Record<UtilityIntegrationType, UtilityIntegration> = {
+  firecrawl: {
+    type: 'firecrawl',
+    enabled: true, // Already connected via connector
+  },
+};
 
 // Default integration configs
 export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {

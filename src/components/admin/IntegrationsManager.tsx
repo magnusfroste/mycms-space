@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -14,38 +14,44 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
-import type { AIIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig } from '@/types/modules';
+import type { AIIntegrationType, UtilityIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 
+// Combined integration type
+type IntegrationType = AIIntegrationType | UtilityIntegrationType;
+
 // Secret names for each integration
-const integrationSecrets: Partial<Record<AIIntegrationType, string>> = {
+const integrationSecrets: Partial<Record<IntegrationType, string>> = {
   openai: 'OPENAI_API_KEY',
   gemini: 'GEMINI_API_KEY',
+  firecrawl: 'FIRECRAWL_API_KEY',
 };
 import { useToast } from '@/hooks/use-toast';
 
 // Integration icons
-const integrationIcons: Record<AIIntegrationType, React.ReactNode> = {
+const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   n8n: <Webhook className="h-5 w-5" />,
   lovable: <Sparkles className="h-5 w-5" />,
   openai: <Bot className="h-5 w-5" />,
   gemini: <Sparkles className="h-5 w-5" />,
   ollama: <Server className="h-5 w-5" />,
+  firecrawl: <Globe className="h-5 w-5" />,
 };
 
-const integrationColors: Record<AIIntegrationType, string> = {
+const integrationColors: Record<IntegrationType, string> = {
   n8n: 'text-orange-500',
   lovable: 'text-pink-500',
   openai: 'text-green-500',
   gemini: 'text-blue-500',
   ollama: 'text-purple-500',
+  firecrawl: 'text-amber-500',
 };
 
 const IntegrationsManager: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
   const updateModule = useUpdateAIModule();
   const { toast } = useToast();
-  const [expandedIntegration, setExpandedIntegration] = useState<AIIntegrationType | null>(null);
+  const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
   const [showPayloadPreview, setShowPayloadPreview] = useState(false);
   
   // Get context data for preview
@@ -122,7 +128,7 @@ const IntegrationsManager: React.FC = () => {
 
   // Check if an integration is properly configured
   // Note: For OpenAI/Gemini we show "Requires secret" since we can't check Supabase secrets from client
-  const isIntegrationConfigured = (type: AIIntegrationType): boolean | 'requires_secret' => {
+  const isIntegrationConfigured = (type: IntegrationType): boolean | 'requires_secret' | 'connected' => {
     switch (type) {
       case 'n8n': {
         const webhookUrl = config?.integration?.type === 'n8n' 
@@ -137,6 +143,9 @@ const IntegrationsManager: React.FC = () => {
       case 'gemini':
         // These require Supabase secrets - we can't verify from client
         return 'requires_secret';
+      case 'firecrawl':
+        // Firecrawl is connected via connector
+        return 'connected';
       case 'ollama': {
         // Check for base_url
         if (config?.integration?.type === 'ollama') {
@@ -147,6 +156,11 @@ const IntegrationsManager: React.FC = () => {
       default:
         return false;
     }
+  };
+
+  // Check if this is an AI integration (can be activated for chat)
+  const isAIIntegration = (type: IntegrationType): type is AIIntegrationType => {
+    return ['n8n', 'lovable', 'openai', 'gemini', 'ollama'].includes(type);
   };
 
   return (
@@ -161,137 +175,85 @@ const IntegrationsManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Integration Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {integrationsMeta.map((integration) => {
-          const isActive = activeIntegration === integration.type;
-          const isExpanded = expandedIntegration === integration.type;
-          const isAvailable = integration.available;
-          const isConfigured = isIntegrationConfigured(integration.type);
-          
-          return (
-            <Card 
-              key={integration.type}
-              className={`relative transition-all ${isActive ? 'ring-2 ring-primary' : ''} ${!isAvailable ? 'opacity-60' : ''}`}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-muted ${integrationColors[integration.type]}`}>
-                      {integrationIcons[integration.type]}
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {integration.name}
-                        {isActive && (
-                          <Badge variant="default" className="text-xs">
-                            <Check className="h-3 w-3 mr-1" />
-                            Active
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        {integration.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Connection status indicator */}
-                {isAvailable && (
-                  <div className="mt-3">
-                    {isConfigured === true ? (
-                      <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
-                        <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
-                        Connected
-                      </Badge>
-                    ) : isConfigured === 'requires_secret' ? (
-                      <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
-                        <Key className="h-3 w-3 mr-1" />
-                        Requires secret
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Not configured
-                      </Badge>
-                    )}
-                  </div>
+      {/* AI Integrations Section */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-muted-foreground">AI Providers</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {integrationsMeta.filter(i => i.category === 'ai').map((integration) => {
+            const isActive = activeIntegration === integration.type;
+            const isExpanded = expandedIntegration === integration.type;
+            const isAvailable = integration.available;
+            const isConfigured = isIntegrationConfigured(integration.type);
+            
+            return (
+              <IntegrationCard
+                key={integration.type}
+                integration={integration}
+                isActive={isActive}
+                isExpanded={isExpanded}
+                isAvailable={isAvailable}
+                isConfigured={isConfigured}
+                onActivate={() => isAIIntegration(integration.type) && activateIntegration(integration.type)}
+                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
+                showActivate={isAIIntegration(integration.type)}
+              >
+                {integration.type === 'n8n' && (
+                  <N8nConfig
+                    config={currentIntegrationConfig as N8nIntegration}
+                    legacyWebhookUrl={config?.webhook_url}
+                    onUpdate={(field, value) => handleIntegrationFieldUpdate('n8n', field, value)}
+                  />
                 )}
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {!isAvailable ? (
-                  <Badge variant="outline" className="text-xs">Coming soon</Badge>
-                ) : (
-                  <>
-                    {/* Quick actions */}
-                    <div className="flex gap-2">
-                      {!isActive && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => activateIntegration(integration.type)}
-                        >
-                          Activate
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                      >
-                        <Settings className="h-3 w-3 mr-1" />
-                        Configure
-                        <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </Button>
-                      {integration.docs && (
-                        <Button size="sm" variant="ghost" asChild>
-                          <a href={integration.docs} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </Button>
-                      )}
-                    </div>
+                {integration.type === 'lovable' && (
+                  <LovableConfig
+                    config={currentIntegrationConfig as LovableIntegration}
+                    onUpdate={(field, value) => handleIntegrationFieldUpdate('lovable', field, value)}
+                  />
+                )}
+                {integration.type === 'openai' && (
+                  <OpenAIConfig
+                    config={currentIntegrationConfig as OpenAIIntegration}
+                    onUpdate={(field, value) => handleIntegrationFieldUpdate('openai', field, value)}
+                  />
+                )}
+                {integration.type === 'gemini' && (
+                  <GeminiConfig
+                    config={currentIntegrationConfig as GeminiIntegration}
+                    onUpdate={(field, value) => handleIntegrationFieldUpdate('gemini', field, value)}
+                  />
+                )}
+              </IntegrationCard>
+            );
+          })}
+        </div>
+      </div>
 
-                    {/* Expanded Configuration */}
-                    {isExpanded && (
-                      <div className="pt-4 border-t space-y-4">
-                        {integration.type === 'n8n' && (
-                          <N8nConfig
-                            config={currentIntegrationConfig as N8nIntegration}
-                            legacyWebhookUrl={config?.webhook_url}
-                            onUpdate={(field, value) => handleIntegrationFieldUpdate('n8n', field, value)}
-                          />
-                        )}
-                        
-                        {integration.type === 'lovable' && (
-                          <LovableConfig
-                            config={currentIntegrationConfig as LovableIntegration}
-                            onUpdate={(field, value) => handleIntegrationFieldUpdate('lovable', field, value)}
-                          />
-                        )}
-                        
-                        {integration.type === 'openai' && (
-                          <OpenAIConfig
-                            config={currentIntegrationConfig as OpenAIIntegration}
-                            onUpdate={(field, value) => handleIntegrationFieldUpdate('openai', field, value)}
-                          />
-                        )}
-                        
-                        {integration.type === 'gemini' && (
-                          <GeminiConfig
-                            config={currentIntegrationConfig as GeminiIntegration}
-                            onUpdate={(field, value) => handleIntegrationFieldUpdate('gemini', field, value)}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* Utility Integrations Section */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-muted-foreground">Utilities</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {integrationsMeta.filter(i => i.category === 'utility').map((integration) => {
+            const isExpanded = expandedIntegration === integration.type;
+            const isAvailable = integration.available;
+            const isConfigured = isIntegrationConfigured(integration.type);
+            
+            return (
+              <IntegrationCard
+                key={integration.type}
+                integration={integration}
+                isActive={false}
+                isExpanded={isExpanded}
+                isAvailable={isAvailable}
+                isConfigured={isConfigured}
+                onActivate={() => {}}
+                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
+                showActivate={false}
+              >
+                {integration.type === 'firecrawl' && <FirecrawlConfig />}
+              </IntegrationCard>
+            );
+          })}
+        </div>
       </div>
 
       {/* Payload Preview - useful for n8n users */}
@@ -341,8 +303,149 @@ const IntegrationsManager: React.FC = () => {
 };
 
 // ============================================
-// n8n Configuration Component
+// Integration Card Component (Reusable)
 // ============================================
+interface IntegrationCardProps {
+  integration: IntegrationMeta;
+  isActive: boolean;
+  isExpanded: boolean;
+  isAvailable: boolean;
+  isConfigured: boolean | 'requires_secret' | 'connected';
+  onActivate: () => void;
+  onToggleExpand: () => void;
+  showActivate: boolean;
+  children?: React.ReactNode;
+}
+
+const IntegrationCard: React.FC<IntegrationCardProps> = ({
+  integration,
+  isActive,
+  isExpanded,
+  isAvailable,
+  isConfigured,
+  onActivate,
+  onToggleExpand,
+  showActivate,
+  children,
+}) => {
+  return (
+    <Card className={`relative transition-all ${isActive ? 'ring-2 ring-primary' : ''} ${!isAvailable ? 'opacity-60' : ''}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg bg-muted ${integrationColors[integration.type]}`}>
+              {integrationIcons[integration.type]}
+            </div>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                {integration.name}
+                {isActive && (
+                  <Badge variant="default" className="text-xs">
+                    <Check className="h-3 w-3 mr-1" />
+                    Active
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                {integration.description}
+              </CardDescription>
+            </div>
+          </div>
+        </div>
+        
+        {/* Connection status indicator */}
+        {isAvailable && (
+          <div className="mt-3">
+            {isConfigured === true || isConfigured === 'connected' ? (
+              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
+                Connected
+              </Badge>
+            ) : isConfigured === 'requires_secret' ? (
+              <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
+                <Key className="h-3 w-3 mr-1" />
+                Requires secret
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Not configured
+              </Badge>
+            )}
+          </div>
+        )}
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {!isAvailable ? (
+          <Badge variant="outline" className="text-xs">Coming soon</Badge>
+        ) : (
+          <>
+            {/* Quick actions */}
+            <div className="flex gap-2">
+              {showActivate && !isActive && (
+                <Button size="sm" onClick={onActivate}>
+                  Activate
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={onToggleExpand}>
+                <Settings className="h-3 w-3 mr-1" />
+                Configure
+                <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              </Button>
+              {integration.docs && (
+                <Button size="sm" variant="ghost" asChild>
+                  <a href={integration.docs} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+              )}
+            </div>
+
+            {/* Expanded Configuration */}
+            {isExpanded && (
+              <div className="pt-4 border-t space-y-4">
+                {children}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// ============================================
+// Firecrawl Configuration Component
+// ============================================
+const FirecrawlConfig: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+        <div className="flex items-start gap-2">
+          <Check className="h-4 w-4 text-green-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-green-900 dark:text-green-100">Connected via Connector</p>
+            <p className="text-green-700 dark:text-green-300 mt-1">
+              Firecrawl is connected via Lovable connector. The API key <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">FIRECRAWL_API_KEY</code> is automatically available in edge functions.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Available features:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>Scrape</strong> - Extract content from any URL</li>
+          <li><strong>Search</strong> - Web search with content extraction</li>
+          <li><strong>Map</strong> - Discover all URLs on a website</li>
+          <li><strong>Crawl</strong> - Recursively scrape entire sites</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+
 interface N8nConfigProps {
   config: N8nIntegration;
   legacyWebhookUrl?: string;
