@@ -83,7 +83,7 @@ export const restoreHistoryEntry = async (
   const { id, created_at, updated_at, ...restoreData } = old_data as Record<string, unknown>;
 
   const { error } = await supabase
-    .from(table_name as 'about_me_settings' | 'hero_settings' | 'portfolio_settings' | 'modules' | 'page_blocks' | 'projects')
+    .from(table_name as 'modules' | 'page_blocks' | 'nav_links')
     .update(restoreData)
     .eq('id', record_id);
 

@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Check, X, Plus } from 'lucide-react';
 import AITextEnhance from './AITextEnhance';
-import ProjectCategorySelect from './ProjectCategorySelect';
 import ProjectImageGallery from './ProjectImageGallery';
+import ProjectCategorySelectInline from './ProjectCategorySelectInline';
 import type { ProjectImage } from '@/types';
 
 interface ProjectFormData {
@@ -35,6 +35,10 @@ interface ProjectFormProps {
   onDeleteImage?: (image: ProjectImage) => void;
   onUploadImage?: () => void;
   isUploading?: boolean;
+  // For inline category selection (new JSONB mode)
+  categories?: Array<{ id: string; name: string; slug: string }>;
+  selectedCategories?: string[];
+  onCategoryChange?: (slugs: string[]) => void;
 }
 
 const ProjectForm: React.FC<ProjectFormProps> = ({
@@ -49,6 +53,9 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   onDeleteImage,
   onUploadImage,
   isUploading,
+  categories,
+  selectedCategories,
+  onCategoryChange,
 }) => {
   return (
     <Card className={`p-4 ${isCreate ? 'border-primary/50 bg-primary/5' : ''}`}>
@@ -140,8 +147,14 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           />
         </div>
 
-        {/* Category Selection - only for edit mode */}
-        {!isCreate && projectId && <ProjectCategorySelect projectId={projectId} />}
+        {/* Category Selection - uses inline categories from block_config */}
+        {categories && categories.length > 0 && onCategoryChange && (
+          <ProjectCategorySelectInline
+            allCategories={categories.map((c, i) => ({ ...c, order_index: i, enabled: true }))}
+            selectedSlugs={selectedCategories || []}
+            onSelectionChange={onCategoryChange}
+          />
+        )}
 
         <div className="flex gap-2 pt-2">
           <Button onClick={onSave} size="sm" disabled={isSaving}>

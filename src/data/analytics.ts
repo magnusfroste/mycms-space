@@ -28,18 +28,12 @@ export const trackPageView = async (pageSlug: string): Promise<void> => {
   });
 };
 
-// Track project view
+// Track project view (table removed - no-op)
 export const trackProjectView = async (
-  projectId: string,
-  action: 'view' | 'demo_click' = 'view'
+  _projectId: string,
+  _action: 'view' | 'demo_click' = 'view'
 ): Promise<void> => {
-  const visitorId = getVisitorId();
-  
-  await supabase.from('project_views').insert({
-    project_id: projectId,
-    visitor_id: visitorId,
-    action,
-  });
+  // Project views table has been removed - tracking disabled
 };
 
 // Track chat session
@@ -87,13 +81,8 @@ export const fetchAnalyticsSummary = async (days: number = 30) => {
 
   if (pvError) throw pvError;
 
-  // Fetch project views with project titles
-  const { data: projectViews, error: prError } = await supabase
-    .from('project_views')
-    .select('*, projects(title)')
-    .gte('created_at', startDateStr);
-
-  if (prError) throw prError;
+  // Project views removed - use empty array
+  const projectViews: Array<{ project_id: string; projects?: { title: string } }> = [];
 
   // Fetch chat analytics
   const { data: chatData, error: chatError } = await supabase

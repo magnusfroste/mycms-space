@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePageBuilderChat } from '@/hooks/usePageBuilderChat';
-import { useCreateProject } from '@/models/projects';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import type { PageBlock } from '@/types';
@@ -59,7 +58,6 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
     message?: string;
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const createProject = useCreateProject();
   const { toast } = useToast();
 
   const { messages, isLoading, error, sendMessage, clearMessages } = usePageBuilderChat({
@@ -107,24 +105,12 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
       onCreateBlock(pendingAction.block_type, pendingAction.config);
       setPendingAction(null);
     } else if (pendingAction.type === 'project' && pendingAction.project) {
-      try {
-        await createProject.mutateAsync({
-          title: pendingAction.project.title,
-          description: pendingAction.project.description,
-          problem_statement: pendingAction.project.problem_statement,
-          why_built: pendingAction.project.why_built,
-          demo_link: pendingAction.project.demo_link || '#',
-          order_index: 999, // Will be sorted by the hook
-          enabled: true,
-        });
-        toast({
-          title: 'Projekt skapat!',
-          description: `"${pendingAction.project.title}" har lagts till i din portfolio.`,
-        });
-        setPendingAction(null);
-      } catch (err) {
-        console.error('Failed to create project:', err);
-      }
+      // Projects are now created via block_config - just show a message
+      toast({
+        title: 'Projekt hanteras via block-editorn',
+        description: 'Redigera Project Showcase-blocket för att lägga till projekt.',
+      });
+      setPendingAction(null);
     }
   };
 
@@ -269,10 +255,9 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
                 size="sm" 
                 onClick={handleConfirmBlock} 
                 className="gap-1 bg-green-600 hover:bg-green-700"
-                disabled={createProject.isPending}
               >
                 <CheckCircle2 className="h-3 w-3" />
-                {createProject.isPending ? 'Skapar...' : 'Lägg till'}
+                Lägg till
               </Button>
               <Button size="sm" variant="outline" onClick={handleRejectBlock}>
                 Avbryt

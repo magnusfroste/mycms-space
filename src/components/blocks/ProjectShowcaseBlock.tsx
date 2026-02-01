@@ -13,7 +13,7 @@ import ProjectModal from '@/components/ProjectModal';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useProjectsModule } from '@/models/modules';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
-import type { DisplayProject } from '@/hooks/useProjectsWithFallback';
+import type { DisplayProject } from '@/types/displayProject';
 
 interface ProjectShowcaseBlockProps {
   config: Record<string, unknown>;
