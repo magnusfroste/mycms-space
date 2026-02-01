@@ -196,6 +196,14 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
     }
   };
 
+  // Category change handler
+  const handleCategoryChange = (projectId: string, slugs: string[]) => {
+    const updatedProjects = projects.map((p) =>
+      p.id === projectId ? { ...p, categories: slugs } : p
+    );
+    updateProjects(updatedProjects);
+  };
+
   const handleDeleteImage = (projectId: string, image: ProjectImage) => {
     if (confirm('Delete this image?')) {
       const updatedProjects = projects.map((p) => {
@@ -396,9 +404,12 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
                 <SortableProjectItem
                   key={project.id}
                   project={projectToLegacyFormat(project)}
+                  allCategories={config.categories || []}
+                  selectedCategorySlugs={project.categories}
                   onEdit={() => startEditing(project)}
                   onToggle={handleToggle}
                   onDelete={handleDelete}
+                  onCategoryChange={handleCategoryChange}
                 />
               )
             )}

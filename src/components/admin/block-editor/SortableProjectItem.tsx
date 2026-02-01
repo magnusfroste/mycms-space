@@ -17,20 +17,34 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import type { Project } from '@/types';
-import ProjectCategorySelect from './ProjectCategorySelect';
+import ProjectCategorySelectInline from './ProjectCategorySelectInline';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  order_index: number;
+  enabled: boolean;
+}
 
 interface SortableProjectItemProps {
   project: Project;
+  allCategories?: Category[];
+  selectedCategorySlugs?: string[];
   onEdit: (project: Project) => void;
   onToggle: (id: string, enabled: boolean) => void;
   onDelete: (id: string) => void;
+  onCategoryChange?: (projectId: string, slugs: string[]) => void;
 }
 
 const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
   project,
+  allCategories = [],
+  selectedCategorySlugs = [],
   onEdit,
   onToggle,
   onDelete,
+  onCategoryChange,
 }) => {
   const {
     attributes,
@@ -100,7 +114,14 @@ const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                 {project.images.length} image{project.images.length !== 1 ? 's' : ''}
               </span>
             )}
-            <ProjectCategorySelect projectId={project.id} compact />
+            {allCategories.length > 0 && onCategoryChange && (
+              <ProjectCategorySelectInline
+                allCategories={allCategories}
+                selectedSlugs={selectedCategorySlugs}
+                onSelectionChange={(slugs) => onCategoryChange(project.id, slugs)}
+                compact
+              />
+            )}
           </div>
         </div>
 
