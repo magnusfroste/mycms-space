@@ -1,6 +1,10 @@
 // ============================================
 // Block Renderer
 // Routes each block_type to its corresponding component
+// Supports: hero, chat-widget, text-section, about-split, featured-carousel,
+// expertise-grid, project-showcase, image-text, cta-banner, spacer, video-hero,
+// parallax-section, bento-grid, marquee, stats-counter, testimonial-carousel,
+// contact-form, blog
 // ============================================
 
 import React from 'react';
