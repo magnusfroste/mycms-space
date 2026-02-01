@@ -27,19 +27,19 @@ interface AITextEnhanceProps {
 
 const actionConfig: Record<EnhanceAction, { label: string; icon: React.ReactNode; description: string }> = {
   correct: {
-    label: 'Rätta',
+    label: 'Correct',
     icon: <Check className="h-4 w-4" />,
-    description: 'Rätta stavfel och grammatik',
+    description: 'Fix spelling and grammar',
   },
   enhance: {
-    label: 'Förbättra',
+    label: 'Enhance',
     icon: <Wand2 className="h-4 w-4" />,
-    description: 'Gör texten mer professionell',
+    description: 'Make text more professional',
   },
   expand: {
-    label: 'Expandera',
+    label: 'Expand',
     icon: <Expand className="h-4 w-4" />,
-    description: 'Lägg till mer detaljer',
+    description: 'Add more details',
   },
 };
 
@@ -55,7 +55,7 @@ const AITextEnhance: React.FC<AITextEnhanceProps> = ({
 
   const handleEnhance = async (action: EnhanceAction) => {
     if (!text.trim()) {
-      toast({ title: 'Ingen text att bearbeta', variant: 'destructive' });
+      toast({ title: 'No text to process', variant: 'destructive' });
       return;
     }
 
@@ -94,15 +94,15 @@ const AITextEnhance: React.FC<AITextEnhanceProps> = ({
       if (data?.text) {
         onTextChange(data.text);
         toast({
-          title: actionConfig[action].label + ' klar',
-          description: 'Texten har uppdaterats.',
+          title: actionConfig[action].label + ' complete',
+          description: 'Text has been updated.',
         });
       }
     } catch (err) {
       console.error('AI enhance error:', err);
       toast({
-        title: 'Kunde inte bearbeta texten',
-        description: 'Försök igen senare.',
+        title: 'Could not process text',
+        description: 'Please try again later.',
         variant: 'destructive',
       });
     } finally {

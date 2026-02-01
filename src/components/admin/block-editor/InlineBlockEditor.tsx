@@ -945,11 +945,11 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     <Card className="border-2 border-primary/50 bg-card/95">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 bg-primary/5">
         <CardTitle className="text-base font-medium">
-          Redigerar: {blockTypeLabels[block.block_type] || block.block_type}
+          Editing: {blockTypeLabels[block.block_type] || block.block_type}
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onDone} className="h-8">
           <Check className="h-4 w-4 mr-1" />
-          Klar
+          Done
         </Button>
       </CardHeader>
       <CardContent className="p-4">

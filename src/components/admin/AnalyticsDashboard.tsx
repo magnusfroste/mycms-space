@@ -45,7 +45,7 @@ export const AnalyticsDashboard = () => {
   if (error) {
     return (
       <div className="p-6">
-        <p className="text-destructive">Kunde inte ladda analytics: {error.message}</p>
+        <p className="text-destructive">Could not load analytics: {error.message}</p>
       </div>
     );
   }
@@ -55,16 +55,16 @@ export const AnalyticsDashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
-          <p className="text-muted-foreground">Översikt av besöksstatistik och engagement</p>
+          <p className="text-muted-foreground">Overview of visitor statistics and engagement</p>
         </div>
         <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Välj period" />
+            <SelectValue placeholder="Select period" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7">Senaste 7 dagarna</SelectItem>
-            <SelectItem value="30">Senaste 30 dagarna</SelectItem>
-            <SelectItem value="90">Senaste 90 dagarna</SelectItem>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -81,26 +81,26 @@ export const AnalyticsDashboard = () => {
         ) : (
           <>
             <StatCard
-              title="Totalt sidbesök"
+              title="Total Page Views"
               value={data?.totalPageViews || 0}
               icon={<Eye className="h-5 w-5" />}
-              description={`${data?.uniqueVisitors || 0} unika besökare`}
+              description={`${data?.uniqueVisitors || 0} unique visitors`}
             />
             <StatCard
-              title="Unika besökare"
+              title="Unique Visitors"
               value={data?.uniqueVisitors || 0}
               icon={<Users className="h-5 w-5" />}
             />
             <StatCard
-              title="Projektvisningar"
+              title="Project Views"
               value={data?.totalProjectViews || 0}
               icon={<FolderOpen className="h-5 w-5" />}
             />
             <StatCard
-              title="Chat-sessioner"
+              title="Chat Sessions"
               value={data?.totalChatSessions || 0}
               icon={<MessageSquare className="h-5 w-5" />}
-              description={`${data?.totalChatMessages || 0} meddelanden totalt`}
+              description={`${data?.totalChatMessages || 0} messages total`}
             />
           </>
         )}
@@ -151,7 +151,7 @@ export const AnalyticsDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="h-5 w-5" />
-              Populära projekt
+              Popular Projects
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -174,7 +174,7 @@ export const AnalyticsDashboard = () => {
                       </span>
                       <span className="font-medium truncate max-w-[200px]">{project.title}</span>
                     </div>
-                    <span className="text-muted-foreground">{project.count} visningar</span>
+                    <span className="text-muted-foreground">{project.count} views</span>
                   </div>
                 ))}
               </div>

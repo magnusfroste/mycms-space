@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Mail, MailOpen, Trash2, Clock, User, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { sv } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import type { ContactMessage } from '@/data/contactMessages';
 
 const MessagesManager: React.FC = () => {
@@ -82,14 +82,14 @@ const MessagesManager: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Meddelanden</h2>
+          <h2 className="text-2xl font-bold">Messages</h2>
           <p className="text-muted-foreground">
-            Hantera kontaktförfrågningar från besökare
+            Manage contact requests from visitors
           </p>
         </div>
         {unreadCount > 0 && (
           <Badge variant="default" className="text-sm">
-            {unreadCount} oläst{unreadCount !== 1 ? 'a' : ''}
+            {unreadCount} unread
           </Badge>
         )}
       </div>
@@ -99,7 +99,7 @@ const MessagesManager: React.FC = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Mail className="w-12 h-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              Inga meddelanden än. När någon skickar ett kontaktformulär visas det här.
+              No messages yet. When someone sends a contact form, it will appear here.
             </p>
           </CardContent>
         </Card>
@@ -132,7 +132,7 @@ const MessagesManager: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4" />
-                    {format(new Date(message.created_at), 'd MMM yyyy, HH:mm', { locale: sv })}
+                    {format(new Date(message.created_at), 'd MMM yyyy, HH:mm', { locale: enUS })}
                   </div>
                 </div>
               </CardHeader>
@@ -166,35 +166,35 @@ const MessagesManager: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  {format(new Date(selectedMessage.created_at), "d MMMM yyyy 'kl.' HH:mm", { locale: sv })}
+                  {format(new Date(selectedMessage.created_at), "d MMMM yyyy 'at' HH:mm", { locale: enUS })}
                 </div>
                 
                 {selectedMessage.subject && (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Ämne</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Subject</p>
                     <p className="font-medium">{selectedMessage.subject}</p>
                   </div>
                 )}
                 
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Meddelande</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Message</p>
                   <p className="whitespace-pre-wrap">{selectedMessage.message}</p>
                 </div>
 
                 <div className="flex justify-between pt-4 border-t">
                   <Button
                     variant="outline"
-                    onClick={() => window.open(`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject || 'Ditt meddelande'}`)}
+                    onClick={() => window.open(`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject || 'Your message'}`)}
                   >
                     <Mail className="w-4 h-4 mr-2" />
-                    Svara via e-post
+                    Reply via email
                   </Button>
                   <Button
                     variant="destructive"
                     onClick={() => setMessageToDelete(selectedMessage.id)}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Ta bort
+                    Delete
                   </Button>
                 </div>
               </div>
@@ -207,15 +207,15 @@ const MessagesManager: React.FC = () => {
       <AlertDialog open={!!messageToDelete} onOpenChange={() => setMessageToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort meddelande?</AlertDialogTitle>
+            <AlertDialogTitle>Delete message?</AlertDialogTitle>
             <AlertDialogDescription>
-              Denna åtgärd kan inte ångras. Meddelandet kommer att tas bort permanent.
+              This action cannot be undone. The message will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>
-              Ta bort
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

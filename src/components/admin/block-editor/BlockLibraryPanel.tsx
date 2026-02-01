@@ -37,19 +37,19 @@ const BLOCK_CATEGORIES = [
     name: 'Hero & Headers',
     icon: Sparkles,
     blocks: [
-      { type: 'hero', name: 'Hero', description: 'Huvudsektion med namn och features', icon: Sparkles },
-      { type: 'video-hero', name: 'Video Hero', description: 'Fullskärmsvideo med overlay-text', icon: Play },
-      { type: 'parallax-section', name: 'Parallax', description: 'Flerlagers scroll-effekt', icon: Layers },
+      { type: 'hero', name: 'Hero', description: 'Main section with name and features', icon: Sparkles },
+      { type: 'video-hero', name: 'Video Hero', description: 'Fullscreen video with overlay text', icon: Play },
+      { type: 'parallax-section', name: 'Parallax', description: 'Multi-layer scroll effect', icon: Layers },
     ],
   },
   {
     id: 'content',
-    name: 'Innehåll',
+    name: 'Content',
     icon: Type,
     blocks: [
-      { type: 'text-section', name: 'Text Section', description: 'Enkel textblock', icon: Type },
-      { type: 'image-text', name: 'Bild & Text', description: 'Bild med tillhörande text', icon: Image },
-      { type: 'about-split', name: 'Om Mig', description: 'Split-layout med bild och skills', icon: Users },
+      { type: 'text-section', name: 'Text Section', description: 'Simple text block', icon: Type },
+      { type: 'image-text', name: 'Image & Text', description: 'Image with accompanying text', icon: Image },
+      { type: 'about-split', name: 'About Me', description: 'Split layout with image and skills', icon: Users },
     ],
   },
   {
@@ -57,9 +57,9 @@ const BLOCK_CATEGORIES = [
     name: 'Features & Grid',
     icon: Grid3X3,
     blocks: [
-      { type: 'bento-grid', name: 'Bento Grid', description: 'Modern asymmetrisk layout', icon: Grid3X3 },
-      { type: 'expertise-grid', name: 'Expertise Grid', description: 'Grid med kompetensområden', icon: Layout },
-      { type: 'stats-counter', name: 'Stats Counter', description: 'Animerade siffror', icon: BarChart3 },
+      { type: 'bento-grid', name: 'Bento Grid', description: 'Modern asymmetric layout', icon: Grid3X3 },
+      { type: 'expertise-grid', name: 'Expertise Grid', description: 'Grid with expertise areas', icon: Layout },
+      { type: 'stats-counter', name: 'Stats Counter', description: 'Animated numbers', icon: BarChart3 },
     ],
   },
   {
@@ -67,27 +67,27 @@ const BLOCK_CATEGORIES = [
     name: 'Social Proof',
     icon: Users,
     blocks: [
-      { type: 'testimonial-carousel', name: 'Testimonials', description: '3D-karusell med kundcitat', icon: Users },
-      { type: 'featured-carousel', name: 'Featured', description: 'Karusell med logotyper', icon: Image },
-      { type: 'marquee', name: 'Marquee', description: 'Rullande text/logotyper', icon: ArrowRight },
+      { type: 'testimonial-carousel', name: 'Testimonials', description: '3D carousel with customer quotes', icon: Users },
+      { type: 'featured-carousel', name: 'Featured', description: 'Logo carousel', icon: Image },
+      { type: 'marquee', name: 'Marquee', description: 'Scrolling text/logos', icon: ArrowRight },
     ],
   },
   {
     id: 'showcase',
-    name: 'Projekt & Portfolio',
+    name: 'Projects & Portfolio',
     icon: Layout,
     blocks: [
-      { type: 'project-showcase', name: 'Projekt Showcase', description: 'Portfolio med filtrering', icon: Layout },
+      { type: 'project-showcase', name: 'Project Showcase', description: 'Portfolio with filtering', icon: Layout },
     ],
   },
   {
     id: 'cta',
-    name: 'CTA & Kontakt',
+    name: 'CTA & Contact',
     icon: MessageCircle,
     blocks: [
-      { type: 'cta-banner', name: 'CTA Banner', description: 'Call-to-action med knapp', icon: ArrowRight },
-      { type: 'chat-widget', name: 'Chat Widget', description: 'AI-chat för besökare', icon: MessageCircle },
-      { type: 'contact-form', name: 'Kontaktformulär', description: 'Formulär för kontaktförfrågningar', icon: MessageCircle },
+      { type: 'cta-banner', name: 'CTA Banner', description: 'Call-to-action with button', icon: ArrowRight },
+      { type: 'chat-widget', name: 'Chat Widget', description: 'AI chat for visitors', icon: MessageCircle },
+      { type: 'contact-form', name: 'Contact Form', description: 'Form for contact requests', icon: MessageCircle },
     ],
   },
   {
@@ -95,7 +95,7 @@ const BLOCK_CATEGORIES = [
     name: 'Utility',
     icon: Layers,
     blocks: [
-      { type: 'spacer', name: 'Spacer', description: 'Vertikal mellanrum', icon: Layers },
+      { type: 'spacer', name: 'Spacer', description: 'Vertical spacing', icon: Layers },
     ],
   },
 ];
@@ -133,7 +133,7 @@ const BlockLibraryPanel = ({ onAddBlock, isAdding, onClose }: BlockLibraryPanelP
       {/* Header */}
       <div className="p-3 border-b border-border">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-sm">Blockbibliotek</h3>
+          <h3 className="font-semibold text-sm">Block Library</h3>
           {onClose && (
             <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
               ×
@@ -144,7 +144,7 @@ const BlockLibraryPanel = ({ onAddBlock, isAdding, onClose }: BlockLibraryPanelP
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Sök block..."
+            placeholder="Search blocks..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-sm"
@@ -220,7 +220,7 @@ const BlockLibraryPanel = ({ onAddBlock, isAdding, onClose }: BlockLibraryPanelP
       {/* Footer hint */}
       <div className="p-2 border-t border-border">
         <p className="text-[10px] text-muted-foreground text-center">
-          Klicka för att lägga till block
+          Click to add block
         </p>
       </div>
     </div>

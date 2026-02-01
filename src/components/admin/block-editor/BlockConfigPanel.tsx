@@ -39,16 +39,16 @@ interface BlockConfigPanelProps {
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero Block',
-  'about-split': 'Om Mig Block',
-  'text-section': 'Textsektion',
+  'about-split': 'About Me Block',
+  'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
-  'image-text': 'Bild & Text',
-  'spacer': 'Mellanrum',
+  'image-text': 'Image & Text',
+  'spacer': 'Spacer',
   'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertis Grid',
-  'project-showcase': 'Projekt Showcase',
-  'chat-widget': 'Chatt Widget',
-  'contact-form': 'Kontaktformulär',
+  'expertise-grid': 'Expertise Grid',
+  'project-showcase': 'Project Showcase',
+  'chat-widget': 'Chat Widget',
+  'contact-form': 'Contact Form',
 };
 
 const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
@@ -81,7 +81,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Namn</Label>
+          <Label>Name</Label>
           <Input
             value={heroConfig.name || ''}
             onChange={(e) => onBlockConfigChange({ name: e.target.value })}
@@ -93,7 +93,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
           <Textarea
             value={heroConfig.tagline || ''}
             onChange={(e) => onBlockConfigChange({ tagline: e.target.value })}
-            placeholder="Din tagline..."
+            placeholder="Your tagline..."
             rows={2}
           />
         </div>
@@ -106,7 +106,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         />
         <Separator />
         <div className="space-y-2">
-          <Label>Animationsstil</Label>
+          <Label>Animation Style</Label>
           <Select
             value={heroConfig.animation_style || 'falling-stars'}
             onValueChange={(value) => onBlockConfigChange({ animation_style: value })}
@@ -115,14 +115,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="falling-stars">Fallande stjärnor</SelectItem>
-              <SelectItem value="particles">Partiklar</SelectItem>
+              <SelectItem value="falling-stars">Falling Stars</SelectItem>
+              <SelectItem value="particles">Particles</SelectItem>
               <SelectItem value="gradient-shift">Gradient</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex items-center justify-between">
-          <Label>Aktivera animationer</Label>
+          <Label>Enable Animations</Label>
           <Switch
             checked={heroConfig.enable_animations ?? true}
             onCheckedChange={(checked) => onBlockConfigChange({ enable_animations: checked })}
@@ -139,14 +139,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Namn</Label>
+          <Label>Name</Label>
           <Input
             value={aboutConfig.name || ''}
             onChange={(e) => onBlockConfigChange({ name: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <Label>Introduktionstext</Label>
+          <Label>Introduction Text</Label>
           <Textarea
             value={aboutConfig.intro_text || ''}
             onChange={(e) => onBlockConfigChange({ intro_text: e.target.value })}
@@ -154,7 +154,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <Label>Ytterligare text</Label>
+          <Label>Additional Text</Label>
           <Textarea
             value={aboutConfig.additional_text || ''}
             onChange={(e) => onBlockConfigChange({ additional_text: e.target.value })}
@@ -162,14 +162,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
           />
         </div>
         <ImageUpload
-          label="Profilbild"
+          label="Profile Image"
           value={aboutConfig.image_url || ''}
           onChange={(url) => onBlockConfigChange({ image_url: url })}
           bucket="about-me-images"
         />
         <Separator />
         <SkillListEditor
-          label="Kompetenser"
+          label="Skills"
           skills={skills}
           onChange={handleAboutSkillsChange}
           maxItems={3}
@@ -181,14 +181,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   const renderTextSectionConfig = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Titel</Label>
+        <Label>Title</Label>
         <Input
           value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label>Innehåll</Label>
+        <Label>Content</Label>
         <Textarea
           value={(config.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
@@ -196,7 +196,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Justering</Label>
+        <Label>Alignment</Label>
         <Select
           value={(config.alignment as string) || 'center'}
           onValueChange={(value) => onBlockConfigChange({ alignment: value })}
@@ -205,9 +205,9 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="left">Vänster</SelectItem>
+            <SelectItem value="left">Left</SelectItem>
             <SelectItem value="center">Center</SelectItem>
-            <SelectItem value="right">Höger</SelectItem>
+            <SelectItem value="right">Right</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -217,14 +217,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   const renderCtaBannerConfig = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Titel</Label>
+        <Label>Title</Label>
         <Input
           value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label>Beskrivning</Label>
+        <Label>Description</Label>
         <Textarea
           value={(config.description as string) || ''}
           onChange={(e) => onBlockConfigChange({ description: e.target.value })}
@@ -232,14 +232,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         />
       </div>
       <div className="space-y-2">
-        <Label>Knapptext</Label>
+        <Label>Button Text</Label>
         <Input
           value={(config.button_text as string) || ''}
           onChange={(e) => onBlockConfigChange({ button_text: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label>Knapp-URL</Label>
+        <Label>Button URL</Label>
         <Input
           value={(config.button_url as string) || ''}
           onChange={(e) => onBlockConfigChange({ button_url: e.target.value })}
@@ -252,14 +252,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   const renderImageTextConfig = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Titel</Label>
+        <Label>Title</Label>
         <Input
           value={(config.title as string) || ''}
           onChange={(e) => onBlockConfigChange({ title: e.target.value })}
         />
       </div>
       <div className="space-y-2">
-        <Label>Innehåll</Label>
+        <Label>Content</Label>
         <Textarea
           value={(config.content as string) || ''}
           onChange={(e) => onBlockConfigChange({ content: e.target.value })}
@@ -267,13 +267,13 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         />
       </div>
       <ImageUpload
-        label="Bild"
+        label="Image"
         value={(config.image_url as string) || ''}
         onChange={(url) => onBlockConfigChange({ image_url: url })}
         bucket="about-me-images"
       />
       <div className="space-y-2">
-        <Label>Bildposition</Label>
+        <Label>Image Position</Label>
         <Select
           value={(config.image_position as string) || 'left'}
           onValueChange={(value) => onBlockConfigChange({ image_position: value })}
@@ -282,8 +282,8 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="left">Vänster</SelectItem>
-            <SelectItem value="right">Höger</SelectItem>
+            <SelectItem value="left">Left</SelectItem>
+            <SelectItem value="right">Right</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -293,7 +293,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   const renderSpacerConfig = () => (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>Höjd</Label>
+        <Label>Height</Label>
         <Select
           value={(config.height as string) || 'md'}
           onValueChange={(value) => onBlockConfigChange({ height: value })}
@@ -302,10 +302,10 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="sm">Liten (2rem)</SelectItem>
+            <SelectItem value="sm">Small (2rem)</SelectItem>
             <SelectItem value="md">Medium (4rem)</SelectItem>
-            <SelectItem value="lg">Stor (6rem)</SelectItem>
-            <SelectItem value="xl">Extra stor (8rem)</SelectItem>
+            <SelectItem value="lg">Large (6rem)</SelectItem>
+            <SelectItem value="xl">Extra Large (8rem)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -322,7 +322,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   const renderInfoMessage = (message: string) => (
     <div className="text-center py-8 text-muted-foreground">
       <p className="text-sm">{message}</p>
-      <p className="text-xs mt-2">Använd inline-redigering för fullständiga alternativ</p>
+      <p className="text-xs mt-2">Use inline editor for full options</p>
     </div>
   );
 
@@ -343,15 +343,15 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       case 'contact-form':
         return renderContactFormConfig();
       case 'featured-carousel':
-        return renderInfoMessage('Featured items redigeras via inline-editorn');
+        return renderInfoMessage('Featured items are edited via the inline editor');
       case 'expertise-grid':
-        return renderInfoMessage('Expertområden redigeras via inline-editorn');
+        return renderInfoMessage('Expertise areas are edited via the inline editor');
       case 'project-showcase':
-        return renderInfoMessage('Projekt redigeras via inline-editorn');
+        return renderInfoMessage('Projects are edited via the inline editor');
       case 'chat-widget':
-        return renderInfoMessage('Chatt-inställningar redigeras via inline-editorn');
+        return renderInfoMessage('Chat settings are edited via the inline editor');
       default:
-        return <p className="text-muted-foreground">Okänd blocktyp</p>;
+        return <p className="text-muted-foreground">Unknown block type</p>;
     }
   };
 

@@ -23,8 +23,8 @@ const AIModuleSettings: React.FC = () => {
     updateModule.mutate(
       { enabled },
       {
-        onSuccess: () => toast({ title: 'Sparad' }),
-        onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
       }
     );
   };
@@ -34,8 +34,8 @@ const AIModuleSettings: React.FC = () => {
     updateModule.mutate(
       { module_config: { ...config, [field]: value } },
       {
-        onSuccess: () => toast({ title: 'Sparad' }),
-        onError: () => toast({ title: 'Fel vid sparning', variant: 'destructive' }),
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
       }
     );
   };
@@ -54,9 +54,9 @@ const AIModuleSettings: React.FC = () => {
       <div className="flex items-center gap-3 mb-6">
         <Bot className="h-8 w-8 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">AI Modul</h2>
+          <h2 className="text-2xl font-bold">AI Module</h2>
           <p className="text-muted-foreground">
-            Globala inställningar för AI-chatten
+            Global settings for the AI chat
           </p>
         </div>
       </div>
@@ -66,18 +66,18 @@ const AIModuleSettings: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Power className="h-5 w-5" />
-            Modulstatus
+            Module Status
           </CardTitle>
           <CardDescription>
-            Aktivera eller inaktivera AI-chat-modulen globalt
+            Enable or disable the AI chat module globally
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <Label htmlFor="enabled">Aktiverad</Label>
+              <Label htmlFor="enabled">Enabled</Label>
               <p className="text-sm text-muted-foreground">
-                När inaktiverad visas inte chat-widget på sidan
+                When disabled, the chat widget won't be shown on the page
               </p>
             </div>
             <Switch
@@ -97,7 +97,7 @@ const AIModuleSettings: React.FC = () => {
             Webhook
           </CardTitle>
           <CardDescription>
-            Webhook-URL för att skicka chattmeddelanden till n8n eller annan backend
+            Webhook URL for sending chat messages to n8n or other backend
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -120,7 +120,7 @@ const AIModuleSettings: React.FC = () => {
               placeholder="n8n"
             />
             <p className="text-xs text-muted-foreground">
-              Valfritt: identifiera vilken backend som används (n8n, custom, etc.)
+              Optional: identify which backend is being used (n8n, custom, etc.)
             </p>
           </div>
         </CardContent>
@@ -128,14 +128,14 @@ const AIModuleSettings: React.FC = () => {
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-muted-foreground">Framtida funktioner</CardTitle>
+          <CardTitle className="text-muted-foreground">Future Features</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Val av AI-provider (OpenAI, Anthropic, etc.)</li>
+            <li>• AI provider selection (OpenAI, Anthropic, etc.)</li>
             <li>• Rate limiting</li>
-            <li>• Konversationshistorik</li>
-            <li>• Analytics och statistik</li>
+            <li>• Conversation history</li>
+            <li>• Analytics and statistics</li>
           </ul>
         </CardContent>
       </Card>

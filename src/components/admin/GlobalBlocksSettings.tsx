@@ -28,7 +28,7 @@ const SOCIAL_PLATFORMS = [
   { value: 'twitter', label: 'Twitter/X', icon: Twitter },
   { value: 'instagram', label: 'Instagram', icon: Instagram },
   { value: 'youtube', label: 'YouTube', icon: Youtube },
-  { value: 'custom', label: 'Anpassad', icon: Link },
+  { value: 'custom', label: 'Custom', icon: Link },
 ] as const;
 
 const getSocialIcon = (platform: string) => {
@@ -74,9 +74,9 @@ export default function GlobalBlocksSettings() {
       } else {
         await updateHeader.mutateAsync({ module_config: headerConfig });
       }
-      toast({ title: 'Sparat', description: 'Header-inställningar uppdaterade' });
+      toast({ title: 'Saved', description: 'Header settings updated' });
     } catch (error) {
-      toast({ title: 'Fel', description: 'Kunde inte spara inställningar', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not save settings', variant: 'destructive' });
     }
   };
 
@@ -87,9 +87,9 @@ export default function GlobalBlocksSettings() {
       } else {
         await updateFooter.mutateAsync({ module_config: footerConfig });
       }
-      toast({ title: 'Sparat', description: 'Footer-inställningar uppdaterade' });
+      toast({ title: 'Saved', description: 'Footer settings updated' });
     } catch (error) {
-      toast({ title: 'Fel', description: 'Kunde inte spara inställningar', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Could not save settings', variant: 'destructive' });
     }
   };
 
@@ -117,7 +117,7 @@ export default function GlobalBlocksSettings() {
   };
 
   if (headerLoading || footerLoading) {
-    return <div className="flex items-center justify-center p-8">Laddar...</div>;
+    return <div className="flex items-center justify-center p-8">Loading...</div>;
   }
 
   return (
@@ -125,10 +125,10 @@ export default function GlobalBlocksSettings() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Globe className="h-6 w-6" />
-          Globala Block
+          Global Blocks
         </h1>
         <p className="text-muted-foreground mt-1">
-          Hantera header och footer som visas på alla sidor
+          Manage header and footer displayed on all pages
         </p>
       </div>
 
@@ -142,29 +142,29 @@ export default function GlobalBlocksSettings() {
         <TabsContent value="header" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Header-inställningar</CardTitle>
+              <CardTitle>Header Settings</CardTitle>
               <CardDescription>
-                Konfigurera logotyp och navigeringsbeteende
+                Configure logo and navigation behavior
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Logo Section */}
               <div className="space-y-4">
-                <h3 className="font-medium">Logotyp</h3>
+                <h3 className="font-medium">Logo</h3>
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="logo-text">Logotyptext</Label>
+                    <Label htmlFor="logo-text">Logo Text</Label>
                     <Input
                       id="logo-text"
                       value={headerConfig.logo_text}
                       onChange={(e) => setHeaderConfig(prev => ({ ...prev, logo_text: e.target.value }))}
-                      placeholder="Din webbplats"
+                      placeholder="Your website"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="logo-image">Logotypbild (URL)</Label>
+                    <Label htmlFor="logo-image">Logo Image (URL)</Label>
                     <Input
                       id="logo-image"
                       value={headerConfig.logo_image_url || ''}
@@ -172,7 +172,7 @@ export default function GlobalBlocksSettings() {
                       placeholder="https://..."
                     />
                     <p className="text-xs text-muted-foreground">
-                      Lämna tomt för att använda text istället
+                      Leave empty to use text instead
                     </p>
                   </div>
                 </div>
@@ -180,14 +180,14 @@ export default function GlobalBlocksSettings() {
 
               {/* Behavior Section */}
               <div className="space-y-4">
-                <h3 className="font-medium">Beteende</h3>
+                <h3 className="font-medium">Behavior</h3>
                 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Sticky header</Label>
                       <p className="text-sm text-muted-foreground">
-                        Headern följer med vid scrollning
+                        Header follows when scrolling
                       </p>
                     </div>
                     <Switch
@@ -198,9 +198,9 @@ export default function GlobalBlocksSettings() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Visa tema-toggle</Label>
+                      <Label>Show theme toggle</Label>
                       <p className="text-sm text-muted-foreground">
-                        Knapp för att växla mellan ljust/mörkt tema
+                        Button to switch between light/dark theme
                       </p>
                     </div>
                     <Switch
@@ -211,9 +211,9 @@ export default function GlobalBlocksSettings() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Transparent på hero</Label>
+                      <Label>Transparent on hero</Label>
                       <p className="text-sm text-muted-foreground">
-                        Genomskinlig bakgrund över hero-sektionen
+                        Transparent background over hero section
                       </p>
                     </div>
                     <Switch
@@ -227,7 +227,7 @@ export default function GlobalBlocksSettings() {
               <div className="flex justify-end pt-4 border-t">
                 <Button onClick={handleSaveHeader} disabled={updateHeader.isPending || createHeaderModule.isPending}>
                   <Save className="h-4 w-4 mr-2" />
-                  Spara header
+                  Save Header
                 </Button>
               </div>
             </CardContent>
@@ -238,23 +238,23 @@ export default function GlobalBlocksSettings() {
         <TabsContent value="footer" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Footer-inställningar</CardTitle>
+              <CardTitle>Footer Settings</CardTitle>
               <CardDescription>
-                Konfigurera copyright-text och sociala länkar
+                Configure copyright text and social links
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Copyright Section */}
               <div className="space-y-2">
-                <Label htmlFor="copyright">Copyright-text</Label>
+                <Label htmlFor="copyright">Copyright Text</Label>
                 <Input
                   id="copyright"
                   value={footerConfig.copyright_text}
                   onChange={(e) => setFooterConfig(prev => ({ ...prev, copyright_text: e.target.value }))}
-                  placeholder="© {year} Ditt namn"
+                  placeholder="© {year} Your name"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Använd {'{year}'} för att visa aktuellt år automatiskt
+                  Use {'{year}'} to display current year automatically
                 </p>
               </div>
 
@@ -262,9 +262,9 @@ export default function GlobalBlocksSettings() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium">Sociala länkar</h3>
+                    <h3 className="font-medium">Social Links</h3>
                     <p className="text-sm text-muted-foreground">
-                      Lägg till länkar till dina sociala profiler
+                      Add links to your social profiles
                     </p>
                   </div>
                   <Switch
@@ -308,7 +308,7 @@ export default function GlobalBlocksSettings() {
                             <Input
                               value={link.label || ''}
                               onChange={(e) => updateSocialLink(index, { label: e.target.value })}
-                              placeholder="Etikett"
+                              placeholder="Label"
                               className="w-24"
                             />
                           )}
@@ -327,7 +327,7 @@ export default function GlobalBlocksSettings() {
 
                     <Button variant="outline" onClick={addSocialLink} className="w-full">
                       <Plus className="h-4 w-4 mr-2" />
-                      Lägg till länk
+                      Add Link
                     </Button>
                   </div>
                 )}
@@ -336,7 +336,7 @@ export default function GlobalBlocksSettings() {
               <div className="flex justify-end pt-4 border-t">
                 <Button onClick={handleSaveFooter} disabled={updateFooter.isPending || createFooterModule.isPending}>
                   <Save className="h-4 w-4 mr-2" />
-                  Spara footer
+                  Save Footer
                 </Button>
               </div>
             </CardContent>
