@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import AITextEnhance from './AITextEnhance';
+import BlogAIAssist from './BlogAIAssist';
 import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
 import ReactMarkdown from 'react-markdown';
@@ -237,6 +238,11 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="content">Content (Markdown)</Label>
                   <div className="flex items-center gap-1">
+                    <BlogAIAssist
+                      title={title}
+                      content={content}
+                      onContentChange={setContent}
+                    />
                     <AITextEnhance
                       text={content}
                       onTextChange={setContent}
