@@ -22,6 +22,7 @@ import MarqueeBlock from './MarqueeBlock';
 import StatsCounterBlock from './StatsCounterBlock';
 import TestimonialCarouselBlock from './TestimonialCarouselBlock';
 import ContactFormBlock from './ContactFormBlock';
+import BlogBlock from './BlogBlock';
 
 interface BlockRendererProps {
   block: PageBlock;
@@ -65,6 +66,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block }) => {
       return <TestimonialCarouselBlock config={block_config} />;
     case 'contact-form':
       return <ContactFormBlock config={block_config} />;
+    case 'blog':
+      return <BlogBlock config={block_config} />;
     default:
       return (
         <div className="py-8 text-center text-muted-foreground">

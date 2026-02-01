@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import AIModuleSettings from '@/components/admin/AIModuleSettings';
 import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
+import BlogModuleSettings from '@/components/admin/BlogModuleSettings';
+import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
@@ -112,6 +114,8 @@ const Admin = () => {
         return <AnalyticsDashboard />;
       case 'pages':
         return <ClassicPageBuilder />;
+      case 'blog':
+        return <BlogManager />;
       case 'navigation':
         return <NavSettings />;
       case 'messages':
@@ -122,6 +126,8 @@ const Admin = () => {
         return <AIModuleSettings />;
       case 'projects-module':
         return <ProjectsModuleSettings />;
+      case 'blog-module':
+        return <BlogModuleSettings />;
       case 'history':
         return <SettingsHistory />;
       default:

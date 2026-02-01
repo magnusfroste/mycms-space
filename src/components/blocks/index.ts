@@ -14,3 +14,4 @@ export { default as ImageTextBlock } from './ImageTextBlock';
 export { default as CtaBannerBlock } from './CtaBannerBlock';
 export { default as SpacerBlock } from './SpacerBlock';
 export { default as ContactFormBlock } from './ContactFormBlock';
+export { default as BlogBlock } from './BlogBlock';
