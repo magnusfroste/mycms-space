@@ -10,7 +10,8 @@ import {
   ExternalLink,
   LogOut,
   Mail,
-  History
+  History,
+  Globe
 } from 'lucide-react';
 import {
   Sidebar,
@@ -45,6 +46,7 @@ const mainNavItems = [
 ];
 
 const settingsNavItems = [
+  { id: 'global-blocks', label: 'Globala Block', icon: Globe },
   { id: 'ai-module', label: 'AI Modul', icon: Bot },
   { id: 'projects-module', label: 'Projekt Modul', icon: FolderOpen },
   { id: 'history', label: 'Historik', icon: History },

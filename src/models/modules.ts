@@ -12,10 +12,13 @@ import type {
   ConfigForModule,
   AIModuleConfig,
   ProjectsModuleConfig,
+  HeaderModuleConfig,
+  FooterModuleConfig,
 } from '@/types/modules';
+import { defaultModuleConfigs } from '@/types/modules';
 
 // Re-export types
-export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig };
+export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig };
 
 // Query keys
 export const modulesKeys = {
@@ -93,6 +96,34 @@ export const useProjectsModule = () => {
 };
 
 export const useUpdateProjectsModule = () => useUpdateModule('projects');
+
+// Header Module
+export const useHeaderModule = () => {
+  const query = useModule('header');
+  const defaultConfig = defaultModuleConfigs.header;
+  
+  return {
+    ...query,
+    config: (query.data?.module_config as HeaderModuleConfig) ?? defaultConfig,
+    isEnabled: query.data?.enabled ?? true,
+  };
+};
+
+export const useUpdateHeaderModule = () => useUpdateModule('header');
+
+// Footer Module
+export const useFooterModule = () => {
+  const query = useModule('footer');
+  const defaultConfig = defaultModuleConfigs.footer;
+  
+  return {
+    ...query,
+    config: (query.data?.module_config as FooterModuleConfig) ?? defaultConfig,
+    isEnabled: query.data?.enabled ?? true,
+  };
+};
+
+export const useUpdateFooterModule = () => useUpdateModule('footer');
 
 // Realtime subscription hook
 export const useModuleSubscription = (moduleType: ModuleType) => {
