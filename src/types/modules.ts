@@ -16,15 +16,154 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
   updated_at?: string;
 }
 
-// AI Module Config
-export interface AIModuleConfig {
+// ============================================
+// AI Integration Types
+// Extensible integration system for AI providers
+// ============================================
+
+export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'ollama' | 'lovable';
+
+// Base integration interface
+export interface AIIntegrationBase {
+  type: AIIntegrationType;
+  enabled: boolean;
+}
+
+// n8n Integration
+export interface N8nIntegration extends AIIntegrationBase {
+  type: 'n8n';
   webhook_url: string;
-  provider: 'n8n' | 'custom' | 'lovable';
-  // Context sources - which pages and blog posts to include
+  description?: string;
+}
+
+// OpenAI Integration (future)
+export interface OpenAIIntegration extends AIIntegrationBase {
+  type: 'openai';
+  model: string;
+  api_key_ref?: string; // Reference to secret
+}
+
+// Gemini Integration (future)
+export interface GeminiIntegration extends AIIntegrationBase {
+  type: 'gemini';
+  model: string;
+  api_key_ref?: string;
+}
+
+// Ollama Integration (future)
+export interface OllamaIntegration extends AIIntegrationBase {
+  type: 'ollama';
+  base_url: string;
+  model: string;
+}
+
+// Lovable AI Integration (built-in)
+export interface LovableIntegration extends AIIntegrationBase {
+  type: 'lovable';
+  model: string;
+}
+
+// Union type for all integrations
+export type AIIntegration = 
+  | N8nIntegration 
+  | OpenAIIntegration 
+  | GeminiIntegration 
+  | OllamaIntegration
+  | LovableIntegration;
+
+// Integration metadata for UI
+export interface IntegrationMeta {
+  type: AIIntegrationType;
+  name: string;
+  description: string;
+  icon: string;
+  available: boolean; // Is this integration implemented?
+}
+
+export const integrationsMeta: IntegrationMeta[] = [
+  {
+    type: 'n8n',
+    name: 'n8n Webhook',
+    description: 'Connect to an n8n workflow via webhook for full AI agent control',
+    icon: 'Webhook',
+    available: true,
+  },
+  {
+    type: 'lovable',
+    name: 'Lovable AI',
+    description: 'Built-in AI using Lovable gateway (no API key needed)',
+    icon: 'Sparkles',
+    available: true,
+  },
+  {
+    type: 'openai',
+    name: 'OpenAI',
+    description: 'Direct integration with OpenAI GPT models',
+    icon: 'Bot',
+    available: false,
+  },
+  {
+    type: 'gemini',
+    name: 'Google Gemini',
+    description: 'Direct integration with Google Gemini models',
+    icon: 'Sparkles',
+    available: false,
+  },
+  {
+    type: 'ollama',
+    name: 'Self-hosted Ollama',
+    description: 'Connect to a self-hosted Ollama instance',
+    icon: 'Server',
+    available: false,
+  },
+];
+
+// Default integration configs
+export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
+  n8n: {
+    type: 'n8n',
+    enabled: false,
+    webhook_url: '',
+    description: '',
+  },
+  lovable: {
+    type: 'lovable',
+    enabled: false,
+    model: 'google/gemini-2.5-flash',
+  },
+  openai: {
+    type: 'openai',
+    enabled: false,
+    model: 'gpt-4o',
+  },
+  gemini: {
+    type: 'gemini',
+    enabled: false,
+    model: 'gemini-1.5-flash',
+  },
+  ollama: {
+    type: 'ollama',
+    enabled: false,
+    base_url: 'http://localhost:11434',
+    model: 'llama3',
+  },
+};
+
+// AI Module Config - Updated to use integration system
+export interface AIModuleConfig {
+  // Active integration
+  active_integration: AIIntegrationType;
+  integration: AIIntegration;
+  
+  // Legacy fields (for backwards compatibility)
+  webhook_url?: string;
+  provider?: 'n8n' | 'custom' | 'lovable';
+  
+  // Context sources
   include_page_context: boolean;
-  selected_page_slugs: string[]; // Empty = all pages
+  selected_page_slugs: string[];
   include_blog_context: boolean;
-  selected_blog_ids: string[]; // Empty = all published blogs
+  selected_blog_ids: string[];
 }
 
 // Projects Module Config
@@ -110,6 +249,8 @@ export type ConfigForModule<T extends ModuleType> = ModuleTypeConfigMap[T];
 // Default configs for each module type
 export const defaultModuleConfigs: ModuleTypeConfigMap = {
   ai: {
+    active_integration: 'n8n',
+    integration: defaultIntegrations.n8n,
     webhook_url: '',
     provider: 'n8n',
     include_page_context: false,
