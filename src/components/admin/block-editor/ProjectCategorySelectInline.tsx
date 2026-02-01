@@ -57,9 +57,9 @@ const ProjectCategorySelectInline: React.FC<ProjectCategorySelectInlineProps> = 
           <Button variant="ghost" size="sm" className="h-6 px-2 gap-1 text-xs">
             <Tag className="h-3 w-3" />
             {selectedSlugs.length > 0 ? (
-              <span>{selectedSlugs.length} kat.</span>
+              <span>{selectedSlugs.length} cat.</span>
             ) : (
-              <span className="text-muted-foreground">Kategorier</span>
+              <span className="text-muted-foreground">Categories</span>
             )}
             <ChevronDown className="h-3 w-3" />
           </Button>
@@ -82,7 +82,7 @@ const ProjectCategorySelectInline: React.FC<ProjectCategorySelectInlineProps> = 
             ))}
             {enabledCategories.length === 0 && (
               <p className="text-xs text-muted-foreground px-2 py-1">
-                Inga kategorier skapade
+                No categories created
               </p>
             )}
           </div>
@@ -93,7 +93,7 @@ const ProjectCategorySelectInline: React.FC<ProjectCategorySelectInlineProps> = 
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs">Kategorier</Label>
+      <Label className="text-xs">Categories</Label>
       <div className="flex flex-wrap gap-1.5">
         {enabledCategories.map((category) => {
           const isSelected = selectedSlugs.includes(category.slug);
@@ -110,7 +110,7 @@ const ProjectCategorySelectInline: React.FC<ProjectCategorySelectInlineProps> = 
         })}
         {enabledCategories.length === 0 && (
           <span className="text-xs text-muted-foreground">
-            Inga kategorier. Skapa i Portfolio-inställningar.
+            No categories. Create in Project Showcase settings.
           </span>
         )}
       </div>
