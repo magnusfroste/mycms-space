@@ -16,7 +16,7 @@ import { Sparkles, List, MessageSquareText, CheckCircle2, Loader2 } from 'lucide
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-type BlogAction = 'generate-outline' | 'generate-intro' | 'generate-conclusion';
+type BlogAction = 'generate-outline' | 'generate-intro' | 'generate-conclusion' | 'generate-draft';
 
 interface BlogAIAssistProps {
   title: string;
@@ -27,6 +27,11 @@ interface BlogAIAssistProps {
 }
 
 const actionConfig: Record<BlogAction, { label: string; icon: React.ReactNode; description: string }> = {
+  'generate-draft': {
+    label: 'Generate Full Draft',
+    icon: <Sparkles className="h-4 w-4" />,
+    description: 'Create a complete blog post',
+  },
   'generate-outline': {
     label: 'Generate Outline',
     icon: <List className="h-4 w-4" />,
@@ -101,11 +106,13 @@ const BlogAIAssist: React.FC<BlogAIAssistProps> = ({
       }
 
       if (data?.text) {
-        // For outline, replace content. For intro/conclusion, append appropriately
         let newContent = '';
         
-        if (action === 'generate-outline') {
-          // If there's existing content, ask before replacing
+        if (action === 'generate-draft') {
+          // Full draft replaces everything
+          newContent = data.text;
+        } else if (action === 'generate-outline') {
+          // If there's existing content, prepend outline
           if (content.trim()) {
             newContent = data.text + '\n\n---\n\n' + content;
           } else {

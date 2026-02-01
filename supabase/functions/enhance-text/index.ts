@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-type EnhanceAction = 'correct' | 'enhance' | 'expand' | 'generate-outline' | 'generate-intro' | 'generate-conclusion';
+type EnhanceAction = 'correct' | 'enhance' | 'expand' | 'generate-outline' | 'generate-intro' | 'generate-conclusion' | 'generate-draft';
 
 interface EnhanceRequest {
   text: string;
@@ -14,7 +14,7 @@ interface EnhanceRequest {
   title?: string; // For blog generation actions
 }
 
-const validActions: EnhanceAction[] = ['correct', 'enhance', 'expand', 'generate-outline', 'generate-intro', 'generate-conclusion'];
+const validActions: EnhanceAction[] = ['correct', 'enhance', 'expand', 'generate-outline', 'generate-intro', 'generate-conclusion', 'generate-draft'];
 
 const getSystemPrompt = (action: EnhanceAction, context?: string, title?: string): string => {
   const contextInfo = context ? `\n\nContext: This is ${context}.` : '';
@@ -61,6 +61,25 @@ Return ONLY the introduction text in Markdown, no explanations.`;
 ${titleInfo}${contextInfo}
 
 Return ONLY the conclusion text in Markdown, no explanations.`;
+    
+    case 'generate-draft':
+      return `You are a professional blog writer. Write a complete, well-structured blog post in Markdown format. The post should include:
+
+1. **Engaging Introduction** (2-3 paragraphs) - Hook the reader and preview what they'll learn
+2. **Main Content** (3-5 sections with ## headings) - Cover the topic thoroughly with practical insights
+3. **Subpoints and Examples** - Use bullet points, numbered lists, and concrete examples
+4. **Conclusion** - Summarize key takeaways and include a call to action
+
+Guidelines:
+- Use proper Markdown formatting (##, ###, **, -, etc.)
+- Write in a professional but approachable tone
+- Make it informative and actionable
+- Target length: 800-1200 words
+- Include relevant subheadings for scannability
+
+${titleInfo}${contextInfo}
+
+Return ONLY the complete blog post in Markdown format, no meta-commentary.`;
     
     default:
       return 'You are a helpful assistant.';
@@ -124,7 +143,7 @@ serve(async (req) => {
           { role: "user", content: userMessage },
         ],
         temperature: action === 'correct' ? 0.1 : 0.7,
-        max_tokens: isGenerateAction ? 2000 : (action === 'expand' ? 2000 : 1000),
+        max_tokens: (isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : 1000)),
       }),
     });
 
