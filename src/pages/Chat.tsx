@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MessageSquarePlus, Database } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppleChat from "@/components/AppleChat";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -17,6 +17,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { integrationsMeta, type AIIntegrationType } from "@/types/modules";
 
 interface Message {
   id: string;
@@ -31,12 +38,26 @@ const Chat = () => {
   const { contextData, contextSummary, hasContext } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
+  
+  // Get configured integration from module, allow user override
+  const configuredIntegration = aiConfig?.active_integration || 'n8n';
+  const [selectedIntegration, setSelectedIntegration] = React.useState<AIIntegrationType>(configuredIntegration);
 
   // Get initial messages and sessionId from navigation state if available
   const initialMessages = location.state?.messages as Message[] | undefined;
   const initialSessionId = location.state?.sessionId as string | undefined;
   
-  const webhookUrl = aiConfig?.webhook_url || "https://agent.froste.eu/webhook/magnet";
+  // Get available AI integrations
+  const availableIntegrations = integrationsMeta.filter(
+    (meta) => meta.category === 'ai' && meta.available
+  );
+  
+  const selectedMeta = availableIntegrations.find(m => m.type === selectedIntegration);
+  
+  // Get webhook URL for n8n, otherwise use edge function
+  const webhookUrl = selectedIntegration === 'n8n' 
+    ? (aiConfig?.webhook_url || "https://agent.froste.eu/webhook/magnet")
+    : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
   const handleBack = () => {
     navigate("/");
@@ -65,6 +86,28 @@ const Chat = () => {
             <h1 className="text-lg font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
               Chat with Magnet
             </h1>
+            
+            {/* Integration Selector Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-7 text-xs">
+                  {selectedMeta?.name || 'Select AI'}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="bg-background border-border">
+                {availableIntegrations.map((meta) => (
+                  <DropdownMenuItem
+                    key={meta.type}
+                    onClick={() => setSelectedIntegration(meta.type as AIIntegrationType)}
+                    className={selectedIntegration === meta.type ? 'bg-accent' : ''}
+                  >
+                    {meta.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             {hasContext && (
               <Badge variant="secondary" className="text-xs gap-1">
                 <Database className="h-3 w-3" />
@@ -93,6 +136,8 @@ const Chat = () => {
           resetTrigger={resetTrigger}
           showQuickActions={true}
           siteContext={contextData}
+          integration={selectedIntegration}
+          integrationConfig={aiConfig?.integration}
         />
       </main>
 
