@@ -13,22 +13,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
 
 interface ImageUploadProps {
-  label: string;
-  value: string;
-  onChange: (url: string) => void;
-  bucket: 'about-me-images' | 'featured-images' | 'project-images';
+  label?: string;
+  value?: string;
+  currentImageUrl?: string;
+  onChange?: (url: string) => void;
+  onImageChange?: (url: string, path?: string) => void;
+  bucket: 'about-me-images' | 'featured-images' | 'project-images' | 'blog-images';
   folder?: string;
   className?: string;
+  aspectRatio?: string;
+  compact?: boolean;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   label,
   value,
+  currentImageUrl,
   onChange,
+  onImageChange,
   bucket,
   folder = '',
   className,
+  aspectRatio,
+  compact,
 }) => {
+  // Support both value and currentImageUrl props
+  const imageUrl = value || currentImageUrl || '';
+  const handleChange = (url: string, path?: string) => {
+    onChange?.(url);
+    onImageChange?.(url, path);
+  };
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +89,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         .from(bucket)
         .getPublicUrl(fileName);
 
-      onChange(publicUrl);
+      handleChange(publicUrl, fileName);
     } catch (err) {
       console.error('Upload error:', err);
       setError('Could not upload image');
@@ -89,21 +103,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
 
   const handleClear = () => {
-    onChange('');
+    handleChange('', '');
     setError(null);
   };
 
+  const aspectStyle = aspectRatio ? { aspectRatio } : {};
+
   return (
     <div className={cn('space-y-2', className)}>
-      <Label>{label}</Label>
+      {label && <Label>{label}</Label>}
       
       {/* Preview */}
-      {value ? (
-        <div className="relative rounded-lg overflow-hidden border bg-muted">
+      {imageUrl ? (
+        <div className="relative rounded-lg overflow-hidden border bg-muted" style={aspectStyle}>
           <img
-            src={value}
+            src={imageUrl}
             alt="Preview"
-            className="w-full h-32 object-cover"
+            className={cn("w-full object-cover", compact ? "h-24" : "h-32")}
             onError={(e) => {
               e.currentTarget.src = '/placeholder.svg';
             }}
@@ -154,7 +170,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       />
 
       {/* Upload button when image exists */}
-      {value && (
+      {imageUrl && (
         <Button
           variant="outline"
           size="sm"

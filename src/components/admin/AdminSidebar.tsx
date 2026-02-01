@@ -11,7 +11,9 @@ import {
   LogOut,
   Mail,
   History,
-  Globe
+  Globe,
+  PenSquare,
+  BookOpen,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -41,6 +43,7 @@ const mainNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'landing', label: 'Page Builder', icon: Layers },
+  { id: 'blog', label: 'Blog', icon: PenSquare },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
 ];
@@ -49,6 +52,7 @@ const settingsNavItems = [
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
   { id: 'ai-module', label: 'AI Module', icon: Bot },
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
+  { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'history', label: 'History', icon: History },
 ];
 

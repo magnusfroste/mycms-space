@@ -11,6 +11,8 @@ import DynamicPage from "./pages/DynamicPage";
 import Chat from "./pages/Chat";
 import BlockDemo from "./pages/BlockDemo";
 import Admin from "./pages/Admin";
+import BlogPost from "./pages/BlogPost";
+import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
 import { usePageTracking } from "@/hooks/usePageTracking";
 
@@ -56,6 +58,8 @@ const App = () => {
               <Route path="/chat" element={<Chat />} />
               <Route path="/demo" element={<BlockDemo />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/blog" element={<BlogArchive />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               {/* Dynamic page route - catches any slug */}
               <Route path="/:slug" element={<DynamicPage />} />
               {/* 404 fallback */}

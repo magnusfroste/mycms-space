@@ -236,7 +236,8 @@ export type BlockType =
   | 'marquee'
   | 'stats-counter'
   | 'testimonial-carousel'
-  | 'contact-form';
+  | 'contact-form'
+  | 'blog';
 
 export interface PageBlock {
   id: string;

@@ -78,6 +78,7 @@ const BLOCK_CATEGORIES = [
     icon: Layout,
     blocks: [
       { type: 'project-showcase', name: 'Project Showcase', description: 'Portfolio with filtering', icon: Layout },
+      { type: 'blog', name: 'Blog Posts', description: 'Display blog posts in grid or list', icon: Type },
     ],
   },
   {

@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -44,6 +44,17 @@ export interface AnalyticsModuleConfig {
   track_chat_sessions: boolean;
 }
 
+// Blog Module Config
+export interface BlogModuleConfig {
+  posts_per_page: number;
+  show_reading_time: boolean;
+  show_author: boolean;
+  show_categories: boolean;
+  default_cover_image: string;
+  enable_comments: boolean;
+  date_format: string;
+}
+
 // Header Module Config
 export interface HeaderModuleConfig {
   logo_text: string;
@@ -73,7 +84,8 @@ export type ModuleConfigType =
   | NewsletterModuleConfig
   | AnalyticsModuleConfig
   | HeaderModuleConfig
-  | FooterModuleConfig;
+  | FooterModuleConfig
+  | BlogModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -83,8 +95,10 @@ export interface ModuleTypeConfigMap {
   analytics: AnalyticsModuleConfig;
   header: HeaderModuleConfig;
   footer: FooterModuleConfig;
+  blog: BlogModuleConfig;
 }
 
+// Helper type to get config from module type
 // Helper type to get config from module type
 export type ConfigForModule<T extends ModuleType> = ModuleTypeConfigMap[T];
 
@@ -124,6 +138,15 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
       { platform: 'twitter', url: 'https://twitter.com/magnusfroste' },
     ],
   },
+  blog: {
+    posts_per_page: 10,
+    show_reading_time: true,
+    show_author: true,
+    show_categories: true,
+    default_cover_image: '',
+    enable_comments: false,
+    date_format: 'MMMM d, yyyy',
+  },
 };
 
 // Type guard for module config
@@ -141,4 +164,8 @@ export const isHeaderModuleConfig = (config: ModuleConfigType): config is Header
 
 export const isFooterModuleConfig = (config: ModuleConfigType): config is FooterModuleConfig => {
   return 'copyright_text' in config;
+};
+
+export const isBlogModuleConfig = (config: ModuleConfigType): config is BlogModuleConfig => {
+  return 'posts_per_page' in config && 'show_reading_time' in config;
 };

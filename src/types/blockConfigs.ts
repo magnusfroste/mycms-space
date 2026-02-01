@@ -203,6 +203,21 @@ export interface ParallaxSectionBlockConfig {
   height?: 'sm' | 'md' | 'lg';
 }
 
+// Blog Block Config
+export interface BlogBlockConfig {
+  display_mode?: 'latest' | 'featured' | 'category' | 'selected';
+  layout?: 'grid' | 'list' | 'cards' | 'magazine';
+  posts_count?: number;
+  show_excerpt?: boolean;
+  show_reading_time?: boolean;
+  show_categories?: boolean;
+  show_author?: boolean;
+  category_filter?: string;
+  selected_post_ids?: string[];
+  heading?: string;
+  subheading?: string;
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -221,7 +236,8 @@ export type BlockConfigType =
   | TestimonialCarouselBlockConfig
   | MarqueeBlockConfig
   | VideoHeroBlockConfig
-  | ParallaxSectionBlockConfig;
+  | ParallaxSectionBlockConfig
+  | BlogBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -242,6 +258,7 @@ export interface BlockTypeConfigMap {
   'marquee': MarqueeBlockConfig;
   'video-hero': VideoHeroBlockConfig;
   'parallax-section': ParallaxSectionBlockConfig;
+  'blog': BlogBlockConfig;
 }
 
 // Helper type to get config type from block type
@@ -332,5 +349,16 @@ export const defaultBlockConfigs: BlockTypeConfigMap = {
   'parallax-section': {
     title: 'Parallax Title',
     height: 'md',
+  },
+  'blog': {
+    display_mode: 'latest',
+    layout: 'grid',
+    posts_count: 6,
+    show_excerpt: true,
+    show_reading_time: true,
+    show_categories: true,
+    show_author: false,
+    heading: 'Latest Posts',
+    subheading: '',
   },
 };
