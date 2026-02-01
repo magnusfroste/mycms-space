@@ -1,6 +1,7 @@
 // ============================================
 // Portfolio Settings Editor
-// Inline editing for portfolio section (title, description, categories)
+// Inline editing for portfolio section (title, description)
+// Note: Categories moved to Projects Module Settings
 // ============================================
 
 import React from 'react';
@@ -9,9 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { usePortfolioSettings, useUpdatePortfolioSettings } from '@/models/portfolioSettings';
-import CategoryManager from './CategoryManager';
 
 const PortfolioSettingsEditor: React.FC = () => {
   const { data: settings, isLoading: settingsLoading } = usePortfolioSettings();
@@ -73,11 +72,6 @@ const PortfolioSettingsEditor: React.FC = () => {
           />
         </div>
       </div>
-
-      <Separator />
-
-      {/* Category Management */}
-      <CategoryManager />
     </div>
   );
 };

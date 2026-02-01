@@ -4,15 +4,17 @@
 // ============================================
 
 import React from 'react';
-import { FolderOpen, LayoutGrid, Power } from 'lucide-react';
+import { FolderOpen, LayoutGrid, Power, Tags } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useProjectsModule, useUpdateProjectsModule } from '@/models/modules';
 import type { ProjectsModuleConfig } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
+import CategoryManager from './block-editor/CategoryManager';
 
 const layoutOptions = [
   { value: 'alternating', label: 'Alternerande (vänster/höger)' },
@@ -157,6 +159,22 @@ const ProjectsModuleSettings: React.FC = () => {
               onCheckedChange={(checked) => handleConfigUpdate('link_to_detail_pages', checked)}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Category Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Tags className="h-5 w-5" />
+            Kategorier
+          </CardTitle>
+          <CardDescription>
+            Skapa och hantera kategorier för att organisera projekt
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CategoryManager />
         </CardContent>
       </Card>
 
