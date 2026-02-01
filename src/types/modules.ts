@@ -102,14 +102,16 @@ export const integrationsMeta: IntegrationMeta[] = [
     name: 'OpenAI',
     description: 'Direct integration with OpenAI GPT models',
     icon: 'Bot',
-    available: false,
+    available: true,
+    docs: 'https://platform.openai.com/docs',
   },
   {
     type: 'gemini',
     name: 'Google Gemini',
     description: 'Direct integration with Google Gemini models',
     icon: 'Sparkles',
-    available: false,
+    available: true,
+    docs: 'https://ai.google.dev/docs',
   },
   {
     type: 'ollama',
