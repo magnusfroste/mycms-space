@@ -20,5 +20,6 @@ export { default as BentoItemEditor } from './BentoItemEditor';
 export { default as StatsItemEditor } from './StatsItemEditor';
 export { default as TestimonialItemEditor } from './TestimonialItemEditor';
 export { default as ProjectCategorySelectInline } from './ProjectCategorySelectInline';
+export { default as CategoryManagerInline } from './CategoryManagerInline';
 export type { FeatureItem } from './FeatureListEditor';
 export type { SkillItem } from './SkillListEditor';

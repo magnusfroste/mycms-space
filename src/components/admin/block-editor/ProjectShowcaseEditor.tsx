@@ -21,7 +21,8 @@ import {
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus } from 'lucide-react';
+import { Plus, Tags } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
@@ -29,6 +30,7 @@ import { useUpdateBlockConfig } from '@/models/blockContent';
 import { useQueryClient } from '@tanstack/react-query';
 import SortableProjectItem from './SortableProjectItem';
 import ProjectForm from './ProjectForm';
+import CategoryManagerInline from './CategoryManagerInline';
 
 interface ProjectShowcaseEditorProps {
   config: ProjectShowcaseBlockConfig;
@@ -38,6 +40,7 @@ interface ProjectShowcaseEditorProps {
 
 type ProjectItem = NonNullable<ProjectShowcaseBlockConfig['projects']>[number];
 type ProjectImage = ProjectItem['images'][number];
+type Category = NonNullable<ProjectShowcaseBlockConfig['categories']>[number];
 
 interface ProjectFormData {
   title: string;
@@ -337,6 +340,32 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
     })),
   });
 
+  // Category management handler
+  const handleCategoriesChange = (updatedCategories: Category[]) => {
+    if (!blockId) {
+      onChange({ ...config, categories: updatedCategories });
+      return;
+    }
+    
+    setIsSaving(true);
+    updateBlockConfig.mutate(
+      { blockId, config: { categories: updatedCategories } },
+      {
+        onSuccess: () => {
+          onChange({ ...config, categories: updatedCategories });
+          toast({ title: 'Kategorier sparade' });
+          setIsSaving(false);
+        },
+        onError: () => {
+          toast({ title: 'Kunde inte spara kategorier', variant: 'destructive' });
+          setIsSaving(false);
+        },
+      }
+    );
+  };
+
+  const [showCategories, setShowCategories] = useState(false);
+
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Hidden file input */}
@@ -347,6 +376,27 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
         onChange={handleFileChange}
         className="hidden"
       />
+
+      {/* Category Management Section */}
+      <Collapsible open={showCategories} onOpenChange={setShowCategories}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span className="flex items-center gap-2">
+              <Tags className="h-4 w-4" />
+              Hantera kategorier ({(config.categories || []).length})
+            </span>
+            <span className="text-muted-foreground text-xs">
+              {showCategories ? 'Dölj' : 'Visa'}
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <CategoryManagerInline
+            categories={config.categories || []}
+            onChange={handleCategoriesChange}
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
