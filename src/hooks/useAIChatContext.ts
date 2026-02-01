@@ -4,15 +4,22 @@
 // ============================================
 
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAIModule } from '@/models/modules';
-import { usePages, usePageBlocks } from '@/models';
+import { usePages } from '@/models';
 import { useBlogPosts } from '@/models/blog';
+import { supabase } from '@/integrations/supabase/client';
+import type { PageBlock } from '@/types';
 
 export interface AIContextData {
   pages: Array<{
     slug: string;
     title: string;
     content: string;
+    blocks: Array<{
+      type: string;
+      content: string;
+    }>;
   }>;
   blogs: Array<{
     slug: string;
@@ -23,14 +30,59 @@ export interface AIContextData {
 }
 
 /**
+ * Extract text content from a block config
+ */
+const extractBlockContent = (blockType: string, config: Record<string, unknown>): string => {
+  const parts: string[] = [];
+
+  // Common text fields across block types
+  const textFields = [
+    'title', 'subtitle', 'content', 'description', 'heading',
+    'text', 'quote', 'author', 'label', 'buttonText', 'ctaText',
+    'headline', 'subheadline', 'body', 'caption', 'name', 'role',
+    'testimonial', 'message', 'placeholder', 'welcomeMessage'
+  ];
+
+  // Extract simple text fields
+  for (const field of textFields) {
+    if (config[field] && typeof config[field] === 'string') {
+      parts.push(config[field] as string);
+    }
+  }
+
+  // Extract from arrays (items, features, skills, stats, etc.)
+  const arrayFields = [
+    'items', 'features', 'skills', 'stats', 'testimonials',
+    'expertise', 'areas', 'links', 'buttons', 'quickActions'
+  ];
+
+  for (const field of arrayFields) {
+    if (Array.isArray(config[field])) {
+      for (const item of config[field] as Array<Record<string, unknown>>) {
+        if (typeof item === 'object' && item !== null) {
+          for (const subField of textFields) {
+            if (item[subField] && typeof item[subField] === 'string') {
+              parts.push(item[subField] as string);
+            }
+          }
+        } else if (typeof item === 'string') {
+          parts.push(item);
+        }
+      }
+    }
+  }
+
+  // Filter out empty strings and join
+  return parts.filter(p => p.trim()).join(' | ');
+};
+
+/**
  * Hook to fetch and compile AI context from selected pages and blog posts
  */
 export const useAIChatContext = () => {
   const { config: aiConfig, isLoading: aiLoading } = useAIModule();
   const { data: allPages = [], isLoading: pagesLoading } = usePages();
   const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts();
-
-  const isLoading = aiLoading || pagesLoading || postsLoading;
 
   // Get selected page slugs
   const selectedPageSlugs = aiConfig?.selected_page_slugs || [];
@@ -44,35 +96,77 @@ export const useAIChatContext = () => {
   const selectedPages = useMemo(() => {
     if (!includePageContext) return [];
     if (selectedPageSlugs.length === 0) {
-      // If no specific pages selected, include all enabled pages
       return allPages.filter((p) => p.enabled);
     }
     return allPages.filter((p) => selectedPageSlugs.includes(p.slug) && p.enabled);
   }, [includePageContext, selectedPageSlugs, allPages]);
+
+  // Fetch all blocks for selected pages
+  const pageSlugsToFetch = selectedPages.map(p => p.slug);
+  
+  const { data: allBlocks = [], isLoading: blocksLoading } = useQuery({
+    queryKey: ['page-blocks-context', pageSlugsToFetch],
+    queryFn: async () => {
+      if (pageSlugsToFetch.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('page_blocks')
+        .select('*')
+        .in('page_slug', pageSlugsToFetch)
+        .eq('enabled', true)
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching blocks for context:', error);
+        return [];
+      }
+
+      return data as PageBlock[];
+    },
+    enabled: includePageContext && pageSlugsToFetch.length > 0,
+  });
+
+  const isLoading = aiLoading || pagesLoading || postsLoading || blocksLoading;
 
   // Filter blog posts based on selection
   const selectedBlogs = useMemo(() => {
     if (!includeBlogContext) return [];
     const publishedPosts = allPosts.filter((p) => p.status === 'published');
     if (selectedBlogIds.length === 0) {
-      // If no specific blogs selected, include all published
       return publishedPosts;
     }
     return publishedPosts.filter((p) => selectedBlogIds.includes(p.id));
   }, [includeBlogContext, selectedBlogIds, allPosts]);
 
-  // Compile context data
+  // Compile context data with block content
   const contextData = useMemo((): AIContextData | null => {
     if (!includePageContext && !includeBlogContext) {
       return null;
     }
 
+    // Group blocks by page slug
+    const blocksByPage = new Map<string, PageBlock[]>();
+    for (const block of allBlocks) {
+      const existing = blocksByPage.get(block.page_slug) || [];
+      existing.push(block);
+      blocksByPage.set(block.page_slug, existing);
+    }
+
     return {
-      pages: selectedPages.map((page) => ({
-        slug: page.slug,
-        title: page.title,
-        content: page.description || '',
-      })),
+      pages: selectedPages.map((page) => {
+        const pageBlocks = blocksByPage.get(page.slug) || [];
+        const blocksContent = pageBlocks.map(block => ({
+          type: block.block_type,
+          content: extractBlockContent(block.block_type, block.block_config || {}),
+        })).filter(b => b.content.trim());
+
+        return {
+          slug: page.slug,
+          title: page.title,
+          content: page.description || '',
+          blocks: blocksContent,
+        };
+      }),
       blogs: selectedBlogs.map((post) => ({
         slug: post.slug,
         title: post.title,
@@ -80,16 +174,17 @@ export const useAIChatContext = () => {
         content: post.content,
       })),
     };
-  }, [includePageContext, includeBlogContext, selectedPages, selectedBlogs]);
+  }, [includePageContext, includeBlogContext, selectedPages, selectedBlogs, allBlocks]);
 
   // Create a summary string for quick context
   const contextSummary = useMemo(() => {
     if (!contextData) return '';
 
     const parts: string[] = [];
+    const totalBlocks = contextData.pages.reduce((sum, p) => sum + p.blocks.length, 0);
 
     if (contextData.pages.length > 0) {
-      parts.push(`${contextData.pages.length} page(s)`);
+      parts.push(`${contextData.pages.length} page(s), ${totalBlocks} block(s)`);
     }
     if (contextData.blogs.length > 0) {
       parts.push(`${contextData.blogs.length} blog post(s)`);
