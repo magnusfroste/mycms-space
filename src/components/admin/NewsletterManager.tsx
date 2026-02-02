@@ -3,9 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RichTextEditor } from '@/components/common';
 import {
   Table,
   TableBody,
@@ -197,18 +198,31 @@ export default function NewsletterManager() {
                 <CardTitle>{editingCampaign ? 'Redigera kampanj' : 'Ny kampanj'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Input
-                  placeholder="Ämne"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                />
-                <Textarea
-                  placeholder="Innehåll (HTML)"
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  rows={10}
-                  className="font-mono text-sm"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="campaign-subject">Ämne</Label>
+                  <Input
+                    id="campaign-subject"
+                    placeholder="Nyhetsbrevets ämne..."
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Innehåll</Label>
+                  <RichTextEditor
+                    value={formData.content}
+                    onChange={(content) => setFormData({ ...formData, content })}
+                    title={formData.subject}
+                    placeholder="Skriv ditt nyhetsbrev i Markdown..."
+                    minHeight="min-h-[300px]"
+                    showAI={true}
+                    aiMode="content"
+                    aiContext="newsletter email content"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Använd Markdown för formatering. HTML stöds också.
+                  </p>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={editingCampaign ? handleUpdateCampaign : handleCreateCampaign}
