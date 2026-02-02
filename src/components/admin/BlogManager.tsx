@@ -254,7 +254,7 @@ const BlogManager = () => {
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="z-[100]">
                                 <DropdownMenuItem onClick={() => setEditingPostId(post.id)}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
