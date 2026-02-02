@@ -235,14 +235,20 @@ export const NavSettings = () => {
           <p className="text-muted-foreground">Manage header navigation links</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog 
+          open={isAddDialogOpen} 
+          onOpenChange={(open) => {
+            if (open) resetForm();
+            setIsAddDialogOpen(open);
+          }}
+        >
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Add Link
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby={undefined}>
             <DialogHeader>
               <DialogTitle>Add Navigation Link</DialogTitle>
             </DialogHeader>
@@ -288,7 +294,7 @@ export const NavSettings = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Edit Navigation Link</DialogTitle>
           </DialogHeader>
