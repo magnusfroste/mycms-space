@@ -15,12 +15,21 @@ interface MarkdownContentProps {
   compact?: boolean;
 }
 
+// Preprocess content to preserve extra blank lines as visible spacing
+const preprocessContent = (text: string): string => {
+  // Convert 3+ consecutive newlines (2+ blank lines) to paragraph + spacer
+  // This preserves intentional extra spacing in the source
+  return text.replace(/\n{3,}/g, '\n\n&nbsp;\n\n');
+};
+
 const MarkdownContent: React.FC<MarkdownContentProps> = ({
   content,
   className,
   compact = false,
 }) => {
   if (!content) return null;
+
+  const processedContent = preprocessContent(content);
 
   return (
     <div
@@ -50,7 +59,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
         remarkPlugins={[remarkBreaks]} 
         rehypePlugins={[rehypeRaw]}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
