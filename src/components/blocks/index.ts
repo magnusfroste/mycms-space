@@ -15,3 +15,4 @@ export { default as CtaBannerBlock } from './CtaBannerBlock';
 export { default as SpacerBlock } from './SpacerBlock';
 export { default as ContactFormBlock } from './ContactFormBlock';
 export { default as BlogBlock } from './BlogBlock';
+export { default as SectionDivider } from './SectionDivider';

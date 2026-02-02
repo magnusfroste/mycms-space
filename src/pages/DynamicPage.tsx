@@ -41,8 +41,12 @@ const DynamicPage = () => {
             <Skeleton className="h-48 w-full" />
           </div>
         ) : (
-          blocks?.map((block) => (
-            <BlockRenderer key={block.id} block={block} />
+          blocks?.map((block, index) => (
+            <BlockRenderer 
+              key={block.id} 
+              block={block} 
+              isLast={index === blocks.length - 1} 
+            />
           ))
         )}
       </main>
