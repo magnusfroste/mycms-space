@@ -29,17 +29,13 @@ import {
   Search as SearchIcon,
   Image as ImageIcon,
   Calendar as CalendarIcon,
-  Eye,
   Star,
-  X,
   Check,
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
-import AITextEnhance from './AITextEnhance';
-import BlogAIAssist from './BlogAIAssist';
+import { RichTextEditor, AITextActions, MarkdownContent } from '@/components/common';
 import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
-import ReactMarkdown from 'react-markdown';
 
 interface BlogPostEditorProps {
   post?: BlogPost | null;
@@ -235,53 +231,27 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="content">Content (Markdown)</Label>
-                  <div className="flex items-center gap-1">
-                    <BlogAIAssist
-                      title={title}
-                      content={content}
-                      onContentChange={setContent}
-                    />
-                    <AITextEnhance
-                      text={content}
-                      onTextChange={setContent}
-                      context="Blog post content in Markdown format"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      {showPreview ? 'Edit' : 'Preview'}
-                    </Button>
-                  </div>
-                </div>
-                {showPreview ? (
-                  <Card className="min-h-[400px]">
-                    <CardContent className="prose prose-sm dark:prose-invert max-w-none p-4">
-                      <ReactMarkdown>{content || '*No content yet*'}</ReactMarkdown>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Textarea
-                    id="content"
-                    placeholder="Write your post content in Markdown..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="min-h-[400px] font-mono text-sm"
-                  />
-                )}
+                <Label htmlFor="content">Content (Markdown)</Label>
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  title={title}
+                  placeholder="Write your post content in Markdown..."
+                  minHeight="min-h-[400px]"
+                  showAI
+                  aiMode="both"
+                  aiContext="Blog post content in Markdown format"
+                />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="excerpt">Excerpt</Label>
-                  <AITextEnhance
+                  <AITextActions
                     text={excerpt}
                     onTextChange={setExcerpt}
                     context="Blog post excerpt/summary"
+                    mode="text"
                   />
                 </div>
                 <Textarea

@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { parseMarkdown } from '@/lib/markdown';
+import { MarkdownContent } from '@/components/common';
 
 interface ResponseModalProps {
   isOpen: boolean;
@@ -51,10 +50,7 @@ const ResponseModal: React.FC<ResponseModalProps> = ({
         </DialogHeader>
         
         <div className="overflow-y-auto max-h-[60vh] pr-2">
-          <div 
-            className="prose prose-sm max-w-none text-foreground leading-relaxed text-left"
-            dangerouslySetInnerHTML={{ __html: parseMarkdown(content) }}
-          />
+          <MarkdownContent content={content} />
         </div>
       </DialogContent>
     </Dialog>

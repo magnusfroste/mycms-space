@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Check, X, Plus } from 'lucide-react';
-import AITextEnhance from './AITextEnhance';
+import { AITextActions } from '@/components/common';
 import ProjectImageGallery from './ProjectImageGallery';
 import ProjectCategorySelectInline from './ProjectCategorySelectInline';
 import type { ProjectImage } from '@/types';
@@ -89,10 +89,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs">Description *</Label>
-            <AITextEnhance
+            <AITextActions
               text={data.description}
               onTextChange={(text) => onChange({ ...data, description: text })}
               context="project description"
+              mode="text"
             />
           </div>
           <Textarea
@@ -116,10 +117,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs">Problem Statement</Label>
-            <AITextEnhance
+            <AITextActions
               text={data.problem_statement}
               onTextChange={(text) => onChange({ ...data, problem_statement: text })}
               context="problem statement"
+              mode="text"
             />
           </div>
           <Textarea
@@ -133,10 +135,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs">Why was it built?</Label>
-            <AITextEnhance
+            <AITextActions
               text={data.why_built}
               onTextChange={(text) => onChange({ ...data, why_built: text })}
               context="project motivation"
+              mode="text"
             />
           </div>
           <Textarea

@@ -4,7 +4,7 @@
 // ============================================
 
 import React from "react";
-import { parseMarkdown } from "@/lib/markdown";
+import { MarkdownContent } from "@/components/common";
 import type { Message } from "./types";
 
 interface ChatMessageProps {
@@ -27,10 +27,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         {message.isUser ? (
           <p className="text-sm leading-relaxed text-left">{message.text}</p>
         ) : (
-          <div
-            className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-            dangerouslySetInnerHTML={{ __html: parseMarkdown(message.text) }}
-          />
+          <MarkdownContent content={message.text} compact className="text-left" />
         )}
       </div>
     </div>
