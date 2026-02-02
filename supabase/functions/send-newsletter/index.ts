@@ -10,6 +10,7 @@ const corsHeaders = {
 
 interface SendNewsletterRequest {
   campaignId: string;
+  fromEmail?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,11 +33,14 @@ const handler = async (req: Request): Promise<Response> => {
     const resend = new Resend(RESEND_API_KEY);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { campaignId }: SendNewsletterRequest = await req.json();
+    const { campaignId, fromEmail }: SendNewsletterRequest = await req.json();
 
     if (!campaignId) {
       throw new Error("Campaign ID is required");
     }
+
+    // Use provided fromEmail or fallback to default
+    const senderEmail = fromEmail || "newsletter@froste.eu";
 
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
@@ -86,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       const emailPromises = batch.map((subscriber) =>
         resend.emails.send({
-          from: "Newsletter <newsletter@froste.eu>",
+          from: `Newsletter <${senderEmail}>`,
           to: [subscriber.email],
           subject: campaign.subject,
           html: campaign.content,
