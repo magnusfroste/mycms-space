@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Expand } from 'lucide-react';
-import { parseMarkdown } from '@/lib/markdown';
+import { MarkdownContent } from '@/components/common';
 
 interface TruncatedMessageProps {
   content: string;
@@ -38,10 +37,7 @@ const TruncatedMessage: React.FC<TruncatedMessageProps> = ({
 
   return (
     <div className="space-y-3">
-      <div 
-        className="text-sm leading-relaxed prose prose-sm max-w-none text-left"
-        dangerouslySetInnerHTML={{ __html: parseMarkdown(truncatedContent) }}
-      />
+      <MarkdownContent content={truncatedContent} compact className="text-left" />
       
       {content.length > maxLength && (
         <Button

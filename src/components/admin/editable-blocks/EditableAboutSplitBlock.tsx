@@ -9,7 +9,7 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { iconMap } from '@/lib/constants/iconMaps';
 import type { AboutMeSettings } from '@/types';
 import EditableText from './EditableText';
-import AITextEnhance from '../block-editor/AITextEnhance';
+import { AITextActions } from '@/components/common';
 
 interface EditableAboutSplitBlockProps {
   config: Record<string, unknown>;
@@ -64,10 +64,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
             <div className="space-y-1">
               {isEditMode && (
                 <div className="flex justify-end">
-                  <AITextEnhance
+                  <AITextActions
                     text={getValue('intro_text', '')}
                     onTextChange={(value) => onChange({ intro_text: value })}
                     context="intro text for About Me section"
+                    mode="text"
                   />
                 </div>
               )}
@@ -85,10 +86,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
             <div className="space-y-1">
               {isEditMode && (
                 <div className="flex justify-end">
-                  <AITextEnhance
+                  <AITextActions
                     text={getValue('additional_text', '')}
                     onTextChange={(value) => onChange({ additional_text: value })}
                     context="additional text for About Me section"
+                    mode="text"
                   />
                 </div>
               )}
@@ -122,10 +124,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                 <div className="space-y-1">
                   {isEditMode && (
                     <div className="flex justify-end">
-                      <AITextEnhance
+                      <AITextActions
                         text={getValue('skill1_description', '')}
                         onTextChange={(value) => onChange({ skill1_description: value })}
                         context="skill description"
+                        mode="text"
                       />
                     </div>
                   )}
@@ -159,10 +162,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                 <div className="space-y-1">
                   {isEditMode && (
                     <div className="flex justify-end">
-                      <AITextEnhance
+                      <AITextActions
                         text={getValue('skill2_description', '')}
                         onTextChange={(value) => onChange({ skill2_description: value })}
                         context="skill description"
+                        mode="text"
                       />
                     </div>
                   )}
@@ -196,10 +200,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                 <div className="space-y-1">
                   {isEditMode && (
                     <div className="flex justify-end">
-                      <AITextEnhance
+                      <AITextActions
                         text={getValue('skill3_description', '')}
                         onTextChange={(value) => onChange({ skill3_description: value })}
                         context="skill description"
+                        mode="text"
                       />
                     </div>
                   )}

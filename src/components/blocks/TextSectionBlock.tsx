@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { MarkdownContent } from '@/components/common';
 
 interface TextSectionBlockConfig {
   title?: string;
@@ -43,12 +44,12 @@ const TextSectionBlock: React.FC<TextSectionBlockProps> = ({ config }) => {
             </h2>
           )}
           {content && (
-            <p 
-              className="text-lg md:text-xl leading-relaxed text-muted-foreground animate-fade-in"
+            <div 
+              className="animate-fade-in text-lg md:text-xl leading-relaxed text-muted-foreground"
               style={{ animationDelay: '0.1s' }}
             >
-              {content}
-            </p>
+              <MarkdownContent content={content} />
+            </div>
           )}
         </div>
       </div>

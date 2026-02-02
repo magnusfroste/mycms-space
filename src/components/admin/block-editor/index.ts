@@ -15,7 +15,6 @@ export { default as ChatWidgetEditor } from './ChatWidgetEditor';
 export { default as ProjectShowcaseEditor } from './ProjectShowcaseEditor';
 export { default as ProjectForm } from './ProjectForm';
 export { default as ProjectImageGallery } from './ProjectImageGallery';
-export { default as AITextEnhance } from './AITextEnhance';
 export { default as BentoItemEditor } from './BentoItemEditor';
 export { default as StatsItemEditor } from './StatsItemEditor';
 export { default as TestimonialItemEditor } from './TestimonialItemEditor';
