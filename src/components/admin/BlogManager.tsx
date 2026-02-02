@@ -25,8 +25,6 @@ import {
   useBlogCategories,
   useDeleteBlogPost,
   useDeleteBlogCategory,
-  useBlogPostsSubscription,
-  useBlogCategoriesSubscription,
 } from '@/models/blog';
 import { format } from 'date-fns';
 import {
@@ -64,9 +62,8 @@ const BlogManager = () => {
   const deletePost = useDeleteBlogPost();
   const deleteCategory = useDeleteBlogCategory();
 
-  // Realtime subscriptions
-  useBlogPostsSubscription();
-  useBlogCategoriesSubscription();
+  // Note: Realtime subscriptions removed to prevent re-render issues with dropdowns
+  // React Query already handles cache updates after mutations
 
   // Filter posts based on search
   const filteredPosts = posts.filter(
