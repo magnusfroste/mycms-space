@@ -8,7 +8,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -25,6 +24,7 @@ import type {
   HeroBlockConfig,
   AboutSplitBlockConfig,
 } from '@/types/blockConfigs';
+import { RichTextEditor } from '@/components/common';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
 import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
@@ -90,11 +90,12 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         </div>
         <div className="space-y-2">
           <Label>Tagline</Label>
-          <Textarea
+          <RichTextEditor
             value={heroConfig.tagline || ''}
-            onChange={(e) => onBlockConfigChange({ tagline: e.target.value })}
+            onChange={(value) => onBlockConfigChange({ tagline: value })}
             placeholder="Your tagline..."
-            rows={2}
+            minHeight="min-h-[80px]"
+            showAI={false}
           />
         </div>
         <Separator />
@@ -147,18 +148,24 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
         </div>
         <div className="space-y-2">
           <Label>Introduction Text</Label>
-          <Textarea
+          <RichTextEditor
             value={aboutConfig.intro_text || ''}
-            onChange={(e) => onBlockConfigChange({ intro_text: e.target.value })}
-            rows={4}
+            onChange={(value) => onBlockConfigChange({ intro_text: value })}
+            placeholder="Write introduction..."
+            minHeight="min-h-[120px]"
+            showAI
+            aiMode="text"
           />
         </div>
         <div className="space-y-2">
           <Label>Additional Text</Label>
-          <Textarea
+          <RichTextEditor
             value={aboutConfig.additional_text || ''}
-            onChange={(e) => onBlockConfigChange({ additional_text: e.target.value })}
-            rows={4}
+            onChange={(value) => onBlockConfigChange({ additional_text: value })}
+            placeholder="Write additional text..."
+            minHeight="min-h-[120px]"
+            showAI
+            aiMode="text"
           />
         </div>
         <ImageUpload
@@ -189,10 +196,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       </div>
       <div className="space-y-2">
         <Label>Content</Label>
-        <Textarea
+        <RichTextEditor
           value={(config.content as string) || ''}
-          onChange={(e) => onBlockConfigChange({ content: e.target.value })}
-          rows={6}
+          onChange={(value) => onBlockConfigChange({ content: value })}
+          title={(config.title as string) || ''}
+          placeholder="Write content..."
+          minHeight="min-h-[200px]"
+          showAI
+          aiMode="content"
         />
       </div>
       <div className="space-y-2">
@@ -225,10 +236,13 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       </div>
       <div className="space-y-2">
         <Label>Description</Label>
-        <Textarea
+        <RichTextEditor
           value={(config.description as string) || ''}
-          onChange={(e) => onBlockConfigChange({ description: e.target.value })}
-          rows={3}
+          onChange={(value) => onBlockConfigChange({ description: value })}
+          placeholder="Write description..."
+          minHeight="min-h-[100px]"
+          showAI
+          aiMode="text"
         />
       </div>
       <div className="space-y-2">
@@ -260,10 +274,14 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       </div>
       <div className="space-y-2">
         <Label>Content</Label>
-        <Textarea
+        <RichTextEditor
           value={(config.content as string) || ''}
-          onChange={(e) => onBlockConfigChange({ content: e.target.value })}
-          rows={4}
+          onChange={(value) => onBlockConfigChange({ content: value })}
+          title={(config.title as string) || ''}
+          placeholder="Write content..."
+          minHeight="min-h-[150px]"
+          showAI
+          aiMode="text"
         />
       </div>
       <ImageUpload

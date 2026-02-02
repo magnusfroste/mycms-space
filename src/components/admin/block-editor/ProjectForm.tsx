@@ -6,11 +6,10 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Check, X, Plus } from 'lucide-react';
-import { AITextActions } from '@/components/common';
+import { RichTextEditor } from '@/components/common';
 import ProjectImageGallery from './ProjectImageGallery';
 import ProjectCategorySelectInline from './ProjectCategorySelectInline';
 import type { ProjectImage } from '@/types';
@@ -87,20 +86,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Description *</Label>
-            <AITextActions
-              text={data.description}
-              onTextChange={(text) => onChange({ ...data, description: text })}
-              context="project description"
-              mode="text"
-            />
-          </div>
-          <Textarea
+          <Label className="text-xs">Description *</Label>
+          <RichTextEditor
             value={data.description}
-            onChange={(e) => onChange({ ...data, description: e.target.value })}
+            onChange={(text) => onChange({ ...data, description: text })}
+            title={data.title}
             placeholder="Short description..."
-            rows={4}
+            minHeight="min-h-[120px]"
+            showAI
+            aiMode="text"
+            aiContext="project description"
           />
         </div>
 
@@ -115,38 +110,30 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Problem Statement</Label>
-            <AITextActions
-              text={data.problem_statement}
-              onTextChange={(text) => onChange({ ...data, problem_statement: text })}
-              context="problem statement"
-              mode="text"
-            />
-          </div>
-          <Textarea
+          <Label className="text-xs">Problem Statement</Label>
+          <RichTextEditor
             value={data.problem_statement}
-            onChange={(e) => onChange({ ...data, problem_statement: e.target.value })}
+            onChange={(text) => onChange({ ...data, problem_statement: text })}
+            title={data.title}
             placeholder="What problem does this project solve?"
-            rows={3}
+            minHeight="min-h-[100px]"
+            showAI
+            aiMode="text"
+            aiContext="problem statement"
           />
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Why was it built?</Label>
-            <AITextActions
-              text={data.why_built}
-              onTextChange={(text) => onChange({ ...data, why_built: text })}
-              context="project motivation"
-              mode="text"
-            />
-          </div>
-          <Textarea
+          <Label className="text-xs">Why was it built?</Label>
+          <RichTextEditor
             value={data.why_built}
-            onChange={(e) => onChange({ ...data, why_built: e.target.value })}
+            onChange={(text) => onChange({ ...data, why_built: text })}
+            title={data.title}
             placeholder="Motivation and goals..."
-            rows={3}
+            minHeight="min-h-[100px]"
+            showAI
+            aiMode="text"
+            aiContext="project motivation"
           />
         </div>
 
