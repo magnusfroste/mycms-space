@@ -57,7 +57,8 @@ const BlogManager = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('posts');
   const [search, setSearch] = useState('');
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  // Store only the ID to avoid race conditions with realtime updates
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
@@ -121,12 +122,12 @@ const BlogManager = () => {
   };
 
   // Show editor if creating or editing
-  if (isCreatingPost || editingPost) {
+  if (isCreatingPost || editingPostId) {
     return (
       <BlogPostEditor
-        post={editingPost}
+        postId={editingPostId}
         onClose={() => {
-          setEditingPost(null);
+          setEditingPostId(null);
           setIsCreatingPost(false);
         }}
       />
@@ -254,7 +255,7 @@ const BlogManager = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setEditingPost(post)}>
+                                <DropdownMenuItem onClick={() => setEditingPostId(post.id)}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
