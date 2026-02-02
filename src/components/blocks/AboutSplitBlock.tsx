@@ -53,83 +53,77 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-            {/* Left Column - Image & Text */}
-            <div className="lg:col-span-5 space-y-8">
+          <div className="space-y-12">
+            {/* Top Row - Image + Intro Text Side by Side */}
+            <div 
+              className="flex flex-col sm:flex-row gap-6 lg:gap-10 items-start animate-fade-in"
+              style={{ animationDelay: '0.2s' }}
+            >
+              {/* Small Image */}
               {imageUrl && (
-                <div 
-                  className="relative group animate-fade-in"
-                  style={{ animationDelay: '0.2s' }}
-                >
-                  {/* Image Container */}
-                  <div className="relative rounded-3xl overflow-hidden">
-                    {/* Gradient Border Effect */}
-                    <div className="absolute -inset-px bg-gradient-primary rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    <div className="relative bg-card rounded-3xl overflow-hidden p-1">
+                <div className="relative group shrink-0">
+                  <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden">
+                    <div className="absolute -inset-px bg-gradient-primary rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="relative bg-card rounded-2xl overflow-hidden p-0.5 h-full">
                       <img 
                         src={imageUrl} 
                         alt={name || "Profile"} 
-                        className="w-full aspect-[4/5] object-cover rounded-2xl"
+                        className="w-full h-full object-cover rounded-xl"
                       />
-                      
-                      {/* Overlay on hover */}
-                      <div className="absolute inset-1 rounded-2xl bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
-                  
-                  {/* Floating Decoration */}
-                  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-2xl -z-10" />
+                  {/* Subtle Glow */}
+                  <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl -z-10" />
                 </div>
               )}
               
               {/* Text Content */}
-              <div 
-                className="space-y-6 animate-fade-in"
-                style={{ animationDelay: '0.3s' }}
-              >
-                <p className="text-lg text-foreground/80 leading-relaxed">
+              <div className="flex-1 space-y-4">
+                <p className="text-lg lg:text-xl text-foreground/90 leading-relaxed">
                   {introText}
                 </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  {additionalText}
-                </p>
+                {additionalText && additionalText !== 'Additional text...' && (
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    {additionalText}
+                  </p>
+                )}
               </div>
             </div>
             
-            {/* Right Column - Skills */}
-            <div className="lg:col-span-7 space-y-5">
-              {skills.map((skill, index) => (
-                <article 
-                  key={index} 
-                  className="group elevated-card p-6 animate-fade-in"
-                  style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-                >
-                  <div className="flex items-start gap-5">
-                    {/* Icon */}
-                    <div className="relative shrink-0">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                        <div className="text-primary">
-                          {iconMap[skill.icon] || iconMap['Monitor']}
+            {/* Skills Grid */}
+            {skills.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
+                {skills.map((skill, index) => (
+                  <article 
+                    key={index} 
+                    className="group elevated-card p-5 animate-fade-in"
+                    style={{ animationDelay: `${0.3 + index * 0.08}s` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Icon */}
+                      <div className="relative shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                          <div className="text-primary">
+                            {iconMap[skill.icon] || iconMap['Monitor']}
+                          </div>
                         </div>
+                        <div className="absolute inset-0 rounded-xl bg-primary/15 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
                       </div>
-                      {/* Glow */}
-                      <div className="absolute inset-0 rounded-2xl bg-primary/15 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                          {skill.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {skill.description}
+                        </p>
+                      </div>
                     </div>
-                    
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-xl mb-2 group-hover:text-primary transition-colors">
-                        {skill.title}
-                      </h3>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {skill.description}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
