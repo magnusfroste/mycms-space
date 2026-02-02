@@ -16,7 +16,13 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Info,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -242,6 +248,16 @@ const AITextActions: React.FC<AITextActionsProps> = ({
       
       {isExpanded && (
         <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-[200px]">
+              <p><strong>Draft, Outline, Intro, Conclusion</strong> använder titeln.</p>
+              <p className="mt-1 text-muted-foreground">Correct, Enhance, Expand arbetar på texten.</p>
+            </TooltipContent>
+          </Tooltip>
+
           {availableActions.map(([action, config]) => {
             const canExecute = config.category === 'text' ? canExecuteText : canExecuteContent;
             return (
