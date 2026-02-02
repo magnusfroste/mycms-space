@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, GripVertical, ExternalLink, Link } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -235,33 +235,27 @@ export const NavSettings = () => {
           <p className="text-muted-foreground">Manage header navigation links</p>
         </div>
 
-        <Dialog 
-          open={isAddDialogOpen} 
-          onOpenChange={(open) => {
-            if (open) resetForm();
-            setIsAddDialogOpen(open);
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Link
-            </Button>
-          </DialogTrigger>
-          <DialogContent aria-describedby={undefined}>
-            <DialogHeader>
-              <DialogTitle>Add Navigation Link</DialogTitle>
-            </DialogHeader>
-            <NavForm
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleAdd}
-              onCancel={() => { setIsAddDialogOpen(false); resetForm(); }}
-              isLoading={createNavLink.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Link
+        </Button>
       </div>
+
+      {/* Add Dialog - separate from trigger to avoid re-render issues */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>Add Navigation Link</DialogTitle>
+          </DialogHeader>
+          <NavForm
+            formData={formData}
+            setFormData={setFormData}
+            onSubmit={handleAdd}
+            onCancel={() => { setIsAddDialogOpen(false); resetForm(); }}
+            isLoading={createNavLink.isPending}
+          />
+        </DialogContent>
+      </Dialog>
 
       <DndContext
         sensors={sensors}
