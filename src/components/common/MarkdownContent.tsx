@@ -6,6 +6,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
 
 interface MarkdownContentProps {
@@ -27,7 +28,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
         'prose prose-sm dark:prose-invert max-w-none',
         // Base typography
         'prose-headings:font-semibold prose-headings:tracking-tight',
-        'prose-p:leading-relaxed',
+        'prose-p:leading-relaxed prose-p:mb-4',
         'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
         // Lists
         'prose-ul:my-2 prose-ol:my-2',
@@ -45,7 +46,12 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
         className
       )}
     >
-      <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
+      <ReactMarkdown 
+        remarkPlugins={[remarkBreaks]} 
+        rehypePlugins={[rehypeRaw]}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };
