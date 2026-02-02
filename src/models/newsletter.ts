@@ -126,7 +126,8 @@ export const useSendNewsletter = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: newsletterData.sendNewsletter,
+    mutationFn: ({ campaignId, fromEmail }: { campaignId: string; fromEmail?: string }) =>
+      newsletterData.sendNewsletter(campaignId, fromEmail),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: newsletterKeys.campaigns() });
     },

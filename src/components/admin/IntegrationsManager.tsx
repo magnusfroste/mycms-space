@@ -455,15 +455,42 @@ const FirecrawlConfig: React.FC = () => {
 // Resend Configuration Component
 // ============================================
 const ResendConfig: React.FC = () => {
+  const { toast } = useToast();
+  const [fromEmail, setFromEmail] = React.useState(() => 
+    localStorage.getItem('resend_from_email') || 'newsletter@froste.eu'
+  );
+
+  const handleSave = () => {
+    localStorage.setItem('resend_from_email', fromEmail);
+    toast({ title: 'From-adress sparad' });
+  };
+
   return (
     <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="resend_from_email">From-adress</Label>
+        <div className="flex gap-2">
+          <Input
+            id="resend_from_email"
+            type="email"
+            value={fromEmail}
+            onChange={(e) => setFromEmail(e.target.value)}
+            placeholder="newsletter@example.com"
+          />
+          <Button onClick={handleSave} size="sm">Spara</Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          E-postadressen som nyhetsbrev skickas från. Måste tillhöra en verifierad domän i Resend.
+        </p>
+      </div>
+
       <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
         <div className="flex items-start gap-2">
           <Key className="h-4 w-4 text-blue-600 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
+            <p className="font-medium text-blue-900 dark:text-blue-100">API Key</p>
             <p className="text-blue-700 dark:text-blue-300 mt-1">
-              Resend is configured with the secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>.
+              Konfigurerad via secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>
             </p>
           </div>
         </div>
@@ -475,7 +502,7 @@ const ResendConfig: React.FC = () => {
           <div className="text-sm">
             <p className="font-medium text-amber-900 dark:text-amber-100">⚠️ Viktigt: Verifiera din domän</p>
             <p className="text-amber-700 dark:text-amber-300 mt-1">
-              From-adressen i edge-funktionen (<code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs font-mono">newsletter@froste.eu</code>) måste tillhöra en verifierad domän i Resend.
+              From-adressen måste tillhöra en verifierad domän i Resend.
             </p>
             <a 
               href="https://resend.com/domains" 

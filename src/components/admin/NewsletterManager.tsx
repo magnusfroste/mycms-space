@@ -112,7 +112,9 @@ export default function NewsletterManager() {
 
   const handleSendCampaign = async (campaign: NewsletterCampaign) => {
     try {
-      const result = await sendNewsletter.mutateAsync(campaign.id);
+      // Get from email from localStorage (set in Integrations)
+      const fromEmail = localStorage.getItem('resend_from_email') || 'newsletter@froste.eu';
+      const result = await sendNewsletter.mutateAsync({ campaignId: campaign.id, fromEmail });
       if (result.success) {
         toast.success(`Nyhetsbrev skickat till ${result.sent} av ${result.total} prenumeranter`);
       } else {

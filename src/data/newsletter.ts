@@ -203,14 +203,17 @@ export const deleteCampaign = async (id: string): Promise<void> => {
 // Send Newsletter (via Edge Function)
 // ============================================
 
-export const sendNewsletter = async (campaignId: string): Promise<{
+export const sendNewsletter = async (
+  campaignId: string,
+  fromEmail?: string
+): Promise<{
   success: boolean;
   sent?: number;
   total?: number;
   error?: string;
 }> => {
   const { data, error } = await supabase.functions.invoke('send-newsletter', {
-    body: { campaignId },
+    body: { campaignId, fromEmail },
   });
 
   if (error) {
