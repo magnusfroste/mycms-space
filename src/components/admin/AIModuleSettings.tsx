@@ -195,29 +195,49 @@ const AIModuleSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* System Prompt */}
+      {/* System Prompt - Personality & Behavior */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            System Prompt
+            Persona & Instructions
           </CardTitle>
           <CardDescription>
-            Instructions sent to all AI providers (n8n, OpenAI, Gemini, Lovable)
+            Define your AI's personality, tone, and conversational style
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="system_prompt">AI Instructions</Label>
+            <Label htmlFor="system_prompt">System Prompt</Label>
             <Textarea
               id="system_prompt"
               value={config?.system_prompt || ''}
               onChange={(e) => handleConfigUpdate({ system_prompt: e.target.value })}
-              placeholder="You are a helpful AI assistant..."
-              className="min-h-[120px] font-mono text-sm"
+              placeholder={`# Role
+You are [Name], an AI assistant for [Your Website]...
+
+# Personality
+- Friendly and helpful
+- Professional but approachable
+
+# Conversational Style
+- Keep responses concise
+- Ask clarifying questions
+- Be pedagogical with examples`}
+              className="min-h-[200px] font-mono text-sm"
             />
+          </div>
+          
+          <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+            <p className="text-sm font-medium">💡 Separation of Concerns</p>
             <p className="text-xs text-muted-foreground">
-              This prompt is sent with every request to define the AI's personality and behavior.
+              <strong>Here (CMS):</strong> Personality, tone, instructions, showcase content
+            </p>
+            <p className="text-xs text-muted-foreground">
+              <strong>n8n/Backend:</strong> Tool definitions, function calls, technical workflow logic
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              This makes it easy to update the AI's personality without touching the backend workflow.
             </p>
           </div>
         </CardContent>
