@@ -28,6 +28,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const initialPlaceholder = typedConfig.initial_placeholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?";
   const activePlaceholder = typedConfig.active_placeholder || "How can Magnet help?";
   const webhookUrl = aiConfig?.webhook_url || 'https://agent.froste.eu/webhook/magnet';
+  const systemPrompt = aiConfig?.system_prompt || '';
 
   // Navigate to full chat after first user message
   useEffect(() => {
@@ -62,6 +63,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
             skipWebhook={true}
             showQuickActions={showQuickActions}
             siteContext={contextData}
+            systemPrompt={systemPrompt}
           />
         </div>
       </div>

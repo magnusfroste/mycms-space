@@ -138,6 +138,7 @@ const Chat = () => {
           siteContext={contextData}
           integration={selectedIntegration}
           integrationConfig={aiConfig?.integration}
+          systemPrompt={aiConfig?.system_prompt}
         />
       </main>
 

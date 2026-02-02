@@ -4,9 +4,10 @@
 // ============================================
 
 import React from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -191,6 +192,34 @@ const AIModuleSettings: React.FC = () => {
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* System Prompt */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            System Prompt
+          </CardTitle>
+          <CardDescription>
+            Instructions sent to all AI providers (n8n, OpenAI, Gemini, Lovable)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="system_prompt">AI Instructions</Label>
+            <Textarea
+              id="system_prompt"
+              value={config?.system_prompt || ''}
+              onChange={(e) => handleConfigUpdate({ system_prompt: e.target.value })}
+              placeholder="You are a helpful AI assistant..."
+              className="min-h-[120px] font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              This prompt is sent with every request to define the AI's personality and behavior.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

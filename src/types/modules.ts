@@ -199,6 +199,9 @@ export interface AIModuleConfig {
   active_integration: AIIntegrationType;
   integration: AIIntegration;
   
+  // System prompt (sent to all providers)
+  system_prompt: string;
+  
   // Legacy fields (for backwards compatibility)
   webhook_url?: string;
   provider?: 'n8n' | 'custom' | 'lovable';
@@ -295,6 +298,7 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
   ai: {
     active_integration: 'n8n',
     integration: defaultIntegrations.n8n,
+    system_prompt: `You are Magnet, a helpful AI assistant for Magnus Froste's website. You answer questions clearly and concisely. Be friendly, professional, and helpful.`,
     webhook_url: '',
     provider: 'n8n',
     include_page_context: false,
