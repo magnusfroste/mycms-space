@@ -1,6 +1,6 @@
-
 {
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/sitemap-dynamic" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "buildCommand": "npm run build",

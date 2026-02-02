@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/common/SEOHead';
 
 const BlogArchive = () => {
   const [search, setSearch] = useState('');
@@ -35,6 +36,10 @@ const BlogArchive = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead 
+        title="Blog"
+        description="Thoughts, ideas, and insights on technology, design, AI, and innovation."
+      />
       <Header />
       <main className="flex-1">
         <div className="container px-4 py-16">

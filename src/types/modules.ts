@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -235,17 +235,6 @@ export interface AnalyticsModuleConfig {
   track_chat_sessions: boolean;
 }
 
-// Blog Module Config
-export interface BlogModuleConfig {
-  posts_per_page: number;
-  show_reading_time: boolean;
-  show_author: boolean;
-  show_categories: boolean;
-  default_cover_image: string;
-  enable_comments: boolean;
-  date_format: string;
-}
-
 // Header Module Config
 export interface HeaderModuleConfig {
   logo_text: string;
@@ -268,6 +257,28 @@ export interface FooterModuleConfig {
   social_links: SocialLink[];
 }
 
+// Blog Module Config
+export interface BlogModuleConfig {
+  posts_per_page: number;
+  show_reading_time: boolean;
+  show_author: boolean;
+  show_categories: boolean;
+  default_cover_image: string;
+  enable_comments: boolean;
+  date_format: string;
+}
+
+// SEO Module Config
+export interface SEOModuleConfig {
+  site_title: string;
+  title_template: string;
+  site_description: string;
+  site_url: string;
+  default_og_image: string;
+  twitter_handle: string;
+  linkedin_url: string;
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -276,7 +287,8 @@ export type ModuleConfigType =
   | AnalyticsModuleConfig
   | HeaderModuleConfig
   | FooterModuleConfig
-  | BlogModuleConfig;
+  | BlogModuleConfig
+  | SEOModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -287,6 +299,7 @@ export interface ModuleTypeConfigMap {
   header: HeaderModuleConfig;
   footer: FooterModuleConfig;
   blog: BlogModuleConfig;
+  seo: SEOModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -345,6 +358,15 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
     enable_comments: false,
     date_format: 'MMMM d, yyyy',
   },
+  seo: {
+    site_title: 'Magnus Froste',
+    title_template: '%s | Magnus Froste',
+    site_description: 'Innovation Strategist and Agentic AI Expert',
+    site_url: 'https://www.froste.eu',
+    default_og_image: '/og-image.png',
+    twitter_handle: '@magnusfroste',
+    linkedin_url: 'https://linkedin.com/in/magnusfroste',
+  },
 };
 
 // Type guard for module config
@@ -366,4 +388,8 @@ export const isFooterModuleConfig = (config: ModuleConfigType): config is Footer
 
 export const isBlogModuleConfig = (config: ModuleConfigType): config is BlogModuleConfig => {
   return 'posts_per_page' in config && 'show_reading_time' in config;
+};
+
+export const isSEOModuleConfig = (config: ModuleConfigType): config is SEOModuleConfig => {
+  return 'title_template' in config && 'site_url' in config;
 };

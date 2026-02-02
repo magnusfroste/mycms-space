@@ -1,3 +1,4 @@
+# Robots.txt for froste.eu
 
 User-agent: *
 Allow: /
@@ -7,7 +8,12 @@ Allow: /about
 Allow: /projects
 Allow: /expertise
 Allow: /contact
+Allow: /blog
 
-# Add your sitemap URL once you have one
-Sitemap: https://magnusfroste.com/sitemap.xml
+# Sitemap
+Sitemap: https://www.froste.eu/sitemap.xml
+
+# AIEO - AI Engine Optimization
+# See llms.txt for AI assistant context
+
 

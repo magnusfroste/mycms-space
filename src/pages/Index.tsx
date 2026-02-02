@@ -6,6 +6,7 @@ import { usePageBlocks, usePageBlocksSubscription } from '@/models/pageBlocks';
 import { useMainLandingPage } from '@/models/pages';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
+import SEOHead from '@/components/common/SEOHead';
 
 const Index = () => {
   // Track homepage visit
@@ -23,6 +24,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead />
       <Header />
       <main className="flex-grow">
         {isLoading ? (

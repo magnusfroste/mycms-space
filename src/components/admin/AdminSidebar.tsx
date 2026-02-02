@@ -15,6 +15,7 @@ import {
   PenSquare,
   BookOpen,
   Plug,
+  Search,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -55,6 +56,7 @@ const settingsNavItems = [
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
+  { id: 'seo-module', label: 'SEO & AIEO', icon: Search },
   { id: 'history', label: 'History', icon: History },
 ];
 
