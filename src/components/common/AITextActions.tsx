@@ -6,12 +6,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Sparkles,
   Check,
@@ -24,6 +22,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type TextAction = 'correct' | 'enhance' | 'expand';
 type ContentAction = 'generate-outline' | 'generate-intro' | 'generate-conclusion' | 'generate-draft';
@@ -110,6 +109,7 @@ const AITextActions: React.FC<AITextActionsProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentAction, setCurrentAction] = useState<AIAction | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const availableActions = Object.entries(actionConfig).filter(([_, config]) => {
     if (mode === 'both') return true;
@@ -121,6 +121,9 @@ const AITextActions: React.FC<AITextActionsProps> = ({
 
   const handleAction = async (action: AIAction) => {
     const config = actionConfig[action];
+    
+    // Close popover first
+    setIsOpen(false);
     
     // Validate input
     if (config.category === 'text' && !text.trim()) {
@@ -207,8 +210,8 @@ const AITextActions: React.FC<AITextActionsProps> = ({
   const canExecute = mode === 'text' ? text.trim() : true;
 
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
         <Button
           variant={variant}
           size={size}
@@ -222,35 +225,42 @@ const AITextActions: React.FC<AITextActionsProps> = ({
           )}
           <span className="ml-1.5 text-xs">AI</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-52 p-1">
         {textActions.length > 0 && (
           <>
             <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
               Enhance Text
             </div>
             {textActions.map(([action, config]) => (
-              <DropdownMenuItem
+              <button
                 key={action}
                 onClick={() => handleAction(action as AIAction)}
                 disabled={isLoading || !text.trim()}
-                className="flex items-center gap-2"
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  "focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                  "disabled:pointer-events-none disabled:opacity-50"
+                )}
               >
                 {currentAction === action ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   config.icon
                 )}
-                <div>
+                <div className="text-left">
                   <div className="font-medium">{config.label}</div>
                   <div className="text-xs text-muted-foreground">{config.description}</div>
                 </div>
-              </DropdownMenuItem>
+              </button>
             ))}
           </>
         )}
 
-        {textActions.length > 0 && contentActions.length > 0 && <DropdownMenuSeparator />}
+        {textActions.length > 0 && contentActions.length > 0 && (
+          <div className="my-1 h-px bg-border" />
+        )}
 
         {contentActions.length > 0 && (
           <>
@@ -258,27 +268,32 @@ const AITextActions: React.FC<AITextActionsProps> = ({
               Generate Content
             </div>
             {contentActions.map(([action, config]) => (
-              <DropdownMenuItem
+              <button
                 key={action}
                 onClick={() => handleAction(action as AIAction)}
                 disabled={isLoading || !title?.trim()}
-                className="flex items-center gap-2"
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  "focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                  "disabled:pointer-events-none disabled:opacity-50"
+                )}
               >
                 {currentAction === action ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   config.icon
                 )}
-                <div>
+                <div className="text-left">
                   <div className="font-medium">{config.label}</div>
                   <div className="text-xs text-muted-foreground">{config.description}</div>
                 </div>
-              </DropdownMenuItem>
+              </button>
             ))}
           </>
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverContent>
+    </Popover>
   );
 };
 
