@@ -5,6 +5,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { cn } from '@/lib/utils';
 
 interface MarkdownContentProps {
@@ -44,7 +45,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
         className
       )}
     >
-      <ReactMarkdown>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
     </div>
   );
 };
