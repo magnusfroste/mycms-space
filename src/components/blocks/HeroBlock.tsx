@@ -215,20 +215,17 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
                   </div>
                 )}
 
-                {/* Scroll Indicator */}
+                {/* Scroll Indicator - links to chat */}
                 <div 
-                  className="mt-20 animate-fade-in"
+                  className="mt-16 animate-fade-in"
                   style={{ animationDelay: '0.5s' }}
                 >
                   <a 
-                    href="#about"
-                    className="inline-flex flex-col items-center gap-3 text-muted-foreground/50 hover:text-muted-foreground transition-colors group"
+                    href="#chat"
+                    className="inline-flex flex-col items-center gap-2 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
                   >
-                    <span className="text-xs uppercase tracking-[0.2em] font-medium">Discover</span>
-                    <div className="relative">
-                      <div className="w-6 h-10 rounded-full border-2 border-current flex justify-center pt-2">
-                        <div className="w-1 h-2 rounded-full bg-current animate-bounce" />
-                      </div>
+                    <div className="w-5 h-8 rounded-full border border-current flex justify-center pt-1.5">
+                      <div className="w-0.5 h-1.5 rounded-full bg-current animate-bounce" />
                     </div>
                   </a>
                 </div>
