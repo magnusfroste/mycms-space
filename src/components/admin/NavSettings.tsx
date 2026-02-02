@@ -243,7 +243,11 @@ export const NavSettings = () => {
 
       {/* Add Dialog - separate from trigger to avoid re-render issues */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent aria-describedby={undefined}>
+        <DialogContent 
+          aria-describedby={undefined}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Add Navigation Link</DialogTitle>
           </DialogHeader>
@@ -288,7 +292,11 @@ export const NavSettings = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent aria-describedby={undefined}>
+        <DialogContent 
+          aria-describedby={undefined}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Edit Navigation Link</DialogTitle>
           </DialogHeader>
