@@ -35,8 +35,8 @@ interface IntegrationConfig {
 }
 
 // Build system prompt with site context
-function buildSystemPrompt(siteContext: SiteContext | null): string {
-  let prompt = `You are a helpful AI assistant. You answer questions clearly and concisely.`;
+function buildSystemPrompt(customPrompt: string | null, siteContext: SiteContext | null): string {
+  let prompt = customPrompt || `You are a helpful AI assistant. You answer questions clearly and concisely.`;
 
   if (siteContext) {
     prompt += `\n\n## Site Context\n\nYou have access to information about this website:\n`;
@@ -67,18 +67,21 @@ function buildSystemPrompt(siteContext: SiteContext | null): string {
   return prompt;
 }
 
-// Handler for n8n webhook
+// Handler for n8n webhook - now receives full messages array
 async function handleN8n(
-  message: string,
+  messages: ChatMessage[],
   sessionId: string,
   webhookUrl: string,
+  systemPrompt: string,
   siteContext: SiteContext | null
 ): Promise<string> {
-  console.log("Calling n8n webhook:", webhookUrl);
+  console.log("Calling n8n webhook:", webhookUrl, "with", messages.length, "messages");
 
+  // Build complete payload with full conversation history
   const body: Record<string, unknown> = {
-    message,
+    messages,
     sessionId,
+    systemPrompt,
   };
 
   if (siteContext) {
@@ -113,6 +116,7 @@ async function handleN8n(
 async function handleLovableAI(
   messages: ChatMessage[],
   model: string,
+  systemPrompt: string,
   siteContext: SiteContext | null
 ): Promise<string> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -122,7 +126,7 @@ async function handleLovableAI(
 
   console.log("Calling Lovable AI with model:", model);
 
-  const systemPrompt = buildSystemPrompt(siteContext);
+  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -133,7 +137,7 @@ async function handleLovableAI(
     body: JSON.stringify({
       model: model || "google/gemini-3-flash-preview",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: fullSystemPrompt },
         ...messages,
       ],
       stream: false,
@@ -159,6 +163,7 @@ async function handleLovableAI(
 async function handleOpenAI(
   messages: ChatMessage[],
   model: string,
+  systemPrompt: string,
   siteContext: SiteContext | null
 ): Promise<string> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -168,7 +173,7 @@ async function handleOpenAI(
 
   console.log("Calling OpenAI with model:", model);
 
-  const systemPrompt = buildSystemPrompt(siteContext);
+  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -179,7 +184,7 @@ async function handleOpenAI(
     body: JSON.stringify({
       model: model || "gpt-4o",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: fullSystemPrompt },
         ...messages,
       ],
     }),
@@ -198,6 +203,7 @@ async function handleOpenAI(
 async function handleGemini(
   messages: ChatMessage[],
   model: string,
+  systemPrompt: string,
   siteContext: SiteContext | null
 ): Promise<string> {
   const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -207,17 +213,17 @@ async function handleGemini(
 
   console.log("Calling Gemini with model:", model);
 
-  const systemPrompt = buildSystemPrompt(siteContext);
+  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
   const geminiModel = model || "gemini-1.5-flash";
 
   // Convert messages to Gemini format
   const contents = [];
 
   // Add system instruction as first user message for context
-  if (systemPrompt) {
+  if (fullSystemPrompt) {
     contents.push({
       role: "user",
-      parts: [{ text: `[System]: ${systemPrompt}` }],
+      parts: [{ text: `[System]: ${fullSystemPrompt}` }],
     });
     contents.push({
       role: "model",
@@ -258,17 +264,17 @@ Deno.serve(async (req) => {
 
   try {
     const {
-      message,
       messages: conversationHistory,
       sessionId,
+      systemPrompt,
       siteContext,
       integration,
     } = await req.json();
 
     console.log("AI Chat request:", {
       integrationType: integration?.type,
-      hasMessage: !!message,
-      historyLength: conversationHistory?.length,
+      messagesCount: conversationHistory?.length,
+      hasSystemPrompt: !!systemPrompt,
       hasContext: !!siteContext,
     });
 
@@ -277,11 +283,9 @@ Deno.serve(async (req) => {
       throw new Error("Integration type is required");
     }
 
-    // Build messages array from current message + history
+    // Use messages array directly
     const messages: ChatMessage[] = conversationHistory || [];
-    if (message) {
-      messages.push({ role: "user", content: message });
-    }
+    const customSystemPrompt = systemPrompt || '';
 
     let responseText: string;
 
@@ -291,9 +295,10 @@ Deno.serve(async (req) => {
           throw new Error("n8n webhook URL is required");
         }
         responseText = await handleN8n(
-          message,
+          messages,
           sessionId || "default",
           integration.webhook_url,
+          customSystemPrompt,
           siteContext
         );
         break;
@@ -302,6 +307,7 @@ Deno.serve(async (req) => {
         responseText = await handleLovableAI(
           messages,
           integration.model || "google/gemini-3-flash-preview",
+          customSystemPrompt,
           siteContext
         );
         break;
@@ -310,6 +316,7 @@ Deno.serve(async (req) => {
         responseText = await handleOpenAI(
           messages,
           integration.model || "gpt-4o",
+          customSystemPrompt,
           siteContext
         );
         break;
@@ -318,6 +325,7 @@ Deno.serve(async (req) => {
         responseText = await handleGemini(
           messages,
           integration.model || "gemini-1.5-flash",
+          customSystemPrompt,
           siteContext
         );
         break;

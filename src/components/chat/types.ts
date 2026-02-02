@@ -34,6 +34,12 @@ export interface SiteContext {
   }>;
 }
 
+// Chat message format for API calls
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export interface ChatInterfaceProps {
   webhookUrl: string;
   initialPlaceholder?: string;
@@ -50,4 +56,5 @@ export interface ChatInterfaceProps {
   siteContext?: SiteContext | null;
   integration?: AIIntegrationType;
   integrationConfig?: AIIntegration;
+  systemPrompt?: string;
 }
