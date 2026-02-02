@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
-import type { AIIntegrationType, UtilityIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta } from '@/types/modules';
+import type { AIIntegrationType, UtilityIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 
 // Combined integration type
@@ -36,6 +36,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   gemini: <Sparkles className="h-5 w-5" />,
   ollama: <Server className="h-5 w-5" />,
   firecrawl: <Globe className="h-5 w-5" />,
+  resend: <Mail className="h-5 w-5" />,
 };
 
 const integrationColors: Record<IntegrationType, string> = {
@@ -45,6 +46,7 @@ const integrationColors: Record<IntegrationType, string> = {
   gemini: 'text-blue-500',
   ollama: 'text-purple-500',
   firecrawl: 'text-amber-500',
+  resend: 'text-indigo-500',
 };
 
 const IntegrationsManager: React.FC = () => {
@@ -146,6 +148,9 @@ const IntegrationsManager: React.FC = () => {
       case 'firecrawl':
         // Firecrawl is connected via connector
         return 'connected';
+      case 'resend':
+        // Resend requires RESEND_API_KEY secret
+        return 'requires_secret';
       case 'ollama': {
         // Check for base_url
         if (config?.integration?.type === 'ollama') {
@@ -250,6 +255,7 @@ const IntegrationsManager: React.FC = () => {
                 showActivate={false}
               >
                 {integration.type === 'firecrawl' && <FirecrawlConfig />}
+                {integration.type === 'resend' && <ResendConfig />}
               </IntegrationCard>
             );
           })}
@@ -439,6 +445,56 @@ const FirecrawlConfig: React.FC = () => {
           <li><strong>Search</strong> - Web search with content extraction</li>
           <li><strong>Map</strong> - Discover all URLs on a website</li>
           <li><strong>Crawl</strong> - Recursively scrape entire sites</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// Resend Configuration Component
+// ============================================
+const ResendConfig: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-2">
+          <Key className="h-4 w-4 text-blue-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
+            <p className="text-blue-700 dark:text-blue-300 mt-1">
+              Resend is configured with the secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-900 dark:text-amber-100">⚠️ Viktigt: Verifiera din domän</p>
+            <p className="text-amber-700 dark:text-amber-300 mt-1">
+              From-adressen i edge-funktionen (<code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-xs font-mono">newsletter@froste.eu</code>) måste tillhöra en verifierad domän i Resend.
+            </p>
+            <a 
+              href="https://resend.com/domains" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-amber-800 dark:text-amber-200 underline mt-2 hover:text-amber-900"
+            >
+              Verifiera domän i Resend
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Används för:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>Newsletter</strong> - Skicka nyhetsbrev till prenumeranter</li>
+          <li><strong>Transaktionella e-post</strong> - Bekräftelser, notiser</li>
         </ul>
       </div>
     </div>
