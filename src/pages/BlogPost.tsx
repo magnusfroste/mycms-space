@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import ReactMarkdown from 'react-markdown';
+import MarkdownContent from '@/components/common/MarkdownContent';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/common/SEOHead';
@@ -167,9 +167,7 @@ const BlogPost = () => {
           )}
 
           {/* Content */}
-          <div className="prose prose-lg dark:prose-invert max-w-none">
-            <ReactMarkdown>{post.content}</ReactMarkdown>
-          </div>
+          <MarkdownContent content={post.content} className="prose-lg" />
 
           {/* Divider */}
           <hr className="my-12 border-border" />
