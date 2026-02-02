@@ -20,6 +20,7 @@ import {
   ScrollText,
   BarChart3,
   Quote,
+  Mail,
 } from 'lucide-react';
 import type { BlockType } from '@/types';
 
@@ -207,6 +208,17 @@ const TestimonialPreview = () => (
   </div>
 );
 
+const NewsletterPreview = () => (
+  <div className="w-full h-full bg-muted/30 rounded flex flex-col items-center justify-center gap-1 p-2">
+    <Mail className="w-4 h-4 text-primary/40" />
+    <div className="w-10 h-0.5 bg-muted-foreground/20 rounded" />
+    <div className="flex gap-1 mt-1">
+      <div className="flex-1 h-2 bg-background border rounded" />
+      <div className="w-4 h-2 bg-primary/40 rounded" />
+    </div>
+  </div>
+);
+
 export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
   // Basic blocks
   {
@@ -336,6 +348,14 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     icon: <Quote className="h-4 w-4" />,
     description: '3D carousel with testimonials',
     preview: <TestimonialPreview />,
+    category: '2026',
+  },
+  {
+    type: 'newsletter-subscribe',
+    label: 'Newsletter ✨',
+    icon: <Mail className="h-4 w-4" />,
+    description: 'Email subscription form',
+    preview: <NewsletterPreview />,
     category: '2026',
   },
 ];

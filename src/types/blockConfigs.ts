@@ -218,6 +218,16 @@ export interface BlogBlockConfig {
   subheading?: string;
 }
 
+// Newsletter Subscribe Block Config
+export interface NewsletterSubscribeBlockConfig {
+  heading?: string;
+  description?: string;
+  buttonText?: string;
+  successMessage?: string;
+  showNameField?: boolean;
+  backgroundColor?: string;
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -237,7 +247,8 @@ export type BlockConfigType =
   | MarqueeBlockConfig
   | VideoHeroBlockConfig
   | ParallaxSectionBlockConfig
-  | BlogBlockConfig;
+  | BlogBlockConfig
+  | NewsletterSubscribeBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -259,6 +270,7 @@ export interface BlockTypeConfigMap {
   'video-hero': VideoHeroBlockConfig;
   'parallax-section': ParallaxSectionBlockConfig;
   'blog': BlogBlockConfig;
+  'newsletter-subscribe': NewsletterSubscribeBlockConfig;
 }
 
 // Helper type to get config type from block type
@@ -360,5 +372,13 @@ export const defaultBlockConfigs: BlockTypeConfigMap = {
     show_author: false,
     heading: 'Latest Posts',
     subheading: '',
+  },
+  'newsletter-subscribe': {
+    heading: 'Prenumerera på nyhetsbrevet',
+    description: 'Få de senaste nyheterna direkt i din inkorg.',
+    buttonText: 'Prenumerera',
+    successMessage: 'Tack för din prenumeration!',
+    showNameField: false,
+    backgroundColor: '',
   },
 };

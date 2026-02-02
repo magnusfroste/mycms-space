@@ -12,6 +12,7 @@ import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import NewsletterManager from '@/components/admin/NewsletterManager';
 import MessagesManager from '@/components/admin/MessagesManager';
 import { SettingsHistory } from '@/components/admin/SettingsHistory';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
@@ -134,6 +135,8 @@ const Admin = () => {
         return <BlogModuleSettings />;
       case 'seo-module':
         return <SEOModuleSettings />;
+      case 'newsletter':
+        return <NewsletterManager />;
       case 'history':
         return <SettingsHistory />;
       default:
