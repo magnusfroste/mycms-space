@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { useCreateBlogPost, useUpdateBlogPost, useBlogCategories } from '@/models/blog';
+import { useCreateBlogPost, useUpdateBlogPost, useBlogCategories, useBlogPostById } from '@/models/blog';
 import { fetchCategoriesForPost } from '@/data/blog';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -38,46 +38,69 @@ import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
 
 interface BlogPostEditorProps {
-  post?: BlogPost | null;
+  postId?: string | null;
   onClose: () => void;
 }
 
-const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
+const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
   const { toast } = useToast();
   const createPost = useCreateBlogPost();
   const updatePost = useUpdateBlogPost();
   const { data: allCategories = [] } = useBlogCategories(true);
+  
+  // Fetch post data by ID to avoid race conditions
+  const { data: post, isLoading: isLoadingPost } = useBlogPostById(postId || '');
 
-  const isEditing = !!post;
+  const isEditing = !!postId;
 
-  // Form state
-  const [title, setTitle] = useState(post?.title || '');
-  const [slug, setSlug] = useState(post?.slug || '');
-  const [content, setContent] = useState(post?.content || '');
-  const [excerpt, setExcerpt] = useState(post?.excerpt || '');
-  const [coverImageUrl, setCoverImageUrl] = useState(post?.cover_image_url || '');
-  const [coverImagePath, setCoverImagePath] = useState(post?.cover_image_path || '');
-  const [authorName, setAuthorName] = useState(post?.author_name || 'Admin');
-  const [status, setStatus] = useState<BlogPostStatus>(post?.status || 'draft');
-  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(
-    post?.scheduled_for ? new Date(post.scheduled_for) : undefined
-  );
-  const [featured, setFeatured] = useState(post?.featured || false);
-  const [seoTitle, setSeoTitle] = useState(post?.seo_title || '');
-  const [seoDescription, setSeoDescription] = useState(post?.seo_description || '');
-  const [seoKeywords, setSeoKeywords] = useState(post?.seo_keywords?.join(', ') || '');
+  // Form state - initialize empty, update when post loads
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [content, setContent] = useState('');
+  const [excerpt, setExcerpt] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [coverImagePath, setCoverImagePath] = useState('');
+  const [authorName, setAuthorName] = useState('Admin');
+  const [status, setStatus] = useState<BlogPostStatus>('draft');
+  const [scheduledFor, setScheduledFor] = useState<Date | undefined>(undefined);
+  const [featured, setFeatured] = useState(false);
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [seoKeywords, setSeoKeywords] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize form when post data loads (only once)
+  useEffect(() => {
+    if (post && !isInitialized) {
+      setTitle(post.title || '');
+      setSlug(post.slug || '');
+      setContent(post.content || '');
+      setExcerpt(post.excerpt || '');
+      setCoverImageUrl(post.cover_image_url || '');
+      setCoverImagePath(post.cover_image_path || '');
+      setAuthorName(post.author_name || 'Admin');
+      setStatus(post.status || 'draft');
+      setScheduledFor(post.scheduled_for ? new Date(post.scheduled_for) : undefined);
+      setFeatured(post.featured || false);
+      setSeoTitle(post.seo_title || '');
+      setSeoDescription(post.seo_description || '');
+      setSeoKeywords(post.seo_keywords?.join(', ') || '');
+      setSlugManuallyEdited(true); // Don't auto-generate slug for existing posts
+      setIsInitialized(true);
+    }
+  }, [post, isInitialized]);
 
   // Load categories for existing post
   useEffect(() => {
-    if (post?.id) {
+    if (post?.id && isInitialized) {
       fetchCategoriesForPost(post.id).then((cats) => {
         setSelectedCategories(cats.map((c) => c.id));
       });
     }
-  }, [post?.id]);
+  }, [post?.id, isInitialized]);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -122,8 +145,8 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
         category_ids: selectedCategories,
       };
 
-      if (isEditing && post) {
-        await updatePost.mutateAsync({ id: post.id, ...postData });
+      if (isEditing && postId) {
+        await updatePost.mutateAsync({ id: postId, ...postData });
         toast({ title: 'Post updated', description: 'Your changes have been saved.' });
       } else {
         await createPost.mutateAsync(postData);
@@ -147,6 +170,15 @@ const BlogPostEditor = ({ post, onClose }: BlogPostEditorProps) => {
       prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
     );
   };
+
+  // Show loading state while fetching post data
+  if (isEditing && isLoadingPost) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
