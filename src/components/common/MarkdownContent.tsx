@@ -15,11 +15,12 @@ interface MarkdownContentProps {
   compact?: boolean;
 }
 
-// Preprocess content to preserve extra blank lines as visible spacing
+// Preprocess content to preserve blank lines as visible spacing
+// Double newline (\n\n) in markdown = paragraph break, we convert to extra spacing
 const preprocessContent = (text: string): string => {
-  // Convert 3+ consecutive newlines (2+ blank lines) to paragraph + spacer
-  // This preserves intentional extra spacing in the source
-  return text.replace(/\n{3,}/g, '\n\n&nbsp;\n\n');
+  // Convert 2+ consecutive newlines to paragraph + spacer for extra visual spacing
+  // This makes a single blank line in the editor create visible space
+  return text.replace(/\n\n+/g, '\n\n&nbsp;\n\n');
 };
 
 const MarkdownContent: React.FC<MarkdownContentProps> = ({
