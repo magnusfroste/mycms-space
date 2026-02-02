@@ -90,37 +90,24 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
               </div>
             </div>
             
-            {/* Skills Grid */}
+            {/* Compact Skills Row */}
             {skills.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
+              <div 
+                className="flex flex-wrap gap-3 pt-4 animate-fade-in"
+                style={{ animationDelay: '0.3s' }}
+              >
                 {skills.map((skill, index) => (
-                  <article 
+                  <div 
                     key={index} 
-                    className="group elevated-card p-5 animate-fade-in"
-                    style={{ animationDelay: `${0.3 + index * 0.08}s` }}
+                    className="group flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors"
                   >
-                    <div className="flex items-start gap-4">
-                      {/* Icon */}
-                      <div className="relative shrink-0">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                          <div className="text-primary">
-                            {iconMap[skill.icon] || iconMap['Monitor']}
-                          </div>
-                        </div>
-                        <div className="absolute inset-0 rounded-xl bg-primary/15 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
-                      </div>
-                      
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-                          {skill.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {skill.description}
-                        </p>
-                      </div>
+                    <div className="w-5 h-5 text-primary shrink-0">
+                      {iconMap[skill.icon] || iconMap['Monitor']}
                     </div>
-                  </article>
+                    <span className="text-sm font-medium text-foreground/90">
+                      {skill.title}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
