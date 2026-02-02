@@ -7,8 +7,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Plus, X } from 'lucide-react';
+import { RichTextEditor } from '@/components/common';
 import IconPicker from './IconPicker';
 
 export interface SkillItem {
@@ -73,12 +73,14 @@ const SkillListEditor: React.FC<SkillListEditorProps> = ({
                     className="flex-1"
                   />
                 </div>
-                <Textarea
+                <RichTextEditor
                   value={skill.description}
-                  onChange={(e) => handleSkillChange(index, 'description', e.target.value)}
+                  onChange={(value) => handleSkillChange(index, 'description', value)}
+                  title={skill.title}
                   placeholder="Beskrivning..."
-                  rows={2}
-                  className="resize-none"
+                  minHeight="min-h-[80px]"
+                  showAI
+                  aiMode="text"
                 />
               </div>
               <Button
