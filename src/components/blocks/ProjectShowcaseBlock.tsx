@@ -1,11 +1,10 @@
 // ============================================
-// Project Showcase Block
-// Reads projects from block_config JSONB
-// Applies global settings from ProjectsModule
+// Project Showcase Block - 2026 Design System
+// Modern grid with hover effects and glass cards
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +24,6 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   const [selectedProject, setSelectedProject] = useState<DisplayProject | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
-  // Get global module settings
   const { config: moduleConfig, isEnabled: moduleEnabled } = useProjectsModule();
   
   useAnalytics('portfolio');
@@ -37,11 +35,9 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   const categories = typedConfig.categories?.filter(c => c.enabled) || [];
   const projects = typedConfig.projects?.filter(p => p.enabled) || [];
   
-  // Module settings with fallbacks
-  const layoutStyle = moduleConfig?.layout_style ?? 'alternating';
+  const layoutStyle = moduleConfig?.layout_style ?? 'grid';
   const showCategories = moduleConfig?.show_categories ?? true;
 
-  // Filter projects by selected category
   const filteredProjects = useMemo(() => {
     if (!selectedCategory) return projects;
     const selectedCat = categories.find(c => c.id === selectedCategory);
@@ -50,16 +46,6 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
       project.categories?.includes(selectedCat.slug)
     );
   }, [projects, selectedCategory, categories]);
-
-  const handleDemoClick = (projectTitle: string, demoLink: string) => {
-    console.log(`Demo clicked: ${projectTitle}`);
-    if (demoLink.startsWith('#')) {
-      const element = document.querySelector(demoLink);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
 
   const handleViewMore = (project: typeof projects[0]) => {
     setSelectedProject({
@@ -74,11 +60,6 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
     });
   };
 
-  const handleCloseModal = () => {
-    setSelectedProject(null);
-  };
-
-  // Hide entire section if module is disabled
   if (!moduleEnabled || !showSection) {
     return null;
   }
@@ -86,47 +67,74 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   const isLoading = !typedConfig.projects;
 
   return (
-    <section id="projects" className="py-20 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <h2 className="section-title">{sectionTitle}</h2>
+    <section id="projects" className="section-container relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/20 to-transparent" />
+      
+      <div className="container mx-auto px-4 relative">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Work
+          </span>
+          <h2 
+            className="section-title animate-fade-in" 
+            style={{ animationDelay: '0.1s' }}
+          >
+            {sectionTitle}
+          </h2>
           {sectionSubtitle && (
-            <p className="text-xl text-muted-foreground mt-2">
+            <p 
+              className="text-xl text-muted-foreground mt-4 animate-fade-in"
+              style={{ animationDelay: '0.2s' }}
+            >
               {sectionSubtitle}
             </p>
           )}
           {sectionDescription && (
-            <p className="text-base text-muted-foreground mt-4 max-w-3xl mx-auto">
+            <p 
+              className="section-subtitle mt-4 animate-fade-in"
+              style={{ animationDelay: '0.3s' }}
+            >
               {sectionDescription}
             </p>
           )}
         </div>
         
-        {/* Category Filter - respects module setting */}
+        {/* Category Filter */}
         {showCategories && categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-8 justify-center">
-            <Badge
-              variant={selectedCategory === null ? 'default' : 'outline'}
-              className="cursor-pointer hover:opacity-80 transition-opacity"
+          <div 
+            className="flex flex-wrap gap-3 mb-12 justify-center animate-fade-in"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <button
               onClick={() => setSelectedCategory(null)}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                selectedCategory === null
+                  ? 'bg-foreground text-background shadow-lg'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
             >
-              All Projects
-            </Badge>
+              All
+            </button>
             {categories.map((category) => (
-              <Badge
+              <button
                 key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                className="cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setSelectedCategory(category.id)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                  selectedCategory === category.id
+                    ? 'bg-foreground text-background shadow-lg'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
               >
                 {category.name}
-              </Badge>
+              </button>
             ))}
           </div>
         )}
         
         {isLoading && (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-16">
             <div className="animate-pulse text-center">
               <p className="text-muted-foreground">Loading projects...</p>
             </div>
@@ -134,58 +142,71 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
         )}
 
         {projects.length === 0 && !isLoading && (
-          <div className="glass-card p-4 mb-8 text-center">
-            <p className="text-amber-600 dark:text-amber-400">No projects found.</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Add projects in the admin panel to display them here.
-            </p>
-            <Button
-              onClick={() => navigate('/admin')}
-              className="mt-4 apple-button"
-            >
-              Manage Projects
+          <div className="elevated-card p-8 text-center max-w-md mx-auto">
+            <p className="text-muted-foreground mb-4">No projects found.</p>
+            <Button onClick={() => navigate('/admin')} className="btn-primary">
+              Add Projects
             </Button>
           </div>
         )}
         
-        {/* Layout based on module settings */}
-        {layoutStyle === 'grid' ? (
+        {/* Grid Layout */}
+        {layoutStyle === 'grid' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => {
+            {filteredProjects.map((project, index) => {
               const projectImage = project.images?.[0]?.image_url;
               return (
-                <div
+                <article
                   key={project.id}
-                  className="glass-card overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                  className="group glow-card overflow-hidden cursor-pointer animate-fade-in"
+                  style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                   onClick={() => handleViewMore(project)}
                 >
-                  <div className="aspect-video bg-muted flex items-center justify-center">
+                  {/* Image */}
+                  <div className="aspect-[4/3] bg-muted overflow-hidden relative">
                     {projectImage ? (
                       <img
                         src={projectImage}
                         alt={project.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="text-muted-foreground text-sm">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        No image
+                      </div>
                     )}
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Quick action */}
+                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                      <div className="w-10 h-10 rounded-full bg-foreground text-background flex items-center justify-center">
+                        <ArrowUpRight className="w-5 h-5" />
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold mb-2">{project.title}</h3>
+                  
+                  {/* Content */}
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                      {project.title}
+                    </h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {project.description}
                     </p>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
-        ) : (
-          /* Alternating layout (default) */
-          <div className="space-y-16">
+        )}
+
+        {/* Alternating Layout */}
+        {layoutStyle === 'alternating' && (
+          <div className="space-y-8">
             {filteredProjects.length === 0 && selectedCategory && (
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">No projects found in this category.</p>
+              <div className="text-center py-16">
+                <p className="text-muted-foreground">No projects in this category.</p>
               </div>
             )}
             {filteredProjects.map((project, index) => {
@@ -193,128 +214,74 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
               const projectImage = project.images?.[0]?.image_url;
 
               return (
-                <div
+                <article
                   key={project.id}
-                  className="glass-card overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                  id={`demo-${project.title.toLowerCase().split(' ').slice(0, 2).join('-')}`}
+                  className="group elevated-card overflow-hidden cursor-pointer animate-fade-in"
+                  style={{ animationDelay: `${0.1 + index * 0.1}s` }}
                   onClick={() => handleViewMore(project)}
                 >
                   <div
-                    className={`grid grid-cols-1 ${isImageOnLeft ? 'lg:grid-cols-[3fr,2fr]' : 'lg:grid-cols-[2fr,3fr]'}`}
+                    className={`grid grid-cols-1 lg:grid-cols-2 ${
+                      isImageOnLeft ? '' : 'lg:grid-flow-dense'
+                    }`}
                   >
-                    {isImageOnLeft ? (
-                      <>
-                        <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
-                          {projectImage ? (
-                            <img
-                              src={projectImage}
-                              alt={project.title}
-                              className="w-full h-full object-cover rounded-xl"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              No image available
-                            </div>
-                          )}
+                    {/* Image */}
+                    <div 
+                      className={`relative aspect-[16/10] lg:aspect-auto lg:min-h-[400px] overflow-hidden ${
+                        !isImageOnLeft ? 'lg:col-start-2' : ''
+                      }`}
+                    >
+                      {projectImage ? (
+                        <img
+                          src={projectImage}
+                          alt={project.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground">
+                          No image available
                         </div>
-                        <div className="p-8 flex flex-col justify-center">
-                          <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                          <p className="text-muted-foreground mb-6">{project.description}</p>
-                          <div className="flex space-x-3">
-                            <Button
-                              className="apple-button flex items-center gap-2"
-                              asChild
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (project.demo_link.startsWith('#')) {
-                                  e.preventDefault();
-                                  handleDemoClick(project.title, project.demo_link);
-                                } else {
-                                  handleDemoClick(project.title, project.demo_link);
-                                }
-                              }}
-                            >
-                              <a
-                                href={project.demo_link.startsWith('#') ? undefined : project.demo_link}
-                                target={project.demo_link.startsWith('#') ? undefined : '_blank'}
-                                rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
-                              >
-                                Link
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex items-center gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewMore(project);
-                              }}
-                            >
-                              View More
-                              <Info className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="p-8 flex flex-col justify-center">
-                          <h3 className="text-2xl font-semibold mb-4">{project.title}</h3>
-                          <p className="text-muted-foreground mb-6">{project.description}</p>
-                          <div className="flex space-x-3">
-                            <Button
-                              className="apple-button flex items-center gap-2"
-                              asChild
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (project.demo_link.startsWith('#')) {
-                                  e.preventDefault();
-                                  handleDemoClick(project.title, project.demo_link);
-                                } else {
-                                  handleDemoClick(project.title, project.demo_link);
-                                }
-                              }}
-                            >
-                              <a
-                                href={project.demo_link.startsWith('#') ? undefined : project.demo_link}
-                                target={project.demo_link.startsWith('#') ? undefined : '_blank'}
-                                rel={project.demo_link.startsWith('#') ? undefined : 'noopener noreferrer'}
-                              >
-                                Link
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex items-center gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewMore(project);
-                              }}
-                            >
-                              View More
-                              <Info className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="bg-muted min-h-[300px] lg:min-h-[400px] p-6 flex items-center justify-center">
-                          {projectImage ? (
-                            <img
-                              src={projectImage}
-                              alt={project.title}
-                              className="w-full h-full object-cover rounded-xl"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              No image available
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
+                      )}
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-background/10 group-hover:to-background/20 transition-all duration-500" />
+                    </div>
+
+                    {/* Content */}
+                    <div className={`p-8 lg:p-12 flex flex-col justify-center ${
+                      !isImageOnLeft ? 'lg:col-start-1 lg:row-start-1' : ''
+                    }`}>
+                      <h3 className="text-2xl lg:text-3xl font-semibold mb-4 group-hover:text-primary transition-colors">
+                        {project.title}
+                      </h3>
+                      <p className="text-muted-foreground mb-8 leading-relaxed">
+                        {project.description}
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href={project.demo_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="btn-primary inline-flex items-center gap-2"
+                        >
+                          View Live
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                        <Button
+                          variant="outline"
+                          className="rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewMore(project);
+                          }}
+                        >
+                          <Info className="h-4 w-4 mr-2" />
+                          Details
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
@@ -325,7 +292,7 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
         <ProjectModal
           project={selectedProject}
           isOpen={!!selectedProject}
-          onClose={handleCloseModal}
+          onClose={() => setSelectedProject(null)}
         />
       )}
     </section>

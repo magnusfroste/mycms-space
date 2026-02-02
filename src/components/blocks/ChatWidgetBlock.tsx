@@ -1,11 +1,11 @@
 // ============================================
-// Chat Widget Block
-// Reads config from block_config JSONB + global settings from modules
+// Chat Widget Block - 2026 Design System
+// Modern chat interface with glass styling
 // ============================================
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, MessageCircle } from 'lucide-react';
 import { ChatInterface, Message } from '@/components/chat';
 import { useAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
@@ -56,40 +56,66 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   }
 
   return (
-    <div className="pb-20" aria-label="Chat Widget">
+    <div className="section-container-sm relative" aria-label="Chat Widget">
       <div className="container mx-auto px-4">
+        {/* Header */}
         {(title || subtitle) && (
-          <div className="text-center mb-8">
-            {title && <h2 className="section-title">{title}</h2>}
+          <div className="text-center mb-10">
+            {!title && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 animate-fade-in">
+                <MessageCircle className="w-4 h-4" />
+                <span>AI Assistant</span>
+              </div>
+            )}
+            {title && (
+              <h2 
+                className="section-title animate-fade-in"
+                style={{ animationDelay: '0.1s' }}
+              >
+                {title}
+              </h2>
+            )}
             {subtitle && (
-              <p className="text-muted-foreground max-w-2xl mx-auto">
+              <p 
+                className="section-subtitle mt-4 animate-fade-in"
+                style={{ animationDelay: '0.2s' }}
+              >
                 {subtitle}
               </p>
             )}
           </div>
         )}
-        <div className="max-w-4xl mx-auto">
-          <ChatInterface
-            webhookUrl={webhookUrl}
-            initialPlaceholder={initialPlaceholder}
-            activePlaceholder={activePlaceholder}
-            quickActions={quickActions}
-            onMessagesChange={setCurrentMessages}
-            onSessionIdChange={setCurrentSessionId}
-            skipWebhook={true}
-            showQuickActions={showQuickActions}
-            siteContext={contextData}
-          />
-          
-          <div className="flex justify-center mt-12">
-            <a
-              href="#about"
-              className="inline-flex items-center justify-center animate-bounce"
-              aria-label="Scroll to About section"
-            >
-              <ChevronDown className="h-8 w-8 text-muted-foreground" />
-            </a>
+        
+        {/* Chat Container */}
+        <div 
+          className="max-w-4xl mx-auto animate-fade-in"
+          style={{ animationDelay: '0.3s' }}
+        >
+          <div className="elevated-card overflow-hidden">
+            <ChatInterface
+              webhookUrl={webhookUrl}
+              initialPlaceholder={initialPlaceholder}
+              activePlaceholder={activePlaceholder}
+              quickActions={quickActions}
+              onMessagesChange={setCurrentMessages}
+              onSessionIdChange={setCurrentSessionId}
+              skipWebhook={true}
+              showQuickActions={showQuickActions}
+              siteContext={contextData}
+            />
           </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="flex justify-center mt-16 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <a
+            href="#about"
+            className="group inline-flex flex-col items-center gap-2 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            aria-label="Scroll to About section"
+          >
+            <span className="text-xs uppercase tracking-widest">Explore</span>
+            <ChevronDown className="h-6 w-6 animate-bounce" />
+          </a>
         </div>
       </div>
     </div>
