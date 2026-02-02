@@ -248,7 +248,7 @@ const BlogManager = () => {
 
                           <div className="flex items-center gap-2 shrink-0">
                             {getStatusBadge(post.status)}
-                            <DropdownMenu>
+                            <DropdownMenu modal={false}>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <MoreVertical className="h-4 w-4" />
@@ -341,7 +341,7 @@ const BlogManager = () => {
                         )}
                       </div>
 
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                             <MoreVertical className="h-4 w-4" />
