@@ -7,6 +7,7 @@ import { usePageBlocks, usePageBlocksSubscription } from '@/models/pageBlocks';
 import { usePageBySlug } from '@/models/pages';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
+import SEOHead from '@/components/common/SEOHead';
 
 const DynamicPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -32,6 +33,10 @@ const DynamicPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead 
+        title={page?.title}
+        description={page?.description || undefined}
+      />
       <Header />
       <main className="flex-grow">
         {isLoading ? (

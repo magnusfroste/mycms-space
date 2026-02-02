@@ -5,6 +5,7 @@
 
 import { useParams, Link } from 'react-router-dom';
 import { useBlogPostBySlug, useBlogPosts } from '@/models/blog';
+import { useSEOModule } from '@/hooks/useSEOModule';
 import { format } from 'date-fns';
 import { ArrowLeft, Clock, User, Calendar, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -14,14 +15,37 @@ import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/common/SEOHead';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading, error } = useBlogPostBySlug(slug || '');
   const { data: relatedPosts = [] } = useBlogPosts({ status: 'published', limit: 3 });
+  const { data: seoModule } = useSEOModule();
 
   // Filter out current post from related
   const otherPosts = relatedPosts.filter((p) => p.slug !== slug).slice(0, 2);
+  const articleJsonLd = post ? {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.seo_title || post.title,
+    description: post.seo_description || post.excerpt || '',
+    image: post.cover_image_url || seoModule?.module_config?.default_og_image,
+    author: {
+      '@type': 'Person',
+      name: post.author_name || 'Magnus Froste',
+    },
+    publisher: {
+      '@type': 'Person',
+      name: seoModule?.module_config?.site_title || 'Magnus Froste',
+    },
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.created_at,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${seoModule?.module_config?.site_url || ''}/blog/${post.slug}`,
+    },
+  } : undefined;
 
   if (isLoading) {
     return (
@@ -73,6 +97,21 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead 
+        title={post.seo_title || post.title}
+        description={post.seo_description || post.excerpt || undefined}
+        ogImage={post.cover_image_url || undefined}
+        ogType="article"
+        canonicalUrl={`${seoModule?.module_config?.site_url || ''}/blog/${post.slug}`}
+        article={{
+          publishedTime: post.published_at || post.created_at,
+          modifiedTime: post.updated_at || post.created_at,
+          author: post.author_name || 'Magnus Froste',
+          section: post.categories?.[0]?.name,
+          tags: post.seo_keywords || undefined,
+        }}
+        jsonLd={articleJsonLd}
+      />
       <Header />
       <main className="flex-1">
         <article className="container max-w-3xl mx-auto px-4 py-16">
