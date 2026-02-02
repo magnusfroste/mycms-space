@@ -1,6 +1,6 @@
 // ============================================
-// Text Section Block
-// Simple title + content block with alignment options
+// Text Section Block - 2026 Design System
+// Clean typography with subtle backgrounds
 // ============================================
 
 import React from 'react';
@@ -22,28 +22,31 @@ const TextSectionBlock: React.FC<TextSectionBlockProps> = ({ config }) => {
   const { title, content, alignment = 'center', background = 'default' } = typedConfig;
 
   const alignmentClasses = {
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
+    left: 'text-left items-start',
+    center: 'text-center items-center',
+    right: 'text-right items-end',
   };
 
   const backgroundClasses = {
-    default: 'bg-background',
-    muted: 'bg-muted/50',
+    default: '',
+    muted: 'bg-muted/30',
     card: 'bg-card',
   };
 
   return (
-    <section className={cn('py-16', backgroundClasses[background])}>
+    <section className={cn('section-container-sm', backgroundClasses[background])}>
       <div className="container mx-auto px-4">
-        <div className={cn('max-w-3xl mx-auto', alignmentClasses[alignment])}>
+        <div className={cn('flex flex-col max-w-3xl', alignmentClasses[alignment], alignment === 'center' && 'mx-auto')}>
           {title && (
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-foreground tracking-tight animate-fade-in">
               {title}
             </h2>
           )}
           {content && (
-            <p className="text-lg leading-relaxed text-muted-foreground">
+            <p 
+              className="text-lg md:text-xl leading-relaxed text-muted-foreground animate-fade-in"
+              style={{ animationDelay: '0.1s' }}
+            >
               {content}
             </p>
           )}

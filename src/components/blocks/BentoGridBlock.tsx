@@ -1,6 +1,6 @@
 // ============================================
-// Bento Grid Block
-// Modern asymmetric grid layout (Apple/Linear style)
+// Bento Grid Block - 2026 Design System
+// Modern asymmetric grid with glass effects
 // ============================================
 
 import React from 'react';
@@ -50,7 +50,6 @@ const defaultItems: BentoItem[] = [
     description: 'Let artificial intelligence enhance your creative workflow with smart suggestions and automation.',
     icon: 'sparkles',
     size: 'large',
-    gradient: 'from-purple-500/20 to-pink-500/20',
   },
   {
     id: '2',
@@ -58,7 +57,6 @@ const defaultItems: BentoItem[] = [
     description: 'Optimized for speed and performance.',
     icon: 'zap',
     size: 'small',
-    gradient: 'from-yellow-500/20 to-orange-500/20',
   },
   {
     id: '3',
@@ -66,7 +64,6 @@ const defaultItems: BentoItem[] = [
     description: 'Enterprise-grade security built in.',
     icon: 'shield',
     size: 'small',
-    gradient: 'from-green-500/20 to-emerald-500/20',
   },
   {
     id: '4',
@@ -74,7 +71,6 @@ const defaultItems: BentoItem[] = [
     description: 'Pixel-perfect designs that captivate and inspire your audience.',
     icon: 'palette',
     size: 'medium',
-    gradient: 'from-blue-500/20 to-cyan-500/20',
   },
   {
     id: '5',
@@ -82,7 +78,6 @@ const defaultItems: BentoItem[] = [
     description: 'Built for developers with clean APIs and comprehensive docs.',
     icon: 'code',
     size: 'medium',
-    gradient: 'from-indigo-500/20 to-violet-500/20',
   },
 ];
 
@@ -102,56 +97,62 @@ const BentoGridBlock: React.FC<BentoGridBlockProps> = ({ config }) => {
   };
 
   return (
-    <section className="py-24 px-6 md:px-12 lg:px-24">
-      <div className="max-w-7xl mx-auto">
+    <section className="section-container relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-mesh-gradient opacity-40" />
+      
+      <div className="container mx-auto px-4 relative">
         {/* Header */}
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+        <div className="text-center mb-16">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Features
+          </span>
+          <h2 
+            className="section-title-gradient animate-fade-in"
+            style={{ animationDelay: '0.1s' }}
+          >
             {settings.headline || 'Everything You Need'}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p 
+            className="section-subtitle mt-4 animate-fade-in"
+            style={{ animationDelay: '0.2s' }}
+          >
             {settings.subheadline || 'A complete toolkit designed for modern creators and developers.'}
           </p>
         </div>
 
         {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           {items.map((item, index) => (
-            <div
+            <article
               key={item.id}
               className={cn(
-                'group relative overflow-hidden rounded-3xl border border-border/50',
-                'bg-gradient-to-br from-card to-card/50',
-                'p-6 md:p-8 transition-all duration-500',
-                'hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5',
-                'hover:-translate-y-1',
+                'group relative overflow-hidden rounded-3xl',
+                'glow-card p-7 md:p-8',
+                'animate-fade-in',
                 getSizeClasses(item.size)
               )}
-              style={{
-                animationDelay: `${index * 100}ms`,
-              }}
+              style={{ animationDelay: `${0.1 + index * 0.05}s` }}
             >
-              {/* Background Gradient */}
-              <div 
-                className={cn(
-                  'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-                  `bg-gradient-to-br ${item.gradient || 'from-primary/10 to-primary/5'}`
-                )}
-              />
-
-              {/* Glow Effect */}
-              <div className="absolute -inset-px bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500" />
+              {/* Background Gradient on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               {/* Content */}
               <div className="relative z-10 h-full flex flex-col">
                 {/* Icon */}
-                <div className="mb-4 p-3 w-fit rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300">
-                  {iconMap[item.icon || 'sparkles'] || <Sparkles className="w-6 h-6" />}
+                <div className="relative mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-primary">
+                      {iconMap[item.icon || 'sparkles'] || <Sparkles className="w-6 h-6" />}
+                    </div>
+                  </div>
+                  {/* Glow */}
+                  <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
                 </div>
 
-                {/* Image (if provided) */}
+                {/* Image */}
                 {item.image_url && (
-                  <div className="mb-4 rounded-xl overflow-hidden">
+                  <div className="mb-5 rounded-2xl overflow-hidden">
                     <img 
                       src={item.image_url} 
                       alt={item.title}
@@ -161,14 +162,14 @@ const BentoGridBlock: React.FC<BentoGridBlockProps> = ({ config }) => {
                 )}
 
                 {/* Text */}
-                <h3 className="text-xl md:text-2xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                <h3 className="text-xl md:text-2xl font-semibold mb-3 group-hover:text-primary transition-colors">
                   {item.title}
                 </h3>
-                <p className="text-muted-foreground flex-grow">
+                <p className="text-muted-foreground leading-relaxed flex-grow">
                   {item.description}
                 </p>
 
-                {/* Decorative Arrow (large cards) */}
+                {/* Arrow for large cards */}
                 {item.size === 'large' && (
                   <div className="mt-6 flex items-center gap-2 text-primary opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
                     <span className="text-sm font-medium">Learn more</span>
@@ -181,7 +182,7 @@ const BentoGridBlock: React.FC<BentoGridBlockProps> = ({ config }) => {
 
               {/* Corner Decoration */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+            </article>
           ))}
         </div>
       </div>

@@ -1,6 +1,6 @@
 // ============================================
-// Expertise Grid Block
-// Reads expertise items from block_config JSONB
+// Expertise Grid Block - 2026 Design System
+// Modern bento-style grid with hover effects
 // ============================================
 
 import React from 'react';
@@ -18,46 +18,78 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
   
   const title = typedConfig.title || 'Areas of Expertise';
   const subtitle = typedConfig.subtitle;
+  const columns = typedConfig.columns || 3;
   const items = typedConfig.items?.filter(item => item.enabled) || [];
 
   const isLoading = !typedConfig.items;
 
+  const gridCols = columns === 2 
+    ? 'md:grid-cols-2' 
+    : 'md:grid-cols-2 lg:grid-cols-3';
+
   return (
-    <section id="expertise" className="py-20 bg-card">
-      <div className="container mx-auto px-4">
-        <h2 className="section-title">{title}</h2>
-        {subtitle && (
-          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
-        )}
+    <section id="expertise" className="section-container relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-muted/50 via-muted/30 to-transparent" />
+      
+      <div className="container mx-auto px-4 relative">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Expertise
+          </span>
+          <h2 
+            className="section-title animate-fade-in" 
+            style={{ animationDelay: '0.1s' }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p 
+              className="section-subtitle mt-4 animate-fade-in"
+              style={{ animationDelay: '0.2s' }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
         
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="glass-card p-6 h-full">
-                <div className="flex items-start mb-4">
-                  <Skeleton className="h-12 w-12 rounded-lg mr-4" />
-                  <Skeleton className="h-6 w-40" />
-                </div>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-2" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
+              <Skeleton key={i} className="h-48 rounded-2xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {items.map((area) => (
-              <div key={area.id} className="glass-card p-6 h-full">
-                <div className="flex items-start mb-4">
-                  <div className="mr-4 p-3 bg-background rounded-lg shadow-sm">
-                    {iconMap[area.icon] || <Lightbulb className="h-6 w-6 text-apple-purple" />}
+          <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
+            {items.map((area, index) => (
+              <article 
+                key={area.id} 
+                className="group glow-card p-8 animate-fade-in"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              >
+                {/* Icon */}
+                <div className="relative mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-primary">
+                      {iconMap[area.icon] || <Lightbulb className="h-6 w-6" />}
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold">{area.title}</h3>
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
                 </div>
-                <p className="text-muted-foreground">{area.description}</p>
-              </div>
+
+                {/* Content */}
+                <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
+                  {area.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  {area.description}
+                </p>
+
+                {/* Decorative corner */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              </article>
             ))}
           </div>
         )}

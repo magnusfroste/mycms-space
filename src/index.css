@@ -1,3 +1,7 @@
+/* ============================================
+   2026 Design System
+   Fusion: Linear + Apple + Bento + Editorial
+   ============================================ */
 
 @tailwind base;
 @tailwind components;
@@ -5,83 +9,142 @@
 
 @layer base {
   :root {
-    --background: 210 50% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* ─────────────────────────────────────────
+       Core Color Palette - Warm Slate + Electric Accents
+       ───────────────────────────────────────── */
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 25% 10%;
 
-    --primary: 262 77% 74%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Deep Indigo */
+    --primary: 245 58% 51%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Warm Stone */
+    --secondary: 30 15% 94%;
+    --secondary-foreground: 220 25% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Electric Coral */
+    --accent: 12 90% 62%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 245 58% 51%;
 
     --radius: 1rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ─────────────────────────────────────────
+       Extended Design Tokens
+       ───────────────────────────────────────── */
+    
+    /* Gradient Stops */
+    --gradient-start: 245 58% 51%;
+    --gradient-mid: 280 65% 58%;
+    --gradient-end: 12 90% 62%;
+
+    /* Surface Hierarchy */
+    --surface-elevated: 0 0% 100%;
+    --surface-overlay: 220 20% 98% / 0.8;
+    --surface-glass: 0 0% 100% / 0.6;
+
+    /* Shadows - Layered depth */
+    --shadow-xs: 0 1px 2px hsl(220 25% 10% / 0.04);
+    --shadow-sm: 0 2px 8px hsl(220 25% 10% / 0.06);
+    --shadow-md: 0 8px 24px hsl(220 25% 10% / 0.08);
+    --shadow-lg: 0 16px 48px hsl(220 25% 10% / 0.12);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.15);
+
+    /* Spacing Scale */
+    --section-gap: 6rem;
+    --section-py: 5rem;
+    --container-px: 1.5rem;
+
+    /* Typography */
+    --heading-tracking: -0.025em;
+    --body-leading: 1.7;
+
+    /* Sidebar */
+    --sidebar-background: 220 20% 98%;
+    --sidebar-foreground: 220 10% 35%;
+    --sidebar-primary: 220 25% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 25% 10%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 245 58% 51%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* ─────────────────────────────────────────
+       Dark Mode - Rich, Immersive, Premium
+       ───────────────────────────────────────── */
+    --background: 225 25% 6%;
+    --foreground: 210 20% 95%;
 
-    --card: 222.2 84% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 225 20% 9%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222.2 84% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 225 20% 9%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 262 77% 74%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary: Vibrant Indigo */
+    --primary: 245 75% 68%;
+    --primary-foreground: 225 25% 6%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary: Dark Slate */
+    --secondary: 225 20% 14%;
+    --secondary-foreground: 210 20% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 225 20% 14%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent: Bright Coral */
+    --accent: 12 95% 65%;
+    --accent-foreground: 225 25% 6%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 262 77% 74%;
+    --border: 225 20% 15%;
+    --input: 225 20% 15%;
+    --ring: 245 75% 68%;
 
-    --sidebar-background: 222.2 84% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 262 77% 74%;
+    /* Extended Tokens - Dark */
+    --gradient-start: 245 75% 68%;
+    --gradient-mid: 280 70% 65%;
+    --gradient-end: 12 95% 65%;
+
+    --surface-elevated: 225 20% 11%;
+    --surface-overlay: 225 25% 8% / 0.9;
+    --surface-glass: 225 20% 12% / 0.7;
+
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 8px 24px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 16px 48px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 60px hsl(var(--primary) / 0.25);
+
+    /* Sidebar - Dark */
+    --sidebar-background: 225 25% 7%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-primary: 210 20% 95%;
+    --sidebar-primary-foreground: 225 25% 6%;
+    --sidebar-accent: 225 20% 14%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 225 20% 15%;
+    --sidebar-ring: 245 75% 68%;
   }
 }
 
@@ -89,46 +152,259 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground transition-colors duration-300;
-  }
-  body:not(.dark) {
-    background: linear-gradient(to bottom, #F8F9FB, #F0F4F8);
-  }
-  .dark body {
-    background: linear-gradient(to bottom, hsl(222.2, 84%, 4.9%), hsl(217.2, 32.6%, 12%));
-  }
+
   html {
     scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Background gradients */
+  body:not(.dark) {
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.05), transparent),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(220 20% 96%));
+  }
+
+  .dark body {
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.08), transparent),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(225 25% 4%));
+  }
+
+  /* Heading styles */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: var(--heading-tracking);
+    font-weight: 600;
   }
 }
 
 @layer components {
+  /* ─────────────────────────────────────────
+     Surface Components
+     ───────────────────────────────────────── */
+
+  /* Glass Card - Frosted effect */
   .glass-card {
-    @apply bg-card/70 backdrop-blur-md border border-border shadow-apple rounded-2xl transition-all hover:shadow-apple-hover;
+    @apply relative overflow-hidden rounded-2xl;
+    background: hsl(var(--surface-glass));
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
+  .glass-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: hsl(var(--primary) / 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Elevated Card - Solid with depth */
+  .elevated-card {
+    @apply relative overflow-hidden rounded-2xl bg-card border border-border;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .elevated-card:hover {
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    transform: translateY(-4px);
+  }
+
+  /* Glow Card - Subtle ambient glow */
+  .glow-card {
+    @apply relative overflow-hidden rounded-2xl bg-card border border-border;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glow-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: radial-gradient(
+      800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(var(--primary) / 0.06),
+      transparent 40%
+    );
+  }
+
+  .glow-card:hover::before {
+    @apply opacity-100;
+  }
+
+  .glow-card:hover {
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+    border-color: hsl(var(--primary) / 0.15);
+  }
+
+  /* ─────────────────────────────────────────
+     Typography Components
+     ───────────────────────────────────────── */
+
   .section-title {
-    @apply text-4xl md:text-5xl font-semibold text-center bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent mb-8;
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-6;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--foreground) / 0.7) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
-  .apple-button {
-    @apply px-6 py-3 bg-apple-blue text-white rounded-full font-medium transition-all hover:bg-opacity-90 shadow-sm;
+
+  .section-title-gradient {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-6;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)) 0%,
+      hsl(var(--gradient-mid)) 50%,
+      hsl(var(--gradient-end)) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  
+
+  .section-subtitle {
+    @apply text-lg md:text-xl text-muted-foreground text-center max-w-2xl mx-auto;
+    line-height: var(--body-leading);
+  }
+
   .prose-content {
-    @apply text-muted-foreground leading-relaxed;
+    @apply text-muted-foreground;
+    line-height: var(--body-leading);
   }
-  
+
+  /* ─────────────────────────────────────────
+     Button Components
+     ───────────────────────────────────────── */
+
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
+    @apply rounded-full font-medium text-primary-foreground;
+    @apply transition-all duration-300;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--gradient-mid)) 100%
+    );
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.35);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px hsl(var(--primary) / 0.45);
+  }
+
+  .btn-secondary {
+    @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
+    @apply rounded-full font-medium bg-secondary text-secondary-foreground;
+    @apply border border-border transition-all duration-300;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-muted;
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
+    @apply rounded-full font-medium text-foreground;
+    @apply transition-all duration-300;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-muted;
+  }
+
+  /* ─────────────────────────────────────────
+     Input Components
+     ───────────────────────────────────────── */
+
   .input-field {
-    @apply w-full bg-card/70 backdrop-blur-sm border border-input rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary text-foreground placeholder:text-muted-foreground;
+    @apply w-full bg-card border border-input rounded-xl px-4 py-3;
+    @apply text-foreground placeholder:text-muted-foreground;
+    @apply transition-all duration-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
   }
-  
+
+  /* ─────────────────────────────────────────
+     Navigation Components
+     ───────────────────────────────────────── */
+
   .nav-link {
-    @apply text-foreground/60 hover:text-primary transition-colors;
+    @apply text-muted-foreground hover:text-foreground transition-colors duration-200;
   }
-  
+
   .nav-link-mobile {
-    @apply text-foreground/60 hover:text-primary transition-colors text-lg;
+    @apply text-foreground/70 hover:text-foreground transition-colors duration-200 text-lg font-medium;
+  }
+
+  /* ─────────────────────────────────────────
+     Utility Animations
+     ───────────────────────────────────────── */
+
+  .animate-in {
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Staggered delay utilities */
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+
+  /* Gradient border effect */
+  .gradient-border {
+    @apply relative rounded-2xl;
+  }
+
+  .gradient-border::before {
+    content: '';
+    @apply absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-500;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    z-index: -1;
+  }
+
+  .gradient-border:hover::before {
+    @apply opacity-100;
+  }
+
+  /* ─────────────────────────────────────────
+     Section Layouts
+     ───────────────────────────────────────── */
+
+  .section-container {
+    @apply py-20 md:py-28 lg:py-32;
+  }
+
+  .section-container-sm {
+    @apply py-12 md:py-16 lg:py-20;
   }
 }
