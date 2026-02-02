@@ -135,13 +135,22 @@ export const integrationsMeta: IntegrationMeta[] = [
     docs: 'https://docs.firecrawl.dev',
     category: 'utility',
   },
+  {
+    type: 'resend',
+    name: 'Resend',
+    description: 'Email API for sending newsletters and transactional emails',
+    icon: 'Mail',
+    available: true,
+    docs: 'https://resend.com/docs',
+    category: 'utility',
+  },
 ];
 
 // ============================================
 // Utility Integration Types
 // ============================================
 
-export type UtilityIntegrationType = 'firecrawl';
+export type UtilityIntegrationType = 'firecrawl' | 'resend';
 
 export interface UtilityIntegrationBase {
   type: UtilityIntegrationType;
@@ -153,12 +162,23 @@ export interface FirecrawlIntegration extends UtilityIntegrationBase {
   // API key is stored in Supabase secrets
 }
 
-export type UtilityIntegration = FirecrawlIntegration;
+export interface ResendIntegration extends UtilityIntegrationBase {
+  type: 'resend';
+  from_email: string;
+  // API key is stored in Supabase secrets as RESEND_API_KEY
+}
+
+export type UtilityIntegration = FirecrawlIntegration | ResendIntegration;
 
 export const defaultUtilityIntegrations: Record<UtilityIntegrationType, UtilityIntegration> = {
   firecrawl: {
     type: 'firecrawl',
-    enabled: true, // Already connected via connector
+    enabled: true,
+  },
+  resend: {
+    type: 'resend',
+    enabled: true,
+    from_email: 'newsletter@froste.eu',
   },
 };
 
