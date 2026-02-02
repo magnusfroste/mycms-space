@@ -46,6 +46,7 @@ const mainNavItems = [
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'landing', label: 'Page Builder', icon: Layers },
   { id: 'blog', label: 'Blog', icon: PenSquare },
+  { id: 'newsletter', label: 'Newsletter', icon: Mail },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
 ];

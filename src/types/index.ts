@@ -237,7 +237,8 @@ export type BlockType =
   | 'stats-counter'
   | 'testimonial-carousel'
   | 'contact-form'
-  | 'blog';
+  | 'blog'
+  | 'newsletter-subscribe';
 
 export interface PageBlock {
   id: string;

@@ -166,6 +166,29 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         submit_button_text: 'Send Message',
       };
 
+    case 'blog':
+      return {
+        display_mode: 'latest',
+        layout: 'grid',
+        posts_count: 6,
+        show_excerpt: true,
+        show_reading_time: true,
+        show_categories: true,
+        show_author: false,
+        heading: 'Latest Posts',
+        subheading: '',
+      };
+
+    case 'newsletter-subscribe':
+      return {
+        heading: 'Subscribe to Newsletter',
+        description: 'Get the latest news directly to your inbox.',
+        buttonText: 'Subscribe',
+        successMessage: 'Thank you for subscribing!',
+        showNameField: false,
+        backgroundColor: '',
+      };
+
     default:
       return {};
   }
