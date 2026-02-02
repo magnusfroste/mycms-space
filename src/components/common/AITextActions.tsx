@@ -6,11 +6,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
   Sparkles,
   Check,
   Wand2,
@@ -19,6 +14,8 @@ import {
   MessageSquareText,
   CheckCircle2,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -36,47 +33,45 @@ interface ActionConfig {
 }
 
 const actionConfig: Record<AIAction, ActionConfig> = {
-  // Text enhancement actions
   correct: {
     label: 'Correct',
-    icon: <Check className="h-4 w-4" />,
+    icon: <Check className="h-3.5 w-3.5" />,
     description: 'Fix spelling and grammar',
     category: 'text',
   },
   enhance: {
     label: 'Enhance',
-    icon: <Wand2 className="h-4 w-4" />,
+    icon: <Wand2 className="h-3.5 w-3.5" />,
     description: 'Make text more professional',
     category: 'text',
   },
   expand: {
     label: 'Expand',
-    icon: <Expand className="h-4 w-4" />,
+    icon: <Expand className="h-3.5 w-3.5" />,
     description: 'Add more details',
     category: 'text',
   },
-  // Content generation actions (for longer content like blog posts)
   'generate-draft': {
-    label: 'Generate Draft',
-    icon: <Sparkles className="h-4 w-4" />,
+    label: 'Draft',
+    icon: <Sparkles className="h-3.5 w-3.5" />,
     description: 'Create complete content',
     category: 'content',
   },
   'generate-outline': {
-    label: 'Generate Outline',
-    icon: <List className="h-4 w-4" />,
+    label: 'Outline',
+    icon: <List className="h-3.5 w-3.5" />,
     description: 'Create a structured outline',
     category: 'content',
   },
   'generate-intro': {
-    label: 'Generate Intro',
-    icon: <MessageSquareText className="h-4 w-4" />,
+    label: 'Intro',
+    icon: <MessageSquareText className="h-3.5 w-3.5" />,
     description: 'Write an engaging opening',
     category: 'content',
   },
   'generate-conclusion': {
-    label: 'Generate Conclusion',
-    icon: <CheckCircle2 className="h-4 w-4" />,
+    label: 'Conclusion',
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
     description: 'Create a strong ending',
     category: 'content',
   },
@@ -87,7 +82,7 @@ type AITextActionsMode = 'text' | 'content' | 'both';
 interface AITextActionsProps {
   text: string;
   onTextChange: (newText: string) => void;
-  title?: string; // Required for content generation
+  title?: string;
   context?: string;
   mode?: AITextActionsMode;
   disabled?: boolean;
@@ -104,28 +99,19 @@ const AITextActions: React.FC<AITextActionsProps> = ({
   mode = 'text',
   disabled,
   className,
-  variant = 'ghost',
-  size = 'sm',
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentAction, setCurrentAction] = useState<AIAction | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const availableActions = Object.entries(actionConfig).filter(([_, config]) => {
     if (mode === 'both') return true;
     return config.category === mode;
   });
 
-  const textActions = availableActions.filter(([_, c]) => c.category === 'text');
-  const contentActions = availableActions.filter(([_, c]) => c.category === 'content');
-
   const handleAction = async (action: AIAction) => {
     const config = actionConfig[action];
     
-    // Close popover first
-    setIsOpen(false);
-    
-    // Validate input
     if (config.category === 'text' && !text.trim()) {
       toast({ title: 'No text to process', variant: 'destructive' });
       return;
@@ -179,7 +165,6 @@ const AITextActions: React.FC<AITextActionsProps> = ({
       if (data?.text) {
         let newContent = data.text;
 
-        // Handle content placement for generation actions
         if (action === 'generate-outline' && text.trim()) {
           newContent = data.text + '\n\n---\n\n' + text;
         } else if (action === 'generate-intro') {
@@ -207,93 +192,80 @@ const AITextActions: React.FC<AITextActionsProps> = ({
     }
   };
 
-  const canExecute = mode === 'text' ? text.trim() : true;
+  const canExecuteText = text.trim().length > 0;
+  const canExecuteContent = !!title?.trim();
 
+  // Simple mode: just show a single row of action buttons
+  if (mode === 'text') {
+    return (
+      <div className={cn('flex items-center gap-1', className)}>
+        {availableActions.map(([action, config]) => (
+          <Button
+            key={action}
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAction(action as AIAction)}
+            disabled={disabled || isLoading || !canExecuteText}
+            className="h-7 px-2 text-xs"
+            title={config.description}
+          >
+            {currentAction === action ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              config.icon
+            )}
+            <span className="ml-1">{config.label}</span>
+          </Button>
+        ))}
+      </div>
+    );
+  }
+
+  // Content or both mode: show expandable actions
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          className={className}
-          disabled={disabled || isLoading || !canExecute}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-          <span className="ml-1.5 text-xs">AI</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-52 p-1">
-        {textActions.length > 0 && (
-          <>
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-              Enhance Text
-            </div>
-            {textActions.map(([action, config]) => (
-              <button
+    <div className={cn('flex flex-wrap items-center gap-1', className)}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsExpanded(!isExpanded)}
+        disabled={disabled || isLoading}
+        className="h-7 px-2 text-xs"
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        <span className="ml-1">AI</span>
+        {isExpanded ? (
+          <ChevronUp className="h-3 w-3 ml-1" />
+        ) : (
+          <ChevronDown className="h-3 w-3 ml-1" />
+        )}
+      </Button>
+      
+      {isExpanded && (
+        <>
+          {availableActions.map(([action, config]) => {
+            const canExecute = config.category === 'text' ? canExecuteText : canExecuteContent;
+            return (
+              <Button
                 key={action}
+                variant="outline"
+                size="sm"
                 onClick={() => handleAction(action as AIAction)}
-                disabled={isLoading || !text.trim()}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  "focus:bg-accent focus:text-accent-foreground focus:outline-none",
-                  "disabled:pointer-events-none disabled:opacity-50"
-                )}
+                disabled={disabled || isLoading || !canExecute}
+                className="h-7 px-2 text-xs"
+                title={config.description}
               >
                 {currentAction === action ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   config.icon
                 )}
-                <div className="text-left">
-                  <div className="font-medium">{config.label}</div>
-                  <div className="text-xs text-muted-foreground">{config.description}</div>
-                </div>
-              </button>
-            ))}
-          </>
-        )}
-
-        {textActions.length > 0 && contentActions.length > 0 && (
-          <div className="my-1 h-px bg-border" />
-        )}
-
-        {contentActions.length > 0 && (
-          <>
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-              Generate Content
-            </div>
-            {contentActions.map(([action, config]) => (
-              <button
-                key={action}
-                onClick={() => handleAction(action as AIAction)}
-                disabled={isLoading || !title?.trim()}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  "focus:bg-accent focus:text-accent-foreground focus:outline-none",
-                  "disabled:pointer-events-none disabled:opacity-50"
-                )}
-              >
-                {currentAction === action ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  config.icon
-                )}
-                <div className="text-left">
-                  <div className="font-medium">{config.label}</div>
-                  <div className="text-xs text-muted-foreground">{config.description}</div>
-                </div>
-              </button>
-            ))}
-          </>
-        )}
-      </PopoverContent>
-    </Popover>
+                <span className="ml-1">{config.label}</span>
+              </Button>
+            );
+          })}
+        </>
+      )}
+    </div>
   );
 };
 
