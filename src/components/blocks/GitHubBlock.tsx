@@ -1,6 +1,7 @@
 // ============================================
 // GitHub Block
 // Displays GitHub profile and repositories
+// Uses module config as fallback for username
 // ============================================
 
 import React from 'react';
@@ -19,6 +20,7 @@ import {
   BookOpen 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useGitHubModule } from '@/models/modules';
 import type { GitHubBlockConfig, GitHubApiResponse, GitHubRepo } from '@/types/github';
 
 // Language colors (common ones)
@@ -47,20 +49,23 @@ interface GitHubBlockProps {
 }
 
 const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
-  const config = rawConfig as unknown as GitHubBlockConfig;
+  const blockConfig = rawConfig as unknown as GitHubBlockConfig;
+  const { config: moduleConfig, isEnabled } = useGitHubModule();
+  
+  // Use block-level username, fallback to module username
+  const username = blockConfig.username || moduleConfig?.username || '';
   
   const {
-    username = '',
     title = 'Open Source Projects',
     subtitle = '',
     showProfile = true,
     showStats = true,
     showLanguages = true,
     showTopics = true,
-    maxRepos = 6,
-    layout = 'grid',
-    sortBy = 'pushed',
-  } = config;
+    maxRepos = moduleConfig?.default_max_repos || 6,
+    layout = moduleConfig?.default_layout || 'grid',
+    sortBy = moduleConfig?.default_sort_by || 'pushed',
+  } = blockConfig;
 
   const { data, isLoading, error } = useQuery<GitHubApiResponse>({
     queryKey: ['github-repos', username, maxRepos, sortBy],
