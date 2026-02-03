@@ -73,13 +73,13 @@ export type AIIntegration =
 
 // Integration metadata for UI
 export interface IntegrationMeta {
-  type: AIIntegrationType | UtilityIntegrationType;
+  type: AIIntegrationType | UtilityIntegrationType | SourceIntegrationType;
   name: string;
   description: string;
   icon: string;
   available: boolean; // Is this integration implemented?
   docs?: string; // Link to documentation
-  category: 'ai' | 'utility';
+  category: 'ai' | 'utility' | 'source';
 }
 
 export const integrationsMeta: IntegrationMeta[] = [
@@ -144,6 +144,15 @@ export const integrationsMeta: IntegrationMeta[] = [
     docs: 'https://resend.com/docs',
     category: 'utility',
   },
+  {
+    type: 'github',
+    name: 'GitHub',
+    description: 'Connect your GitHub profile to display repositories',
+    icon: 'Github',
+    available: true,
+    docs: 'https://docs.github.com/en/rest',
+    category: 'source',
+  },
 ];
 
 // ============================================
@@ -151,6 +160,32 @@ export const integrationsMeta: IntegrationMeta[] = [
 // ============================================
 
 export type UtilityIntegrationType = 'firecrawl' | 'resend';
+
+// ============================================
+// Source Integration Types (GitHub, etc.)
+// ============================================
+
+export type SourceIntegrationType = 'github';
+
+export interface SourceIntegrationBase {
+  type: SourceIntegrationType;
+  enabled: boolean;
+}
+
+export interface GitHubSourceIntegration extends SourceIntegrationBase {
+  type: 'github';
+  username: string;
+}
+
+export type SourceIntegration = GitHubSourceIntegration;
+
+export const defaultSourceIntegrations: Record<SourceIntegrationType, SourceIntegration> = {
+  github: {
+    type: 'github',
+    enabled: false,
+    username: '',
+  },
+};
 
 export interface UtilityIntegrationBase {
   type: UtilityIntegrationType;

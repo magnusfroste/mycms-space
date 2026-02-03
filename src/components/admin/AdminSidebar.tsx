@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useGitHubModule } from '@/models/modules';
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -52,11 +53,17 @@ const mainNavItems = [
   { id: 'messages', label: 'Messages', icon: Mail },
 ];
 
-const settingsNavItems = [
+// Base settings items (always visible)
+const baseSettingsNavItems = [
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
   { id: 'integrations', label: 'Integrations', icon: Plug },
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
-  { id: 'github-module', label: 'GitHub', icon: Github },
+];
+
+// Conditional settings items (shown based on integration status)
+const githubSettingsItem = { id: 'github-module', label: 'GitHub', icon: Github };
+
+const bottomSettingsNavItems = [
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'seo-module', label: 'SEO & AIEO', icon: Search },
@@ -66,6 +73,14 @@ const settingsNavItems = [
 export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: AdminSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const { isEnabled: isGitHubEnabled } = useGitHubModule();
+
+  // Build settings nav items dynamically based on integration status
+  const settingsNavItems = [
+    ...baseSettingsNavItems,
+    ...(isGitHubEnabled ? [githubSettingsItem] : []),
+    ...bottomSettingsNavItems,
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
