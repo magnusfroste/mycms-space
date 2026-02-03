@@ -1,0 +1,63 @@
+# ============================================
+# Docker Compose for local development
+# Includes frontend, Supabase (optional), and nginx
+# ============================================
+
+version: '3.8'
+
+services:
+  # Frontend (mycms.space)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    networks:
+      - mycms-network
+
+  # Optional: Supabase Local (for development)
+  # Comment out if using Supabase Cloud (recommended for production)
+  supabase:
+    image: supabase/supabase:latest
+    container_name: supabase-local
+    ports:
+      - "54321:54321"  # Studio
+      - "54322:54322"  # API
+      - "54328:54328"  # Database
+    environment:
+      - POSTGRES_PASSWORD=yourpassword
+      - SUPABASE_ADMIN_EMAIL=admin@example.com
+      - SUPABASE_ADMIN_PASSWORD=admin123
+    volumes:
+      - supabase-data:/var/lib/supabase
+    restart: unless-stopped
+    networks:
+      - mycms-network
+    # Comment out if using Supabase Cloud
+
+  # nginx (optional reverse proxy)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    networks:
+      - mycms-network
+
+networks:
+  mycms-network:
+    driver: bridge
+
+volumes:
+  supabase-data:
