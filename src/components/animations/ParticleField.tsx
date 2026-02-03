@@ -1,14 +1,18 @@
+import { useMemo } from 'react';
+
 const ParticleField = () => {
-  // Generate 25 particles with random properties
-  const particles = Array.from({ length: 25 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 4 + 2, // 2-6px
-    duration: Math.random() * 8 + 6, // 6-14s
-    delay: Math.random() * 5, // 0-5s delay
-    left: Math.random() * 100, // 0-100%
-    top: Math.random() * 100, // 0-100%
-    opacity: Math.random() * 0.3 + 0.1, // 0.1-0.4
-  }));
+  // Memoize particles to prevent regeneration on each render
+  const particles = useMemo(() => 
+    Array.from({ length: 25 }, (_, i) => ({
+      id: i,
+      size: Math.random() * 4 + 2, // 2-6px
+      duration: Math.random() * 8 + 6, // 6-14s
+      delay: Math.random() * 5, // 0-5s delay
+      left: Math.random() * 100, // 0-100%
+      top: Math.random() * 100, // 0-100%
+      opacity: Math.random() * 0.3 + 0.1, // 0.1-0.4
+    })), 
+  []);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">

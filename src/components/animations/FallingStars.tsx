@@ -1,12 +1,16 @@
+import { useMemo } from 'react';
+
 const FallingStars = () => {
-  // Generate 18 stars with random properties
-  const stars = Array.from({ length: 18 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 3 + 1, // 1-4px
-    duration: Math.random() * 5 + 4, // 4-9s
-    delay: Math.random() * 8, // 0-8s delay
-    left: Math.random() * 100, // 0-100%
-  }));
+  // Memoize stars to prevent regeneration on each render
+  const stars = useMemo(() => 
+    Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      size: Math.random() * 3 + 1, // 1-4px
+      duration: Math.random() * 5 + 4, // 4-9s
+      delay: Math.random() * 8, // 0-8s delay
+      left: Math.random() * 100, // 0-100%
+    })),
+  []);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
