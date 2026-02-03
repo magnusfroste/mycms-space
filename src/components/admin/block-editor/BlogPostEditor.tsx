@@ -389,7 +389,11 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
                         {scheduledFor ? format(scheduledFor, 'PPP') : 'Pick a date'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent 
+                      className="w-auto p-0"
+                      onPointerDownOutside={(e) => e.preventDefault()}
+                      onInteractOutside={(e) => e.preventDefault()}
+                    >
                       <Calendar
                         mode="single"
                         selected={scheduledFor}

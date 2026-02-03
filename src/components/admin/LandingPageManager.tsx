@@ -624,7 +624,11 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
 
       {/* Add Block Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent 
+          className="max-w-2xl max-h-[85vh] overflow-y-auto"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Add Block</DialogTitle>
           </DialogHeader>
