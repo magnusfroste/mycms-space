@@ -54,19 +54,45 @@ export const updateModule = async <T extends ModuleConfigType>(
   moduleType: ModuleType,
   updates: Partial<{ enabled: boolean; module_config: T }>
 ): Promise<Module<T>> => {
-  const { data, error } = await supabase
+  // First try to update
+  const { data: updateData, error: updateError } = await supabase
     .from('modules')
     .update(updates as never)
     .eq('module_type', moduleType)
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    console.error('Error updating module:', error);
-    throw error;
+  // If update succeeded and returned data, we're done
+  if (updateData) {
+    return castModule<T>(updateData);
   }
 
-  return castModule<T>(data);
+  // If no row was updated, create the module (upsert logic)
+  if (!updateData && !updateError) {
+    const { data: insertData, error: insertError } = await supabase
+      .from('modules')
+      .insert({
+        module_type: moduleType,
+        module_config: updates.module_config ?? {},
+        enabled: updates.enabled ?? true,
+      } as never)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating module:', insertError);
+      throw insertError;
+    }
+
+    return castModule<T>(insertData);
+  }
+
+  if (updateError) {
+    console.error('Error updating module:', updateError);
+    throw updateError;
+  }
+
+  throw new Error('Unexpected state in updateModule');
 };
 
 export const createModule = async <T extends ModuleConfigType>(
