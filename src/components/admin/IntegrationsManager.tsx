@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { useAIModule, useUpdateAIModule, useGitHubModule, useUpdateGitHubModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
 import type { AIIntegrationType, UtilityIntegrationType, SourceIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig } from '@/types/modules';
@@ -769,17 +769,6 @@ interface GitHubSourceConfigProps {
   onToggle: (enabled: boolean) => void;
 }
 
-const layoutOptions = [
-  { value: 'grid', label: 'Grid' },
-  { value: 'list', label: 'List' },
-  { value: 'compact', label: 'Compact' },
-];
-
-const sortOptions = [
-  { value: 'pushed', label: 'Recently Updated' },
-  { value: 'stars', label: 'Most Stars' },
-  { value: 'created', label: 'Recently Created' },
-];
 
 const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({ 
   config,
@@ -845,92 +834,44 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
         </div>
       )}
 
-      {/* Display Settings - only show when enabled */}
+      {/* Technical Settings - only show when enabled */}
       {enabled && (
         <>
+          {/* Cache Settings */}
           <div className="border-t pt-4 mt-4">
             <div className="flex items-center gap-2 mb-4">
-              <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Display Settings</span>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Cache</span>
             </div>
             
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="default_layout">Default Layout</Label>
-                <Select
-                  value={currentConfig.default_layout || 'grid'}
-                  onValueChange={(value) => onConfigUpdate('default_layout', value as GitHubModuleConfig['default_layout'])}
-                >
-                  <SelectTrigger id="default_layout">
-                    <SelectValue placeholder="Select layout" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {layoutOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="default_sort">Default Sort</Label>
-                <Select
-                  value={currentConfig.default_sort_by || 'pushed'}
-                  onValueChange={(value) => onConfigUpdate('default_sort_by', value as GitHubModuleConfig['default_sort_by'])}
-                >
-                  <SelectTrigger id="default_sort">
-                    <SelectValue placeholder="Select sort order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max_repos">Max Repos</Label>
-                <Input
-                  id="max_repos"
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={currentConfig.default_max_repos}
-                  onChange={(e) => onConfigUpdate('default_max_repos', parseInt(e.target.value) || 6)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cache_duration">Cache (minutes)</Label>
-                <Input
-                  id="cache_duration"
-                  type="number"
-                  min={5}
-                  max={1440}
-                  value={currentConfig.cache_duration_minutes}
-                  onChange={(e) => onConfigUpdate('cache_duration_minutes', parseInt(e.target.value) || 60)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="cache_duration">Cache Duration (minutes)</Label>
+              <Input
+                id="cache_duration"
+                type="number"
+                min={5}
+                max={1440}
+                value={currentConfig.cache_duration_minutes}
+                onChange={(e) => onConfigUpdate('cache_duration_minutes', parseInt(e.target.value) || 60)}
+              />
+              <p className="text-xs text-muted-foreground">
+                How long to cache GitHub API responses
+              </p>
             </div>
           </div>
 
           {/* Filters */}
           <div className="border-t pt-4">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Filters</span>
+              <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Sync Filters</span>
             </div>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="hide_forked">Hide Forked Repos</Label>
-                  <p className="text-xs text-muted-foreground">Don't show forked repositories</p>
+                  <p className="text-xs text-muted-foreground">Don't sync forked repositories</p>
                 </div>
                 <Switch
                   id="hide_forked"
@@ -942,7 +883,7 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="hide_archived">Hide Archived Repos</Label>
-                  <p className="text-xs text-muted-foreground">Don't show archived repositories</p>
+                  <p className="text-xs text-muted-foreground">Don't sync archived repositories</p>
                 </div>
                 <Switch
                   id="hide_archived"
@@ -953,12 +894,15 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
             </div>
           </div>
 
-          {/* Display Toggles */}
+          {/* Global Display Defaults */}
           <div className="border-t pt-4">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Show in Repo Cards</span>
+              <span className="text-sm font-medium">Default Display Options</span>
             </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              These are global defaults. You can override them per block in the page builder.
+            </p>
             
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex items-center justify-between">
