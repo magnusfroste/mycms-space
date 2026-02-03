@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Layers } from 'lucide-react';
+import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Layers, Github } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -71,7 +71,6 @@ import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlo
 import ContactFormBlock from '@/components/blocks/ContactFormBlock';
 import BlogBlock from '@/components/blocks/BlogBlock';
 import NewsletterSubscribeBlock from '@/components/blocks/NewsletterSubscribeBlock';
-import GitHubBlock from '@/components/blocks/GitHubBlock';
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
@@ -178,7 +177,25 @@ const VisualBlockItem = ({
       case 'newsletter-subscribe':
         return <NewsletterSubscribeBlock config={config} />;
       case 'github':
-        return <GitHubBlock config={config} />;
+        // Render lightweight placeholder in admin to prevent heavy API calls
+        return (
+          <section className="py-16 md:py-24 bg-muted/20">
+            <div className="container mx-auto px-4 text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <GripVertical className="w-8 h-8 text-primary" />
+                <h2 className="text-2xl font-bold">{(config.title as string) || 'GitHub Repos'}</h2>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                {(config.subtitle as string) || 'Your GitHub repositories will be displayed here'}
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg text-sm">
+                <span>Layout: {(config.layout as string) || 'grid'}</span>
+                <span className="text-muted-foreground">•</span>
+                <span>Max repos: {(config.maxRepos as number) || 6}</span>
+              </div>
+            </div>
+          </section>
+        );
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
