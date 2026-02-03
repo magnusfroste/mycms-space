@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Globe, Share2, FileText, Search } from 'lucide-react';
+import { Save, Globe, Share2, FileText, Search, BarChart3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SEOModuleSettings = () => {
@@ -30,6 +30,7 @@ const SEOModuleSettings = () => {
     default_og_image: '',
     twitter_handle: '',
     linkedin_url: '',
+    google_analytics_id: '',
   });
 
   useEffect(() => {
@@ -190,6 +191,33 @@ const SEOModuleSettings = () => {
                 onChange={(e) => setConfig({ ...config, linkedin_url: e.target.value })}
                 placeholder="https://linkedin.com/in/yourprofile"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analytics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Analytics
+            </CardTitle>
+            <CardDescription>
+              Configure tracking and analytics integrations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="google_analytics_id">Google Analytics ID</Label>
+              <Input
+                id="google_analytics_id"
+                value={config.google_analytics_id}
+                onChange={(e) => setConfig({ ...config, google_analytics_id: e.target.value })}
+                placeholder="G-XXXXXXXXXX"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your GA4 Measurement ID (starts with G-). Leave empty to disable.
+              </p>
             </div>
           </CardContent>
         </Card>

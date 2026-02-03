@@ -297,6 +297,8 @@ export interface SEOModuleConfig {
   default_og_image: string;
   twitter_handle: string;
   linkedin_url: string;
+  // Analytics
+  google_analytics_id: string;
 }
 
 // Union type for all configs
@@ -409,6 +411,7 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     default_og_image: '/og-image.png',
     twitter_handle: '@magnusfroste',
     linkedin_url: 'https://linkedin.com/in/magnusfroste',
+    google_analytics_id: '',
   },
 };
 

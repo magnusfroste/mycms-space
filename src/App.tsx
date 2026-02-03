@@ -15,6 +15,7 @@ import BlogPost from "./pages/BlogPost";
 import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 
 // Page view tracking component (internal + Google Analytics)
 const PageTracker = () => {
@@ -59,6 +60,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
+          <GoogleAnalytics />
           <Toaster />
           <Sonner />
           <BrowserRouter>
