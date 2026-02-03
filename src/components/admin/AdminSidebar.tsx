@@ -16,6 +16,7 @@ import {
   BookOpen,
   Plug,
   Search,
+  Github,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -55,6 +56,7 @@ const settingsNavItems = [
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
   { id: 'integrations', label: 'Integrations', icon: Plug },
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
+  { id: 'github-module', label: 'GitHub', icon: Github },
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'seo-module', label: 'SEO & AIEO', icon: Search },
