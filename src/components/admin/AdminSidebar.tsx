@@ -17,6 +17,7 @@ import {
   Plug,
   Search,
   Github,
+  ImageIcon,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -46,6 +47,7 @@ const mainNavItems = [
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'landing', label: 'Page Builder', icon: Layers },
   { id: 'blog', label: 'Blog', icon: PenSquare },
+  { id: 'media-hub', label: 'Media Hub', icon: ImageIcon },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
