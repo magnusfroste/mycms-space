@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -301,6 +301,19 @@ export interface SEOModuleConfig {
   google_analytics_id: string;
 }
 
+// GitHub Module Config
+export interface GitHubModuleConfig {
+  username: string;
+  cache_duration_minutes: number;
+  auto_sync: boolean;
+  sync_interval_hours: number;
+  default_layout: 'grid' | 'list' | 'compact';
+  default_max_repos: number;
+  hide_forked: boolean;
+  hide_archived: boolean;
+  default_sort_by: 'pushed' | 'stars' | 'created';
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -310,7 +323,8 @@ export type ModuleConfigType =
   | HeaderModuleConfig
   | FooterModuleConfig
   | BlogModuleConfig
-  | SEOModuleConfig;
+  | SEOModuleConfig
+  | GitHubModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -322,6 +336,7 @@ export interface ModuleTypeConfigMap {
   footer: FooterModuleConfig;
   blog: BlogModuleConfig;
   seo: SEOModuleConfig;
+  github: GitHubModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -412,6 +427,17 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     twitter_handle: '@magnusfroste',
     linkedin_url: 'https://linkedin.com/in/magnusfroste',
     google_analytics_id: '',
+  },
+  github: {
+    username: 'magnusfroste',
+    cache_duration_minutes: 60,
+    auto_sync: false,
+    sync_interval_hours: 24,
+    default_layout: 'grid',
+    default_max_repos: 6,
+    hide_forked: true,
+    hide_archived: true,
+    default_sort_by: 'pushed',
   },
 };
 
