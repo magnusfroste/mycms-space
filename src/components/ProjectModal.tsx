@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import type { DisplayProject } from '@/types/displayProject';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -12,15 +11,29 @@ interface ProjectModalProps {
 }
 
 const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
-  const [current, setCurrent] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Determine if we have multiple images to display
-  const hasMultipleImages = project.images && project.images.length > 1;
+  // Get images array
   const imagesToShow = project.images && project.images.length > 0
     ? project.images
     : project.image 
       ? [project.image] 
       : [];
+
+  const hasMultipleImages = imagesToShow.length > 1;
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? imagesToShow.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === imagesToShow.length - 1 ? 0 : prev + 1));
+  };
+
+  // Reset index when project changes
+  React.useEffect(() => {
+    setCurrentIndex(0);
+  }, [project.id]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -35,78 +48,48 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
         <div className="space-y-4 mt-4">
           {imagesToShow.length > 0 && (
             <div className="rounded-lg overflow-hidden p-4 bg-muted/30">
-              {hasMultipleImages ? (
-                <div className="relative">
-                  <Carousel
-                    setApi={(api) => {
-                      api?.on('select', () => {
-                        setCurrent(api.selectedScrollSnap());
-                      });
-                    }}
-                  >
-                    <CarouselContent>
-                      {imagesToShow.map((img, index) => (
-                        <CarouselItem key={index}>
-                          <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
-                            <img 
-                              src={img} 
-                              alt={`${project.title} - Image ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    
-                    <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between pointer-events-none">
-                      <Button 
-                        variant="secondary" 
-                        size="icon"
-                        className="ml-2 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10 pointer-events-auto"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const prevButton = document.querySelector('[data-carousel-prev]') as HTMLElement;
-                          prevButton?.click();
-                        }}
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                        <span className="sr-only">Previous slide</span>
-                      </Button>
-                      <Button 
-                        variant="secondary"
-                        size="icon"
-                        className="mr-2 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10 pointer-events-auto"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const nextButton = document.querySelector('[data-carousel-next]') as HTMLElement;
-                          nextButton?.click();
-                        }}
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                        <span className="sr-only">Next slide</span>
-                      </Button>
-                    </div>
-                    
-                    <div className="hidden">
-                      <CarouselPrevious data-carousel-prev />
-                      <CarouselNext data-carousel-next />
-                    </div>
-                  </Carousel>
-                  
-                  {imagesToShow.length > 1 && (
-                    <div className="mt-2 flex justify-center items-center gap-2">
-                      <div className="text-sm text-muted-foreground font-medium bg-secondary/50 px-3 py-1 rounded-full">
-                        {current + 1} / {imagesToShow.length}
-                      </div>
-                    </div>
-                  )}
+              <div className="relative">
+                {/* Current Image */}
+                <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
+                  <img 
+                    src={imagesToShow[currentIndex]} 
+                    alt={`${project.title} - Image ${currentIndex + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              ) : (
-                <img 
-                  src={imagesToShow[0]} 
-                  alt={project.title}
-                  className="w-full h-auto rounded-xl"
-                />
+
+                {/* Navigation Buttons */}
+                {hasMultipleImages && (
+                  <>
+                    <Button 
+                      variant="secondary" 
+                      size="icon"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10"
+                      onClick={goToPrevious}
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                      <span className="sr-only">Previous image</span>
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full w-10 h-10"
+                      onClick={goToNext}
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                      <span className="sr-only">Next image</span>
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              {/* Image Counter */}
+              {hasMultipleImages && (
+                <div className="mt-2 flex justify-center items-center gap-2">
+                  <div className="text-sm text-muted-foreground font-medium bg-secondary/50 px-3 py-1 rounded-full">
+                    {currentIndex + 1} / {imagesToShow.length}
+                  </div>
+                </div>
               )}
             </div>
           )}
