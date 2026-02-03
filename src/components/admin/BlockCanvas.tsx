@@ -70,6 +70,8 @@ import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
 import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
 import ContactFormBlock from '@/components/blocks/ContactFormBlock';
 import BlogBlock from '@/components/blocks/BlogBlock';
+import NewsletterSubscribeBlock from '@/components/blocks/NewsletterSubscribeBlock';
+import GitHubBlock from '@/components/blocks/GitHubBlock';
 
 // Inline editor
 import { InlineBlockEditor } from './block-editor';
@@ -94,6 +96,8 @@ export const blockTypeLabels: Record<string, string> = {
   'testimonial-carousel': 'Testimonials ✨',
   'contact-form': 'Contact Form',
   'blog': 'Blog Posts',
+  'newsletter-subscribe': 'Newsletter',
+  'github': 'GitHub Repos',
 };
 
 interface VisualBlockItemProps {
@@ -171,6 +175,10 @@ const VisualBlockItem = ({
         return <ContactFormBlock config={config} />;
       case 'blog':
         return <BlogBlock config={config} />;
+      case 'newsletter-subscribe':
+        return <NewsletterSubscribeBlock config={config} />;
+      case 'github':
+        return <GitHubBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
