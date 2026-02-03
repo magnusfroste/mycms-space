@@ -48,16 +48,24 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
   }, [projects, selectedCategory, categories]);
 
   const handleViewMore = (project: typeof projects[0]) => {
-    setSelectedProject({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      demoLink: project.demo_link,
-      image: project.images?.[0]?.image_url || undefined,
-      images: project.images?.map(img => img.image_url) || [],
-      problemStatement: project.problem_statement,
-      whyBuilt: project.why_built,
-    });
+    try {
+      console.log('[ProjectShowcase] Opening modal for:', project.title);
+      const displayProject: DisplayProject = {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        demoLink: project.demo_link,
+        image: project.images?.[0]?.image_url || undefined,
+        images: project.images?.map(img => img.image_url) || [],
+        problemStatement: project.problem_statement,
+        whyBuilt: project.why_built,
+      };
+      console.log('[ProjectShowcase] DisplayProject created:', displayProject);
+      setSelectedProject(displayProject);
+      console.log('[ProjectShowcase] State updated');
+    } catch (error) {
+      console.error('[ProjectShowcase] Error opening modal:', error);
+    }
   };
 
   if (!moduleEnabled || !showSection) {
