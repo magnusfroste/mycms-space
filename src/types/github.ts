@@ -56,11 +56,15 @@ export interface GitHubBlockConfig {
   showLanguages?: boolean;
   showTopics?: boolean;
   maxRepos?: number;
-  layout?: 'grid' | 'list' | 'compact';
+  layout?: 'grid' | 'list' | 'compact' | 'project-cards' | 'showcase-hero' | 'minimal-list';
   sortBy?: 'pushed' | 'stars' | 'created';
   filterLanguage?: string;
   hideForked?: boolean;
   hideArchived?: boolean;
+  // New options for enriched display
+  showImages?: boolean;
+  showProblemStatement?: boolean;
+  showWhyItMatters?: boolean;
 }
 
 // GitHub Module Config (for module settings)

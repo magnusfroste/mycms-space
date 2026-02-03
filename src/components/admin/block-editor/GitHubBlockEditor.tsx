@@ -73,14 +73,6 @@ const GitHubBlockEditor: React.FC<GitHubBlockEditorProps> = ({ config, onChange 
         
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-            <Label>Show Profile Card</Label>
-            <Switch
-              checked={config.showProfile ?? true}
-              onCheckedChange={(checked) => updateConfig({ showProfile: checked })}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
             <Label>Show Stars & Forks</Label>
             <Switch
               checked={config.showStats ?? true}
@@ -103,44 +95,70 @@ const GitHubBlockEditor: React.FC<GitHubBlockEditorProps> = ({ config, onChange 
               onCheckedChange={(checked) => updateConfig({ showTopics: checked })}
             />
           </div>
+
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <Label>Show Images</Label>
+            <Switch
+              checked={config.showImages ?? true}
+              onCheckedChange={(checked) => updateConfig({ showImages: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <Label>Show Problem Statement</Label>
+            <Switch
+              checked={config.showProblemStatement ?? true}
+              onCheckedChange={(checked) => updateConfig({ showProblemStatement: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+            <Label>Show Why It Matters</Label>
+            <Switch
+              checked={config.showWhyItMatters ?? true}
+              onCheckedChange={(checked) => updateConfig({ showWhyItMatters: checked })}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Layout and Sorting */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Layout</Label>
-          <Select
-            value={config.layout || 'grid'}
-            onValueChange={(value) => updateConfig({ layout: value as 'grid' | 'list' | 'compact' })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="grid">Grid (Cards)</SelectItem>
-              <SelectItem value="list">List (Vertical)</SelectItem>
-              <SelectItem value="compact">Compact (Table)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Sort By</Label>
-          <Select
-            value={config.sortBy || 'pushed'}
-            onValueChange={(value) => updateConfig({ sortBy: value as 'pushed' | 'stars' | 'created' })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pushed">Recently Updated</SelectItem>
-              <SelectItem value="stars">Most Stars</SelectItem>
-              <SelectItem value="created">Newest First</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Layout */}
+      <div className="space-y-2">
+        <Label>Layout</Label>
+        <Select
+          value={config.layout || 'grid'}
+          onValueChange={(value) => updateConfig({ layout: value as GitHubBlockConfig['layout'] })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="project-cards">
+              <div>
+                <span className="font-medium">Project Cards</span>
+                <p className="text-xs text-muted-foreground">Large cards with images, problem & why it matters</p>
+              </div>
+            </SelectItem>
+            <SelectItem value="showcase-hero">
+              <div>
+                <span className="font-medium">Showcase Hero</span>
+                <p className="text-xs text-muted-foreground">One repo at a time with carousel navigation</p>
+              </div>
+            </SelectItem>
+            <SelectItem value="grid">
+              <div>
+                <span className="font-medium">Classic Grid</span>
+                <p className="text-xs text-muted-foreground">Compact cards in 3-column grid</p>
+              </div>
+            </SelectItem>
+            <SelectItem value="minimal-list">
+              <div>
+                <span className="font-medium">Minimal List</span>
+                <p className="text-xs text-muted-foreground">Simple list with quick links</p>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Max Repos */}
