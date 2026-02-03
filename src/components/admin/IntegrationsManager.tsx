@@ -5,7 +5,8 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -826,16 +827,21 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
       </div>
 
       {enabled && currentConfig.username && (
-        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-          <div className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-green-600 mt-0.5" />
-            <div className="text-sm">
-              <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
-              <p className="text-green-700 dark:text-green-300 mt-1">
-                Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{currentConfig.username}</code>
-              </p>
+        <div className="space-y-3">
+          <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+            <div className="flex items-start gap-2">
+              <Check className="h-4 w-4 text-green-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
+                <p className="text-green-700 dark:text-green-300 mt-1">
+                  Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{currentConfig.username}</code>
+                </p>
+              </div>
             </div>
           </div>
+          
+          {/* Link to Repos Manager */}
+          <ManageReposLink />
         </div>
       )}
 
@@ -995,6 +1001,25 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
         </>
       )}
     </div>
+  );
+};
+
+// ============================================
+// Manage Repos Link Component
+// ============================================
+const ManageReposLink: React.FC = () => {
+  const [, setSearchParams] = useSearchParams();
+
+  const handleClick = () => {
+    setSearchParams({ tab: 'github-repos' });
+  };
+
+  return (
+    <Button variant="outline" className="w-full justify-start" onClick={handleClick}>
+      <FolderOpen className="h-4 w-4 mr-2" />
+      Manage Repositories
+      <span className="ml-auto text-xs text-muted-foreground">Select & enrich repos</span>
+    </Button>
   );
 };
 

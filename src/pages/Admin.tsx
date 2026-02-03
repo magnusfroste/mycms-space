@@ -8,6 +8,7 @@ import SEOModuleSettings from '@/components/admin/SEOModuleSettings';
 import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import IntegrationsManager from '@/components/admin/IntegrationsManager';
+import GitHubReposManager from '@/components/admin/GitHubReposManager';
 import { NavSettings } from '@/components/admin/NavSettings';
 import LandingPageManager from '@/components/admin/LandingPageManager';
 import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
@@ -135,6 +136,8 @@ const Admin = () => {
         return <BlogModuleSettings />;
       case 'seo-module':
         return <SEOModuleSettings />;
+      case 'github-repos':
+        return <GitHubReposManager />;
       case 'newsletter':
         return <NewsletterManager />;
       case 'history':

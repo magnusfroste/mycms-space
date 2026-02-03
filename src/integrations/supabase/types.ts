@@ -200,6 +200,125 @@ export type Database = {
         }
         Relationships: []
       }
+      github_repo_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string | null
+          id: string
+          image_path: string | null
+          image_url: string
+          order_index: number | null
+          repo_id: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_path?: string | null
+          image_url: string
+          order_index?: number | null
+          repo_id: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          image_path?: string | null
+          image_url?: string
+          order_index?: number | null
+          repo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_repo_images_repo_id_fkey"
+            columns: ["repo_id"]
+            isOneToOne: false
+            referencedRelation: "github_repos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_repos: {
+        Row: {
+          created_at: string | null
+          created_at_github: string | null
+          description: string | null
+          enabled: boolean | null
+          enriched_description: string | null
+          enriched_title: string | null
+          forks: number | null
+          full_name: string
+          github_id: string
+          homepage: string | null
+          id: string
+          is_archived: boolean | null
+          is_fork: boolean | null
+          language: string | null
+          last_synced_at: string | null
+          name: string
+          order_index: number | null
+          problem_statement: string | null
+          pushed_at: string | null
+          stars: number | null
+          topics: string[] | null
+          updated_at: string | null
+          url: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_at_github?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          enriched_description?: string | null
+          enriched_title?: string | null
+          forks?: number | null
+          full_name: string
+          github_id: string
+          homepage?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_fork?: boolean | null
+          language?: string | null
+          last_synced_at?: string | null
+          name: string
+          order_index?: number | null
+          problem_statement?: string | null
+          pushed_at?: string | null
+          stars?: number | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_at_github?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          enriched_description?: string | null
+          enriched_title?: string | null
+          forks?: number | null
+          full_name?: string
+          github_id?: string
+          homepage?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_fork?: boolean | null
+          language?: string | null
+          last_synced_at?: string | null
+          name?: string
+          order_index?: number | null
+          problem_statement?: string | null
+          pushed_at?: string | null
+          stars?: number | null
+          topics?: string[] | null
+          updated_at?: string | null
+          url?: string
+          why_it_matters?: string | null
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           created_at: string | null

@@ -16,6 +16,7 @@ import {
   BookOpen,
   Plug,
   Search,
+  Github,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -59,6 +60,7 @@ const baseSettingsNavItems = [
 
 const bottomSettingsNavItems = [
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
+  { id: 'github-repos', label: 'GitHub Repos', icon: Github },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'seo-module', label: 'SEO & AIEO', icon: Search },
   { id: 'history', label: 'History', icon: History },
