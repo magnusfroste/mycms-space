@@ -5,7 +5,6 @@ import AIModuleSettings from '@/components/admin/AIModuleSettings';
 import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
 import BlogModuleSettings from '@/components/admin/BlogModuleSettings';
 import SEOModuleSettings from '@/components/admin/SEOModuleSettings';
-import GitHubModuleSettings from '@/components/admin/GitHubModuleSettings';
 import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import IntegrationsManager from '@/components/admin/IntegrationsManager';
@@ -130,8 +129,6 @@ const Admin = () => {
         return <IntegrationsManager />;
       case 'ai-module':
         return <AIModuleSettings />;
-      case 'github-module':
-        return <GitHubModuleSettings />;
       case 'projects-module':
         return <ProjectsModuleSettings />;
       case 'blog-module':

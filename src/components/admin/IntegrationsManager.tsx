@@ -1,10 +1,11 @@
 // ============================================
 // Integrations Manager
 // Catalog of available integrations (n8n, OpenAI, etc.)
+// All integration settings consolidated here (n8n pattern)
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAIModule, useUpdateAIModule, useGitHubModule, useUpdateGitHubModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
 import type { AIIntegrationType, UtilityIntegrationType, SourceIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig } from '@/types/modules';
-import { integrationsMeta, defaultIntegrations } from '@/types/modules';
+import { integrationsMeta, defaultIntegrations, defaultModuleConfigs } from '@/types/modules';
 
 // Combined integration type (all categories)
 type IntegrationType = AIIntegrationType | UtilityIntegrationType | SourceIntegrationType;
@@ -186,6 +189,22 @@ const IntegrationsManager: React.FC = () => {
     );
   };
 
+  // Update GitHub config field
+  const handleGitHubConfigUpdate = <K extends keyof GitHubModuleConfig>(
+    field: K,
+    value: GitHubModuleConfig[K]
+  ) => {
+    const currentConfig = githubConfig ?? defaultModuleConfigs.github;
+    updateGitHubModule.mutate(
+      { module_config: { ...currentConfig, [field]: value } },
+      {
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+      }
+    );
+  };
+
+  // Legacy: updateGitHubUsername is now handled by handleGitHubConfigUpdate
   const updateGitHubUsername = (username: string) => {
     if (!githubConfig) return;
     updateGitHubModule.mutate(
@@ -320,9 +339,9 @@ const IntegrationsManager: React.FC = () => {
               >
                 {integration.type === 'github' && (
                   <GitHubSourceConfig 
-                    username={githubConfig?.username || ''} 
+                    config={githubConfig}
                     enabled={githubModule?.enabled ?? false}
-                    onUsernameChange={updateGitHubUsername}
+                    onConfigUpdate={handleGitHubConfigUpdate}
                     onToggle={toggleGitHubIntegration}
                   />
                 )}
@@ -740,29 +759,44 @@ const GeminiConfig: React.FC<GeminiConfigProps> = ({ config, onUpdate }) => {
 };
 
 // ============================================
-// GitHub Source Configuration Component
+// GitHub Source Configuration Component (All-in-one)
 // ============================================
 interface GitHubSourceConfigProps {
-  username: string;
+  config: GitHubModuleConfig | undefined;
   enabled: boolean;
-  onUsernameChange: (username: string) => void;
+  onConfigUpdate: <K extends keyof GitHubModuleConfig>(field: K, value: GitHubModuleConfig[K]) => void;
   onToggle: (enabled: boolean) => void;
 }
 
+const layoutOptions = [
+  { value: 'grid', label: 'Grid' },
+  { value: 'list', label: 'List' },
+  { value: 'compact', label: 'Compact' },
+];
+
+const sortOptions = [
+  { value: 'pushed', label: 'Recently Updated' },
+  { value: 'stars', label: 'Most Stars' },
+  { value: 'created', label: 'Recently Created' },
+];
+
 const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({ 
-  username, 
+  config,
   enabled,
-  onUsernameChange,
+  onConfigUpdate,
   onToggle 
 }) => {
-  const [localUsername, setLocalUsername] = React.useState(username);
+  const defaultConfig = defaultModuleConfigs.github;
+  const currentConfig = config ?? defaultConfig;
+  const [localUsername, setLocalUsername] = React.useState(currentConfig.username);
 
-  const handleSave = () => {
-    onUsernameChange(localUsername);
+  const handleSaveUsername = () => {
+    onConfigUpdate('username', localUsername);
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Enable/Disable */}
       <div className="flex items-center justify-between">
         <div>
           <Label htmlFor="github_enabled">Enable GitHub Integration</Label>
@@ -770,20 +804,14 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
             Show GitHub content in your pages
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs ${enabled ? 'text-green-600' : 'text-muted-foreground'}`}>
-            {enabled ? 'Active' : 'Inactive'}
-          </span>
-          <input
-            type="checkbox"
-            id="github_enabled"
-            checked={enabled}
-            onChange={(e) => onToggle(e.target.checked)}
-            className="h-4 w-4"
-          />
-        </div>
+        <Switch
+          id="github_enabled"
+          checked={enabled}
+          onCheckedChange={onToggle}
+        />
       </div>
 
+      {/* Username */}
       <div className="space-y-2">
         <Label htmlFor="github_username">GitHub Username</Label>
         <div className="flex gap-2">
@@ -793,35 +821,133 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
             onChange={(e) => setLocalUsername(e.target.value)}
             placeholder="magnusfroste"
           />
-          <Button onClick={handleSave} size="sm">Save</Button>
+          <Button onClick={handleSaveUsername} size="sm">Save</Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Your GitHub username for fetching repositories
-        </p>
       </div>
 
-      {enabled && username && (
+      {enabled && currentConfig.username && (
         <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
           <div className="flex items-start gap-2">
             <Check className="h-4 w-4 text-green-600 mt-0.5" />
             <div className="text-sm">
               <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
               <p className="text-green-700 dark:text-green-300 mt-1">
-                Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{username}</code>
+                Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{currentConfig.username}</code>
               </p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="text-sm text-muted-foreground">
-        <p className="font-medium mb-2">When enabled:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>GitHub Block</strong> appears in Page Builder</li>
-          <li><strong>GitHub Module</strong> settings become available</li>
-          <li>Display repositories on your pages</li>
-        </ul>
-      </div>
+      {/* Display Settings - only show when enabled */}
+      {enabled && (
+        <>
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Display Settings</span>
+            </div>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="default_layout">Default Layout</Label>
+                <Select
+                  value={currentConfig.default_layout}
+                  onValueChange={(value) => onConfigUpdate('default_layout', value as GitHubModuleConfig['default_layout'])}
+                >
+                  <SelectTrigger id="default_layout">
+                    <SelectValue placeholder="Select layout" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {layoutOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="default_sort">Default Sort</Label>
+                <Select
+                  value={currentConfig.default_sort_by}
+                  onValueChange={(value) => onConfigUpdate('default_sort_by', value as GitHubModuleConfig['default_sort_by'])}
+                >
+                  <SelectTrigger id="default_sort">
+                    <SelectValue placeholder="Select sort order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="max_repos">Max Repos</Label>
+                <Input
+                  id="max_repos"
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={currentConfig.default_max_repos}
+                  onChange={(e) => onConfigUpdate('default_max_repos', parseInt(e.target.value) || 6)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cache_duration">Cache (minutes)</Label>
+                <Input
+                  id="cache_duration"
+                  type="number"
+                  min={5}
+                  max={1440}
+                  value={currentConfig.cache_duration_minutes}
+                  onChange={(e) => onConfigUpdate('cache_duration_minutes', parseInt(e.target.value) || 60)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Filters</span>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="hide_forked">Hide Forked Repos</Label>
+                  <p className="text-xs text-muted-foreground">Don't show forked repositories</p>
+                </div>
+                <Switch
+                  id="hide_forked"
+                  checked={currentConfig.hide_forked}
+                  onCheckedChange={(checked) => onConfigUpdate('hide_forked', checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="hide_archived">Hide Archived Repos</Label>
+                  <p className="text-xs text-muted-foreground">Don't show archived repositories</p>
+                </div>
+                <Switch
+                  id="hide_archived"
+                  checked={currentConfig.hide_archived}
+                  onCheckedChange={(checked) => onConfigUpdate('hide_archived', checked)}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
