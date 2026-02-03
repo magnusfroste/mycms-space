@@ -148,10 +148,7 @@ const PageManager = () => {
         </Button>
 
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent
-            onPointerDownOutside={(e) => e.preventDefault()}
-            onInteractOutside={(e) => e.preventDefault()}
-          >
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Page</DialogTitle>
               <DialogDescription>
@@ -231,10 +228,7 @@ const PageManager = () => {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
-        <DialogContent
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Page</DialogTitle>
           </DialogHeader>

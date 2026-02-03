@@ -343,11 +343,7 @@ export const BlockSettings = () => {
           </Button>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogContent 
-              className="max-w-2xl max-h-[85vh] overflow-y-auto"
-              onPointerDownOutside={(e) => e.preventDefault()}
-              onInteractOutside={(e) => e.preventDefault()}
-            >
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add Block</DialogTitle>
               </DialogHeader>
@@ -417,11 +413,7 @@ export const BlockSettings = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent 
-          className="max-w-2xl max-h-[85vh] overflow-y-auto"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-        >
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Block</DialogTitle>
           </DialogHeader>
