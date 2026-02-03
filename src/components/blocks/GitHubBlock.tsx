@@ -59,13 +59,16 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
     title = 'Open Source Projects',
     subtitle = '',
     showProfile = true,
-    showStats = true,
-    showLanguages = true,
-    showTopics = true,
+    showStats = moduleConfig?.show_stars ?? true,
+    showLanguages = moduleConfig?.show_languages ?? true,
+    showTopics = moduleConfig?.show_topics ?? true,
     maxRepos = moduleConfig?.default_max_repos || 6,
     layout = moduleConfig?.default_layout || 'grid',
     sortBy = moduleConfig?.default_sort_by || 'pushed',
   } = blockConfig;
+  
+  // Get forks visibility from module config
+  const showForks = moduleConfig?.show_forks ?? true;
 
   const { data, isLoading, error } = useQuery<GitHubApiResponse>({
     queryKey: ['github-repos', username, maxRepos, sortBy],
@@ -139,16 +142,20 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
               <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
             </a>
           </CardTitle>
-          {showStats && (
+          {(showStats || showForks) && (
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Star className="w-4 h-4" />
-                {repo.stars}
-              </span>
-              <span className="flex items-center gap-1">
-                <GitFork className="w-4 h-4" />
-                {repo.forks}
-              </span>
+              {showStats && (
+                <span className="flex items-center gap-1">
+                  <Star className="w-4 h-4" />
+                  {repo.stars}
+                </span>
+              )}
+              {showForks && (
+                <span className="flex items-center gap-1">
+                  <GitFork className="w-4 h-4" />
+                  {repo.forks}
+                </span>
+              )}
             </div>
           )}
         </div>
