@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RichTextEditor } from '@/components/common';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
+import MediaHubPicker from './MediaHubPicker';
 import {
   useGitHubRepos,
   useSyncGitHubRepos,
@@ -57,6 +58,7 @@ import {
   Plus,
   ImagePlus,
   Upload,
+  FolderOpen,
 } from 'lucide-react';
 
 // Language colors
@@ -199,6 +201,7 @@ interface RepoEditFormProps {
   }) => void;
   onCancel: () => void;
   onAddImage: (file: File) => void;
+  onAddImageFromUrl: (url: string) => void;
   onDeleteImage: (imageId: string) => void;
   onSyncToGitHub: (description: string) => void;
   isUploading: boolean;
@@ -211,6 +214,7 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
   onSave,
   onCancel,
   onAddImage,
+  onAddImageFromUrl,
   onDeleteImage,
   onSyncToGitHub,
   isUploading,
@@ -224,6 +228,7 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
     why_it_matters: repo.why_it_matters || '',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaHubOpen, setMediaHubOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -262,16 +267,31 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
                 </button>
               </div>
             ))}
+            {/* Add from computer */}
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="h-20 w-32 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              className="h-20 w-16 border-2 border-dashed rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors gap-1"
+              title="Upload from computer"
             >
               {isUploading ? (
-                <RefreshCw className="h-5 w-5 animate-spin" />
+                <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
-                <Plus className="h-5 w-5" />
+                <>
+                  <Plus className="h-4 w-4" />
+                  <span className="text-[10px]">Upload</span>
+                </>
               )}
+            </button>
+            {/* Add from Media Hub */}
+            <button
+              onClick={() => setMediaHubOpen(true)}
+              disabled={isUploading}
+              className="h-20 w-16 border-2 border-dashed rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors gap-1"
+              title="Select from Media Hub"
+            >
+              <FolderOpen className="h-4 w-4" />
+              <span className="text-[10px]">Media</span>
             </button>
             <input
               ref={fileInputRef}
@@ -282,6 +302,16 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
             />
           </div>
         </div>
+
+        {/* Media Hub Picker */}
+        <MediaHubPicker
+          open={mediaHubOpen}
+          onOpenChange={setMediaHubOpen}
+          onSelect={(file) => {
+            onAddImageFromUrl(file.publicUrl);
+            setMediaHubOpen(false);
+          }}
+        />
 
         {/* Enriched Title */}
         <div className="space-y-2">
@@ -473,6 +503,21 @@ const GitHubReposManager: React.FC = () => {
     }
   };
 
+  // Add image from Media Hub URL (no upload needed)
+  const handleAddImageFromUrl = async (repoId: string, imageUrl: string) => {
+    try {
+      await addImageMutation.mutateAsync({
+        repoId,
+        imageUrl,
+        imagePath: null, // No local path since it's already in storage
+      });
+      toast({ title: 'Image added from Media Hub' });
+    } catch (error) {
+      console.error('Add image error:', error);
+      toast({ title: 'Could not add image', variant: 'destructive' });
+    }
+  };
+
   const handleDeleteImage = (imageId: string) => {
     if (confirm('Delete this image?')) {
       deleteImageMutation.mutate(imageId);
@@ -563,6 +608,7 @@ const GitHubReposManager: React.FC = () => {
                     onSave={(updates) => handleSaveEnrichment(repo.id, updates)}
                     onCancel={() => setEditingId(null)}
                     onAddImage={(file) => handleAddImage(repo.id, file)}
+                    onAddImageFromUrl={(url) => handleAddImageFromUrl(repo.id, url)}
                     onDeleteImage={handleDeleteImage}
                     onSyncToGitHub={(desc) => handleSyncToGitHub(repo.id, repo.full_name, desc)}
                     isUploading={uploadingFor === repo.id}
