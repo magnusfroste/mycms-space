@@ -171,14 +171,16 @@ const ClassicPageBuilder = () => {
             <div className="p-4 border-b bg-background">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-lg">Pages</h2>
+                <Button size="sm" onClick={() => { resetForm(); setIsCreateOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  New
+                </Button>
+
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" onClick={resetForm}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      New
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => e.preventDefault()}
+                  >
                     <DialogHeader>
                       <DialogTitle>Create New Page</DialogTitle>
                       <DialogDescription>
@@ -410,7 +412,10 @@ const ClassicPageBuilder = () => {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Edit Page</DialogTitle>
           </DialogHeader>

@@ -142,14 +142,16 @@ const PageManager = () => {
           <p className="text-muted-foreground">Manage your pages and choose which one is the home page</p>
         </div>
         
+        <Button onClick={() => { resetForm(); setIsCreateOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Page
+        </Button>
+
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Page
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>Create New Page</DialogTitle>
               <DialogDescription>
@@ -229,7 +231,10 @@ const PageManager = () => {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Edit Page</DialogTitle>
           </DialogHeader>
