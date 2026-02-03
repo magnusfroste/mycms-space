@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useAIModule, useUpdateAIModule } from '@/models/modules';
+import { useAIModule, useUpdateAIModule, useGitHubModule, useUpdateGitHubModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
-import type { AIIntegrationType, UtilityIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration } from '@/types/modules';
+import type { AIIntegrationType, UtilityIntegrationType, SourceIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 
-// Combined integration type
-type IntegrationType = AIIntegrationType | UtilityIntegrationType;
+// Combined integration type (all categories)
+type IntegrationType = AIIntegrationType | UtilityIntegrationType | SourceIntegrationType;
 
 // Secret names for each integration
 const integrationSecrets: Partial<Record<IntegrationType, string>> = {
@@ -37,6 +37,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   ollama: <Server className="h-5 w-5" />,
   firecrawl: <Globe className="h-5 w-5" />,
   resend: <Mail className="h-5 w-5" />,
+  github: <Github className="h-5 w-5" />,
 };
 
 const integrationColors: Record<IntegrationType, string> = {
@@ -47,11 +48,14 @@ const integrationColors: Record<IntegrationType, string> = {
   ollama: 'text-purple-500',
   firecrawl: 'text-amber-500',
   resend: 'text-indigo-500',
+  github: 'text-gray-700 dark:text-gray-300',
 };
 
 const IntegrationsManager: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
+  const { data: githubModule, config: githubConfig } = useGitHubModule();
   const updateModule = useUpdateAIModule();
+  const updateGitHubModule = useUpdateGitHubModule();
   const { toast } = useToast();
   const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
   const [showPayloadPreview, setShowPayloadPreview] = useState(false);
@@ -151,6 +155,9 @@ const IntegrationsManager: React.FC = () => {
       case 'resend':
         // Resend requires RESEND_API_KEY secret
         return 'requires_secret';
+      case 'github':
+        // GitHub is configured if username is set and module is enabled
+        return !!(githubModule?.enabled && githubConfig?.username);
       case 'ollama': {
         // Check for base_url
         if (config?.integration?.type === 'ollama') {
@@ -166,6 +173,28 @@ const IntegrationsManager: React.FC = () => {
   // Check if this is an AI integration (can be activated for chat)
   const isAIIntegration = (type: IntegrationType): type is AIIntegrationType => {
     return ['n8n', 'lovable', 'openai', 'gemini', 'ollama'].includes(type);
+  };
+
+  // Toggle GitHub integration
+  const toggleGitHubIntegration = (enabled: boolean) => {
+    updateGitHubModule.mutate(
+      { enabled },
+      {
+        onSuccess: () => toast({ title: enabled ? 'GitHub enabled' : 'GitHub disabled' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+      }
+    );
+  };
+
+  const updateGitHubUsername = (username: string) => {
+    if (!githubConfig) return;
+    updateGitHubModule.mutate(
+      { module_config: { ...githubConfig, username } },
+      {
+        onSuccess: () => toast({ title: 'Saved' }),
+        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+      }
+    );
   };
 
   return (
@@ -256,6 +285,47 @@ const IntegrationsManager: React.FC = () => {
               >
                 {integration.type === 'firecrawl' && <FirecrawlConfig />}
                 {integration.type === 'resend' && <ResendConfig />}
+              </IntegrationCard>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Source Integrations Section (GitHub, etc.) */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-muted-foreground">Sources</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {integrationsMeta.filter(i => i.category === 'source').map((integration) => {
+            const isExpanded = expandedIntegration === integration.type;
+            const isAvailable = integration.available;
+            const isConfigured = isIntegrationConfigured(integration.type);
+            const isActive = integration.type === 'github' && githubModule?.enabled;
+            
+            return (
+              <IntegrationCard
+                key={integration.type}
+                integration={integration}
+                isActive={isActive}
+                isExpanded={isExpanded}
+                isAvailable={isAvailable}
+                isConfigured={isConfigured}
+                onActivate={() => {
+                  if (integration.type === 'github') {
+                    toggleGitHubIntegration(true);
+                    setExpandedIntegration('github');
+                  }
+                }}
+                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
+                showActivate={integration.type === 'github' && !githubModule?.enabled}
+              >
+                {integration.type === 'github' && (
+                  <GitHubSourceConfig 
+                    username={githubConfig?.username || ''} 
+                    enabled={githubModule?.enabled ?? false}
+                    onUsernameChange={updateGitHubUsername}
+                    onToggle={toggleGitHubIntegration}
+                  />
+                )}
               </IntegrationCard>
             );
           })}
@@ -664,6 +734,93 @@ const GeminiConfig: React.FC<GeminiConfigProps> = ({ config, onUpdate }) => {
           <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
           <option value="gemini-2.0-flash">Gemini 2.0 Flash (Latest)</option>
         </select>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// GitHub Source Configuration Component
+// ============================================
+interface GitHubSourceConfigProps {
+  username: string;
+  enabled: boolean;
+  onUsernameChange: (username: string) => void;
+  onToggle: (enabled: boolean) => void;
+}
+
+const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({ 
+  username, 
+  enabled,
+  onUsernameChange,
+  onToggle 
+}) => {
+  const [localUsername, setLocalUsername] = React.useState(username);
+
+  const handleSave = () => {
+    onUsernameChange(localUsername);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label htmlFor="github_enabled">Enable GitHub Integration</Label>
+          <p className="text-xs text-muted-foreground">
+            Show GitHub content in your pages
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs ${enabled ? 'text-green-600' : 'text-muted-foreground'}`}>
+            {enabled ? 'Active' : 'Inactive'}
+          </span>
+          <input
+            type="checkbox"
+            id="github_enabled"
+            checked={enabled}
+            onChange={(e) => onToggle(e.target.checked)}
+            className="h-4 w-4"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="github_username">GitHub Username</Label>
+        <div className="flex gap-2">
+          <Input
+            id="github_username"
+            value={localUsername}
+            onChange={(e) => setLocalUsername(e.target.value)}
+            placeholder="magnusfroste"
+          />
+          <Button onClick={handleSave} size="sm">Save</Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Your GitHub username for fetching repositories
+        </p>
+      </div>
+
+      {enabled && username && (
+        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <div className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-green-600 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
+              <p className="text-green-700 dark:text-green-300 mt-1">
+                Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{username}</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">When enabled:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>GitHub Block</strong> appears in Page Builder</li>
+          <li><strong>GitHub Module</strong> settings become available</li>
+          <li>Display repositories on your pages</li>
+        </ul>
       </div>
     </div>
   );
