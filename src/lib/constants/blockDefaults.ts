@@ -189,6 +189,20 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         backgroundColor: '',
       };
 
+    case 'github':
+      return {
+        username: '',
+        title: 'Open Source Projects',
+        subtitle: 'My contributions to the open source community',
+        showProfile: true,
+        showStats: true,
+        showLanguages: true,
+        showTopics: true,
+        maxRepos: 6,
+        layout: 'grid',
+        sortBy: 'pushed',
+      };
+
     default:
       return {};
   }

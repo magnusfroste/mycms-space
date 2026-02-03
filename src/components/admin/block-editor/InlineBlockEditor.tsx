@@ -38,7 +38,9 @@ import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
+import GitHubBlockEditor from './GitHubBlockEditor';
 import { useToast } from '@/hooks/use-toast';
+import type { GitHubBlockConfig } from '@/types/github';
 
 interface InlineBlockEditorProps {
   block: PageBlock;
@@ -65,6 +67,7 @@ const blockTypeLabels: Record<string, string> = {
   'stats-counter': 'Stats Counter ✨',
   'testimonial-carousel': 'Testimonials ✨',
   'contact-form': 'Contact Form',
+  'github': 'GitHub Repos ✨',
 };
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
@@ -932,6 +935,13 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         return renderTestimonialConfig();
       case 'contact-form':
         return renderContactFormConfig();
+      case 'github':
+        return (
+          <GitHubBlockEditor
+            config={config as unknown as GitHubBlockConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
+        );
       default:
         return (
           <div className="text-center py-8 text-muted-foreground">
