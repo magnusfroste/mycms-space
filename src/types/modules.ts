@@ -347,6 +347,11 @@ export interface GitHubModuleConfig {
   hide_forked: boolean;
   hide_archived: boolean;
   default_sort_by: 'pushed' | 'stars' | 'created';
+  // Display toggles
+  show_stars: boolean;
+  show_forks: boolean;
+  show_languages: boolean;
+  show_topics: boolean;
 }
 
 // Union type for all configs
@@ -473,6 +478,10 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     hide_forked: true,
     hide_archived: true,
     default_sort_by: 'pushed',
+    show_stars: true,
+    show_forks: true,
+    show_languages: true,
+    show_topics: true,
   },
 };
 

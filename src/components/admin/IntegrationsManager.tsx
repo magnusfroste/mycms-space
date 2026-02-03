@@ -852,7 +852,7 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="default_layout">Default Layout</Label>
                 <Select
-                  value={currentConfig.default_layout}
+                  value={currentConfig.default_layout || 'grid'}
                   onValueChange={(value) => onConfigUpdate('default_layout', value as GitHubModuleConfig['default_layout'])}
                 >
                   <SelectTrigger id="default_layout">
@@ -871,7 +871,7 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="default_sort">Default Sort</Label>
                 <Select
-                  value={currentConfig.default_sort_by}
+                  value={currentConfig.default_sort_by || 'pushed'}
                   onValueChange={(value) => onConfigUpdate('default_sort_by', value as GitHubModuleConfig['default_sort_by'])}
                 >
                   <SelectTrigger id="default_sort">
@@ -928,7 +928,7 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
                 </div>
                 <Switch
                   id="hide_forked"
-                  checked={currentConfig.hide_forked}
+                  checked={currentConfig.hide_forked ?? true}
                   onCheckedChange={(checked) => onConfigUpdate('hide_forked', checked)}
                 />
               </div>
@@ -940,8 +940,54 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
                 </div>
                 <Switch
                   id="hide_archived"
-                  checked={currentConfig.hide_archived}
+                  checked={currentConfig.hide_archived ?? true}
                   onCheckedChange={(checked) => onConfigUpdate('hide_archived', checked)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Display Toggles */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Show in Repo Cards</span>
+            </div>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show_stars">Stars</Label>
+                <Switch
+                  id="show_stars"
+                  checked={currentConfig.show_stars ?? true}
+                  onCheckedChange={(checked) => onConfigUpdate('show_stars', checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show_forks">Forks</Label>
+                <Switch
+                  id="show_forks"
+                  checked={currentConfig.show_forks ?? true}
+                  onCheckedChange={(checked) => onConfigUpdate('show_forks', checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show_languages">Languages</Label>
+                <Switch
+                  id="show_languages"
+                  checked={currentConfig.show_languages ?? true}
+                  onCheckedChange={(checked) => onConfigUpdate('show_languages', checked)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show_topics">Topics</Label>
+                <Switch
+                  id="show_topics"
+                  checked={currentConfig.show_topics ?? true}
+                  onCheckedChange={(checked) => onConfigUpdate('show_topics', checked)}
                 />
               </div>
             </div>
