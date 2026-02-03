@@ -26,9 +26,10 @@ import ContactFormBlock from './ContactFormBlock';
 import BlogBlock from './BlogBlock';
 import SectionDivider from './SectionDivider';
 import NewsletterSubscribeBlock from './NewsletterSubscribeBlock';
+import GitHubBlock from './GitHubBlock';
 
 // Block types that should have dividers after them
-const BLOCKS_WITH_DIVIDER = ['hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section'];
+const BLOCKS_WITH_DIVIDER = ['hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github'];
 
 interface BlockRendererProps {
   block: PageBlock;
@@ -79,6 +80,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
         return <BlogBlock config={block_config} />;
       case 'newsletter-subscribe':
         return <NewsletterSubscribeBlock config={block_config as unknown as NewsletterSubscribeBlockConfig} />;
+      case 'github':
+        return <GitHubBlock config={block_config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">

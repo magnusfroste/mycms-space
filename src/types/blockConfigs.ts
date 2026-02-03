@@ -228,6 +228,21 @@ export interface NewsletterSubscribeBlockConfig {
   backgroundColor?: string;
 }
 
+// GitHub Block Config
+export interface GitHubBlockConfig {
+  username?: string;
+  title?: string;
+  subtitle?: string;
+  showProfile?: boolean;
+  showStats?: boolean;
+  showLanguages?: boolean;
+  showTopics?: boolean;
+  maxRepos?: number;
+  layout?: 'grid' | 'list' | 'compact';
+  sortBy?: 'pushed' | 'stars' | 'created';
+  filterLanguage?: string;
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -248,7 +263,8 @@ export type BlockConfigType =
   | VideoHeroBlockConfig
   | ParallaxSectionBlockConfig
   | BlogBlockConfig
-  | NewsletterSubscribeBlockConfig;
+  | NewsletterSubscribeBlockConfig
+  | GitHubBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -271,6 +287,7 @@ export interface BlockTypeConfigMap {
   'parallax-section': ParallaxSectionBlockConfig;
   'blog': BlogBlockConfig;
   'newsletter-subscribe': NewsletterSubscribeBlockConfig;
+  'github': GitHubBlockConfig;
 }
 
 // Helper type to get config type from block type
@@ -380,5 +397,17 @@ export const defaultBlockConfigs: BlockTypeConfigMap = {
     successMessage: 'Tack för din prenumeration!',
     showNameField: false,
     backgroundColor: '',
+  },
+  'github': {
+    username: '',
+    title: 'Open Source Projects',
+    subtitle: 'My contributions to the community',
+    showProfile: true,
+    showStats: true,
+    showLanguages: true,
+    showTopics: true,
+    maxRepos: 6,
+    layout: 'grid',
+    sortBy: 'pushed',
   },
 };

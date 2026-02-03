@@ -21,6 +21,7 @@ import {
   BarChart3,
   Quote,
   Mail,
+  Github,
 } from 'lucide-react';
 import type { BlockType } from '@/types';
 
@@ -219,6 +220,18 @@ const NewsletterPreview = () => (
   </div>
 );
 
+const GitHubPreview = () => (
+  <div className="w-full h-full bg-muted/30 rounded flex flex-col items-center justify-center gap-1 p-2">
+    <Github className="w-4 h-4 text-foreground/60" />
+    <div className="grid grid-cols-2 gap-0.5 w-full mt-1">
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+    </div>
+  </div>
+);
+
 export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
   // Basic blocks
   {
@@ -356,6 +369,14 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     icon: <Mail className="h-4 w-4" />,
     description: 'Email subscription form',
     preview: <NewsletterPreview />,
+    category: '2026',
+  },
+  {
+    type: 'github',
+    label: 'GitHub Repos ✨',
+    icon: <Github className="h-4 w-4" />,
+    description: 'Display your GitHub profile and repos',
+    preview: <GitHubPreview />,
     category: '2026',
   },
 ];

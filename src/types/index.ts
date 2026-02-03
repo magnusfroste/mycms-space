@@ -238,7 +238,8 @@ export type BlockType =
   | 'testimonial-carousel'
   | 'contact-form'
   | 'blog'
-  | 'newsletter-subscribe';
+  | 'newsletter-subscribe'
+  | 'github';
 
 export interface PageBlock {
   id: string;
