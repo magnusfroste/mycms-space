@@ -16,7 +16,6 @@ import {
   BookOpen,
   Plug,
   Search,
-  Github,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -32,9 +31,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useGitHubModule } from '@/models/modules';
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -60,9 +57,6 @@ const baseSettingsNavItems = [
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
 ];
 
-// Conditional settings items (shown based on integration status)
-const githubSettingsItem = { id: 'github-module', label: 'GitHub', icon: Github };
-
 const bottomSettingsNavItems = [
   { id: 'projects-module', label: 'Projects Module', icon: FolderOpen },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
@@ -73,12 +67,10 @@ const bottomSettingsNavItems = [
 export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: AdminSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
-  const { isEnabled: isGitHubEnabled } = useGitHubModule();
 
-  // Build settings nav items dynamically based on integration status
+  // Build settings nav items (no longer conditional on GitHub)
   const settingsNavItems = [
     ...baseSettingsNavItems,
-    ...(isGitHubEnabled ? [githubSettingsItem] : []),
     ...bottomSettingsNavItems,
   ];
 
