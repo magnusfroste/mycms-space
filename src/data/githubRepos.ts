@@ -247,3 +247,35 @@ export const deleteGitHubRepo = async (id: string): Promise<void> => {
 
   if (error) throw error;
 };
+
+// Sync description back to GitHub
+export const syncToGitHub = async (
+  fullName: string,
+  description: string
+): Promise<{ success: boolean; error?: string }> => {
+  const [owner, repo] = fullName.split('/');
+  
+  if (!owner || !repo) {
+    return { success: false, error: 'Invalid repository name' };
+  }
+
+  const { data, error } = await supabase.functions.invoke('github-repos', {
+    body: { 
+      action: 'update',
+      owner,
+      repo,
+      description,
+    },
+  });
+
+  if (error) {
+    console.error('Sync to GitHub error:', error);
+    return { success: false, error: error.message };
+  }
+
+  if (data?.error) {
+    return { success: false, error: data.error };
+  }
+
+  return { success: true };
+};

@@ -39,6 +39,7 @@ import {
   useUpdateGitHubRepoOrder,
   useAddGitHubRepoImage,
   useDeleteGitHubRepoImage,
+  useSyncToGitHub,
   type GitHubRepoWithImages,
 } from '@/models/githubRepos';
 import { useGitHubModule } from '@/models/modules';
@@ -55,6 +56,7 @@ import {
   X,
   Plus,
   ImagePlus,
+  Upload,
 } from 'lucide-react';
 
 // Language colors
@@ -198,8 +200,10 @@ interface RepoEditFormProps {
   onCancel: () => void;
   onAddImage: (file: File) => void;
   onDeleteImage: (imageId: string) => void;
+  onSyncToGitHub: (description: string) => void;
   isUploading: boolean;
   isSaving: boolean;
+  isSyncing: boolean;
 }
 
 const RepoEditForm: React.FC<RepoEditFormProps> = ({
@@ -208,8 +212,10 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
   onCancel,
   onAddImage,
   onDeleteImage,
+  onSyncToGitHub,
   isUploading,
   isSaving,
+  isSyncing,
 }) => {
   const [formData, setFormData] = useState({
     enriched_title: repo.enriched_title || '',
@@ -333,10 +339,19 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={() => onSave(formData)} disabled={isSaving}>
             <Check className="h-4 w-4 mr-1" />
             Save
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onSyncToGitHub(formData.enriched_description || repo.description || '')}
+            disabled={isSyncing || !formData.enriched_description}
+            title="Push description to GitHub"
+          >
+            <Upload className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
+            Sync to GitHub
           </Button>
           <Button variant="ghost" onClick={onCancel}>
             <X className="h-4 w-4 mr-1" />
@@ -358,9 +373,11 @@ const GitHubReposManager: React.FC = () => {
   const updateOrderMutation = useUpdateGitHubRepoOrder();
   const addImageMutation = useAddGitHubRepoImage();
   const deleteImageMutation = useDeleteGitHubRepoImage();
+  const syncToGitHubMutation = useSyncToGitHub();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [syncingFor, setSyncingFor] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -462,6 +479,22 @@ const GitHubReposManager: React.FC = () => {
     }
   };
 
+  const handleSyncToGitHub = async (repoId: string, fullName: string, description: string) => {
+    setSyncingFor(repoId);
+    try {
+      const result = await syncToGitHubMutation.mutateAsync({ fullName, description });
+      if (result.success) {
+        toast({ title: 'Synced to GitHub', description: 'Description updated on GitHub' });
+      } else {
+        toast({ title: 'Sync failed', description: result.error, variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Sync failed', variant: 'destructive' });
+    } finally {
+      setSyncingFor(null);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -531,8 +564,10 @@ const GitHubReposManager: React.FC = () => {
                     onCancel={() => setEditingId(null)}
                     onAddImage={(file) => handleAddImage(repo.id, file)}
                     onDeleteImage={handleDeleteImage}
+                    onSyncToGitHub={(desc) => handleSyncToGitHub(repo.id, repo.full_name, desc)}
                     isUploading={uploadingFor === repo.id}
                     isSaving={updateMutation.isPending}
+                    isSyncing={syncingFor === repo.id}
                   />
                 ) : (
                   <SortableRepoItem

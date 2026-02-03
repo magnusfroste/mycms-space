@@ -126,3 +126,16 @@ export const useDeleteGitHubRepo = () => {
     },
   });
 };
+
+// Sync to GitHub
+export const useSyncToGitHub = () => {
+  return useMutation({
+    mutationFn: ({ 
+      fullName, 
+      description 
+    }: { 
+      fullName: string; 
+      description: string;
+    }) => githubReposData.syncToGitHub(fullName, description),
+  });
+};
