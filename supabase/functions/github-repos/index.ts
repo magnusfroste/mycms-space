@@ -1,6 +1,6 @@
 // ============================================
 // GitHub Repos Edge Function
-// Fetches public repositories from GitHub API
+// Fetches and updates repositories via GitHub API
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -83,16 +83,10 @@ serve(async (req) => {
   }
 
   try {
-    const { username, includeProfile = true, limit = 10, sort = "pushed" } = await req.json();
+    const body = await req.json();
+    const { action = "fetch" } = body;
 
-    if (!username) {
-      return new Response(
-        JSON.stringify({ error: "Username is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Optional: Use GitHub token for higher rate limits
+    // Optional: Use GitHub token for higher rate limits and write access
     const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");
     const headers: Record<string, string> = {
       "Accept": "application/vnd.github.v3+json",
@@ -101,6 +95,85 @@ serve(async (req) => {
     
     if (GITHUB_TOKEN) {
       headers["Authorization"] = `Bearer ${GITHUB_TOKEN}`;
+    }
+
+    // ============================================
+    // ACTION: UPDATE - Push description to GitHub
+    // ============================================
+    if (action === "update") {
+      const { owner, repo, description } = body;
+
+      if (!owner || !repo) {
+        return new Response(
+          JSON.stringify({ error: "Owner and repo are required for update" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!GITHUB_TOKEN) {
+        return new Response(
+          JSON.stringify({ error: "GITHUB_TOKEN with write access is required for updates" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log(`Updating repo ${owner}/${repo} with description: ${description?.substring(0, 50)}...`);
+
+      const updateUrl = `https://api.github.com/repos/${owner}/${repo}`;
+      const updateResponse = await fetch(updateUrl, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description: description || "" }),
+      });
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        console.error(`GitHub update error: ${updateResponse.status} - ${errorText}`);
+        
+        if (updateResponse.status === 404) {
+          return new Response(
+            JSON.stringify({ error: "Repository not found or no access" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (updateResponse.status === 403) {
+          return new Response(
+            JSON.stringify({ error: "No write permission. Ensure token has 'repo' scope." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error(`GitHub API error: ${updateResponse.status}`);
+      }
+
+      const updatedRepo = await updateResponse.json();
+      console.log(`Successfully updated ${owner}/${repo}`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          repo: {
+            name: updatedRepo.name,
+            fullName: updatedRepo.full_name,
+            description: updatedRepo.description,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
+    // ACTION: FETCH - Get repos from GitHub
+    // ============================================
+    const { username, includeProfile = true, limit = 10, sort = "pushed" } = body;
+
+    if (!username) {
+      return new Response(
+        JSON.stringify({ error: "Username is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Fetch repos
@@ -177,11 +250,15 @@ serve(async (req) => {
       reset: reposResponse.headers.get("X-RateLimit-Reset"),
     };
 
+    // Check if we have write access
+    const hasWriteAccess = !!GITHUB_TOKEN;
+
     return new Response(
       JSON.stringify({
         repos: transformedRepos,
         profile,
         rateLimit,
+        hasWriteAccess,
         cached: false,
         fetchedAt: new Date().toISOString(),
       }),
