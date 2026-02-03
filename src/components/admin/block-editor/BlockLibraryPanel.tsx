@@ -28,6 +28,7 @@ import {
   Layers,
   ArrowRight,
   Plus,
+  Github,
 } from 'lucide-react';
 
 // Block categories with their blocks
@@ -60,6 +61,7 @@ const BLOCK_CATEGORIES = [
       { type: 'bento-grid', name: 'Bento Grid', description: 'Modern asymmetric layout', icon: Grid3X3 },
       { type: 'expertise-grid', name: 'Expertise Grid', description: 'Grid with expertise areas', icon: Layout },
       { type: 'stats-counter', name: 'Stats Counter', description: 'Animated numbers', icon: BarChart3 },
+      { type: 'github', name: 'GitHub Repos', description: 'Display your GitHub repositories', icon: Github },
     ],
   },
   {
