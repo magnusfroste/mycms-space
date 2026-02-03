@@ -1,16 +1,19 @@
 // ============================================
 // Image Upload Component
 // Reusable image upload with preview for block editor
+// Now includes Media Hub picker option
 // ============================================
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, Image as ImageIcon, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
+import MediaHubPicker from '@/components/admin/MediaHubPicker';
+import type { MediaFile } from '@/models/mediaHub';
 
 interface ImageUploadProps {
   label?: string;
@@ -23,6 +26,7 @@ interface ImageUploadProps {
   className?: string;
   aspectRatio?: string;
   compact?: boolean;
+  showMediaHub?: boolean;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -36,6 +40,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   className,
   aspectRatio,
   compact,
+  showMediaHub = true,
 }) => {
   // Support both value and currentImageUrl props
   const imageUrl = value || currentImageUrl || '';
@@ -45,7 +50,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   };
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mediaHubOpen, setMediaHubOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleMediaHubSelect = (file: MediaFile) => {
+    handleChange(file.publicUrl, file.path);
+    setError(null);
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -134,27 +145,40 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </Button>
         </div>
       ) : (
-        <div
-          className={cn(
-            'border-2 border-dashed rounded-lg p-6',
-            'flex flex-col items-center justify-center gap-2',
-            'text-muted-foreground',
-            'hover:border-primary/50 hover:bg-muted/50 transition-colors',
-            'cursor-pointer'
-          )}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Uploading...</span>
-            </>
-          ) : (
-            <>
-              <ImageIcon className="h-8 w-8" />
-              <span className="text-sm">Click to upload image</span>
-              <span className="text-xs">JPG, PNG, WEBP (max 10MB)</span>
-            </>
+        <div className="space-y-2">
+          <div
+            className={cn(
+              'border-2 border-dashed rounded-lg p-6',
+              'flex flex-col items-center justify-center gap-2',
+              'text-muted-foreground',
+              'hover:border-primary/50 hover:bg-muted/50 transition-colors',
+              'cursor-pointer'
+            )}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-sm">Uploading...</span>
+              </>
+            ) : (
+              <>
+                <ImageIcon className="h-8 w-8" />
+                <span className="text-sm">Click to upload image</span>
+                <span className="text-xs">JPG, PNG, WEBP (max 10MB)</span>
+              </>
+            )}
+          </div>
+          {showMediaHub && !isUploading && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setMediaHubOpen(true)}
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Browse Media Hub
+            </Button>
           )}
         </div>
       )}
@@ -196,6 +220,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}
+
+      {/* Media Hub Picker */}
+      <MediaHubPicker
+        open={mediaHubOpen}
+        onOpenChange={setMediaHubOpen}
+        onSelect={handleMediaHubSelect}
+        selectedUrl={imageUrl}
+      />
     </div>
   );
 };
