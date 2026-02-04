@@ -71,6 +71,8 @@ import StatsCounterBlock from '@/components/blocks/StatsCounterBlock';
 import TestimonialCarouselBlock from '@/components/blocks/TestimonialCarouselBlock';
 import ContactFormBlock from '@/components/blocks/ContactFormBlock';
 import BlogBlock from '@/components/blocks/BlogBlock';
+import SkillsBarBlock from '@/components/blocks/SkillsBarBlock';
+import ValuesBlock from '@/components/blocks/ValuesBlock';
 import NewsletterSubscribeBlock from '@/components/blocks/NewsletterSubscribeBlock';
 
 // Inline editor
@@ -99,6 +101,8 @@ export const blockTypeLabels: Record<string, string> = {
   'blog': 'Blog Posts',
   'newsletter-subscribe': 'Newsletter',
   'github': 'GitHub Repos',
+  'skills-bar': 'Skills Bar',
+  'values': 'Values',
 };
 
 interface VisualBlockItemProps {
@@ -220,6 +224,10 @@ const VisualBlockItem = ({
             </div>
           </section>
         );
+      case 'skills-bar':
+        return <SkillsBarBlock config={config} />;
+      case 'values':
+        return <ValuesBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
