@@ -53,6 +53,7 @@ import { getDefaultBlockConfig } from '@/lib/constants/blockDefaults';
 
 // Block renderers
 import HeroBlock from '@/components/blocks/HeroBlock';
+import ChatHeroBlock from '@/components/blocks/ChatHeroBlock';
 import AboutSplitBlock from '@/components/blocks/AboutSplitBlock';
 import TextSectionBlock from '@/components/blocks/TextSectionBlock';
 import CtaBannerBlock from '@/components/blocks/CtaBannerBlock';
@@ -78,6 +79,7 @@ import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
 
 export const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
+  'chat-hero': 'Chat Hero ✨',
   'about-split': 'About Me',
   'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
@@ -140,6 +142,28 @@ const VisualBlockItem = ({
     switch (block.block_type) {
       case 'hero':
         return <HeroBlock config={config} />;
+      case 'chat-hero':
+        // Render lightweight placeholder in admin to prevent complex interactions
+        return (
+          <section className="relative min-h-[70vh] flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30">
+            <div className="container mx-auto px-4 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+                {(config.welcome_badge as string) || 'Welcome'}
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                {(config.agent_name as string) || 'AI Assistant'}
+              </h1>
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+                {(config.agent_tagline as string) || 'How can I help you today?'}
+              </p>
+              <div className="max-w-xl mx-auto bg-muted/50 rounded-2xl p-4 border border-border">
+                <p className="text-muted-foreground text-sm">
+                  💬 Chat input will appear here in preview
+                </p>
+              </div>
+            </div>
+          </section>
+        );
       case 'about-split':
         return <AboutSplitBlock config={config} />;
       case 'text-section':
