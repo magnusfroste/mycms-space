@@ -1,6 +1,7 @@
 // ============================================
 // Universal AI Chat Edge Function
 // Supports: n8n webhook, Lovable AI, OpenAI, Gemini
+// Features: Modular dynamic context sections
 // ============================================
 
 const corsHeaders = {
@@ -44,51 +45,103 @@ interface IntegrationConfig {
   model?: string;
 }
 
-// Build system prompt with site context
-function buildSystemPrompt(customPrompt: string | null, siteContext: SiteContext | null): string {
-  let prompt = customPrompt || `You are a helpful AI assistant. You answer questions clearly and concisely.`;
+// ============================================
+// Context Section Builders (Modular Pattern)
+// Each section can be enabled/disabled independently
+// ============================================
 
-  if (siteContext) {
-    prompt += `\n\n## Site Context\n\nYou have access to information about this website:\n`;
+interface ContextSection {
+  key: string;
+  title: string;
+  instruction: string;
+  formatData: (data: unknown[]) => string;
+}
 
-    if (siteContext.repos && siteContext.repos.length > 0) {
-      prompt += `\n### GitHub Projects\n`;
-      for (const repo of siteContext.repos) {
-        prompt += `\n**${repo.name}**\n`;
-        if (repo.description) prompt += `Description: ${repo.description}\n`;
-        if (repo.enrichedDescription) prompt += `${repo.enrichedDescription}\n`;
-        if (repo.problemStatement) prompt += `Problem: ${repo.problemStatement}\n`;
-        if (repo.whyItMatters) prompt += `Why it matters: ${repo.whyItMatters}\n`;
-        if (repo.language) prompt += `Language: ${repo.language}\n`;
-        if (repo.topics && repo.topics.length > 0) prompt += `Topics: ${repo.topics.join(', ')}\n`;
-        prompt += `URL: ${repo.url}\n`;
-      }
+const contextSections: ContextSection[] = [
+  {
+    key: 'repos',
+    title: 'GitHub Projects',
+    instruction: `You have knowledge about Magnus's GitHub projects. Use this to answer questions about his technical work, coding skills, and project experience.`,
+    formatData: (repos: SiteContext['repos']) => {
+      if (!repos?.length) return '';
+      return repos.map(repo => {
+        let section = `\n### ${repo.name}\n`;
+        if (repo.description) section += `${repo.description}\n`;
+        if (repo.enrichedDescription) section += `${repo.enrichedDescription}\n`;
+        if (repo.problemStatement) section += `**Problem solved:** ${repo.problemStatement}\n`;
+        if (repo.whyItMatters) section += `**Why it matters:** ${repo.whyItMatters}\n`;
+        if (repo.language) section += `**Language:** ${repo.language}\n`;
+        if (repo.topics?.length) section += `**Topics:** ${repo.topics.join(', ')}\n`;
+        section += `**URL:** ${repo.url}\n`;
+        return section;
+      }).join('\n');
     }
-
-    if (siteContext.pages && siteContext.pages.length > 0) {
-      prompt += `\n### Pages\n`;
-      for (const page of siteContext.pages) {
-        prompt += `\n**${page.title}** (/${page.slug})\n`;
-        if (page.content) prompt += `${page.content}\n`;
-        if (page.blocks && page.blocks.length > 0) {
+  },
+  {
+    key: 'pages',
+    title: 'Website Content',
+    instruction: `You have access to content from the website. Use this to provide accurate information about Magnus and his services.`,
+    formatData: (pages: SiteContext['pages']) => {
+      if (!pages?.length) return '';
+      return pages.map(page => {
+        let section = `\n### ${page.title} (/${page.slug})\n`;
+        if (page.content) section += `${page.content}\n`;
+        if (page.blocks?.length) {
           for (const block of page.blocks) {
-            if (block.content) prompt += `- ${block.type}: ${block.content}\n`;
+            if (block.content) section += `- ${block.type}: ${block.content}\n`;
           }
         }
-      }
+        return section;
+      }).join('\n');
     }
+  },
+  {
+    key: 'blogs',
+    title: 'Blog Posts',
+    instruction: `You have access to Magnus's blog posts. Use these to discuss his thoughts, expertise, and insights.`,
+    formatData: (blogs: SiteContext['blogs']) => {
+      if (!blogs?.length) return '';
+      return blogs.map(blog => {
+        let section = `\n### ${blog.title}\n`;
+        if (blog.excerpt) section += `${blog.excerpt}\n`;
+        if (blog.content) section += `${blog.content.substring(0, 500)}...\n`;
+        return section;
+      }).join('\n');
+    }
+  }
+];
 
-    if (siteContext.blogs && siteContext.blogs.length > 0) {
-      prompt += `\n### Blog Posts\n`;
-      for (const post of siteContext.blogs) {
-        prompt += `\n**${post.title}** (/${post.slug})\n`;
-        if (post.excerpt) prompt += `${post.excerpt}\n`;
-        if (post.content) prompt += `${post.content.substring(0, 500)}...\n`;
+// ============================================
+// Dynamic Prompt Builder
+// Only includes sections that have data
+// ============================================
+
+function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext | null): string {
+  const sections: string[] = [basePrompt || 'You are a helpful AI assistant.'];
+  
+  if (!siteContext) {
+    console.log('[AI] No site context provided - using base prompt only');
+    return sections[0];
+  }
+
+  const activeSections: string[] = [];
+  
+  for (const section of contextSections) {
+    const data = siteContext[section.key as keyof SiteContext];
+    
+    if (data && Array.isArray(data) && data.length > 0) {
+      const formattedData = section.formatData(data as unknown[]);
+      if (formattedData) {
+        sections.push(`\n\n## ${section.title}\n${section.instruction}\n${formattedData}`);
+        activeSections.push(`${section.key}(${data.length})`);
       }
     }
   }
 
-  return prompt;
+  console.log(`[AI] Dynamic prompt built: ${activeSections.length} context section(s): [${activeSections.join(', ')}]`);
+  console.log(`[AI] Total prompt length: ${sections.join('').length} chars`);
+
+  return sections.join('');
 }
 
 // Handler for n8n webhook - now receives full messages array
@@ -105,7 +158,7 @@ async function handleN8n(
   const body: Record<string, unknown> = {
     messages,
     sessionId,
-    systemPrompt,
+    systemPrompt: buildDynamicPrompt(systemPrompt, siteContext),
   };
 
   if (siteContext) {
@@ -150,7 +203,7 @@ async function handleLovableAI(
 
   console.log("Calling Lovable AI with model:", model);
 
-  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
+  const fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -197,7 +250,7 @@ async function handleOpenAI(
 
   console.log("Calling OpenAI with model:", model);
 
-  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
+  const fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -237,7 +290,7 @@ async function handleGemini(
 
   console.log("Calling Gemini with model:", model);
 
-  const fullSystemPrompt = buildSystemPrompt(systemPrompt, siteContext);
+  const fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
   const geminiModel = model || "gemini-1.5-flash";
 
   // Convert messages to Gemini format
@@ -300,6 +353,11 @@ Deno.serve(async (req) => {
       messagesCount: conversationHistory?.length,
       hasSystemPrompt: !!systemPrompt,
       hasContext: !!siteContext,
+      contextSummary: siteContext ? {
+        repos: siteContext.repos?.length || 0,
+        pages: siteContext.pages?.length || 0,
+        blogs: siteContext.blogs?.length || 0,
+      } : null,
     });
 
     // Validate integration config
