@@ -105,7 +105,7 @@ const StatsCounterBlock: React.FC<StatsCounterBlockProps> = ({ config }) => {
   return (
     <section 
       ref={sectionRef}
-      className="py-24 px-6 md:px-12 lg:px-24 relative overflow-hidden"
+      className="section-container px-6 md:px-12 lg:px-24 relative overflow-hidden"
     >
       {/* Background Decoration */}
       <div className="absolute inset-0 pointer-events-none">

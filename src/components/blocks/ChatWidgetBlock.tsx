@@ -53,7 +53,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const subtitle = typedConfig.subtitle;
 
   return (
-    <div id="chat" className="py-12 md:py-20" aria-label="Chat Widget">
+    <div id="chat" className="section-container-sm" aria-label="Chat Widget">
       <div className="container mx-auto px-4">
         {/* Title and subtitle */}
         {(title || subtitle) && (

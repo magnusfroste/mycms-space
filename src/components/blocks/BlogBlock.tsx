@@ -45,7 +45,7 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
 
   if (isLoading) {
     return (
-      <section className="py-16 md:py-24">
+      <section className="section-container">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
             <Skeleton className="h-8 w-48 mx-auto mb-2" />
@@ -228,7 +228,7 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
   });
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="section-container">
       <div className="container px-4 md:px-6">
         {/* Header */}
         {(heading || subheading) && (

@@ -38,7 +38,7 @@ const ImageTextBlock: React.FC<ImageTextBlockProps> = ({ config }) => {
   const textOrder = image_position === 'right' ? 'md:order-1' : '';
 
   return (
-    <section className={cn('py-16', backgroundClasses[background])}>
+    <section className={cn('section-container-sm', backgroundClasses[background])}>
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Image */}

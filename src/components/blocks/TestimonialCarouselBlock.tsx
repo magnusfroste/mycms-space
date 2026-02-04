@@ -117,7 +117,7 @@ const TestimonialCarouselBlock: React.FC<TestimonialCarouselBlockProps> = ({ con
   };
 
   return (
-    <section className="py-24 px-6 overflow-hidden">
+    <section className="section-container px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16 space-y-4">

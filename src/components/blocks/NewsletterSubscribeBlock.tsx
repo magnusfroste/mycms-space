@@ -46,7 +46,7 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
   if (isSubmitted) {
     return (
       <section
-        className="py-16 px-4"
+        className="section-container-sm px-4"
         style={{ backgroundColor: config.backgroundColor || 'transparent' }}
       >
         <div className="max-w-xl mx-auto text-center">
@@ -62,7 +62,7 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
 
   return (
     <section
-      className="py-16 px-4"
+      className="section-container-sm px-4"
       style={{ backgroundColor: config.backgroundColor || 'transparent' }}
     >
       <div className="max-w-xl mx-auto text-center">
