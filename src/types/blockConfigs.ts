@@ -243,6 +243,25 @@ export interface GitHubBlockConfig {
   filterLanguage?: string;
 }
 
+// Chat Hero Block Config
+export interface ChatHeroBlockConfig {
+  agent_name?: string;
+  agent_tagline?: string;
+  welcome_badge?: string;
+  enable_animations?: boolean;
+  animation_style?: 'falling-stars' | 'particles' | 'gradient-shift';
+  placeholder?: string;
+  show_quick_actions?: boolean;
+  quick_actions?: Array<{
+    id: string;
+    label: string;
+    message: string;
+    icon: string;
+    order_index: number;
+    enabled: boolean;
+  }>;
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -264,7 +283,8 @@ export type BlockConfigType =
   | ParallaxSectionBlockConfig
   | BlogBlockConfig
   | NewsletterSubscribeBlockConfig
-  | GitHubBlockConfig;
+  | GitHubBlockConfig
+  | ChatHeroBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -274,6 +294,7 @@ export interface BlockTypeConfigMap {
   'featured-carousel': FeaturedCarouselBlockConfig;
   'project-showcase': ProjectShowcaseBlockConfig;
   'chat-widget': ChatWidgetBlockConfig;
+  'chat-hero': ChatHeroBlockConfig;
   'text-section': TextSectionBlockConfig;
   'image-text': ImageTextBlockConfig;
   'cta-banner': CtaBannerBlockConfig;
@@ -294,7 +315,7 @@ export interface BlockTypeConfigMap {
 export type ConfigForBlockType<T extends keyof BlockTypeConfigMap> = BlockTypeConfigMap[T];
 
 // Default configs for each block type
-export const defaultBlockConfigs: BlockTypeConfigMap = {
+export const defaultBlockConfigs: Partial<BlockTypeConfigMap> = {
   'hero': {
     name: 'Your Name',
     tagline: 'Your Tagline',
@@ -305,6 +326,16 @@ export const defaultBlockConfigs: BlockTypeConfigMap = {
     ],
     enable_animations: true,
     animation_style: 'falling-stars',
+  },
+  'chat-hero': {
+    agent_name: 'AI Assistant',
+    agent_tagline: 'How can I help you today?',
+    welcome_badge: 'Welcome',
+    enable_animations: true,
+    animation_style: 'falling-stars',
+    placeholder: 'Ask me anything...',
+    show_quick_actions: true,
+    quick_actions: [],
   },
   'about-split': {
     name: 'Your Name',

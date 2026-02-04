@@ -25,6 +25,21 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         ],
       };
 
+    case 'chat-hero':
+      return {
+        agent_name: 'AI Assistant',
+        agent_tagline: 'How can I help you today?',
+        welcome_badge: 'Welcome',
+        enable_animations: true,
+        animation_style: 'falling-stars',
+        placeholder: 'Ask me anything...',
+        show_quick_actions: true,
+        quick_actions: [
+          { id: crypto.randomUUID(), label: 'Learn more', message: 'Tell me more about yourself', icon: 'Info', enabled: true, order_index: 1 },
+          { id: crypto.randomUUID(), label: 'Get in touch', message: 'I would like to discuss a project', icon: 'MessageCircle', enabled: true, order_index: 2 },
+        ],
+      };
+
     case 'chat-widget':
       return {
         initial_placeholder: 'Hello! How can I help you today?',
