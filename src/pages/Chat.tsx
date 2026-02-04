@@ -43,9 +43,10 @@ const Chat = () => {
   const configuredIntegration = aiConfig?.active_integration || 'n8n';
   const [selectedIntegration, setSelectedIntegration] = React.useState<AIIntegrationType>(configuredIntegration);
 
-  // Get initial messages and sessionId from navigation state if available
+  // Get initial messages, sessionId and placeholder from navigation state if available
   const initialMessages = location.state?.messages as Message[] | undefined;
   const initialSessionId = location.state?.sessionId as string | undefined;
+  const passedPlaceholder = location.state?.placeholder as string | undefined;
   
   // Get available AI integrations
   const availableIntegrations = integrationsMeta.filter(
@@ -131,6 +132,8 @@ const Chat = () => {
         <ChatInterface
           webhookUrl={webhookUrl}
           fullPage={true}
+          initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
+          activePlaceholder={passedPlaceholder || "How can Magnet help?"}
           initialMessages={initialMessages}
           initialSessionId={initialSessionId}
           resetTrigger={resetTrigger}
