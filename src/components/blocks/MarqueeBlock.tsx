@@ -55,7 +55,7 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({ config }) => {
   const duplicatedItems = [...items, ...items, ...items, ...items];
 
   return (
-    <section className="py-16 overflow-hidden">
+    <section className="section-container-sm overflow-hidden">
       {/* Headline */}
       {settings.headline && (
         <h3 className="text-center text-sm font-medium text-muted-foreground uppercase tracking-widest mb-8">

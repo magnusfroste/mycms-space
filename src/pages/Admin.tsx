@@ -5,6 +5,7 @@ import AIModuleSettings from '@/components/admin/AIModuleSettings';
 import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
 import BlogModuleSettings from '@/components/admin/BlogModuleSettings';
 import SEOModuleSettings from '@/components/admin/SEOModuleSettings';
+import BrandingSettings from '@/components/admin/BrandingSettings';
 import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import IntegrationsManager from '@/components/admin/IntegrationsManager';
@@ -127,6 +128,8 @@ const Admin = () => {
         return <MessagesManager />;
       case 'global-blocks':
         return <GlobalBlocksSettings />;
+      case 'branding':
+        return <BrandingSettings />;
       case 'integrations':
         return <IntegrationsManager />;
       case 'ai-module':

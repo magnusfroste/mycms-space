@@ -15,11 +15,15 @@ import BlogPost from "./pages/BlogPost";
 import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useBrandingTheme } from "@/hooks/useBrandingTheme";
 import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 
-// Page view tracking component (internal + Google Analytics)
-const PageTracker = () => {
+// Theme and tracking component
+const AppBootstrap = () => {
   const location = useLocation();
+  
+  // Apply branding theme
+  useBrandingTheme();
   
   // Internal analytics tracking
   usePageTracking();
@@ -64,7 +68,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <PageTracker />
+            <AppBootstrap />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/chat" element={<Chat />} />

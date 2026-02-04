@@ -36,7 +36,7 @@ const FeaturedCarouselBlock: React.FC<FeaturedCarouselBlockProps> = ({ config })
   }
 
   return (
-    <section id="featured" className="py-20 bg-muted/30">
+    <section id="featured" className="section-container bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center mb-4">
           <Image className="h-8 w-8 text-apple-purple mr-3" />

@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -356,6 +356,12 @@ export interface GitHubModuleConfig {
   show_topics: boolean;
 }
 
+// Branding Module Config
+export interface BrandingModuleConfig {
+  theme: 'elegant' | 'grok';
+  force_dark: boolean;
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -366,7 +372,8 @@ export type ModuleConfigType =
   | FooterModuleConfig
   | BlogModuleConfig
   | SEOModuleConfig
-  | GitHubModuleConfig;
+  | GitHubModuleConfig
+  | BrandingModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -379,11 +386,11 @@ export interface ModuleTypeConfigMap {
   blog: BlogModuleConfig;
   seo: SEOModuleConfig;
   github: GitHubModuleConfig;
+  branding: BrandingModuleConfig;
 }
 
 // Helper type to get config from module type
-// Helper type to get config from module type
-export type ConfigForModule<T extends ModuleType> = ModuleTypeConfigMap[T];
+export type ConfigForModule<T extends ModuleType> = T extends keyof ModuleTypeConfigMap ? ModuleTypeConfigMap[T] : never;
 
 // Default configs for each module type
 export const defaultModuleConfigs: ModuleTypeConfigMap = {
@@ -486,6 +493,10 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     show_forks: true,
     show_languages: true,
     show_topics: true,
+  },
+  branding: {
+    theme: 'elegant',
+    force_dark: false,
   },
 };
 

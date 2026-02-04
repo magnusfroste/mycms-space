@@ -75,7 +75,7 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
 
   if (error) {
     return (
-      <section className="py-16 md:py-24">
+      <section className="section-container">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <p>Failed to load GitHub data. Please try again later.</p>
         </div>
@@ -85,7 +85,7 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
 
   if (!isLoading && repos.length === 0) {
     return (
-      <section className="py-16 md:py-24">
+      <section className="section-container">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
           <Github className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No repositories enabled. Enable repos in the admin panel.</p>
@@ -123,7 +123,7 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
   };
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="section-container">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
