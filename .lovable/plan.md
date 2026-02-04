@@ -1,191 +1,223 @@
 
 
-# Chat-block förslag: Två alternativa vägar
+# Modulär Systemprompt-arkitektur
 
-## Nulägesanalys
+## Vision
 
-### Vad finns idag
-```
-+------------------+     +-------------------+     +-------------------+
-|    HeroBlock     |     | ChatWidgetBlock   |     |   ChatLanding     |
-|------------------|     |-------------------|     |-------------------|
-| - name           |     | - title           |     | - title           |
-| - tagline        |     | - subtitle        |     | - subtitle        |
-| - features       |     | - initial_placeholder  | (duplicerar logik)|
-| - animations     |     | - active_placeholder   |                    |
-| - scroll → #chat |     | - quick_actions   |     |                    |
-+------------------+     +-------------------+     +-------------------+
-```
-
-### Identifierade problem
-1. **Redundans**: Title/subtitle i ChatWidgetBlock överlappas av HeroBlock
-2. **Tom "ruta"**: `ChatMessageList` renderar en `h-80 glass-card` container även utan meddelanden
-3. **Oanvänd komponent**: `ChatLanding.tsx` duplicerar exakt samma logik som `ChatWidgetBlock`
-4. **Förvirrande konfiguration**: Flera placeholder-texter som inte syns tydligt
+Istället för att hårdkoda varje kontext-källa i edge function skapar vi ett **plugin-mönster** där varje modul registrerar sin egen kontext-builder. Detta gör systemet helt skalbart för framtida moduler.
 
 ---
 
-## Alternativ A: Förenklat Chat-block
+## Nuläge vs. Föreslaget
 
-**Koncept**: Slimmar ner chat-blocket till sin kärnfunktion – ett enkelt chattinput som förlitar sig på Hero för introduktion.
-
-### Vad vi tar bort
-- `title` och `subtitle` (Hero täcker detta)
-- `initial_placeholder` (visar bara `active_placeholder`)
-- Tom "ruta" före första meddelandet
-
-### Resulterande struktur
+### Nuläge (hårdkodat)
 ```
-+------------------+
-|    HeroBlock     |  ← Namn, tagline, features, animationer
-+------------------+
-        ↓
-+------------------+
-| Minimal Chat     |  ← Bara input + quick actions
-| (ingen tom ruta) |
-+------------------+
+Edge Function:
+├── if (repos) → GitHub-sektion (hårdkodat)
+├── if (pages) → Pages-sektion (hårdkodat)
+├── if (blogs) → Blog-sektion (hårdkodat)
+└── Varje ny modul kräver kodändring
 ```
 
-### Konfiguration i admin
-- `active_placeholder` (texten i input-fältet)
-- `show_quick_actions` + `quick_actions[]`
+### Föreslaget (modulärt)
+```
+Varje modul definierar:
+├── contextKey: "repos" | "pages" | "blogs" | "products" | ...
+├── promptSection: "## GitHub Projects\n..."
+└── buildContext(): → data för AI
 
-### Fördelar
-- Renare separation av concerns
-- Mindre att konfigurera
-- Snabbare laddning utan onödig container
+Edge Function:
+└── Loopar genom alla sektioner dynamiskt
+```
 
 ---
 
-## Alternativ B: Chat Hero Block (ny blocktyp)
+## Teknisk implementation
 
-**Koncept**: Slår ihop Hero + Chat till ett nytt immersivt "Chat Hero"-block där konversationen är fokuspunkten.
-
-### Design
-```
-+------------------------------------------------+
-|                                                |
-|        ✨ [animerad bakgrund] ✨               |
-|                                                |
-|           "Hi, I'm Magnet"                     |
-|        Magnus digital twin                     |
-|                                                |
-|   +--------------------------------------+     |
-|   | [chat input med glassmorphism]       |     |
-|   +--------------------------------------+     |
-|                                                |
-|      [quick action] [quick action]            |
-|                                                |
-+------------------------------------------------+
-```
-
-### Ny konfiguration
+### Steg 1: Context Section Interface
 ```typescript
-interface ChatHeroBlockConfig {
-  // Identity
-  agent_name?: string;      // "Magnet"
-  agent_tagline?: string;   // "Magnus digital twin"
-  
-  // Visual
-  enable_animations?: boolean;
-  animation_style?: 'falling-stars' | 'particles' | 'gradient-shift';
-  
-  // Chat
-  placeholder?: string;
-  show_quick_actions?: boolean;
-  quick_actions?: QuickActionConfig[];
+// types/modules.ts - ny interface
+
+export interface AIContextSection {
+  key: string;           // "github", "pages", "blogs", etc.
+  title: string;         // "GitHub Projects"
+  instruction: string;   // "Use this to answer questions about..."
+  enabled: boolean;      // Från modulens config
 }
 ```
 
-### Fördelar
-- Konversationen blir "första intrycket"
-- Ett block att konfigurera istället för två
-- Perfekt för agentfokuserade landningssidor
-- Passar din vision om "Agentic Web"
+### Steg 2: Modul-specifika kontext-builders
 
----
+Varje modul som kan bidra med AI-kontext får en `buildAIContext()` funktion:
 
-## Rekommendation
-
-**Jag rekommenderar Alternativ B (Chat Hero)** av följande skäl:
-
-1. **Visionen**: Din roadmap pekar mot "Digital Twin" och "Agent Discovery" – ett dedikerat Chat Hero-block förstärker denna identitet
-2. **First Impression**: Besökaren möter direkt agenten, inte en statisk hero + scroll
-3. **Förenkling**: Ett block att konfigurera istället för att koordinera två
-4. **Flexibilitet**: Du kan fortfarande använda vanligt HeroBlock på andra sidor
-
-### Implementationsplan
-
-**Fas 1: Skapa ChatHeroBlock**
-1. Ny komponent `src/components/blocks/ChatHeroBlock.tsx`
-2. Kombinerar Hero-visuella (mesh gradient, parallax, noise) med ChatInterface
-3. Ny typ i `blockConfigs.ts`
-
-**Fas 2: Admin Editor**
-1. Ny editor `ChatHeroEditor.tsx`
-2. Kombinerar hero-fält (agent_name, tagline, animations) med chat-fält (placeholder, quick_actions)
-
-**Fas 3: Städa upp**
-1. Ta bort `ChatLanding.tsx` (oanvänd)
-2. Behåll `ChatWidgetBlock` för användning längre ner på sidor (t.ex. kontaktsektion)
-3. Uppdatera `/home`-sidan att använda nya `chat-hero` istället för `hero` + `chat-widget`
-
----
-
-## Tekniska detaljer
-
-### Ny blocktyp-registrering
 ```typescript
-// types/blockConfigs.ts
-export interface ChatHeroBlockConfig {
-  agent_name?: string;
-  agent_tagline?: string;
-  welcome_badge?: string;         // "Welcome" badge text
-  enable_animations?: boolean;
-  animation_style?: 'falling-stars' | 'particles' | 'gradient-shift';
-  placeholder?: string;
-  show_quick_actions?: boolean;
-  quick_actions?: QuickActionConfig[];
+// hooks/useAIChatContext.ts
+
+// Registry för kontext-sektioner
+const contextBuilders: Record<string, ContextBuilder> = {
+  github: {
+    title: '## GitHub Projects',
+    instruction: `You have knowledge about Magnus's GitHub projects. 
+Use this to answer questions about his technical work, coding skills, and project experience.`,
+    getData: (repos) => repos.map(r => 
+      `**${r.name}**: ${r.description}\n` +
+      (r.problemStatement ? `Problem: ${r.problemStatement}\n` : '') +
+      (r.whyItMatters ? `Why: ${r.whyItMatters}\n` : '')
+    ).join('\n'),
+  },
+  
+  pages: {
+    title: '## Website Content',
+    instruction: `You have access to content from the website. 
+Use this to provide accurate information about Magnus and his services.`,
+    getData: (pages) => pages.map(p => 
+      `**${p.title}** (/${p.slug})\n${p.content}`
+    ).join('\n\n'),
+  },
+  
+  blogs: {
+    title: '## Blog Posts',
+    instruction: `You have access to Magnus's blog posts. 
+Use these to discuss his thoughts, expertise, and insights.`,
+    getData: (blogs) => blogs.map(b => 
+      `**${b.title}**\n${b.excerpt || b.content.substring(0, 300)}...`
+    ).join('\n\n'),
+  },
+  
+  // FRAMTIDA MODULER:
+  // products: { ... }
+  // services: { ... }
+  // testimonials: { ... }
+};
+```
+
+### Steg 3: Dynamisk prompt-byggning
+
+Edge Function bygger prompten genom att loopa:
+
+```typescript
+// supabase/functions/ai-chat/index.ts
+
+function buildDynamicPrompt(
+  basePrompt: string, 
+  siteContext: SiteContext | null
+): string {
+  if (!siteContext) return basePrompt;
+
+  const sections: string[] = [];
+  
+  // Dynamiskt: för varje kontext-typ som har data
+  const contextTypes = [
+    { key: 'repos', data: siteContext.repos, title: 'GitHub Projects', 
+      instruction: 'Use this to discuss technical projects and skills.' },
+    { key: 'pages', data: siteContext.pages, title: 'Website Content',
+      instruction: 'Use this for accurate info about Magnus.' },
+    { key: 'blogs', data: siteContext.blogs, title: 'Blog Posts',
+      instruction: 'Use these for thoughts and expertise.' },
+  ];
+  
+  for (const ctx of contextTypes) {
+    if (ctx.data && ctx.data.length > 0) {
+      sections.push(`\n\n## ${ctx.title}\n${ctx.instruction}\n`);
+      // Lägg till formaterad data...
+    }
+  }
+  
+  // Logga för debugging
+  console.log(`[AI] Prompt built with ${sections.length} context section(s)`);
+  
+  return basePrompt + sections.join('');
 }
 ```
 
-### ChatHeroBlock-struktur
-```tsx
-<section className="relative min-h-[90vh] flex items-center">
-  {/* Mesh gradient + noise + animations (från HeroBlock) */}
-  
-  <div className="container">
-    <div className="max-w-3xl mx-auto text-center">
-      {/* Badge */}
-      <div className="badge">Welcome</div>
-      
-      {/* Agent identity */}
-      <h1>{agent_name}</h1>
-      <p>{agent_tagline}</p>
-      
-      {/* Chat input (inga meddelanden visas här) */}
-      <ChatInput ... />
-      
-      {/* Quick actions */}
-      <ChatQuickActions ... />
-    </div>
-  </div>
-</section>
-```
+---
 
-### Navigeringsbeteende (behålls)
-När användaren skickar första meddelandet → navigera till `/chat` med state
+## Implementationsplan
+
+### Fas 1: Fixa GitHub-sparing (bugfix)
+- Säkerställ att `include_github_context` och `selected_repo_ids` sparas korrekt i `AIModuleSettings.tsx`
+- Bekräfta med databasfråga
+
+### Fas 2: Centralisera prompt-byggning
+- Flytta ALL kontext-logik till Edge Function
+- Ta bort `contextInstruction` från `useAIChatContext.ts` (duplicering)
+- Frontend skickar bara rå `siteContext`
+
+### Fas 3: Förbättra Edge Function
+- Uppdatera `buildSystemPrompt()` med tydlig dynamisk loop
+- Lägg till bättre loggning: vilka sektioner, hur mycket data
+- Separera personlighet från kontext med tydliga rubriker
+
+### Fas 4: Synlig feedback (bonus)
+- Visa i admin vilka kontext-källor som är aktiva
+- "Active sources: GitHub (5 repos), Pages (3), Blog (2)"
 
 ---
 
-## Sammanfattning
+## Dataflöde
 
-| Aspekt | Alt A: Förenklat | Alt B: Chat Hero |
-|--------|------------------|------------------|
-| Komplexitet | Låg | Medium |
-| Impact | Minimal | Transformativ |
-| Passar vision | Delvis | Helt |
-| Konfiguration | Enklare | Mer komplett |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AI Module Settings (Admin)                                  │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │
+│  │ ☑ GitHub    │ │ ☑ Pages     │ │ ☐ Blog      │            │
+│  │ 5 selected  │ │ 3 selected  │ │ 0 selected  │            │
+│  └─────────────┘ └─────────────┘ └─────────────┘            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  useAIChatContext                                           │
+│  Returnerar:                                                │
+│  {                                                          │
+│    contextData: { repos: [...], pages: [...], blogs: [] }   │
+│    contextSummary: "5 repos, 3 pages"                       │
+│  }                                                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Edge Function: buildDynamicPrompt()                        │
+│                                                             │
+│  [Base Prompt - Personlighet]                               │
+│  You are Magnet, an AI twin of Magnus...                   │
+│                                                             │
+│  [Dynamiskt tillagda sektioner]                            │
+│  ## GitHub Projects                                        │
+│  You have knowledge about 5 projects...                    │
+│  **Flowwink**: Lightweight flashcard app...                │
+│                                                             │
+│  ## Website Content                                        │
+│  You have access to 3 pages...                             │
+│                                                             │
+│  (Blog-sektion utelämnas - ingen data)                     │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**Nästa steg**: Godkänn vilket alternativ du vill gå vidare med, så implementerar jag det.
+---
+
+## Framtida skalbarhet
+
+Med denna arkitektur kan vi enkelt lägga till nya kontext-källor:
+
+| Framtida modul | contextKey | Data |
+|----------------|------------|------|
+| Products | `products` | Produkter/tjänster |
+| Testimonials | `testimonials` | Kundcitat |
+| CV/Resume | `resume` | Arbetslivserfarenhet |
+| Courses | `courses` | Kurser/utbildningar |
+
+Varje ny modul:
+1. Definierar sin `AIContextSection`
+2. Lägger till toggle i AI Module Settings
+3. Edge Function loopar automatiskt genom alla
+
+---
+
+## Förväntade filer att ändra
+
+1. `src/components/admin/AIModuleSettings.tsx` - fixa spara-logik
+2. `src/hooks/useAIChatContext.ts` - ta bort `contextInstruction`
+3. `supabase/functions/ai-chat/index.ts` - förbättra `buildSystemPrompt()`
+4. Deploy edge function
 
