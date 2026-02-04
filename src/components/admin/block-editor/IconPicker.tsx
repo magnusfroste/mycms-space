@@ -3,7 +3,7 @@
 // Searchable grid for selecting Lucide icons
 // ============================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -58,7 +58,7 @@ const iconComponents: Record<string, LucideIcon> = {
   Sun, Moon, Heart, Flag, Bookmark, Tag, Layers,
 };
 
-// List of available icon names
+// List of available icon names - memoized outside component
 const availableIcons = Object.keys(iconComponents);
 
 interface IconPickerProps {
@@ -79,16 +79,33 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
     );
   }, [search]);
 
-  const renderIcon = (iconName: string, className?: string) => {
+  const renderIcon = useCallback((iconName: string, className?: string) => {
     const IconComponent = iconComponents[iconName];
     if (!IconComponent) return null;
     return <IconComponent className={className || 'h-4 w-4'} />;
-  };
+  }, []);
 
   const currentIcon = renderIcon(value, 'h-4 w-4');
 
+  const handleSelect = useCallback((iconName: string) => {
+    // Close popover first to prevent re-render issues
+    setOpen(false);
+    setSearch('');
+    // Use setTimeout to defer onChange until after popover closes
+    setTimeout(() => {
+      onChange(iconName);
+    }, 0);
+  }, [onChange]);
+
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearch('');
+    }
+  }, []);
+
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={true}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -97,26 +114,21 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
           className="w-14 h-10 p-0 justify-center"
           disabled={disabled}
           title={value || 'Välj ikon'}
-          onClick={(e) => e.stopPropagation()}
+          type="button"
         >
           {currentIcon || <span className="text-xs text-muted-foreground">?</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0 bg-popover z-[100]" 
+        className="w-80 p-0 bg-popover z-[200]" 
         align="start" 
         sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
       >
         <div className="p-3 border-b bg-background">
           <Input
             placeholder="Sök ikon (t.ex. rocket, brain)..."
             value={search}
-            onChange={(e) => {
-              e.stopPropagation();
-              setSearch(e.target.value);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
             className="h-9"
           />
         </div>
@@ -130,15 +142,12 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
                     key={iconName}
                     variant="ghost"
                     size="sm"
+                    type="button"
                     className={cn(
                       'h-10 w-10 p-0 flex items-center justify-center relative',
                       isSelected && 'bg-primary text-primary-foreground hover:bg-primary/90'
                     )}
-                    onClick={() => {
-                      onChange(iconName);
-                      setOpen(false);
-                      setSearch('');
-                    }}
+                    onClick={() => handleSelect(iconName)}
                     title={iconName}
                   >
                     {renderIcon(iconName, 'h-5 w-5')}
