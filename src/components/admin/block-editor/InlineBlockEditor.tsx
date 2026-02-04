@@ -26,6 +26,7 @@ import type {
   ExpertiseGridBlockConfig,
   FeaturedCarouselBlockConfig,
   ChatWidgetBlockConfig,
+  ChatHeroBlockConfig,
   ProjectShowcaseBlockConfig,
 } from '@/types/blockConfigs';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
@@ -34,6 +35,7 @@ import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
 import ChatWidgetEditor from './ChatWidgetEditor';
+import ChatHeroEditor from './ChatHeroEditor';
 import ProjectShowcaseEditor from './ProjectShowcaseEditor';
 import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
@@ -51,6 +53,7 @@ interface InlineBlockEditorProps {
 
 const blockTypeLabels: Record<string, string> = {
   'hero': 'Hero',
+  'chat-hero': 'Chat Hero ✨',
   'about-split': 'About Me',
   'text-section': 'Text Section',
   'cta-banner': 'CTA Banner',
@@ -903,6 +906,13 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     switch (block.block_type) {
       case 'hero':
         return renderHeroConfig();
+      case 'chat-hero':
+        return (
+          <ChatHeroEditor
+            config={config}
+            onChange={onBlockConfigChange}
+          />
+        );
       case 'about-split':
         return renderAboutConfig();
       case 'text-section':

@@ -4,6 +4,7 @@
 
 export { default as BlockRenderer } from './BlockRenderer';
 export { default as HeroBlock } from './HeroBlock';
+export { default as ChatHeroBlock } from './ChatHeroBlock';
 export { default as ChatWidgetBlock } from './ChatWidgetBlock';
 export { default as TextSectionBlock } from './TextSectionBlock';
 export { default as AboutSplitBlock } from './AboutSplitBlock';

@@ -221,6 +221,7 @@ export interface ContactMessage {
 
 export type BlockType =
   | 'hero'
+  | 'chat-hero'
   | 'chat-widget'
   | 'text-section'
   | 'about-split'

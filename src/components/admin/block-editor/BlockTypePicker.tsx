@@ -22,6 +22,7 @@ import {
   Quote,
   Mail,
   Github,
+  Sparkles,
 } from 'lucide-react';
 import type { BlockType } from '@/types';
 
@@ -47,6 +48,15 @@ const HeroPreview = () => (
       <div className="w-4 h-3 bg-primary/30 rounded-sm" />
       <div className="w-4 h-3 bg-primary/30 rounded-sm" />
     </div>
+  </div>
+);
+
+const ChatHeroPreview = () => (
+  <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/20 rounded flex flex-col items-center justify-center gap-1 p-2 relative overflow-hidden">
+    <Sparkles className="w-3 h-3 text-primary/50 absolute top-1 right-1" />
+    <div className="w-8 h-1.5 bg-white/50 rounded" />
+    <div className="w-10 h-1 bg-white/30 rounded" />
+    <div className="w-12 h-3 bg-white/20 border border-white/30 rounded-full mt-1" />
   </div>
 );
 
@@ -241,6 +251,14 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     description: 'Large header with tagline and features',
     preview: <HeroPreview />,
     category: 'basic',
+  },
+  {
+    type: 'chat-hero',
+    label: 'Chat Hero ✨',
+    icon: <Sparkles className="h-4 w-4" />,
+    description: 'Immersive hero with AI chat as focal point',
+    preview: <ChatHeroPreview />,
+    category: '2026',
   },
   {
     type: 'chat-widget',

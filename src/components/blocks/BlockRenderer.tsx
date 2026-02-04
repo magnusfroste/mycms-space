@@ -7,6 +7,7 @@ import React from 'react';
 import type { PageBlock } from '@/types';
 import type { NewsletterSubscribeBlockConfig } from '@/types/blockConfigs';
 import HeroBlock from './HeroBlock';
+import ChatHeroBlock from './ChatHeroBlock';
 import ChatWidgetBlock from './ChatWidgetBlock';
 import TextSectionBlock from './TextSectionBlock';
 import AboutSplitBlock from './AboutSplitBlock';
@@ -29,7 +30,7 @@ import NewsletterSubscribeBlock from './NewsletterSubscribeBlock';
 import GitHubBlock from './GitHubBlock';
 
 // Block types that should have dividers after them
-const BLOCKS_WITH_DIVIDER = ['hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github'];
+const BLOCKS_WITH_DIVIDER = ['hero', 'chat-hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github'];
 
 interface BlockRendererProps {
   block: PageBlock;
@@ -44,6 +45,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
     switch (block_type) {
       case 'hero':
         return <HeroBlock config={block_config} />;
+      case 'chat-hero':
+        return <ChatHeroBlock config={block_config} />;
       case 'chat-widget':
         return <ChatWidgetBlock config={block_config} />;
       case 'text-section':
