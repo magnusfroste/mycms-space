@@ -1,223 +1,255 @@
 
+# Plan: Omstrukturera Personal Branding-block
 
-# Modulär Systemprompt-arkitektur
+## Nuvarande Problem
 
-## Vision
+**About Me-blocket** och **Expertise Grid-blocket** överlappar i funktion - båda försöker visa "skills" eller kompetenser, vilket skapar förvirring och duplicering.
 
-Istället för att hårdkoda varje kontext-källa i edge function skapar vi ett **plugin-mönster** där varje modul registrerar sin egen kontext-builder. Detta gör systemet helt skalbart för framtida moduler.
+```text
+┌─────────────────────────────────────────────────────────┐
+│ NUVARANDE STRUKTUR (överlappar)                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  About Split Block        Expertise Grid Block          │
+│  ┌─────────────────┐      ┌─────────────────┐           │
+│  │ • Profilbild    │      │ • Titel         │           │
+│  │ • Intro text    │      │ • Icon-kort     │           │
+│  │ • Skills pills  │ ←──→ │ • Beskrivning   │           │
+│  │   (överlappar)  │      │   per item      │           │
+│  └─────────────────┘      └─────────────────┘           │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Ny Strategi: Tydlig Separation
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ NY STRUKTUR (tydlig separation)                         │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  IDENTITET (Vem)          ERBJUDANDE (Vad)              │
+│  ┌─────────────────┐      ┌─────────────────┐           │
+│  │ About Me        │      │ Services Grid   │           │
+│  │ • Profilbild    │      │ • Vad jag gör   │           │
+│  │ • Min story     │      │ • Hur jag       │           │
+│  │ • Social links  │      │   hjälper dig   │           │
+│  │                 │      │ • Call-to-action│           │
+│  └─────────────────┘      └─────────────────┘           │
+│                                                         │
+│  NYA BLOCK                                              │
+│  ┌─────────────────┐      ┌─────────────────┐           │
+│  │ Skills Bar      │      │ Values Block    │           │
+│  │ • Tekniska      │      │ • Core beliefs  │           │
+│  │   kunskaper     │      │ • Arbetssätt    │           │
+│  │ • Progress bars │      │ • 3-4 värden    │           │
+│  └─────────────────┘      └─────────────────┘           │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Nuläge vs. Föreslaget
+## Fas 1: Rensa About Me-blocket
 
-### Nuläge (hårdkodat)
-```
-Edge Function:
-├── if (repos) → GitHub-sektion (hårdkodat)
-├── if (pages) → Pages-sektion (hårdkodat)
-├── if (blogs) → Blog-sektion (hårdkodat)
-└── Varje ny modul kräver kodändring
-```
+**Mål:** About Me blir en ren "person-story" utan skills-lista.
 
-### Föreslaget (modulärt)
-```
-Varje modul definierar:
-├── contextKey: "repos" | "pages" | "blogs" | "products" | ...
-├── promptSection: "## GitHub Projects\n..."
-└── buildContext(): → data för AI
+**Ändringar:**
 
-Edge Function:
-└── Loopar genom alla sektioner dynamiskt
-```
+| Fil | Åtgärd |
+|-----|--------|
+| `AboutSplitBlock.tsx` | Ta bort skills-rendereingen helt |
+| `EditableAboutSplitBlock.tsx` | Ta bort skills från editable vy |
+| `AboutSplitBlockConfig` | Behåll skills-typen för bakåtkompatibilitet men markera som deprecated |
+| `blockDefaults.ts` | Ta bort skills från default config |
+
+**Ny struktur för About Me:**
+- Profilbild (befintlig)
+- Intro text (befintlig) 
+- Additional text (befintlig)
+- **NYTT:** Social links (array med icon + URL)
 
 ---
 
-## Teknisk implementation
+## Fas 2: Omvandla Expertise Grid → Services Block
 
-### Steg 1: Context Section Interface
+**Mål:** Byt fokus från "vad jag kan" till "vad jag erbjuder dig".
+
+**Ändringar:**
+
+| Fil | Åtgärd |
+|-----|--------|
+| `ExpertiseGridBlock.tsx` | Lägg till optional CTA-knapp per item, lägg till `show_cta` toggle |
+| `ExpertiseGridBlockConfig` | Utöka items med `cta_text` och `cta_link` |
+| `ExpertiseAreaEditor.tsx` | Lägg till fält för CTA per item |
+| `BlockLibraryPanel.tsx` | Uppdatera beskrivning: "Services & expertise areas" |
+
+**Ny item-struktur:**
 ```typescript
-// types/modules.ts - ny interface
-
-export interface AIContextSection {
-  key: string;           // "github", "pages", "blogs", etc.
-  title: string;         // "GitHub Projects"
-  instruction: string;   // "Use this to answer questions about..."
-  enabled: boolean;      // Från modulens config
-}
-```
-
-### Steg 2: Modul-specifika kontext-builders
-
-Varje modul som kan bidra med AI-kontext får en `buildAIContext()` funktion:
-
-```typescript
-// hooks/useAIChatContext.ts
-
-// Registry för kontext-sektioner
-const contextBuilders: Record<string, ContextBuilder> = {
-  github: {
-    title: '## GitHub Projects',
-    instruction: `You have knowledge about Magnus's GitHub projects. 
-Use this to answer questions about his technical work, coding skills, and project experience.`,
-    getData: (repos) => repos.map(r => 
-      `**${r.name}**: ${r.description}\n` +
-      (r.problemStatement ? `Problem: ${r.problemStatement}\n` : '') +
-      (r.whyItMatters ? `Why: ${r.whyItMatters}\n` : '')
-    ).join('\n'),
-  },
-  
-  pages: {
-    title: '## Website Content',
-    instruction: `You have access to content from the website. 
-Use this to provide accurate information about Magnus and his services.`,
-    getData: (pages) => pages.map(p => 
-      `**${p.title}** (/${p.slug})\n${p.content}`
-    ).join('\n\n'),
-  },
-  
-  blogs: {
-    title: '## Blog Posts',
-    instruction: `You have access to Magnus's blog posts. 
-Use these to discuss his thoughts, expertise, and insights.`,
-    getData: (blogs) => blogs.map(b => 
-      `**${b.title}**\n${b.excerpt || b.content.substring(0, 300)}...`
-    ).join('\n\n'),
-  },
-  
-  // FRAMTIDA MODULER:
-  // products: { ... }
-  // services: { ... }
-  // testimonials: { ... }
-};
-```
-
-### Steg 3: Dynamisk prompt-byggning
-
-Edge Function bygger prompten genom att loopa:
-
-```typescript
-// supabase/functions/ai-chat/index.ts
-
-function buildDynamicPrompt(
-  basePrompt: string, 
-  siteContext: SiteContext | null
-): string {
-  if (!siteContext) return basePrompt;
-
-  const sections: string[] = [];
-  
-  // Dynamiskt: för varje kontext-typ som har data
-  const contextTypes = [
-    { key: 'repos', data: siteContext.repos, title: 'GitHub Projects', 
-      instruction: 'Use this to discuss technical projects and skills.' },
-    { key: 'pages', data: siteContext.pages, title: 'Website Content',
-      instruction: 'Use this for accurate info about Magnus.' },
-    { key: 'blogs', data: siteContext.blogs, title: 'Blog Posts',
-      instruction: 'Use these for thoughts and expertise.' },
-  ];
-  
-  for (const ctx of contextTypes) {
-    if (ctx.data && ctx.data.length > 0) {
-      sections.push(`\n\n## ${ctx.title}\n${ctx.instruction}\n`);
-      // Lägg till formaterad data...
-    }
-  }
-  
-  // Logga för debugging
-  console.log(`[AI] Prompt built with ${sections.length} context section(s)`);
-  
-  return basePrompt + sections.join('');
+{
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  cta_text?: string;    // NYTT: "Läs mer", "Boka möte"
+  cta_link?: string;    // NYTT: URL eller anchor
+  enabled: boolean;
+  order_index: number;
 }
 ```
 
 ---
 
-## Implementationsplan
+## Fas 3: Nytt Skills Bar-block (optional)
 
-### Fas 1: Fixa GitHub-sparing (bugfix)
-- Säkerställ att `include_github_context` och `selected_repo_ids` sparas korrekt i `AIModuleSettings.tsx`
-- Bekräfta med databasfråga
+**Mål:** Ett dedikerat block för tekniska skills med progress bars.
 
-### Fas 2: Centralisera prompt-byggning
-- Flytta ALL kontext-logik till Edge Function
-- Ta bort `contextInstruction` från `useAIChatContext.ts` (duplicering)
-- Frontend skickar bara rå `siteContext`
+**Ny fil:** `src/components/blocks/SkillsBarBlock.tsx`
 
-### Fas 3: Förbättra Edge Function
-- Uppdatera `buildSystemPrompt()` med tydlig dynamisk loop
-- Lägg till bättre loggning: vilka sektioner, hur mycket data
-- Separera personlighet från kontext med tydliga rubriker
-
-### Fas 4: Synlig feedback (bonus)
-- Visa i admin vilka kontext-källor som är aktiva
-- "Active sources: GitHub (5 repos), Pages (3), Blog (2)"
-
----
-
-## Dataflöde
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  AI Module Settings (Admin)                                  │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │
-│  │ ☑ GitHub    │ │ ☑ Pages     │ │ ☐ Blog      │            │
-│  │ 5 selected  │ │ 3 selected  │ │ 0 selected  │            │
-│  └─────────────┘ └─────────────┘ └─────────────┘            │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  useAIChatContext                                           │
-│  Returnerar:                                                │
-│  {                                                          │
-│    contextData: { repos: [...], pages: [...], blogs: [] }   │
-│    contextSummary: "5 repos, 3 pages"                       │
-│  }                                                          │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Edge Function: buildDynamicPrompt()                        │
-│                                                             │
-│  [Base Prompt - Personlighet]                               │
-│  You are Magnet, an AI twin of Magnus...                   │
-│                                                             │
-│  [Dynamiskt tillagda sektioner]                            │
-│  ## GitHub Projects                                        │
-│  You have knowledge about 5 projects...                    │
-│  **Flowwink**: Lightweight flashcard app...                │
-│                                                             │
-│  ## Website Content                                        │
-│  You have access to 3 pages...                             │
-│                                                             │
-│  (Blog-sektion utelämnas - ingen data)                     │
-└─────────────────────────────────────────────────────────────┘
+**Config:**
+```typescript
+interface SkillsBarBlockConfig {
+  title?: string;
+  subtitle?: string;
+  skills?: Array<{
+    id: string;
+    name: string;
+    level: number;      // 0-100
+    category?: string;  // "Frontend", "Backend", etc.
+    enabled: boolean;
+  }>;
+  layout?: 'bars' | 'tags' | 'compact';
+}
 ```
 
----
-
-## Framtida skalbarhet
-
-Med denna arkitektur kan vi enkelt lägga till nya kontext-källor:
-
-| Framtida modul | contextKey | Data |
-|----------------|------------|------|
-| Products | `products` | Produkter/tjänster |
-| Testimonials | `testimonials` | Kundcitat |
-| CV/Resume | `resume` | Arbetslivserfarenhet |
-| Courses | `courses` | Kurser/utbildningar |
-
-Varje ny modul:
-1. Definierar sin `AIContextSection`
-2. Lägger till toggle i AI Module Settings
-3. Edge Function loopar automatiskt genom alla
+**Nytt editor:** `src/components/admin/block-editor/SkillsBarEditor.tsx`
 
 ---
 
-## Förväntade filer att ändra
+## Fas 4: Nytt Values Block (optional)
 
-1. `src/components/admin/AIModuleSettings.tsx` - fixa spara-logik
-2. `src/hooks/useAIChatContext.ts` - ta bort `contextInstruction`
-3. `supabase/functions/ai-chat/index.ts` - förbättra `buildSystemPrompt()`
-4. Deploy edge function
+**Mål:** Ett block för att visa personliga värderingar/filosofi.
 
+**Ny fil:** `src/components/blocks/ValuesBlock.tsx`
+
+**Config:**
+```typescript
+interface ValuesBlockConfig {
+  title?: string;
+  subtitle?: string;
+  values?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    enabled: boolean;
+  }>;
+  layout?: 'grid' | 'list' | 'cards';
+}
+```
+
+**Designidé:** 3-4 stora kort med ikoner, kort text, hover-effekt. Minimalistiskt.
+
+---
+
+## Fas 5: Social Links för About Me
+
+**Mål:** Lägg till social links direkt i About-blocket.
+
+**Utöka AboutSplitBlockConfig:**
+```typescript
+interface AboutSplitBlockConfig {
+  // ... befintliga fält
+  social_links?: Array<{
+    platform: 'linkedin' | 'github' | 'twitter' | 'website' | 'email';
+    url: string;
+    enabled: boolean;
+  }>;
+}
+```
+
+**Rendering:** Ikoner under profilbilden eller efter texten.
+
+---
+
+## Uppdaterad Block Library
+
+```text
+Content (uppdaterad)
+├── Text Section
+├── Image & Text
+└── About Me ← Rensat, person-fokus
+
+Features & Grid (uppdaterad)
+├── Services Grid ← Omdöpt från Expertise Grid
+├── Skills Bar ← NY
+├── Values ← NY
+├── Bento Grid
+└── Stats Counter
+```
+
+---
+
+## Technical Details
+
+### Filer som ändras
+
+| Kategori | Filer |
+|----------|-------|
+| **Block Components** | `AboutSplitBlock.tsx`, `ExpertiseGridBlock.tsx` |
+| **Editable Blocks** | `EditableAboutSplitBlock.tsx` |
+| **Block Editors** | `ExpertiseAreaEditor.tsx`, `SkillListEditor.tsx` (ta bort) |
+| **Types** | `blockConfigs.ts` |
+| **Defaults** | `blockDefaults.ts` |
+| **Library** | `BlockLibraryPanel.tsx` |
+
+### Nya filer (Fas 3-4)
+
+```text
+src/components/blocks/
+├── SkillsBarBlock.tsx          (ny)
+└── ValuesBlock.tsx             (ny)
+
+src/components/admin/block-editor/
+├── SkillsBarEditor.tsx         (ny)
+└── ValuesEditor.tsx            (ny)
+
+src/components/admin/editable-blocks/
+├── EditableSkillsBarBlock.tsx  (ny, optional)
+└── EditableValuesBlock.tsx     (ny, optional)
+```
+
+### Block Renderer-uppdatering
+
+Lägg till nya cases i `BlockRenderer.tsx`:
+```typescript
+case 'skills-bar':
+  return <SkillsBarBlock config={block.block_config} />;
+case 'values':
+  return <ValuesBlock config={block.block_config} />;
+```
+
+---
+
+## Prioritetsordning
+
+| Prio | Åtgärd | Värde |
+|------|--------|-------|
+| 1 | Rensa About Me (ta bort skills) | Hög - löser överlappning |
+| 2 | Förbättra Expertise Grid med CTA | Hög - ökar användbarhet |
+| 3 | Lägg till Social Links i About | Medium - vanlig request |
+| 4 | Skills Bar Block | Medium - för tekniska profiler |
+| 5 | Values Block | Låg - nice-to-have |
+
+---
+
+## Summering
+
+**Enkel version (Fas 1-2):**
+- About Me → Ren personlig story + social links
+- Expertise Grid → Services med CTAs
+
+**Full version (Fas 1-5):**
+- Plus dedikerade Skills Bar och Values-block
+
+Detta ger användare tydliga val utan att skapa 200 inställningar, och följer "less is more"-principen.
