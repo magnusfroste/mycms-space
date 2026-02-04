@@ -74,12 +74,13 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
       isUser: true,
     };
 
-    // Navigate to full chat page with the initial message
+    // Navigate to full chat page with the initial message and placeholder
     navigate('/chat', {
       state: {
         fromHero: true,
         messages: [userMessage],
         sessionId: crypto.randomUUID(),
+        placeholder: placeholder,
       },
     });
   };
@@ -97,6 +98,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
         fromHero: true,
         messages: [userMessage],
         sessionId: crypto.randomUUID(),
+        placeholder: placeholder,
       },
     });
   };
