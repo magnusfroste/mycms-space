@@ -516,8 +516,11 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
         />
       </div>
       
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col justify-between p-2">
+      {/* Overlay - stays visible when menu is open */}
+      <div className={cn(
+        "absolute inset-0 bg-black/60 transition-opacity rounded-lg flex flex-col justify-between p-2",
+        menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+      )}>
         <div className="flex justify-end">
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
@@ -525,7 +528,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="z-50">
+            <DropdownMenuContent align="end" className="z-[100]" sideOffset={5}>
               <DropdownMenuItem onSelect={() => handleAction(onCopy)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
