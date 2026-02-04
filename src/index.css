@@ -269,6 +269,140 @@
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 25 100% 55%;
   }
+
+  /* ─────────────────────────────────────────
+     Theme: Sana - Clean, Minimal, Professional
+     Inspired by sanalabs.com
+     ───────────────────────────────────────── */
+  
+  [data-theme="sana"] {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* Primary: Soft Violet */
+    --primary: 250 65% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Light Gray */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent: Violet */
+    --accent: 250 65% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
+    --ring: 250 65% 60%;
+
+    --radius: 0.75rem;
+
+    /* Gradient - Subtle violet */
+    --gradient-start: 250 65% 60%;
+    --gradient-mid: 270 60% 65%;
+    --gradient-end: 290 55% 60%;
+
+    /* Surface */
+    --surface-elevated: 0 0% 100%;
+    --surface-overlay: 0 0% 100% / 0.98;
+    --surface-glass: 0 0% 100% / 0.9;
+
+    /* Shadows - Very soft */
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.02);
+    --shadow-sm: 0 2px 6px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 6px 16px hsl(0 0% 0% / 0.06);
+    --shadow-lg: 0 12px 32px hsl(0 0% 0% / 0.08);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.08);
+
+    /* Spacing - Generous */
+    --section-gap: 5rem;
+    --section-py: 5rem;
+    --container-px: 1.5rem;
+
+    /* Typography - Clean */
+    --heading-tracking: -0.02em;
+    --body-leading: 1.7;
+
+    /* Sidebar - Sana Light */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 35%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 250 65% 60%;
+  }
+
+  [data-theme="sana"].dark {
+    --background: 240 10% 6%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 10% 9%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 10% 9%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Primary: Brighter Violet */
+    --primary: 250 70% 70%;
+    --primary-foreground: 240 10% 6%;
+
+    /* Secondary: Dark Gray */
+    --secondary: 240 8% 14%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 240 8% 14%;
+    --muted-foreground: 0 0% 55%;
+
+    /* Accent: Bright Violet */
+    --accent: 250 70% 70%;
+    --accent-foreground: 240 10% 6%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 8% 18%;
+    --input: 240 8% 18%;
+    --ring: 250 70% 70%;
+
+    /* Gradient - Dark with violet */
+    --gradient-start: 250 70% 70%;
+    --gradient-mid: 270 65% 68%;
+    --gradient-end: 290 60% 65%;
+
+    --surface-elevated: 240 10% 11%;
+    --surface-overlay: 240 10% 7% / 0.98;
+    --surface-glass: 240 10% 12% / 0.85;
+
+    --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-sm: 0 2px 6px hsl(0 0% 0% / 0.4);
+    --shadow-md: 0 6px 16px hsl(0 0% 0% / 0.5);
+    --shadow-lg: 0 12px 32px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 50px hsl(var(--primary) / 0.2);
+
+    /* Sidebar - Sana Dark */
+    --sidebar-background: 240 10% 7%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-primary: 0 0% 95%;
+    --sidebar-primary-foreground: 240 10% 6%;
+    --sidebar-accent: 240 8% 14%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 8% 18%;
+    --sidebar-ring: 250 70% 70%;
+  }
 }
 
 @layer base {

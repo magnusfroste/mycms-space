@@ -358,7 +358,7 @@ export interface GitHubModuleConfig {
 
 // Branding Module Config
 export interface BrandingModuleConfig {
-  theme: 'elegant' | 'grok';
+  theme: 'elegant' | 'grok' | 'sana';
   force_dark: boolean;
 }
 
