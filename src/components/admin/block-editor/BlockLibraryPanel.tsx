@@ -51,7 +51,7 @@ const BLOCK_CATEGORIES = [
     blocks: [
       { type: 'text-section', name: 'Text Section', description: 'Simple text block', icon: Type },
       { type: 'image-text', name: 'Image & Text', description: 'Image with accompanying text', icon: Image },
-      { type: 'about-split', name: 'About Me', description: 'Split layout with image and skills', icon: Users },
+      { type: 'about-split', name: 'About Me', description: 'Personal story with social links', icon: Users },
     ],
   },
   {
@@ -59,8 +59,10 @@ const BLOCK_CATEGORIES = [
     name: 'Features & Grid',
     icon: Grid3X3,
     blocks: [
+      { type: 'expertise-grid', name: 'Services Grid', description: 'Services & offerings with CTAs', icon: Layout },
+      { type: 'skills-bar', name: 'Skills Bar', description: 'Technical skills with progress bars', icon: BarChart3 },
+      { type: 'values', name: 'Values', description: 'Core beliefs and philosophy', icon: Users },
       { type: 'bento-grid', name: 'Bento Grid', description: 'Modern asymmetric layout', icon: Grid3X3 },
-      { type: 'expertise-grid', name: 'Expertise Grid', description: 'Grid with expertise areas', icon: Layout },
       { type: 'stats-counter', name: 'Stats Counter', description: 'Animated numbers', icon: BarChart3 },
       { type: 'github', name: 'GitHub Repos', description: 'Display your GitHub repositories', icon: Github },
     ],

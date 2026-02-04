@@ -64,10 +64,10 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         intro_text: 'Share your story here. Describe who you are, what you do, and what drives you professionally.',
         additional_text: 'Add more details about your background, experience, and what makes you unique in your field.',
         image_url: '',
-        skills: [
-          { icon: 'Briefcase', title: 'Skill 1', description: 'Describe your first key skill or area of expertise.' },
-          { icon: 'Lightbulb', title: 'Skill 2', description: 'Describe your second key skill or area of expertise.' },
-          { icon: 'Target', title: 'Skill 3', description: 'Describe your third key skill or area of expertise.' },
+        social_links: [
+          { platform: 'linkedin', url: '', enabled: true },
+          { platform: 'github', url: '', enabled: true },
+          { platform: 'twitter', url: '', enabled: true },
         ],
       };
 
@@ -82,11 +82,38 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
 
     case 'expertise-grid':
       return {
+        title: 'What I Do',
+        subtitle: 'How I can help you achieve your goals',
         items: [
-          { id: crypto.randomUUID(), icon: 'Code', title: 'Expertise 1', description: 'Describe your first area of expertise.', enabled: true, order_index: 1 },
-          { id: crypto.randomUUID(), icon: 'Palette', title: 'Expertise 2', description: 'Describe your second area of expertise.', enabled: true, order_index: 2 },
-          { id: crypto.randomUUID(), icon: 'Rocket', title: 'Expertise 3', description: 'Describe your third area of expertise.', enabled: true, order_index: 3 },
-          { id: crypto.randomUUID(), icon: 'Users', title: 'Expertise 4', description: 'Describe your fourth area of expertise.', enabled: true, order_index: 4 },
+          { id: crypto.randomUUID(), icon: 'Rocket', title: 'Service 1', description: 'Describe your first service or offering.', cta_text: 'Learn more', cta_link: '#', enabled: true, order_index: 1 },
+          { id: crypto.randomUUID(), icon: 'Palette', title: 'Service 2', description: 'Describe your second service or offering.', cta_text: 'Learn more', cta_link: '#', enabled: true, order_index: 2 },
+          { id: crypto.randomUUID(), icon: 'Code', title: 'Service 3', description: 'Describe your third service or offering.', cta_text: 'Learn more', cta_link: '#', enabled: true, order_index: 3 },
+        ],
+      };
+
+    case 'skills-bar':
+      return {
+        title: 'Skills & Technologies',
+        subtitle: 'Technical expertise and proficiency levels',
+        layout: 'bars',
+        skills: [
+          { id: crypto.randomUUID(), name: 'Skill 1', level: 90, category: 'Frontend', enabled: true },
+          { id: crypto.randomUUID(), name: 'Skill 2', level: 85, category: 'Frontend', enabled: true },
+          { id: crypto.randomUUID(), name: 'Skill 3', level: 80, category: 'Backend', enabled: true },
+          { id: crypto.randomUUID(), name: 'Skill 4', level: 75, category: 'Backend', enabled: true },
+        ],
+      };
+
+    case 'values':
+      return {
+        title: 'My Values',
+        subtitle: 'The principles that guide my work',
+        layout: 'grid',
+        values: [
+          { id: crypto.randomUUID(), title: 'Quality', description: 'Committed to excellence in every detail.', icon: 'Star', enabled: true },
+          { id: crypto.randomUUID(), title: 'Integrity', description: 'Honest and transparent in all interactions.', icon: 'Shield', enabled: true },
+          { id: crypto.randomUUID(), title: 'Innovation', description: 'Always looking for better solutions.', icon: 'Lightbulb', enabled: true },
+          { id: crypto.randomUUID(), title: 'Collaboration', description: 'Working together to achieve great results.', icon: 'Users', enabled: true },
         ],
       };
 

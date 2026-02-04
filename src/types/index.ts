@@ -240,7 +240,9 @@ export type BlockType =
   | 'contact-form'
   | 'blog'
   | 'newsletter-subscribe'
-  | 'github';
+  | 'github'
+  | 'skills-bar'
+  | 'values';
 
 export interface PageBlock {
   id: string;

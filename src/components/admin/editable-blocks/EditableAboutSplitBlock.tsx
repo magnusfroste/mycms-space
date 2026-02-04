@@ -1,11 +1,11 @@
 // ============================================
 // Editable About Split Block
 // Inline editing for about me section
-// Uses new skills array structure (icon + title)
+// Clean person-story focus with social links
 // ============================================
 
 import React from 'react';
-import { iconMap } from '@/lib/constants/iconMaps';
+import { Linkedin, Github, Twitter, Globe, Mail, Instagram, Youtube } from 'lucide-react';
 import type { AboutSplitBlockConfig } from '@/types/blockConfigs';
 import EditableText from './EditableText';
 import { AITextActions } from '@/components/common';
@@ -16,6 +16,16 @@ interface EditableAboutSplitBlockProps {
   isEditMode: boolean;
   onChange: (changes: Record<string, unknown>) => void;
 }
+
+const socialIconMap: Record<string, React.ReactNode> = {
+  linkedin: <Linkedin className="h-5 w-5" />,
+  github: <Github className="h-5 w-5" />,
+  twitter: <Twitter className="h-5 w-5" />,
+  website: <Globe className="h-5 w-5" />,
+  email: <Mail className="h-5 w-5" />,
+  instagram: <Instagram className="h-5 w-5" />,
+  youtube: <Youtube className="h-5 w-5" />,
+};
 
 const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
   config,
@@ -33,10 +43,11 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
     return typedConfig[key] ?? fallback;
   };
 
+  const name = getValue('name', '');
   const introText = getValue('intro_text', 'Introduction text...');
   const additionalText = getValue('additional_text', '');
   const imageUrl = getValue('image_url', '');
-  const skills = getValue('skills', []) || [];
+  const socialLinks = (getValue('social_links', []) || []).filter(link => link.enabled && link.url);
 
   return (
     <section id="about" className="section-container relative overflow-hidden">
@@ -54,10 +65,10 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
           </h2>
         </div>
         
-        <div className="space-y-12">
+        <div className="space-y-8">
           {/* Top Row - Image + Intro Text Side by Side */}
           <div className="flex flex-col sm:flex-row gap-6 lg:gap-10 items-start">
-            {/* Small Image */}
+            {/* Profile Image with Social Links */}
             {imageUrl && (
               <div className="relative group shrink-0">
                 <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden">
@@ -65,13 +76,31 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                   <div className="relative bg-card rounded-2xl overflow-hidden p-0.5 h-full">
                     <img 
                       src={imageUrl} 
-                      alt="Profile" 
+                      alt={name || "Profile"} 
                       className="w-full h-full object-cover rounded-xl"
                     />
                   </div>
                 </div>
                 {/* Subtle Glow */}
                 <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl -z-10" />
+                
+                {/* Social Links under image */}
+                {socialLinks.length > 0 && (
+                  <div className="flex justify-center gap-2 mt-4">
+                    {socialLinks.map((link) => (
+                      <a
+                        key={link.platform}
+                        href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
+                        target={link.platform === 'email' ? undefined : '_blank'}
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                        aria-label={link.platform}
+                      >
+                        {socialIconMap[link.platform]}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             
@@ -122,34 +151,33 @@ const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
                   />
                 </div>
               </div>
+              
+              {/* Social Links inline (if no image) */}
+              {!imageUrl && socialLinks.length > 0 && (
+                <div className="flex gap-2 pt-2">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.platform}
+                      href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
+                      target={link.platform === 'email' ? undefined : '_blank'}
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                      aria-label={link.platform}
+                    >
+                      {socialIconMap[link.platform]}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Compact Skills Row */}
-          {skills.length > 0 && (
-            <div className="flex flex-wrap gap-3 pt-4">
-              {skills.map((skill, index) => (
-                <div 
-                  key={index} 
-                  className="group flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors"
-                >
-                  <div className="w-5 h-5 text-primary shrink-0">
-                    {iconMap[skill.icon] || iconMap['Monitor']}
-                  </div>
-                  <span className="text-sm font-medium text-foreground/90">
-                    {skill.title}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Skills Empty State for Edit Mode */}
-          {skills.length === 0 && isEditMode && (
+          {/* Social Links Empty State for Edit Mode */}
+          {socialLinks.length === 0 && isEditMode && (
             <div className="flex flex-wrap gap-3 pt-4 opacity-50">
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-dashed border-muted-foreground/30">
                 <span className="text-sm text-muted-foreground">
-                  Add skills in the block settings panel →
+                  Add social links in the block settings panel →
                 </span>
               </div>
             </div>

@@ -22,14 +22,21 @@ export interface AboutSplitBlockConfig {
   additional_text?: string;
   image_url?: string;
   image_path?: string;
+  /** @deprecated Skills moved to SkillsBarBlock */
   skills?: Array<{
     title: string;
     description: string;
     icon: string;
   }>;
+  // Social links for personal branding
+  social_links?: Array<{
+    platform: 'linkedin' | 'github' | 'twitter' | 'website' | 'email' | 'instagram' | 'youtube';
+    url: string;
+    enabled: boolean;
+  }>;
 }
 
-// Expertise Grid Block Config
+// Expertise Grid Block Config (Services)
 export interface ExpertiseGridBlockConfig {
   title?: string;
   subtitle?: string;
@@ -40,6 +47,36 @@ export interface ExpertiseGridBlockConfig {
     description: string;
     icon: string;
     order_index: number;
+    enabled: boolean;
+    cta_text?: string;   // "Learn more", "Book now"
+    cta_link?: string;   // URL or anchor
+  }>;
+}
+
+// Skills Bar Block Config
+export interface SkillsBarBlockConfig {
+  title?: string;
+  subtitle?: string;
+  layout?: 'bars' | 'tags' | 'compact';
+  skills?: Array<{
+    id: string;
+    name: string;
+    level: number; // 0-100
+    category?: string;
+    enabled: boolean;
+  }>;
+}
+
+// Values Block Config
+export interface ValuesBlockConfig {
+  title?: string;
+  subtitle?: string;
+  layout?: 'grid' | 'list' | 'cards';
+  values?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
     enabled: boolean;
   }>;
 }
@@ -267,6 +304,8 @@ export type BlockConfigType =
   | HeroBlockConfig
   | AboutSplitBlockConfig
   | ExpertiseGridBlockConfig
+  | SkillsBarBlockConfig
+  | ValuesBlockConfig
   | FeaturedCarouselBlockConfig
   | ProjectShowcaseBlockConfig
   | ChatWidgetBlockConfig
@@ -291,6 +330,8 @@ export interface BlockTypeConfigMap {
   'hero': HeroBlockConfig;
   'about-split': AboutSplitBlockConfig;
   'expertise-grid': ExpertiseGridBlockConfig;
+  'skills-bar': SkillsBarBlockConfig;
+  'values': ValuesBlockConfig;
   'featured-carousel': FeaturedCarouselBlockConfig;
   'project-showcase': ProjectShowcaseBlockConfig;
   'chat-widget': ChatWidgetBlockConfig;
