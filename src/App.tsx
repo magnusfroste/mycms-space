@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import DynamicPage from "./pages/DynamicPage";
 import Chat from "./pages/Chat";
@@ -22,7 +21,7 @@ import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 const AppBootstrap = () => {
   const location = useLocation();
   
-  // Apply branding theme
+  // Apply branding theme (single source of truth)
   useBrandingTheme();
   
   // Internal analytics tracking
@@ -62,29 +61,27 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <TooltipProvider>
-          <GoogleAnalytics />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppBootstrap />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/demo" element={<BlockDemo />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/blog" element={<BlogArchive />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              {/* Dynamic page route - catches any slug */}
-              <Route path="/:slug" element={<DynamicPage />} />
-              {/* 404 fallback */}
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <GoogleAnalytics />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppBootstrap />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/demo" element={<BlockDemo />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/blog" element={<BlogArchive />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            {/* Dynamic page route - catches any slug */}
+            <Route path="/:slug" element={<DynamicPage />} />
+            {/* 404 fallback */}
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

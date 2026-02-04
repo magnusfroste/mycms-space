@@ -6,8 +6,6 @@
 import React from 'react';
 import type { PageBlock } from '@/types';
 import type { NewsletterSubscribeBlockConfig } from '@/types/blockConfigs';
-import type { SectionTheme } from '@/hooks/useScrollTheme';
-import ScrollThemeSection from './ScrollThemeSection';
 import HeroBlock from './HeroBlock';
 import ChatHeroBlock from './ChatHeroBlock';
 import ChatWidgetBlock from './ChatWidgetBlock';
@@ -50,11 +48,6 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
   const anchorId = (block_config && typeof block_config === 'object' && 'anchor_id' in block_config)
     ? (block_config.anchor_id as string)
     : block_type;
-
-  // Section theme for scroll-triggered background changes
-  const sectionTheme: SectionTheme = (block_config && typeof block_config === 'object' && 'section_theme' in block_config)
-    ? (block_config.section_theme as SectionTheme)
-    : 'default';
 
   const renderBlock = () => {
     switch (block_type) {
@@ -114,11 +107,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
   };
 
   return (
-    <ScrollThemeSection theme={sectionTheme}>
+    <>
       {anchorId && <div id={anchorId} className="scroll-mt-20" />}
       {renderBlock()}
       {showDivider && <SectionDivider variant="fade" />}
-    </ScrollThemeSection>
+    </>
   );
 };
 

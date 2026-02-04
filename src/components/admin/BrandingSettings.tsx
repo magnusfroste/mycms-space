@@ -4,10 +4,9 @@
 // ============================================
 
 import React, { useEffect, useState } from 'react';
-import { Palette, Check, Sparkles, Zap, Moon, Sun } from 'lucide-react';
+import { Palette, Check, Sparkles, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -35,10 +34,10 @@ const themeTemplates: ThemeTemplate[] = [
     description: 'Warm, refined aesthetic with indigo & coral accents. Perfect for creative professionals.',
     icon: <Sparkles className="h-5 w-5" />,
     preview: {
-      background: 'bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800',
+      background: 'bg-gradient-to-br from-slate-50 to-slate-100',
       primary: 'bg-indigo-500',
       accent: 'bg-orange-400',
-      text: 'text-slate-800 dark:text-slate-100',
+      text: 'text-slate-800',
     },
     tags: ['Creative', 'Warm', 'Premium'],
   },
@@ -48,10 +47,10 @@ const themeTemplates: ThemeTemplate[] = [
     description: 'Minimal, high-contrast design with electric orange pop. Sharp and modern.',
     icon: <Zap className="h-5 w-5" />,
     preview: {
-      background: 'bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900',
-      primary: 'bg-neutral-900 dark:bg-neutral-100',
+      background: 'bg-gradient-to-br from-neutral-50 to-neutral-100',
+      primary: 'bg-neutral-900',
       accent: 'bg-orange-500',
-      text: 'text-neutral-900 dark:text-neutral-100',
+      text: 'text-neutral-900',
     },
     tags: ['Minimal', 'Bold', 'Tech'],
   },
@@ -61,10 +60,10 @@ const themeTemplates: ThemeTemplate[] = [
     description: 'Clean, professional design with soft violet accents. Inspired by modern SaaS.',
     icon: <Palette className="h-5 w-5" />,
     preview: {
-      background: 'bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900',
+      background: 'bg-gradient-to-br from-white to-slate-50',
       primary: 'bg-violet-500',
       accent: 'bg-violet-400',
-      text: 'text-slate-900 dark:text-slate-100',
+      text: 'text-slate-900',
     },
     tags: ['Clean', 'Professional', 'SaaS'],
   },
@@ -76,19 +75,17 @@ const BrandingSettings: React.FC = () => {
   const updateModule = useUpdateModule('branding');
   
   const [selectedTheme, setSelectedTheme] = useState<'elegant' | 'grok' | 'sana'>('elegant');
-  const [forceDark, setForceDark] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   // Load saved settings
   useEffect(() => {
     if (module?.module_config) {
-      const config = module.module_config as { theme?: 'elegant' | 'grok' | 'sana'; force_dark?: boolean };
+      const config = module.module_config as { theme?: 'elegant' | 'grok' | 'sana' };
       setSelectedTheme(config.theme || 'elegant');
-      setForceDark(config.force_dark || false);
     }
   }, [module]);
 
-  // Apply theme to document
+  // Apply theme to document for preview
   useEffect(() => {
     const theme = previewTheme || selectedTheme;
     if (theme === 'elegant') {
@@ -115,7 +112,6 @@ const BrandingSettings: React.FC = () => {
       await updateModule.mutateAsync({
         module_config: {
           theme: selectedTheme,
-          force_dark: forceDark,
         },
       });
       setPreviewTheme(null);
@@ -215,25 +211,6 @@ const BrandingSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Dark Mode Override */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {forceDark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
-            <div>
-              <Label className="font-medium">Force Dark Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                Always show dark mode to visitors, ignoring their system preference
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={forceDark}
-            onCheckedChange={setForceDark}
-          />
-        </div>
-      </Card>
-
       {/* Save Button */}
       <div className="flex items-center gap-4 pt-4">
         <Button 
@@ -260,7 +237,7 @@ const BrandingSettings: React.FC = () => {
       {/* Pro tip */}
       <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
         <strong className="text-foreground">Pro tip:</strong> The selected theme affects your entire site. 
-        Each theme has light and dark mode variants that adapt to visitor preferences.
+        Light/dark mode support will be added in a future update.
       </div>
     </div>
   );
