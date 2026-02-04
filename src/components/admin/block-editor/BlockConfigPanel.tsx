@@ -373,6 +373,34 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
     }
   };
 
+  // Common settings that apply to all blocks
+  const renderCommonSettings = () => (
+    <div className="space-y-4 pt-4 border-t mt-4">
+      <h4 className="text-sm font-medium text-muted-foreground">Section Settings</h4>
+      <div className="space-y-2">
+        <Label>Section Theme</Label>
+        <Select
+          value={(config.section_theme as string) || 'default'}
+          onValueChange={(value) => onBlockConfigChange({ section_theme: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="default">Default</SelectItem>
+            <SelectItem value="dark">Dark</SelectItem>
+            <SelectItem value="light">Light</SelectItem>
+            <SelectItem value="accent">Accent (Coral)</SelectItem>
+            <SelectItem value="gradient">Gradient</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Background changes when scrolling into this section
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-80 bg-background border-l flex flex-col h-full">
       {/* Header */}
@@ -387,6 +415,7 @@ const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
       <ScrollArea className="flex-1">
         <div className="p-4">
           {renderConfigByType()}
+          {renderCommonSettings()}
         </div>
       </ScrollArea>
     </div>
