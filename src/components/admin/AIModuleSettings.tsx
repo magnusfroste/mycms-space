@@ -4,7 +4,7 @@
 // ============================================
 
 import React from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -133,16 +133,51 @@ const AIModuleSettings: React.FC = () => {
   const availableIntegrations = integrationsMeta.filter((i) => i.available);
   const activeIntegrationMeta = integrationsMeta.find((i) => i.type === activeIntegration);
 
+  // Build active context sources summary
+  const activeContextSources = (() => {
+    const sources: string[] = [];
+    
+    if (config?.include_github_context && selectedRepoIds.length > 0) {
+      sources.push(`GitHub (${selectedRepoIds.length})`);
+    } else if (config?.include_github_context && githubRepos.length > 0) {
+      sources.push(`GitHub (${githubRepos.length})`);
+    }
+    
+    if (config?.include_page_context && selectedPageSlugs.length > 0) {
+      sources.push(`Pages (${selectedPageSlugs.length})`);
+    } else if (config?.include_page_context && pages.length > 0) {
+      sources.push(`Pages (${pages.length})`);
+    }
+    
+    if (config?.include_blog_context && selectedBlogIds.length > 0) {
+      sources.push(`Blog (${selectedBlogIds.length})`);
+    } else if (config?.include_blog_context && publishedPosts.length > 0) {
+      sources.push(`Blog (${publishedPosts.length})`);
+    }
+    
+    return sources;
+  })();
+
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Bot className="h-8 w-8 text-primary" />
-        <div>
-          <h2 className="text-2xl font-bold">AI Chat</h2>
-          <p className="text-muted-foreground">
-            Configure chat widget behavior and context
-          </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Bot className="h-8 w-8 text-primary" />
+          <div>
+            <h2 className="text-2xl font-bold">AI Chat</h2>
+            <p className="text-muted-foreground">
+              Configure chat widget behavior and context
+            </p>
+          </div>
         </div>
+        
+        {/* Active Context Sources Badge */}
+        {activeContextSources.length > 0 && (
+          <Badge variant="secondary" className="gap-1.5 text-sm py-1.5 px-3">
+            <Database className="h-4 w-4" />
+            {activeContextSources.join(', ')}
+          </Badge>
+        )}
       </div>
 
       {/* Enable/Disable Module */}
