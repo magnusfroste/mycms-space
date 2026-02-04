@@ -10,31 +10,44 @@ import type { BrandingModuleConfig } from '@/types/modules';
 
 export const useBrandingTheme = () => {
   const { data: module, isLoading } = useModule('branding');
-  const { setTheme } = useTheme();
+  const { setTheme, theme: currentTheme } = useTheme();
   
+  // Apply branding theme
   useEffect(() => {
     if (isLoading || !module) return;
     
     const config = module.module_config as BrandingModuleConfig | undefined;
-    const theme = config?.theme || 'elegant';
+    const brandingTheme = config?.theme || 'elegant';
     const forceDark = config?.force_dark || false;
     
-    // Apply theme attribute (data-theme for CSS theme variants)
-    if (theme === 'elegant') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
+    // Function to apply data-theme attribute
+    const applyDataTheme = () => {
+      if (brandingTheme === 'elegant') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', brandingTheme);
+      }
+    };
+    
+    // Apply immediately
+    applyDataTheme();
+    
+    // Apply again after a delay to ensure next-themes doesn't override
+    const timeoutId = setTimeout(applyDataTheme, 50);
+    const timeoutId2 = setTimeout(applyDataTheme, 200);
     
     // Apply forced dark mode via next-themes
-    if (forceDark) {
+    if (forceDark && currentTheme !== 'dark') {
       setTheme('dark');
     }
     
-    // Debug log
-    console.log('[Branding] Applied theme:', theme, 'forceDark:', forceDark);
+    console.log('[Branding] Applied theme:', brandingTheme, 'forceDark:', forceDark);
     
-  }, [module, isLoading, setTheme]);
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
+    };
+  }, [module, isLoading, setTheme, currentTheme]);
   
   return {
     theme: (module?.module_config as BrandingModuleConfig | undefined)?.theme || 'elegant',
