@@ -54,6 +54,31 @@ const ChatWidgetEditor: React.FC<ChatWidgetEditorProps> = ({ config, onChange })
 
   return (
     <div className="space-y-6">
+      {/* Title & Subtitle */}
+      <div className="space-y-4">
+        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+          Section Header
+        </h4>
+        <div className="space-y-2">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            value={config.title || ''}
+            onChange={(e) => onChange({ ...config, title: e.target.value })}
+            placeholder="Chat with Magnet"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="subtitle">Subtitle</Label>
+          <Input
+            id="subtitle"
+            value={config.subtitle || ''}
+            onChange={(e) => onChange({ ...config, subtitle: e.target.value })}
+            placeholder="Ask anything about my projects or expertise"
+          />
+        </div>
+      </div>
+
       {/* Placeholders */}
       <div className="space-y-4">
         <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
