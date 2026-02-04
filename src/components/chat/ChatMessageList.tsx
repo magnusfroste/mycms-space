@@ -29,37 +29,39 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     }
   }, [messages]);
 
-  if (messages.length === 0) {
-    return null;
-  }
+  // Always render the container to prevent layout shift
+  // Only hide content when empty (not the container itself)
+  const hasMessages = messages.length > 0;
 
   return (
     <div
       ref={containerRef}
       className={
         fullPage
-          ? "flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 pb-4 flex flex-col justify-end scroll-smooth"
-          : "h-80 overflow-y-auto max-w-4xl mx-auto px-6 py-6 flex flex-col justify-end scroll-smooth glass-card shadow-apple"
+          ? "flex-1 overflow-y-auto max-w-4xl mx-auto w-full px-6 py-6 pb-4 flex flex-col justify-end scroll-smooth"
+          : "h-80 overflow-y-auto max-w-4xl mx-auto w-full px-6 py-6 flex flex-col justify-end scroll-smooth glass-card shadow-apple"
       }
     >
-      <div className="space-y-4">
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
-        ))}
+      {hasMessages && (
+        <div className="space-y-4 animate-fade-in">
+          {messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-muted/20 rounded-2xl rounded-bl-md px-4 py-3">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Thinking...</span>
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-muted/20 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Thinking...</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div ref={messagesEndRef} />
-      </div>
+          <div ref={messagesEndRef} />
+        </div>
+      )}
     </div>
   );
 };
