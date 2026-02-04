@@ -591,38 +591,85 @@ html body {
               color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Section Theme: Dark - Deep immersive background */
+/* ─── Dark Theme ─── */
 html[data-section-theme="dark"],
 html[data-section-theme="dark"] body {
   background-color: hsl(225 25% 6%) !important;
   color: hsl(210 20% 95%);
 }
 
-html[data-section-theme="dark"] .glass-card {
+html[data-section-theme="dark"] .glass-card,
+html[data-section-theme="dark"] .glow-card {
   background: hsl(225 20% 12% / 0.7);
   border-color: hsl(225 20% 20%);
 }
 
-/* Section Theme: Light - Clean bright background */
+html[data-section-theme="dark"] .section-title,
+html[data-section-theme="dark"] .section-title-gradient,
+html[data-section-theme="dark"] h1,
+html[data-section-theme="dark"] h2,
+html[data-section-theme="dark"] h3 {
+  color: hsl(210 20% 98%);
+}
+
+html[data-section-theme="dark"] .section-subtitle,
+html[data-section-theme="dark"] .text-muted-foreground {
+  color: hsl(220 15% 65%);
+}
+
+/* ─── Light Theme ─── */
 html[data-section-theme="light"],
 html[data-section-theme="light"] body {
   background-color: hsl(220 20% 98%) !important;
   color: hsl(220 25% 10%);
 }
 
-/* Section Theme: Accent - Warm coral-tinted background */
+html[data-section-theme="light"] .glass-card,
+html[data-section-theme="light"] .glow-card {
+  background: hsl(0 0% 100% / 0.9);
+  border-color: hsl(220 15% 88%);
+}
+
+html[data-section-theme="light"] .section-title,
+html[data-section-theme="light"] .section-title-gradient,
+html[data-section-theme="light"] h1,
+html[data-section-theme="light"] h2,
+html[data-section-theme="light"] h3 {
+  color: hsl(220 25% 10%);
+}
+
+html[data-section-theme="light"] .section-subtitle,
+html[data-section-theme="light"] .text-muted-foreground {
+  color: hsl(220 10% 40%);
+}
+
+/* ─── Accent Theme (Coral) ─── */
 html[data-section-theme="accent"],
 html[data-section-theme="accent"] body {
   background-color: hsl(12 30% 8%) !important;
   color: hsl(12 10% 95%);
 }
 
-html[data-section-theme="accent"] .glass-card {
+html[data-section-theme="accent"] .glass-card,
+html[data-section-theme="accent"] .glow-card {
   background: hsl(12 20% 12% / 0.7);
   border-color: hsl(12 30% 20%);
 }
 
-/* Section Theme: Gradient - Rich gradient background */
+html[data-section-theme="accent"] .section-title,
+html[data-section-theme="accent"] .section-title-gradient,
+html[data-section-theme="accent"] h1,
+html[data-section-theme="accent"] h2,
+html[data-section-theme="accent"] h3 {
+  color: hsl(12 10% 98%);
+}
+
+html[data-section-theme="accent"] .section-subtitle,
+html[data-section-theme="accent"] .text-muted-foreground {
+  color: hsl(12 10% 65%);
+}
+
+/* ─── Gradient Theme ─── */
 html[data-section-theme="gradient"],
 html[data-section-theme="gradient"] body {
   background: linear-gradient(
@@ -634,7 +681,21 @@ html[data-section-theme="gradient"] body {
   color: hsl(210 20% 95%);
 }
 
-html[data-section-theme="gradient"] .glass-card {
+html[data-section-theme="gradient"] .glass-card,
+html[data-section-theme="gradient"] .glow-card {
   background: hsl(260 20% 12% / 0.6);
   border-color: hsl(260 20% 20%);
+}
+
+html[data-section-theme="gradient"] .section-title,
+html[data-section-theme="gradient"] .section-title-gradient,
+html[data-section-theme="gradient"] h1,
+html[data-section-theme="gradient"] h2,
+html[data-section-theme="gradient"] h3 {
+  color: hsl(260 20% 98%);
+}
+
+html[data-section-theme="gradient"] .section-subtitle,
+html[data-section-theme="gradient"] .text-muted-foreground {
+  color: hsl(260 15% 65%);
 }
