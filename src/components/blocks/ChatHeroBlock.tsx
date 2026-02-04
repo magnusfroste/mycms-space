@@ -279,6 +279,23 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
                 </div>
               </div>
             )}
+
+            {/* Scroll indicator */}
+            <div 
+              className="mt-16 animate-fade-in"
+              style={{ animationDelay: '0.6s' }}
+            >
+              <button
+                onClick={() => window.scrollTo({ top: window.innerHeight * 0.85, behavior: 'smooth' })}
+                className="inline-flex flex-col items-center gap-2 text-muted-foreground/60 hover:text-muted-foreground transition-colors group"
+                aria-label="Scroll down"
+              >
+                <span className="text-xs tracking-widest uppercase">Utforska</span>
+                <div className="w-6 h-10 rounded-full border border-current flex items-start justify-center p-1.5">
+                  <div className="w-1 h-2 rounded-full bg-current animate-bounce" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
