@@ -154,7 +154,8 @@ const IntegrationsManager: React.FC = () => {
         // These require Supabase secrets - we can't verify from client
         return 'requires_secret';
       case 'firecrawl':
-        // Firecrawl is connected via connector
+      case 'resend':
+        // These are connected via secrets/connectors - verified externally
         return 'connected';
       case 'resend':
         // Resend requires RESEND_API_KEY secret
