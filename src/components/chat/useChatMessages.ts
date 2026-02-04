@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
 import type { Message, SiteContext, ChatMessage } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
+import { trackChatSession, updateChatSession } from "@/models/analytics";
 
 interface UseChatMessagesOptions {
   webhookUrl: string;
@@ -58,6 +59,31 @@ export const useChatMessages = ({
     () => initialSessionId ?? generateSessionId()
   );
   const hasSentInitialMessageRef = useRef(false);
+  const analyticsSessionIdRef = useRef<string | null>(null);
+  const messageCountRef = useRef(0);
+
+  // Track chat session on first message
+  const ensureChatSessionTracked = useCallback(async () => {
+    if (!analyticsSessionIdRef.current) {
+      try {
+        const id = await trackChatSession();
+        analyticsSessionIdRef.current = id;
+      } catch (e) {
+        console.warn('Failed to track chat session:', e);
+      }
+    }
+  }, []);
+
+  // Update session with message count
+  const updateSessionMessageCount = useCallback(async (count: number) => {
+    if (analyticsSessionIdRef.current) {
+      try {
+        await updateChatSession(analyticsSessionIdRef.current, count);
+      } catch (e) {
+        console.warn('Failed to update chat session:', e);
+      }
+    }
+  }, []);
 
   // Reset chat when resetTrigger changes
   useEffect(() => {
@@ -110,7 +136,11 @@ export const useChatMessages = ({
     async (messageText: string) => {
       if (!messageText.trim() || isLoading) return;
 
+      // Track chat session on first message
+      await ensureChatSessionTracked();
+
       addUserMessage(messageText);
+      messageCountRef.current += 1;
       setIsLoading(true);
 
       try {
@@ -142,6 +172,10 @@ export const useChatMessages = ({
           data?.output || data?.message || "No response"
         );
         addBotMessage(botResponse);
+        messageCountRef.current += 1;
+        
+        // Update analytics with message count
+        await updateSessionMessageCount(messageCountRef.current);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
@@ -168,6 +202,8 @@ export const useChatMessages = ({
       siteContext,
       addUserMessage,
       addBotMessage,
+      ensureChatSessionTracked,
+      updateSessionMessageCount,
     ]
   );
 
