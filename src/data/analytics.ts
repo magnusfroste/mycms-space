@@ -81,9 +81,6 @@ export const fetchAnalyticsSummary = async (days: number = 30) => {
 
   if (pvError) throw pvError;
 
-  // Project views removed - use empty array
-  const projectViews: Array<{ project_id: string; projects?: { title: string } }> = [];
-
   // Fetch chat analytics
   const { data: chatData, error: chatError } = await supabase
     .from('chat_analytics')
@@ -95,30 +92,36 @@ export const fetchAnalyticsSummary = async (days: number = 30) => {
   // Calculate metrics
   const uniqueVisitors = new Set(pageViews?.map((pv) => pv.visitor_id) || []).size;
   
-  // Top pages
+  // Top pages (exclude project detail pages from main list)
   const pageCounts: Record<string, number> = {};
+  const projectPageCounts: Record<string, number> = {};
+  
   pageViews?.forEach((pv) => {
-    pageCounts[pv.page_slug] = (pageCounts[pv.page_slug] || 0) + 1;
+    // Check if it's a project detail page (e.g., "project/my-project-slug")
+    if (pv.page_slug.startsWith('project/')) {
+      const projectSlug = pv.page_slug.replace('project/', '');
+      projectPageCounts[projectSlug] = (projectPageCounts[projectSlug] || 0) + 1;
+    } else {
+      pageCounts[pv.page_slug] = (pageCounts[pv.page_slug] || 0) + 1;
+    }
   });
+  
   const topPages = Object.entries(pageCounts)
     .map(([page_slug, count]) => ({ page_slug, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  // Top projects
-  const projectCounts: Record<string, { title: string; count: number }> = {};
-  projectViews?.forEach((pv: any) => {
-    const projectId = pv.project_id;
-    const title = pv.projects?.title || 'Unknown';
-    if (!projectCounts[projectId]) {
-      projectCounts[projectId] = { title, count: 0 };
-    }
-    projectCounts[projectId].count += 1;
-  });
-  const topProjects = Object.entries(projectCounts)
-    .map(([project_id, data]) => ({ project_id, ...data }))
+  // Top projects derived from page_views with "project/" prefix
+  const topProjects = Object.entries(projectPageCounts)
+    .map(([slug, count]) => ({ 
+      project_id: slug, 
+      title: slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), // Convert slug to title
+      count 
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+  
+  const totalProjectViews = Object.values(projectPageCounts).reduce((sum, count) => sum + count, 0);
 
   // Views by day
   const viewsByDayMap: Record<string, number> = {};
@@ -136,7 +139,7 @@ export const fetchAnalyticsSummary = async (days: number = 30) => {
   return {
     totalPageViews: pageViews?.length || 0,
     uniqueVisitors,
-    totalProjectViews: projectViews?.length || 0,
+    totalProjectViews,
     totalChatSessions: chatData?.length || 0,
     totalChatMessages,
     topPages,
