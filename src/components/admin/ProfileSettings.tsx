@@ -18,8 +18,6 @@ interface ProfileData {
   bio: string;
   avatar_url: string;
   website: string;
-  social_twitter: string;
-  social_linkedin: string;
 }
 
 export default function ProfileSettings() {
@@ -33,8 +31,6 @@ export default function ProfileSettings() {
     bio: '',
     avatar_url: '',
     website: '',
-    social_twitter: '',
-    social_linkedin: '',
   });
 
   useEffect(() => {
@@ -66,8 +62,6 @@ export default function ProfileSettings() {
           bio: (config.bio as string) || '',
           avatar_url: (config.avatar_url as string) || '',
           website: (config.website as string) || '',
-          social_twitter: (config.social_twitter as string) || '',
-          social_linkedin: (config.social_linkedin as string) || '',
         });
       }
     } catch (error) {
@@ -86,8 +80,6 @@ export default function ProfileSettings() {
         bio: profile.bio,
         avatar_url: profile.avatar_url,
         website: profile.website,
-        social_twitter: profile.social_twitter,
-        social_linkedin: profile.social_linkedin,
       };
 
       // Check if profile exists
@@ -238,28 +230,6 @@ export default function ProfileSettings() {
               onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
               placeholder="https://yourwebsite.com"
             />
-          </div>
-
-          {/* Social Links */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="social_twitter">Twitter/X</Label>
-              <Input
-                id="social_twitter"
-                value={profile.social_twitter}
-                onChange={(e) => setProfile(prev => ({ ...prev, social_twitter: e.target.value }))}
-                placeholder="@username"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="social_linkedin">LinkedIn</Label>
-              <Input
-                id="social_linkedin"
-                value={profile.social_linkedin}
-                onChange={(e) => setProfile(prev => ({ ...prev, social_linkedin: e.target.value }))}
-                placeholder="linkedin.com/in/username"
-              />
-            </div>
           </div>
 
           <div className="flex justify-end pt-4">
