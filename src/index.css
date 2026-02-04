@@ -578,3 +578,61 @@
     );
   }
 }
+
+/* ─────────────────────────────────────────
+   Scroll-Triggered Section Themes
+   Smooth background transitions on scroll
+   ───────────────────────────────────────── */
+
+/* Base transition on body/html for smooth theme changes */
+html {
+  transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Section Theme: Dark - Deep immersive background */
+[data-section-theme="dark"] {
+  background-color: hsl(225 25% 6%);
+  color: hsl(210 20% 95%);
+}
+
+[data-section-theme="dark"] .glass-card {
+  background: hsl(225 20% 12% / 0.7);
+  border-color: hsl(225 20% 20%);
+}
+
+/* Section Theme: Light - Clean bright background */
+[data-section-theme="light"] {
+  background-color: hsl(220 20% 98%);
+  color: hsl(220 25% 10%);
+}
+
+/* Section Theme: Accent - Warm coral-tinted background */
+[data-section-theme="accent"] {
+  background-color: hsl(12 30% 8%);
+  color: hsl(12 10% 95%);
+}
+
+[data-section-theme="accent"] .glass-card {
+  background: hsl(12 20% 12% / 0.7);
+  border-color: hsl(12 30% 20%);
+}
+
+/* Section Theme: Gradient - Rich gradient background */
+[data-section-theme="gradient"] {
+  background: linear-gradient(
+    135deg,
+    hsl(245 25% 8%) 0%,
+    hsl(280 20% 10%) 50%,
+    hsl(12 25% 8%) 100%
+  );
+  color: hsl(210 20% 95%);
+}
+
+[data-section-theme="gradient"] .glass-card {
+  background: hsl(260 20% 12% / 0.6);
+  border-color: hsl(260 20% 20%);
+}
