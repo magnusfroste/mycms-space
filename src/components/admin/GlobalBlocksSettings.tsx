@@ -196,18 +196,7 @@ export default function GlobalBlocksSettings() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label>Show theme toggle</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Button to switch between light/dark theme
-                      </p>
-                    </div>
-                    <Switch
-                      checked={headerConfig.show_theme_toggle}
-                      onCheckedChange={(checked) => setHeaderConfig(prev => ({ ...prev, show_theme_toggle: checked }))}
-                    />
-                  </div>
+                  {/* Theme toggle removed - single theme system for now */}
 
                   <div className="flex items-center justify-between">
                     <div>

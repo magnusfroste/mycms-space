@@ -4,9 +4,8 @@
 // ============================================
 
 import React, { useState, useEffect } from "react";
-import { Menu, X, Home, ExternalLink } from "lucide-react";
+import { Home, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavLinks } from "@/hooks/useNavLinks";
 import { useHeaderModule } from "@/models/modules";
 import { cn } from "@/lib/utils";
@@ -152,16 +151,11 @@ const Header = () => {
                 Home
               </Link>
             )}
-            {headerConfig?.show_theme_toggle !== false && (
-              <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                <ThemeToggle />
-              </div>
-            )}
+            {/* Theme toggle removed - single theme system */}
           </nav>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-3">
-            {headerConfig?.show_theme_toggle !== false && <ThemeToggle />}
             <button 
               className={cn(
                 "relative p-2 rounded-xl transition-all duration-200",

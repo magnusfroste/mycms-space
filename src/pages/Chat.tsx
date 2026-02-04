@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +121,6 @@ const Chat = () => {
               <MessageSquarePlus className="h-4 w-4" />
               <span>New Chat</span>
             </Button>
-            <ThemeToggle />
           </div>
         </div>
       </header>

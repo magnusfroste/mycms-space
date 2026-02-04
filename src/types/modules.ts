@@ -296,7 +296,8 @@ export interface AnalyticsModuleConfig {
 export interface HeaderModuleConfig {
   logo_text: string;
   logo_image_url?: string;
-  show_theme_toggle: boolean;
+  // Future: Re-enable when dark mode is added back
+  // show_theme_toggle: boolean;
   sticky: boolean;
   transparent_on_hero: boolean;
 }
@@ -359,7 +360,9 @@ export interface GitHubModuleConfig {
 // Branding Module Config
 export interface BrandingModuleConfig {
   theme: 'elegant' | 'grok' | 'sana';
-  force_dark: boolean;
+  // Future: Re-enable when dark mode is added back
+  // force_dark?: boolean;
+  // color_mode?: 'light' | 'dark' | 'system';
 }
 
 // Union type for all configs
@@ -447,7 +450,6 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
   header: {
     logo_text: 'froste.eu',
     logo_image_url: '',
-    show_theme_toggle: true,
     sticky: true,
     transparent_on_hero: false,
   },
@@ -496,7 +498,6 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
   },
   branding: {
     theme: 'elegant',
-    force_dark: false,
   },
 };
 
