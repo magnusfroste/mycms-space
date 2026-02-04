@@ -1,10 +1,10 @@
 // ============================================
 // Expertise Grid Block - 2026 Design System
-// Modern bento-style grid with hover effects
+// Services & offerings with optional CTAs
 // ============================================
 
 import React from 'react';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/constants/iconMaps';
 import type { ExpertiseGridBlockConfig } from '@/types/blockConfigs';
@@ -16,7 +16,7 @@ interface ExpertiseGridBlockProps {
 const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
   const typedConfig = config as ExpertiseGridBlockConfig;
   
-  const title = typedConfig.title || 'Areas of Expertise';
+  const title = typedConfig.title || 'What I Do';
   const subtitle = typedConfig.subtitle;
   const columns = typedConfig.columns || 3;
   const items = typedConfig.items?.filter(item => item.enabled) || [];
@@ -28,7 +28,7 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
     : 'md:grid-cols-2 lg:grid-cols-3';
 
   return (
-    <section id="expertise" className="section-container relative overflow-hidden">
+    <section id="services" className="section-container relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-muted/50 via-muted/30 to-transparent" />
       
@@ -36,7 +36,7 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
         {/* Header */}
         <div className="text-center mb-16">
           <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
-            Expertise
+            Services
           </span>
           <h2 
             className="section-title animate-fade-in" 
@@ -65,7 +65,7 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
             {items.map((area, index) => (
               <article 
                 key={area.id} 
-                className="group glow-card p-8 animate-fade-in"
+                className="group glow-card p-8 animate-fade-in flex flex-col"
                 style={{ animationDelay: `${0.1 + index * 0.05}s` }}
               >
                 {/* Icon */}
@@ -83,9 +83,20 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
                 <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors duration-300">
                   {area.title}
                 </h3>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed flex-1">
                   {area.description}
                 </p>
+
+                {/* CTA Link */}
+                {area.cta_text && area.cta_link && (
+                  <a 
+                    href={area.cta_link}
+                    className="inline-flex items-center gap-2 mt-4 text-sm font-medium text-primary hover:underline group/link"
+                  >
+                    {area.cta_text}
+                    <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                  </a>
+                )}
 
                 {/* Decorative corner */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/5 to-transparent rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

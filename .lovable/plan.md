@@ -1,255 +1,87 @@
 
 # Plan: Omstrukturera Personal Branding-block
 
-## Nuvarande Problem
+## Status: ✅ COMPLETED
 
-**About Me-blocket** och **Expertise Grid-blocket** överlappar i funktion - båda försöker visa "skills" eller kompetenser, vilket skapar förvirring och duplicering.
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ NUVARANDE STRUKTUR (överlappar)                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  About Split Block        Expertise Grid Block          │
-│  ┌─────────────────┐      ┌─────────────────┐           │
-│  │ • Profilbild    │      │ • Titel         │           │
-│  │ • Intro text    │      │ • Icon-kort     │           │
-│  │ • Skills pills  │ ←──→ │ • Beskrivning   │           │
-│  │   (överlappar)  │      │   per item      │           │
-│  └─────────────────┘      └─────────────────┘           │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Ny Strategi: Tydlig Separation
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ NY STRUKTUR (tydlig separation)                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  IDENTITET (Vem)          ERBJUDANDE (Vad)              │
-│  ┌─────────────────┐      ┌─────────────────┐           │
-│  │ About Me        │      │ Services Grid   │           │
-│  │ • Profilbild    │      │ • Vad jag gör   │           │
-│  │ • Min story     │      │ • Hur jag       │           │
-│  │ • Social links  │      │   hjälper dig   │           │
-│  │                 │      │ • Call-to-action│           │
-│  └─────────────────┘      └─────────────────┘           │
-│                                                         │
-│  NYA BLOCK                                              │
-│  ┌─────────────────┐      ┌─────────────────┐           │
-│  │ Skills Bar      │      │ Values Block    │           │
-│  │ • Tekniska      │      │ • Core beliefs  │           │
-│  │   kunskaper     │      │ • Arbetssätt    │           │
-│  │ • Progress bars │      │ • 3-4 värden    │           │
-│  └─────────────────┘      └─────────────────┘           │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+All 5 phases have been implemented successfully.
 
 ---
 
-## Fas 1: Rensa About Me-blocket
+## Summary of Changes
 
-**Mål:** About Me blir en ren "person-story" utan skills-lista.
+### Fas 1: About Me - Person Story Focus ✅
+- Removed skills rendering from `AboutSplitBlock.tsx`
+- Removed skills from `EditableAboutSplitBlock.tsx`  
+- Added social links support (LinkedIn, GitHub, Twitter, Instagram, YouTube, Website, Email)
+- Social links render under profile image or inline if no image
 
-**Ändringar:**
+### Fas 2: Expertise Grid → Services Grid ✅
+- Renamed focus from "Expertise" to "Services"
+- Added CTA support (cta_text, cta_link) per service item
+- Updated `ExpertiseAreaEditor.tsx` with CTA fields
+- Services now render with optional "Learn more" links
 
-| Fil | Åtgärd |
-|-----|--------|
-| `AboutSplitBlock.tsx` | Ta bort skills-rendereingen helt |
-| `EditableAboutSplitBlock.tsx` | Ta bort skills från editable vy |
-| `AboutSplitBlockConfig` | Behåll skills-typen för bakåtkompatibilitet men markera som deprecated |
-| `blockDefaults.ts` | Ta bort skills från default config |
+### Fas 3: Skills Bar Block (NEW) ✅
+- Created `SkillsBarBlock.tsx` with 3 layouts: bars, tags, compact
+- Created `SkillsBarEditor.tsx` for editing skills
+- Skills have name, level (0-100), and optional category
+- Categories group skills together in the UI
 
-**Ny struktur för About Me:**
-- Profilbild (befintlig)
-- Intro text (befintlig) 
-- Additional text (befintlig)
-- **NYTT:** Social links (array med icon + URL)
+### Fas 4: Values Block (NEW) ✅
+- Created `ValuesBlock.tsx` with 3 layouts: grid, list, cards
+- Created `ValuesEditor.tsx` for editing values
+- Each value has title, description, icon
+- Clean minimalist design for core beliefs/philosophy
+
+### Fas 5: Social Links ✅
+- Created `SocialLinksEditor.tsx` component
+- Added social_links to AboutSplitBlockConfig
+- Supports 7 platforms with proper icons
 
 ---
 
-## Fas 2: Omvandla Expertise Grid → Services Block
+## Files Created
+- `src/components/blocks/SkillsBarBlock.tsx`
+- `src/components/blocks/ValuesBlock.tsx`
+- `src/components/admin/block-editor/SkillsBarEditor.tsx`
+- `src/components/admin/block-editor/ValuesEditor.tsx`
+- `src/components/admin/block-editor/SocialLinksEditor.tsx`
 
-**Mål:** Byt fokus från "vad jag kan" till "vad jag erbjuder dig".
+## Files Modified
+- `src/types/blockConfigs.ts` - Added SkillsBarBlockConfig, ValuesBlockConfig, updated AboutSplitBlockConfig
+- `src/types/index.ts` - Added skills-bar and values to BlockType
+- `src/components/blocks/AboutSplitBlock.tsx` - Removed skills, added social links
+- `src/components/blocks/ExpertiseGridBlock.tsx` - Added CTA support
+- `src/components/admin/editable-blocks/EditableAboutSplitBlock.tsx` - Removed skills, added social links
+- `src/components/admin/block-editor/ExpertiseAreaEditor.tsx` - Added CTA fields
+- `src/components/admin/block-editor/InlineBlockEditor.tsx` - Added new block editors
+- `src/components/admin/block-editor/BlockLibraryPanel.tsx` - Updated categories
+- `src/components/blocks/BlockRenderer.tsx` - Added new block cases
+- `src/components/blocks/index.ts` - Exported new blocks
+- `src/components/admin/block-editor/index.ts` - Exported new editors
+- `src/lib/constants/blockDefaults.ts` - Added defaults for new blocks
 
-**Ändringar:**
+---
 
-| Fil | Åtgärd |
-|-----|--------|
-| `ExpertiseGridBlock.tsx` | Lägg till optional CTA-knapp per item, lägg till `show_cta` toggle |
-| `ExpertiseGridBlockConfig` | Utöka items med `cta_text` och `cta_link` |
-| `ExpertiseAreaEditor.tsx` | Lägg till fält för CTA per item |
-| `BlockLibraryPanel.tsx` | Uppdatera beskrivning: "Services & expertise areas" |
+## New Block Library Structure
 
-**Ny item-struktur:**
-```typescript
-{
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  cta_text?: string;    // NYTT: "Läs mer", "Boka möte"
-  cta_link?: string;    // NYTT: URL eller anchor
-  enabled: boolean;
-  order_index: number;
-}
 ```
-
----
-
-## Fas 3: Nytt Skills Bar-block (optional)
-
-**Mål:** Ett dedikerat block för tekniska skills med progress bars.
-
-**Ny fil:** `src/components/blocks/SkillsBarBlock.tsx`
-
-**Config:**
-```typescript
-interface SkillsBarBlockConfig {
-  title?: string;
-  subtitle?: string;
-  skills?: Array<{
-    id: string;
-    name: string;
-    level: number;      // 0-100
-    category?: string;  // "Frontend", "Backend", etc.
-    enabled: boolean;
-  }>;
-  layout?: 'bars' | 'tags' | 'compact';
-}
-```
-
-**Nytt editor:** `src/components/admin/block-editor/SkillsBarEditor.tsx`
-
----
-
-## Fas 4: Nytt Values Block (optional)
-
-**Mål:** Ett block för att visa personliga värderingar/filosofi.
-
-**Ny fil:** `src/components/blocks/ValuesBlock.tsx`
-
-**Config:**
-```typescript
-interface ValuesBlockConfig {
-  title?: string;
-  subtitle?: string;
-  values?: Array<{
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    enabled: boolean;
-  }>;
-  layout?: 'grid' | 'list' | 'cards';
-}
-```
-
-**Designidé:** 3-4 stora kort med ikoner, kort text, hover-effekt. Minimalistiskt.
-
----
-
-## Fas 5: Social Links för About Me
-
-**Mål:** Lägg till social links direkt i About-blocket.
-
-**Utöka AboutSplitBlockConfig:**
-```typescript
-interface AboutSplitBlockConfig {
-  // ... befintliga fält
-  social_links?: Array<{
-    platform: 'linkedin' | 'github' | 'twitter' | 'website' | 'email';
-    url: string;
-    enabled: boolean;
-  }>;
-}
-```
-
-**Rendering:** Ikoner under profilbilden eller efter texten.
-
----
-
-## Uppdaterad Block Library
-
-```text
-Content (uppdaterad)
+Content
 ├── Text Section
 ├── Image & Text
-└── About Me ← Rensat, person-fokus
+└── About Me (person-story + social links)
 
-Features & Grid (uppdaterad)
-├── Services Grid ← Omdöpt från Expertise Grid
-├── Skills Bar ← NY
-├── Values ← NY
+Features & Grid
+├── Services Grid (services with CTAs) ← renamed from Expertise Grid
+├── Skills Bar ← NEW
+├── Values ← NEW
 ├── Bento Grid
-└── Stats Counter
+├── Stats Counter
+└── GitHub Repos
 ```
 
 ---
 
-## Technical Details
+## Breaking Changes
 
-### Filer som ändras
-
-| Kategori | Filer |
-|----------|-------|
-| **Block Components** | `AboutSplitBlock.tsx`, `ExpertiseGridBlock.tsx` |
-| **Editable Blocks** | `EditableAboutSplitBlock.tsx` |
-| **Block Editors** | `ExpertiseAreaEditor.tsx`, `SkillListEditor.tsx` (ta bort) |
-| **Types** | `blockConfigs.ts` |
-| **Defaults** | `blockDefaults.ts` |
-| **Library** | `BlockLibraryPanel.tsx` |
-
-### Nya filer (Fas 3-4)
-
-```text
-src/components/blocks/
-├── SkillsBarBlock.tsx          (ny)
-└── ValuesBlock.tsx             (ny)
-
-src/components/admin/block-editor/
-├── SkillsBarEditor.tsx         (ny)
-└── ValuesEditor.tsx            (ny)
-
-src/components/admin/editable-blocks/
-├── EditableSkillsBarBlock.tsx  (ny, optional)
-└── EditableValuesBlock.tsx     (ny, optional)
-```
-
-### Block Renderer-uppdatering
-
-Lägg till nya cases i `BlockRenderer.tsx`:
-```typescript
-case 'skills-bar':
-  return <SkillsBarBlock config={block.block_config} />;
-case 'values':
-  return <ValuesBlock config={block.block_config} />;
-```
-
----
-
-## Prioritetsordning
-
-| Prio | Åtgärd | Värde |
-|------|--------|-------|
-| 1 | Rensa About Me (ta bort skills) | Hög - löser överlappning |
-| 2 | Förbättra Expertise Grid med CTA | Hög - ökar användbarhet |
-| 3 | Lägg till Social Links i About | Medium - vanlig request |
-| 4 | Skills Bar Block | Medium - för tekniska profiler |
-| 5 | Values Block | Låg - nice-to-have |
-
----
-
-## Summering
-
-**Enkel version (Fas 1-2):**
-- About Me → Ren personlig story + social links
-- Expertise Grid → Services med CTAs
-
-**Full version (Fas 1-5):**
-- Plus dedikerade Skills Bar och Values-block
-
-Detta ger användare tydliga val utan att skapa 200 inställningar, och följer "less is more"-principen.
+**About Me block**: The `skills` field is now deprecated. Existing blocks with skills will still render them (backwards compatible), but the editor no longer shows skills. Use the new Skills Bar block instead.

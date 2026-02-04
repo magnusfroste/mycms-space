@@ -28,9 +28,10 @@ import type {
   ChatWidgetBlockConfig,
   ChatHeroBlockConfig,
   ProjectShowcaseBlockConfig,
+  SkillsBarBlockConfig,
+  ValuesBlockConfig,
 } from '@/types/blockConfigs';
 import FeatureListEditor, { FeatureItem } from './FeatureListEditor';
-import SkillListEditor, { SkillItem } from './SkillListEditor';
 import ImageUpload from './ImageUpload';
 import ExpertiseAreaEditor from './ExpertiseAreaEditor';
 import FeaturedItemEditor from './FeaturedItemEditor';
@@ -41,6 +42,9 @@ import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
 import GitHubBlockEditor from './GitHubBlockEditor';
+import SocialLinksEditor from './SocialLinksEditor';
+import SkillsBarEditor from './SkillsBarEditor';
+import ValuesEditor from './ValuesEditor';
 import { useToast } from '@/hooks/use-toast';
 import type { GitHubBlockConfig } from '@/types/github';
 
@@ -60,7 +64,9 @@ const blockTypeLabels: Record<string, string> = {
   'image-text': 'Image & Text',
   'spacer': 'Spacer',
   'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertise Grid',
+  'expertise-grid': 'Services Grid',
+  'skills-bar': 'Skills Bar ✨',
+  'values': 'Values ✨',
   'project-showcase': 'Project Showcase',
   'chat-widget': 'Chat Widget',
   'video-hero': 'Video Hero ✨',
@@ -91,11 +97,6 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   // Handle hero feature changes
   const handleHeroFeaturesChange = (features: FeatureItem[]) => {
     onBlockConfigChange({ features });
-  };
-
-  // Handle about skills changes
-  const handleAboutSkillsChange = (skills: SkillItem[]) => {
-    onBlockConfigChange({ skills });
   };
 
   const renderHeroConfig = () => {
@@ -161,7 +162,7 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
 
   const renderAboutConfig = () => {
     const aboutConfig = getAboutConfig();
-    const skills = aboutConfig.skills || [];
+    const socialLinks = aboutConfig.social_links || [];
     
     return (
       <div className="space-y-6">
@@ -198,13 +199,107 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             </div>
           </div>
           <div>
-            <SkillListEditor
-              label="Skills"
-              skills={skills}
-              onChange={handleAboutSkillsChange}
-              maxItems={3}
+            <SocialLinksEditor
+              links={socialLinks}
+              onChange={(links) => onBlockConfigChange({ social_links: links })}
             />
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSkillsBarConfig = () => {
+    const skillsConfig = config as SkillsBarBlockConfig;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Title</Label>
+            <Input
+              value={skillsConfig.title || ''}
+              onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+              placeholder="Skills & Technologies"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Section Subtitle</Label>
+            <Input
+              value={skillsConfig.subtitle || ''}
+              onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+              placeholder="My technical expertise"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Layout</Label>
+          <Select
+            value={skillsConfig.layout || 'bars'}
+            onValueChange={(value) => onBlockConfigChange({ layout: value })}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bars">Progress Bars</SelectItem>
+              <SelectItem value="tags">Tags</SelectItem>
+              <SelectItem value="compact">Compact List</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="border-t pt-6">
+          <SkillsBarEditor
+            config={skillsConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderValuesConfig = () => {
+    const valuesConfig = config as ValuesBlockConfig;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 max-w-2xl">
+          <div className="space-y-2">
+            <Label>Section Title</Label>
+            <Input
+              value={valuesConfig.title || ''}
+              onChange={(e) => onBlockConfigChange({ title: e.target.value })}
+              placeholder="My Values"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Section Subtitle</Label>
+            <Input
+              value={valuesConfig.subtitle || ''}
+              onChange={(e) => onBlockConfigChange({ subtitle: e.target.value })}
+              placeholder="What I believe in"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Layout</Label>
+          <Select
+            value={valuesConfig.layout || 'grid'}
+            onValueChange={(value) => onBlockConfigChange({ layout: value })}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="grid">Grid</SelectItem>
+              <SelectItem value="list">List</SelectItem>
+              <SelectItem value="cards">Cards</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="border-t pt-6">
+          <ValuesEditor
+            config={valuesConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
         </div>
       </div>
     );
@@ -927,6 +1022,10 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         return renderFeaturedConfig();
       case 'expertise-grid':
         return renderExpertiseConfig();
+      case 'skills-bar':
+        return renderSkillsBarConfig();
+      case 'values':
+        return renderValuesConfig();
       case 'project-showcase':
         return renderProjectShowcaseConfig();
       case 'chat-widget':

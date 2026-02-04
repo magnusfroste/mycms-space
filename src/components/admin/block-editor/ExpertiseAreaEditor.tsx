@@ -1,7 +1,6 @@
 // ============================================
-// Expertise Area Editor
-// Inline editing for expertise areas within block editor
-// Reads/writes to block_config JSONB instead of separate table
+// Expertise Area Editor (Services Editor)
+// Inline editing for services/expertise items with CTA support
 // ============================================
 
 import React from 'react';
@@ -32,11 +31,13 @@ const ExpertiseAreaEditor: React.FC<ExpertiseAreaEditorProps> = ({
   const handleAddItem = () => {
     const newItem: ExpertiseItem = {
       id: crypto.randomUUID(),
-      title: 'New expertise area',
-      description: 'Description of the expertise area',
+      title: 'New service',
+      description: 'Description of the service',
       icon: 'Lightbulb',
       order_index: items.length,
       enabled: true,
+      cta_text: '',
+      cta_link: '',
     };
     onChange({ ...config, items: [...items, newItem] });
   };
@@ -62,7 +63,7 @@ const ExpertiseAreaEditor: React.FC<ExpertiseAreaEditorProps> = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label className="text-base font-medium">
-          Expertise Areas ({sortedItems.length})
+          Services ({sortedItems.length})
         </Label>
         <Button onClick={handleAddItem} size="sm" variant="outline" className="gap-2">
           <Plus className="h-4 w-4" />
@@ -123,6 +124,26 @@ const ExpertiseAreaEditor: React.FC<ExpertiseAreaEditorProps> = ({
                     rows={2}
                     className="resize-none"
                   />
+
+                  {/* CTA fields */}
+                  <div className="flex gap-3">
+                    <Input
+                      value={item.cta_text || ''}
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, { cta_text: e.target.value })
+                      }
+                      placeholder="CTA text (e.g. Learn more)"
+                      className="flex-1"
+                    />
+                    <Input
+                      value={item.cta_link || ''}
+                      onChange={(e) =>
+                        handleUpdateItem(item.id, { cta_link: e.target.value })
+                      }
+                      placeholder="CTA link (e.g. #contact)"
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -132,9 +153,9 @@ const ExpertiseAreaEditor: React.FC<ExpertiseAreaEditorProps> = ({
 
       {sortedItems.length === 0 && (
         <div className="py-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-          <p>No expertise areas yet</p>
+          <p>No services yet</p>
           <Button onClick={handleAddItem} variant="link" className="mt-2">
-            Add your first expertise area
+            Add your first service
           </Button>
         </div>
       )}
