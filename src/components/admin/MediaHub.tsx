@@ -481,7 +481,7 @@ const MediaHub: React.FC = () => {
   );
 };
 
-// Grid card component
+// Grid card component - Memoized with stable dropdown
 interface MediaFileCardProps {
   file: MediaFile;
   onCopy: () => void;
@@ -490,13 +490,21 @@ interface MediaFileCardProps {
   onDelete: () => void;
 }
 
-const MediaFileCard: React.FC<MediaFileCardProps> = ({
+const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
   file,
   onCopy,
   onRename,
   onMove,
   onDelete,
 }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleAction = (action: () => void) => {
+    setMenuOpen(false);
+    // Defer the action to prevent re-render collision
+    setTimeout(action, 0);
+  };
+
   return (
     <div className="group relative">
       <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
@@ -511,32 +519,32 @@ const MediaFileCard: React.FC<MediaFileCardProps> = ({
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col justify-between p-2">
         <div className="flex justify-end">
-          <DropdownMenu>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-white">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onCopy}>
+            <DropdownMenuContent align="end" className="z-50">
+              <DropdownMenuItem onSelect={() => handleAction(onCopy)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.open(file.publicUrl, '_blank')}>
+              <DropdownMenuItem onSelect={() => handleAction(() => window.open(file.publicUrl, '_blank'))}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onRename}>
+              <DropdownMenuItem onSelect={() => handleAction(onRename)}>
                 <Edit3 className="h-4 w-4 mr-2" />
                 Rename
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onMove}>
+              <DropdownMenuItem onSelect={() => handleAction(onMove)}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Move to bucket
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onDelete} className="text-destructive">
+              <DropdownMenuItem onSelect={() => handleAction(onDelete)} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -557,9 +565,9 @@ const MediaFileCard: React.FC<MediaFileCardProps> = ({
       </Badge>
     </div>
   );
-};
+});
 
-// List row component
+// List row component - Memoized with stable dropdown
 interface MediaFileRowProps {
   file: MediaFile;
   formatSize: (bytes: number) => string;
@@ -569,7 +577,7 @@ interface MediaFileRowProps {
   onDelete: () => void;
 }
 
-const MediaFileRow: React.FC<MediaFileRowProps> = ({
+const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
   file,
   formatSize,
   onCopy,
@@ -577,6 +585,13 @@ const MediaFileRow: React.FC<MediaFileRowProps> = ({
   onMove,
   onDelete,
 }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleAction = (action: () => void) => {
+    setMenuOpen(false);
+    setTimeout(action, 0);
+  };
+
   return (
     <div className="flex items-center gap-4 p-3 hover:bg-muted/50">
       <img
@@ -601,28 +616,28 @@ const MediaFileRow: React.FC<MediaFileRowProps> = ({
         <Button variant="ghost" size="icon" onClick={onCopy}>
           <Copy className="h-4 w-4" />
         </Button>
-        <DropdownMenu>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => window.open(file.publicUrl, '_blank')}>
+          <DropdownMenuContent align="end" className="z-50">
+            <DropdownMenuItem onSelect={() => handleAction(() => window.open(file.publicUrl, '_blank'))}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Open in new tab
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onRename}>
+            <DropdownMenuItem onSelect={() => handleAction(onRename)}>
               <Edit3 className="h-4 w-4 mr-2" />
               Rename
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onMove}>
+            <DropdownMenuItem onSelect={() => handleAction(onMove)}>
               <FolderOpen className="h-4 w-4 mr-2" />
               Move to bucket
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} className="text-destructive">
+            <DropdownMenuItem onSelect={() => handleAction(onDelete)} className="text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>
@@ -631,6 +646,6 @@ const MediaFileRow: React.FC<MediaFileRowProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default MediaHub;
