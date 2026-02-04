@@ -55,6 +55,19 @@ const themeTemplates: ThemeTemplate[] = [
     },
     tags: ['Minimal', 'Bold', 'Tech'],
   },
+  {
+    id: 'sana',
+    name: 'Sana',
+    description: 'Clean, professional design with soft violet accents. Inspired by modern SaaS.',
+    icon: <Palette className="h-5 w-5" />,
+    preview: {
+      background: 'bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900',
+      primary: 'bg-violet-500',
+      accent: 'bg-violet-400',
+      text: 'text-slate-900 dark:text-slate-100',
+    },
+    tags: ['Clean', 'Professional', 'SaaS'],
+  },
 ];
 
 const BrandingSettings: React.FC = () => {
@@ -62,14 +75,14 @@ const BrandingSettings: React.FC = () => {
   const { data: module, isLoading } = useModule('branding');
   const updateModule = useUpdateModule('branding');
   
-  const [selectedTheme, setSelectedTheme] = useState<'elegant' | 'grok'>('elegant');
+  const [selectedTheme, setSelectedTheme] = useState<'elegant' | 'grok' | 'sana'>('elegant');
   const [forceDark, setForceDark] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   // Load saved settings
   useEffect(() => {
     if (module?.module_config) {
-      const config = module.module_config as { theme?: 'elegant' | 'grok'; force_dark?: boolean };
+      const config = module.module_config as { theme?: 'elegant' | 'grok' | 'sana'; force_dark?: boolean };
       setSelectedTheme(config.theme || 'elegant');
       setForceDark(config.force_dark || false);
     }
@@ -112,7 +125,7 @@ const BrandingSettings: React.FC = () => {
     }
   };
 
-  const handleThemeSelect = (themeId: 'elegant' | 'grok') => {
+  const handleThemeSelect = (themeId: 'elegant' | 'grok' | 'sana') => {
     setSelectedTheme(themeId);
     setPreviewTheme(themeId);
   };
@@ -161,7 +174,7 @@ const BrandingSettings: React.FC = () => {
                   ? 'ring-2 ring-primary shadow-md' 
                   : 'hover:ring-1 hover:ring-border'
               )}
-              onClick={() => handleThemeSelect(template.id as 'elegant' | 'grok')}
+              onClick={() => handleThemeSelect(template.id as 'elegant' | 'grok' | 'sana')}
             >
               {/* Preview */}
               <div className={cn('h-24 relative', template.preview.background)}>
@@ -235,7 +248,7 @@ const BrandingSettings: React.FC = () => {
             variant="outline" 
             onClick={() => {
               setPreviewTheme(null);
-              const savedTheme = (module?.module_config as { theme?: 'elegant' | 'grok' })?.theme || 'elegant';
+              const savedTheme = (module?.module_config as { theme?: 'elegant' | 'grok' | 'sana' })?.theme || 'elegant';
               setSelectedTheme(savedTheme);
             }}
           >
