@@ -4,11 +4,13 @@
 // ============================================
 
 import { useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { useModule } from '@/models/modules';
 import type { BrandingModuleConfig } from '@/types/modules';
 
 export const useBrandingTheme = () => {
   const { data: module, isLoading } = useModule('branding');
+  const { setTheme } = useTheme();
   
   useEffect(() => {
     if (isLoading || !module) return;
@@ -17,23 +19,22 @@ export const useBrandingTheme = () => {
     const theme = config?.theme || 'elegant';
     const forceDark = config?.force_dark || false;
     
-    // Apply theme attribute
+    // Apply theme attribute (data-theme for CSS theme variants)
     if (theme === 'elegant') {
       document.documentElement.removeAttribute('data-theme');
     } else {
       document.documentElement.setAttribute('data-theme', theme);
     }
     
-    // Apply forced dark mode
+    // Apply forced dark mode via next-themes
     if (forceDark) {
-      document.documentElement.classList.add('dark');
+      setTheme('dark');
     }
     
-    return () => {
-      // Cleanup on unmount (shouldn't normally happen)
-      document.documentElement.removeAttribute('data-theme');
-    };
-  }, [module, isLoading]);
+    // Debug log
+    console.log('[Branding] Applied theme:', theme, 'forceDark:', forceDark);
+    
+  }, [module, isLoading, setTheme]);
   
   return {
     theme: (module?.module_config as BrandingModuleConfig | undefined)?.theme || 'elegant',
