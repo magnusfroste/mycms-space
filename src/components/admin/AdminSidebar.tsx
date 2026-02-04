@@ -7,7 +7,6 @@ import {
   FolderOpen,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   LogOut,
   Mail,
   History,
@@ -19,6 +18,7 @@ import {
   Github,
   ImageIcon,
   Palette,
+  UserCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -40,7 +40,6 @@ interface AdminSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
-  onPreview: () => void;
 }
 
 const mainNavItems = [
@@ -70,7 +69,7 @@ const bottomSettingsNavItems = [
   { id: 'history', label: 'History', icon: History },
 ];
 
-export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: AdminSidebarProps) {
+export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
@@ -139,9 +138,13 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout, onPreview }: Ad
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onPreview} tooltip="Preview">
-              <ExternalLink className="h-4 w-4" />
-              <span>Preview</span>
+            <SidebarMenuButton
+              onClick={() => onTabChange('profile')}
+              isActive={activeTab === 'profile'}
+              tooltip="Profile"
+            >
+              <UserCircle className="h-4 w-4" />
+              <span>Profile</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>

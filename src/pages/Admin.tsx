@@ -18,6 +18,7 @@ import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import MessagesManager from '@/components/admin/MessagesManager';
 import { SettingsHistory } from '@/components/admin/SettingsHistory';
+import ProfileSettings from '@/components/admin/ProfileSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -73,9 +74,6 @@ const Admin = () => {
     }
   };
 
-  const handlePreview = () => {
-    window.open('/', '_blank');
-  };
 
   if (loading) {
     return (
@@ -148,6 +146,8 @@ const Admin = () => {
         return <NewsletterManager />;
       case 'history':
         return <SettingsHistory />;
+      case 'profile':
+        return <ProfileSettings />;
       default:
         return <AnalyticsDashboard />;
     }
@@ -160,7 +160,6 @@ const Admin = () => {
           activeTab={activeTab} 
           onTabChange={handleTabChange}
           onLogout={handleLogout}
-          onPreview={handlePreview}
         />
         <SidebarInset>
           <div className={activeTab === 'landing' || activeTab === 'pages' ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
