@@ -17,7 +17,6 @@ interface ProfileData {
   display_name: string;
   bio: string;
   avatar_url: string;
-  website: string;
 }
 
 export default function ProfileSettings() {
@@ -30,7 +29,6 @@ export default function ProfileSettings() {
     display_name: '',
     bio: '',
     avatar_url: '',
-    website: '',
   });
 
   useEffect(() => {
@@ -61,7 +59,6 @@ export default function ProfileSettings() {
           display_name: (config.display_name as string) || '',
           bio: (config.bio as string) || '',
           avatar_url: (config.avatar_url as string) || '',
-          website: (config.website as string) || '',
         });
       }
     } catch (error) {
@@ -79,7 +76,6 @@ export default function ProfileSettings() {
         display_name: profile.display_name,
         bio: profile.bio,
         avatar_url: profile.avatar_url,
-        website: profile.website,
       };
 
       // Check if profile exists
@@ -218,18 +214,6 @@ export default function ProfileSettings() {
             <p className="text-xs text-muted-foreground">
               A brief description that may appear on your blog posts or author page.
             </p>
-          </div>
-
-          {/* Website */}
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              type="url"
-              value={profile.website}
-              onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
-              placeholder="https://yourwebsite.com"
-            />
           </div>
 
           <div className="flex justify-end pt-4">
