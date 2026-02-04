@@ -1,6 +1,6 @@
 // ============================================
 // useAIChatContext Hook
-// Fetches page and blog content for AI context
+// Fetches page, blog, and GitHub content for AI context
 // ============================================
 
 import { useMemo } from 'react';
@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAIModule } from '@/models/modules';
 import { usePages } from '@/models';
 import { useBlogPosts } from '@/models/blog';
+import { useEnabledGitHubRepos } from '@/models/githubRepos';
 import { supabase } from '@/integrations/supabase/client';
 import type { PageBlock } from '@/types';
 
@@ -26,6 +27,16 @@ export interface AIContextData {
     title: string;
     excerpt?: string;
     content: string;
+  }>;
+  repos: Array<{
+    name: string;
+    description: string;
+    enrichedDescription?: string;
+    problemStatement?: string;
+    whyItMatters?: string;
+    language?: string;
+    topics?: string[];
+    url: string;
   }>;
 }
 
@@ -77,12 +88,13 @@ const extractBlockContent = (blockType: string, config: Record<string, unknown>)
 };
 
 /**
- * Hook to fetch and compile AI context from selected pages and blog posts
+ * Hook to fetch and compile AI context from selected pages, blog posts, and GitHub repos
  */
 export const useAIChatContext = () => {
   const { config: aiConfig, isLoading: aiLoading } = useAIModule();
   const { data: allPages = [], isLoading: pagesLoading } = usePages();
   const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts();
+  const { data: allRepos = [], isLoading: reposLoading } = useEnabledGitHubRepos();
 
   // Get selected page slugs
   const selectedPageSlugs = aiConfig?.selected_page_slugs || [];
@@ -91,6 +103,10 @@ export const useAIChatContext = () => {
   // Get selected blog IDs
   const selectedBlogIds = aiConfig?.selected_blog_ids || [];
   const includeBlogContext = aiConfig?.include_blog_context ?? false;
+
+  // Get selected repo IDs
+  const selectedRepoIds = aiConfig?.selected_repo_ids || [];
+  const includeGitHubContext = aiConfig?.include_github_context ?? false;
 
   // Filter pages based on selection
   const selectedPages = useMemo(() => {
@@ -126,7 +142,7 @@ export const useAIChatContext = () => {
     enabled: includePageContext && pageSlugsToFetch.length > 0,
   });
 
-  const isLoading = aiLoading || pagesLoading || postsLoading || blocksLoading;
+  const isLoading = aiLoading || pagesLoading || postsLoading || blocksLoading || reposLoading;
 
   // Filter blog posts based on selection
   const selectedBlogs = useMemo(() => {
@@ -138,17 +154,28 @@ export const useAIChatContext = () => {
     return publishedPosts.filter((p) => selectedBlogIds.includes(p.id));
   }, [includeBlogContext, selectedBlogIds, allPosts]);
 
+  // Filter repos based on selection
+  const selectedRepos = useMemo(() => {
+    if (!includeGitHubContext) return [];
+    if (selectedRepoIds.length === 0) {
+      return allRepos;
+    }
+    return allRepos.filter((r) => selectedRepoIds.includes(r.id));
+  }, [includeGitHubContext, selectedRepoIds, allRepos]);
+
   // Compile context data with block content
   const contextData = useMemo((): AIContextData | null => {
     console.log("[AIContext] Building context:", {
       includePageContext,
       includeBlogContext,
+      includeGitHubContext,
       selectedPages: selectedPages.length,
       selectedBlogs: selectedBlogs.length,
+      selectedRepos: selectedRepos.length,
       allBlocksCount: allBlocks.length,
     });
     
-    if (!includePageContext && !includeBlogContext) {
+    if (!includePageContext && !includeBlogContext && !includeGitHubContext) {
       console.log("[AIContext] No context enabled, returning null");
       return null;
     }
@@ -182,8 +209,18 @@ export const useAIChatContext = () => {
         excerpt: post.excerpt || undefined,
         content: post.content,
       })),
+      repos: selectedRepos.map((repo) => ({
+        name: repo.enriched_title || repo.name,
+        description: repo.description || '',
+        enrichedDescription: repo.enriched_description || undefined,
+        problemStatement: repo.problem_statement || undefined,
+        whyItMatters: repo.why_it_matters || undefined,
+        language: repo.language || undefined,
+        topics: repo.topics || undefined,
+        url: repo.url,
+      })),
     };
-  }, [includePageContext, includeBlogContext, selectedPages, selectedBlogs, allBlocks]);
+  }, [includePageContext, includeBlogContext, includeGitHubContext, selectedPages, selectedBlogs, selectedRepos, allBlocks]);
 
   // Create a summary string for quick context
   const contextSummary = useMemo(() => {
@@ -198,15 +235,47 @@ export const useAIChatContext = () => {
     if (contextData.blogs.length > 0) {
       parts.push(`${contextData.blogs.length} blog post(s)`);
     }
+    if (contextData.repos.length > 0) {
+      parts.push(`${contextData.repos.length} GitHub repo(s)`);
+    }
 
     return parts.length > 0 ? `Context: ${parts.join(', ')}` : '';
+  }, [contextData]);
+
+  // Generate context instruction for system prompt
+  const contextInstruction = useMemo(() => {
+    if (!contextData) return '';
+    
+    const parts: string[] = [];
+    
+    if (contextData.repos.length > 0) {
+      parts.push(`# GitHub Projects Context
+You have access to information about ${contextData.repos.length} GitHub project(s) that Magnus has built. Use this to answer questions about his projects, technical skills, and work.`);
+    }
+    
+    if (contextData.pages.length > 0) {
+      parts.push(`# Website Pages Context
+You have access to content from ${contextData.pages.length} page(s) on the website. Use this to provide accurate information about Magnus and his services.`);
+    }
+    
+    if (contextData.blogs.length > 0) {
+      parts.push(`# Blog Content Context
+You have access to ${contextData.blogs.length} blog post(s). Use these to discuss Magnus's thoughts, expertise, and insights.`);
+    }
+    
+    return parts.join('\n\n');
   }, [contextData]);
 
   return {
     contextData,
     contextSummary,
+    contextInstruction,
     isLoading,
-    hasContext: !!contextData && (contextData.pages.length > 0 || contextData.blogs.length > 0),
+    hasContext: !!contextData && (
+      contextData.pages.length > 0 || 
+      contextData.blogs.length > 0 || 
+      contextData.repos.length > 0
+    ),
   };
 };
 

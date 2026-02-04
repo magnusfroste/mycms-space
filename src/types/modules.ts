@@ -266,6 +266,8 @@ export interface AIModuleConfig {
   selected_page_slugs: string[];
   include_blog_context: boolean;
   selected_blog_ids: string[];
+  include_github_context: boolean;
+  selected_repo_ids: string[];
 }
 
 // Projects Module Config
@@ -418,6 +420,8 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     selected_page_slugs: [],
     include_blog_context: false,
     selected_blog_ids: [],
+    include_github_context: false,
+    selected_repo_ids: [],
   },
   projects: {
     layout_style: 'alternating',

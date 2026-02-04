@@ -26,6 +26,16 @@ interface SiteContext {
     excerpt?: string;
     content: string;
   }>;
+  repos?: Array<{
+    name: string;
+    description: string;
+    enrichedDescription?: string;
+    problemStatement?: string;
+    whyItMatters?: string;
+    language?: string;
+    topics?: string[];
+    url: string;
+  }>;
 }
 
 interface IntegrationConfig {
@@ -40,6 +50,20 @@ function buildSystemPrompt(customPrompt: string | null, siteContext: SiteContext
 
   if (siteContext) {
     prompt += `\n\n## Site Context\n\nYou have access to information about this website:\n`;
+
+    if (siteContext.repos && siteContext.repos.length > 0) {
+      prompt += `\n### GitHub Projects\n`;
+      for (const repo of siteContext.repos) {
+        prompt += `\n**${repo.name}**\n`;
+        if (repo.description) prompt += `Description: ${repo.description}\n`;
+        if (repo.enrichedDescription) prompt += `${repo.enrichedDescription}\n`;
+        if (repo.problemStatement) prompt += `Problem: ${repo.problemStatement}\n`;
+        if (repo.whyItMatters) prompt += `Why it matters: ${repo.whyItMatters}\n`;
+        if (repo.language) prompt += `Language: ${repo.language}\n`;
+        if (repo.topics && repo.topics.length > 0) prompt += `Topics: ${repo.topics.join(', ')}\n`;
+        prompt += `URL: ${repo.url}\n`;
+      }
+    }
 
     if (siteContext.pages && siteContext.pages.length > 0) {
       prompt += `\n### Pages\n`;
