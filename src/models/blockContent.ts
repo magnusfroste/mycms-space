@@ -116,8 +116,12 @@ export const useUpdateBlockConfig = () => {
       return data as PageBlock;
     },
     onSuccess: (data) => {
+      // Invalidate all relevant query keys (both blockContent and pageBlocks namespaces)
       queryClient.invalidateQueries({ queryKey: blockContentKeys.byId(data.id) });
       queryClient.invalidateQueries({ queryKey: blockContentKeys.byPage(data.page_slug) });
+      // Also invalidate the pageBlocks queries used by BlockCanvas
+      queryClient.invalidateQueries({ queryKey: ['page-blocks', data.page_slug] });
+      queryClient.invalidateQueries({ queryKey: ['page-blocks'] });
     },
   });
 };
@@ -145,8 +149,12 @@ export const useReplaceBlockConfig = () => {
       return data as PageBlock;
     },
     onSuccess: (data) => {
+      // Invalidate all relevant query keys (both blockContent and pageBlocks namespaces)
       queryClient.invalidateQueries({ queryKey: blockContentKeys.byId(data.id) });
       queryClient.invalidateQueries({ queryKey: blockContentKeys.byPage(data.page_slug) });
+      // Also invalidate the pageBlocks queries used by BlockCanvas
+      queryClient.invalidateQueries({ queryKey: ['page-blocks', data.page_slug] });
+      queryClient.invalidateQueries({ queryKey: ['page-blocks'] });
     },
   });
 };
