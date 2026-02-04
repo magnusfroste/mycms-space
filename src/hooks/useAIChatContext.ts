@@ -96,6 +96,25 @@ export const useAIChatContext = () => {
   const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts();
   const { data: allRepos = [], isLoading: reposLoading } = useEnabledGitHubRepos();
 
+  // Debug logging
+  console.log('[AIContext] Hook state:', {
+    aiLoading,
+    pagesLoading,
+    postsLoading,
+    reposLoading,
+    aiConfig: aiConfig ? {
+      include_page_context: aiConfig.include_page_context,
+      include_blog_context: aiConfig.include_blog_context,
+      include_github_context: aiConfig.include_github_context,
+      selected_page_slugs: aiConfig.selected_page_slugs,
+      selected_blog_ids: aiConfig.selected_blog_ids,
+      selected_repo_ids: aiConfig.selected_repo_ids,
+    } : null,
+    allPagesCount: allPages.length,
+    allPostsCount: allPosts.length,
+    allReposCount: allRepos.length,
+  });
+
   // Get selected page slugs
   const selectedPageSlugs = aiConfig?.selected_page_slugs || [];
   const includePageContext = aiConfig?.include_page_context ?? false;
