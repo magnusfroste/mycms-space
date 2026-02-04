@@ -35,7 +35,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
-  const { contextData, contextSummary, hasContext } = useAIChatContext();
+  const { contextData, contextSummary, contextInstruction, hasContext } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
   
@@ -141,7 +141,7 @@ const Chat = () => {
           siteContext={contextData}
           integration={selectedIntegration}
           integrationConfig={aiConfig?.integration}
-          systemPrompt={aiConfig?.system_prompt}
+          systemPrompt={[aiConfig?.system_prompt, contextInstruction].filter(Boolean).join('\n\n')}
         />
       </main>
 

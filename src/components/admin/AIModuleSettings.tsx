@@ -4,7 +4,7 @@
 // ============================================
 
 import React from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,10 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
+import { useEnabledGitHubRepos } from '@/models/githubRepos';
 import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 const AIModuleSettings: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
@@ -27,9 +28,10 @@ const AIModuleSettings: React.FC = () => {
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
   
-  // Fetch pages and blog posts for selection
+  // Fetch pages, blog posts, and GitHub repos for selection
   const { data: pages = [] } = usePages();
   const { data: blogPosts = [] } = useBlogPosts();
+  const { data: githubRepos = [] } = useEnabledGitHubRepos();
 
   const handleToggle = (enabled: boolean) => {
     updateModule.mutate(
@@ -94,6 +96,22 @@ const AIModuleSettings: React.FC = () => {
     handleConfigUpdate({ selected_blog_ids: [] });
   };
 
+  const toggleRepoId = (id: string) => {
+    const current = config?.selected_repo_ids || [];
+    const updated = current.includes(id)
+      ? current.filter((i) => i !== id)
+      : [...current, id];
+    handleConfigUpdate({ selected_repo_ids: updated });
+  };
+
+  const selectAllRepos = () => {
+    handleConfigUpdate({ selected_repo_ids: githubRepos.map((r) => r.id) });
+  };
+
+  const selectNoneRepos = () => {
+    handleConfigUpdate({ selected_repo_ids: [] });
+  };
+
   const goToIntegrations = () => {
     setSearchParams({ tab: 'integrations' });
   };
@@ -109,6 +127,7 @@ const AIModuleSettings: React.FC = () => {
 
   const selectedPageSlugs = config?.selected_page_slugs || [];
   const selectedBlogIds = config?.selected_blog_ids || [];
+  const selectedRepoIds = config?.selected_repo_ids || [];
   const publishedPosts = blogPosts.filter((p) => p.status === 'published');
   const activeIntegration = config?.active_integration || 'n8n';
   const availableIntegrations = integrationsMeta.filter((i) => i.available);
@@ -382,6 +401,87 @@ You are [Name], an AI assistant for [Your Website]...
               <p className="text-xs text-muted-foreground">
                 {selectedBlogIds.length} of {publishedPosts.length} published posts selected
               </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* GitHub Context */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Github className="h-5 w-5" />
+            GitHub Projects Context
+          </CardTitle>
+          <CardDescription>
+            Include GitHub repository data for AI to discuss your projects
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="include_github_context">Include GitHub repos</Label>
+              <p className="text-sm text-muted-foreground">
+                Send project names, descriptions, and enrichment data to the AI
+              </p>
+            </div>
+            <Switch
+              id="include_github_context"
+              checked={config?.include_github_context ?? false}
+              onCheckedChange={(checked) => handleConfigUpdate({ include_github_context: checked })}
+            />
+          </div>
+
+          {config?.include_github_context && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Select repos to include</Label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={selectAllRepos}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Select all
+                  </button>
+                  <span className="text-xs text-muted-foreground">|</span>
+                  <button
+                    onClick={selectNoneRepos}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              {githubRepos.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">
+                  No GitHub repos enabled. Enable repos in Integrations → GitHub Repos first.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {githubRepos.map((repo) => (
+                    <Badge
+                      key={repo.id}
+                      variant={selectedRepoIds.includes(repo.id) ? 'default' : 'outline'}
+                      className="cursor-pointer transition-colors"
+                      onClick={() => toggleRepoId(repo.id)}
+                    >
+                      {selectedRepoIds.includes(repo.id) && (
+                        <Check className="h-3 w-3 mr-1" />
+                      )}
+                      {repo.enriched_title || repo.name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {selectedRepoIds.length} of {githubRepos.length} repos selected
+              </p>
+              
+              <div className="rounded-lg bg-muted/50 p-3 mt-2">
+                <p className="text-xs text-muted-foreground">
+                  💡 The AI will receive project names, descriptions, problem statements, and "why it matters" content to provide informed answers about your work.
+                </p>
+              </div>
             </div>
           )}
         </CardContent>
