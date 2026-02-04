@@ -24,7 +24,7 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
   const isLoading = !typedConfig.name;
 
   return (
-    <section id="about" className="section-container relative overflow-hidden">
+    <section id="about" className="section-container-sm relative overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
       

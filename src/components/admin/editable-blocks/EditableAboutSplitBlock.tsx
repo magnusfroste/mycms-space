@@ -1,19 +1,17 @@
 // ============================================
 // Editable About Split Block
 // Inline editing for about me section
+// Uses new skills array structure (icon + title)
 // ============================================
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { iconMap } from '@/lib/constants/iconMaps';
-import type { AboutMeSettings } from '@/types';
+import type { AboutSplitBlockConfig } from '@/types/blockConfigs';
 import EditableText from './EditableText';
 import { AITextActions } from '@/components/common';
 
 interface EditableAboutSplitBlockProps {
   config: Record<string, unknown>;
-  aboutMeData?: AboutMeSettings | null;
   pendingChanges?: Record<string, unknown>;
   isEditMode: boolean;
   onChange: (changes: Record<string, unknown>) => void;
@@ -21,206 +19,141 @@ interface EditableAboutSplitBlockProps {
 
 const EditableAboutSplitBlock: React.FC<EditableAboutSplitBlockProps> = ({
   config,
-  aboutMeData,
   pendingChanges = {},
   isEditMode,
   onChange,
 }) => {
-  // Merge aboutMeData with pending changes
-  const getValue = (key: keyof AboutMeSettings, fallback: string = '') => {
-    return (pendingChanges[key] as string) ?? aboutMeData?.[key] ?? fallback;
+  const typedConfig = config as AboutSplitBlockConfig;
+  
+  // Merge config with pending changes
+  const getValue = <K extends keyof AboutSplitBlockConfig>(key: K, fallback: AboutSplitBlockConfig[K]): AboutSplitBlockConfig[K] => {
+    if (key in pendingChanges) {
+      return pendingChanges[key] as AboutSplitBlockConfig[K];
+    }
+    return typedConfig[key] ?? fallback;
   };
 
+  const introText = getValue('intro_text', 'Introduction text...');
+  const additionalText = getValue('additional_text', '');
+  const imageUrl = getValue('image_url', '');
+  const skills = getValue('skills', []) || [];
+
   return (
-    <section id="about" className="py-20 bg-card" aria-labelledby="about-heading">
-      <div className="container mx-auto px-4">
-        <h2 id="about-heading" className="section-title">
-          <EditableText
-            value="About Me"
-            isEditMode={false}
-            onChange={() => {}}
-            placeholder="About Me"
-          />
-        </h2>
+    <section id="about" className="section-container relative overflow-hidden">
+      {/* Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
+      
+      <div className="container mx-auto px-4 relative">
+        {/* Section Header */}
+        <div className="text-center mb-16">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4">
+            About
+          </span>
+          <h2 className="section-title-gradient">
+            Who I Am
+          </h2>
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            {aboutMeData?.image_url && (
-              <div className="mb-8">
-                <Card className="overflow-hidden border-0 shadow-lg rounded-2xl bg-gradient-to-br from-primary/10 to-apple-blue/10 w-4/5 mx-auto">
-                  <CardContent className="p-4">
-                    <AspectRatio ratio={16/9} className="bg-muted rounded-xl overflow-hidden">
-                      <img 
-                        src={aboutMeData.image_url} 
-                        alt={aboutMeData?.name || "Profile"} 
-                        className="object-cover w-full h-full"
-                      />
-                    </AspectRatio>
-                  </CardContent>
-                </Card>
+        <div className="space-y-12">
+          {/* Top Row - Image + Intro Text Side by Side */}
+          <div className="flex flex-col sm:flex-row gap-6 lg:gap-10 items-start">
+            {/* Small Image */}
+            {imageUrl && (
+              <div className="relative group shrink-0">
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden">
+                  <div className="absolute -inset-px bg-gradient-primary rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="relative bg-card rounded-2xl overflow-hidden p-0.5 h-full">
+                    <img 
+                      src={imageUrl} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                  </div>
+                </div>
+                {/* Subtle Glow */}
+                <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl -z-10" />
               </div>
             )}
             
-            <div className="space-y-1">
-              {isEditMode && (
-                <div className="flex justify-end">
-                  <AITextActions
-                    text={getValue('intro_text', '')}
-                    onTextChange={(value) => onChange({ intro_text: value })}
-                    context="intro text for About Me section"
-                    mode="text"
+            {/* Text Content */}
+            <div className="flex-1 space-y-4">
+              {/* Intro Text */}
+              <div className="space-y-1">
+                {isEditMode && (
+                  <div className="flex justify-end">
+                    <AITextActions
+                      text={introText as string}
+                      onTextChange={(value) => onChange({ intro_text: value })}
+                      context="intro text for About Me section"
+                      mode="text"
+                    />
+                  </div>
+                )}
+                <div className="text-lg lg:text-xl text-foreground/90 leading-relaxed">
+                  <EditableText
+                    value={introText as string}
+                    isEditMode={isEditMode}
+                    onChange={(value) => onChange({ intro_text: value })}
+                    placeholder="Share your story here..."
+                    multiline
                   />
                 </div>
-              )}
-              <p className="text-lg text-foreground/80 leading-relaxed">
-                <EditableText
-                  value={getValue('intro_text', 'With over 20 years of experience in innovation strategy...')}
-                  isEditMode={isEditMode}
-                  onChange={(value) => onChange({ intro_text: value })}
-                  placeholder="Intro text"
-                  multiline
-                />
-              </p>
-            </div>
-            
-            <div className="space-y-1">
-              {isEditMode && (
-                <div className="flex justify-end">
-                  <AITextActions
-                    text={getValue('additional_text', '')}
-                    onTextChange={(value) => onChange({ additional_text: value })}
-                    context="additional text for About Me section"
-                    mode="text"
+              </div>
+              
+              {/* Additional Text */}
+              <div className="space-y-1">
+                {isEditMode && (
+                  <div className="flex justify-end">
+                    <AITextActions
+                      text={additionalText as string}
+                      onTextChange={(value) => onChange({ additional_text: value })}
+                      context="additional text for About Me section"
+                      mode="text"
+                    />
+                  </div>
+                )}
+                <div className="text-base text-muted-foreground leading-relaxed">
+                  <EditableText
+                    value={additionalText as string}
+                    isEditMode={isEditMode}
+                    onChange={(value) => onChange({ additional_text: value })}
+                    placeholder="Add more details about your background..."
+                    multiline
                   />
                 </div>
-              )}
-              <p className="text-lg text-foreground/80 leading-relaxed">
-                <EditableText
-                  value={getValue('additional_text', 'My approach combines technical expertise...')}
-                  isEditMode={isEditMode}
-                  onChange={(value) => onChange({ additional_text: value })}
-                  placeholder="Additional text"
-                  multiline
-                />
-              </p>
+              </div>
             </div>
           </div>
           
-          <div className="space-y-6">
-            {/* Skill 1 */}
-            <article className="glass-card p-6 flex items-start gap-4">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                {iconMap[aboutMeData?.skill1_icon || 'Monitor']}
-              </div>
-              <div>
-                <h3 className="font-semibold text-xl mb-2">
-                  <EditableText
-                    value={getValue('skill1_title', 'Technology Leadership')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill1_title: value })}
-                    placeholder="Skill 1 title"
-                  />
-                </h3>
-                <div className="space-y-1">
-                  {isEditMode && (
-                    <div className="flex justify-end">
-                      <AITextActions
-                        text={getValue('skill1_description', '')}
-                        onTextChange={(value) => onChange({ skill1_description: value })}
-                        context="skill description"
-                        mode="text"
-                      />
-                    </div>
-                  )}
-                  <p className="text-muted-foreground">
-                    <EditableText
-                      value={getValue('skill1_description', 'Description...')}
-                      isEditMode={isEditMode}
-                      onChange={(value) => onChange({ skill1_description: value })}
-                      placeholder="Skill 1 description"
-                      multiline
-                    />
-                  </p>
+          {/* Compact Skills Row */}
+          {skills.length > 0 && (
+            <div className="flex flex-wrap gap-3 pt-4">
+              {skills.map((skill, index) => (
+                <div 
+                  key={index} 
+                  className="group flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 hover:bg-primary/10 transition-colors"
+                >
+                  <div className="w-5 h-5 text-primary shrink-0">
+                    {iconMap[skill.icon] || iconMap['Monitor']}
+                  </div>
+                  <span className="text-sm font-medium text-foreground/90">
+                    {skill.title}
+                  </span>
                 </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Skills Empty State for Edit Mode */}
+          {skills.length === 0 && isEditMode && (
+            <div className="flex flex-wrap gap-3 pt-4 opacity-50">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-dashed border-muted-foreground/30">
+                <span className="text-sm text-muted-foreground">
+                  Add skills in the block settings panel →
+                </span>
               </div>
-            </article>
-            
-            {/* Skill 2 */}
-            <article className="glass-card p-6 flex items-start gap-4">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-apple-blue/20 flex items-center justify-center">
-                {iconMap[aboutMeData?.skill2_icon || 'Rocket']}
-              </div>
-              <div>
-                <h3 className="font-semibold text-xl mb-2">
-                  <EditableText
-                    value={getValue('skill2_title', 'Product Strategy')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill2_title: value })}
-                    placeholder="Skill 2 title"
-                  />
-                </h3>
-                <div className="space-y-1">
-                  {isEditMode && (
-                    <div className="flex justify-end">
-                      <AITextActions
-                        text={getValue('skill2_description', '')}
-                        onTextChange={(value) => onChange({ skill2_description: value })}
-                        context="skill description"
-                        mode="text"
-                      />
-                    </div>
-                  )}
-                  <p className="text-muted-foreground">
-                    <EditableText
-                      value={getValue('skill2_description', 'Description...')}
-                      isEditMode={isEditMode}
-                      onChange={(value) => onChange({ skill2_description: value })}
-                      placeholder="Skill 2 description"
-                      multiline
-                    />
-                  </p>
-                </div>
-              </div>
-            </article>
-            
-            {/* Skill 3 */}
-            <article className="glass-card p-6 flex items-start gap-4">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                {iconMap[aboutMeData?.skill3_icon || 'Brain']}
-              </div>
-              <div>
-                <h3 className="font-semibold text-xl mb-2">
-                  <EditableText
-                    value={getValue('skill3_title', 'AI Innovation')}
-                    isEditMode={isEditMode}
-                    onChange={(value) => onChange({ skill3_title: value })}
-                    placeholder="Skill 3 title"
-                  />
-                </h3>
-                <div className="space-y-1">
-                  {isEditMode && (
-                    <div className="flex justify-end">
-                      <AITextActions
-                        text={getValue('skill3_description', '')}
-                        onTextChange={(value) => onChange({ skill3_description: value })}
-                        context="skill description"
-                        mode="text"
-                      />
-                    </div>
-                  )}
-                  <p className="text-muted-foreground">
-                    <EditableText
-                      value={getValue('skill3_description', 'Description...')}
-                      isEditMode={isEditMode}
-                      onChange={(value) => onChange({ skill3_description: value })}
-                      placeholder="Skill 3 description"
-                      multiline
-                    />
-                  </p>
-                </div>
-              </div>
-            </article>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </section>
