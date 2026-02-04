@@ -49,9 +49,24 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
     return null;
   }
 
+  const title = typedConfig.title;
+  const subtitle = typedConfig.subtitle;
+
   return (
     <div id="chat" className="py-12 md:py-20" aria-label="Chat Widget">
       <div className="container mx-auto px-4">
+        {/* Title and subtitle */}
+        {(title || subtitle) && (
+          <div className="text-center mb-8 max-w-3xl mx-auto">
+            {title && (
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">{title}</h2>
+            )}
+            {subtitle && (
+              <p className="text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+        )}
+        
         <div className="max-w-3xl mx-auto">
           <ChatInterface
             webhookUrl={webhookUrl}
