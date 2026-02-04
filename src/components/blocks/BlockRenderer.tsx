@@ -43,28 +43,11 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
   const { block_type, block_config } = block;
   const showDivider = !isLast && BLOCKS_WITH_DIVIDER.includes(block_type);
   
-  // Generate anchor ID from block type (e.g., "project-showcase" -> "projekt", "about-split" -> "about")
-  const getAnchorId = (): string | undefined => {
-    // Check if block_config has a custom anchor_id
-    if (block_config && typeof block_config === 'object' && 'anchor_id' in block_config) {
-      return block_config.anchor_id as string;
-    }
-    // Default mapping for common blocks
-    const anchorMap: Record<string, string> = {
-      'project-showcase': 'projekt',
-      'about-split': 'about',
-      'expertise-grid': 'expertis',
-      'contact-form': 'kontakt',
-      'blog': 'blogg',
-      'github': 'github',
-      'skills-bar': 'skills',
-      'values': 'values',
-      'testimonial-carousel': 'testimonials',
-    };
-    return anchorMap[block_type];
-  };
-  
-  const anchorId = getAnchorId();
+  // Anchor ID = block_type (e.g., "chat-hero", "project-showcase")
+  // Custom anchor_id in block_config overrides default
+  const anchorId = (block_config && typeof block_config === 'object' && 'anchor_id' in block_config)
+    ? (block_config.anchor_id as string)
+    : block_type;
 
   const renderBlock = () => {
     switch (block_type) {
