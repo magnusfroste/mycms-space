@@ -25,12 +25,23 @@ export interface SiteContext {
     slug: string;
     title: string;
     content: string;
+    blocks?: Array<{ type: string; content: string }>;
   }>;
   blogs?: Array<{
     slug: string;
     title: string;
     excerpt?: string;
     content: string;
+  }>;
+  repos?: Array<{
+    name: string;
+    description: string;
+    enrichedDescription?: string;
+    problemStatement?: string;
+    whyItMatters?: string;
+    language?: string;
+    topics?: string[];
+    url: string;
   }>;
 }
 

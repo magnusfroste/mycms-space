@@ -242,34 +242,12 @@ export const useAIChatContext = () => {
     return parts.length > 0 ? `Context: ${parts.join(', ')}` : '';
   }, [contextData]);
 
-  // Generate context instruction for system prompt
-  const contextInstruction = useMemo(() => {
-    if (!contextData) return '';
-    
-    const parts: string[] = [];
-    
-    if (contextData.repos.length > 0) {
-      parts.push(`# GitHub Projects Context
-You have access to information about ${contextData.repos.length} GitHub project(s) that Magnus has built. Use this to answer questions about his projects, technical skills, and work.`);
-    }
-    
-    if (contextData.pages.length > 0) {
-      parts.push(`# Website Pages Context
-You have access to content from ${contextData.pages.length} page(s) on the website. Use this to provide accurate information about Magnus and his services.`);
-    }
-    
-    if (contextData.blogs.length > 0) {
-      parts.push(`# Blog Content Context
-You have access to ${contextData.blogs.length} blog post(s). Use these to discuss Magnus's thoughts, expertise, and insights.`);
-    }
-    
-    return parts.join('\n\n');
-  }, [contextData]);
+  // NOTE: contextInstruction removed - all prompt building now happens in Edge Function
+  // This centralizes logic and prevents duplication
 
   return {
     contextData,
     contextSummary,
-    contextInstruction,
     isLoading,
     hasContext: !!contextData && (
       contextData.pages.length > 0 || 
