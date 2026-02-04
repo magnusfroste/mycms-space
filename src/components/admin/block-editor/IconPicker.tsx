@@ -88,7 +88,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
   const currentIcon = renderIcon(value, 'h-4 w-4');
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -97,18 +97,27 @@ const IconPicker: React.FC<IconPickerProps> = ({ value, onChange, disabled }) =>
           className="w-14 h-10 p-0 justify-center"
           disabled={disabled}
           title={value || 'Välj ikon'}
+          onClick={(e) => e.stopPropagation()}
         >
           {currentIcon || <span className="text-xs text-muted-foreground">?</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0 bg-popover z-[100]" align="start" sideOffset={4}>
+      <PopoverContent 
+        className="w-80 p-0 bg-popover z-[100]" 
+        align="start" 
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <div className="p-3 border-b bg-background">
           <Input
             placeholder="Sök ikon (t.ex. rocket, brain)..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              e.stopPropagation();
+              setSearch(e.target.value);
+            }}
             className="h-9"
-            autoFocus
           />
         </div>
         <div className="max-h-64 overflow-y-auto p-2">
