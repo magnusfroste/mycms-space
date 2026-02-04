@@ -39,6 +39,7 @@ const BLOCK_CATEGORIES = [
     icon: Sparkles,
     blocks: [
       { type: 'hero', name: 'Hero', description: 'Main section with name and features', icon: Sparkles },
+      { type: 'chat-hero', name: 'Chat Hero', description: 'Immersive hero with AI chat input', icon: MessageCircle },
       { type: 'video-hero', name: 'Video Hero', description: 'Fullscreen video with overlay text', icon: Play },
       { type: 'parallax-section', name: 'Parallax', description: 'Multi-layer scroll effect', icon: Layers },
     ],
