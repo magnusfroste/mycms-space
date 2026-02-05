@@ -3,7 +3,7 @@
 // Routes AI requests to configured provider
 // ============================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';

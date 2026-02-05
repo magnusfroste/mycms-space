@@ -1,4 +1,4 @@
-// Enhance prompt edge function - v2
+// Enhance prompt edge function - v3 (npm import fix)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   getAdminAICompletion, 
