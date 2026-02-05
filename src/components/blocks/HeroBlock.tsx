@@ -19,6 +19,7 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
   const typedConfig = config as HeroBlockConfig;
   const [scrollY, setScrollY] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
+  const [currentTheme, setCurrentTheme] = useState<string>('elegant');
   
   const name = typedConfig.name || 'Your Name';
   const tagline = typedConfig.tagline || 'Your Tagline';
@@ -27,16 +28,39 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
   const animationStyle = typedConfig.animation_style || 'falling-stars';
 
   const isLoading = !typedConfig.name;
+  
+  // Grok theme disables parallax and mesh gradients
+  const isGrokTheme = currentTheme === 'grok';
+  const isSanaTheme = currentTheme === 'sana';
+  const enableParallax = !isGrokTheme;
+  const enableMeshGradient = !isGrokTheme;
+  const enableFloatingOrbs = !isGrokTheme && !isSanaTheme;
 
-  // Parallax scroll effect
+  // Track current theme
   useEffect(() => {
+    const updateTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme') || 'elegant';
+      setCurrentTheme(theme);
+    };
+    updateTheme();
+    
+    // Observe theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Parallax scroll effect (disabled for Grok)
+  useEffect(() => {
+    if (!enableParallax) return;
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [enableParallax]);
 
-  // Mouse tracking for interactive gradient
+  // Mouse tracking for interactive gradient (disabled for Grok)
   useEffect(() => {
+    if (!enableMeshGradient) return;
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({
         x: e.clientX / window.innerWidth,
@@ -45,47 +69,49 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
     };
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [enableMeshGradient]);
 
-  const parallaxOffset = scrollY * 0.3;
+  const parallaxOffset = enableParallax ? scrollY * 0.3 : 0;
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Animated Mesh Gradient Background */}
-      <div 
-        className="absolute inset-0 transition-transform duration-1000 ease-out"
-        style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
-      >
-        {/* Primary gradient orb */}
+      {/* Animated Mesh Gradient Background - Hidden in Grok theme */}
+      {enableMeshGradient && (
         <div 
-          className="absolute w-[800px] h-[800px] rounded-full blur-[120px] opacity-30 dark:opacity-40 transition-all duration-700"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)',
-            left: `${20 + mousePos.x * 10}%`,
-            top: `${-20 + mousePos.y * 10}%`,
-          }}
-        />
-        
-        {/* Secondary gradient orb */}
-        <div 
-          className="absolute w-[600px] h-[600px] rounded-full blur-[100px] opacity-25 dark:opacity-35 transition-all duration-700"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)',
-            right: `${10 + (1 - mousePos.x) * 15}%`,
-            bottom: `${-10 + (1 - mousePos.y) * 15}%`,
-          }}
-        />
-        
-        {/* Tertiary gradient orb */}
-        <div 
-          className="absolute w-[500px] h-[500px] rounded-full blur-[80px] opacity-20 dark:opacity-30 transition-all duration-700"
-          style={{
-            background: 'radial-gradient(circle, hsl(var(--gradient-mid)) 0%, transparent 70%)',
-            left: `${50 + mousePos.x * 5}%`,
-            top: `${40 + mousePos.y * 10}%`,
-          }}
-        />
-      </div>
+          className="absolute inset-0 transition-transform duration-1000 ease-out"
+          style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
+        >
+          {/* Primary gradient orb */}
+          <div 
+            className="absolute w-[800px] h-[800px] rounded-full blur-[120px] opacity-30 dark:opacity-40 transition-all duration-700"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)',
+              left: `${20 + mousePos.x * 10}%`,
+              top: `${-20 + mousePos.y * 10}%`,
+            }}
+          />
+          
+          {/* Secondary gradient orb */}
+          <div 
+            className="absolute w-[600px] h-[600px] rounded-full blur-[100px] opacity-25 dark:opacity-35 transition-all duration-700"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--accent)) 0%, transparent 70%)',
+              right: `${10 + (1 - mousePos.x) * 15}%`,
+              bottom: `${-10 + (1 - mousePos.y) * 15}%`,
+            }}
+          />
+          
+          {/* Tertiary gradient orb */}
+          <div 
+            className="absolute w-[500px] h-[500px] rounded-full blur-[80px] opacity-20 dark:opacity-30 transition-all duration-700"
+            style={{
+              background: 'radial-gradient(circle, hsl(var(--gradient-mid)) 0%, transparent 70%)',
+              left: `${50 + mousePos.x * 5}%`,
+              top: `${40 + mousePos.y * 10}%`,
+            }}
+          />
+        </div>
+      )}
 
       {/* Noise texture overlay */}
       <div 
@@ -104,31 +130,37 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
         </div>
       )}
 
-      {/* Floating Orbs with parallax */}
-      <div 
-        className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl animate-float"
-        style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
-      />
-      <div 
-        className="absolute bottom-1/4 -right-32 w-80 h-80 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl animate-float"
-        style={{ 
-          animationDelay: '-3s',
-          transform: `translateY(${parallaxOffset * 0.15}px)` 
-        }}
-      />
+      {/* Floating Orbs with parallax - Only in Elegant theme */}
+      {enableFloatingOrbs && (
+        <>
+          <div 
+            className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl animate-float hero-parallax-orb"
+            style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
+          />
+          <div 
+            className="absolute bottom-1/4 -right-32 w-80 h-80 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl animate-float hero-parallax-orb"
+            style={{ 
+              animationDelay: '-3s',
+              transform: `translateY(${parallaxOffset * 0.15}px)` 
+            }}
+          />
+        </>
+      )}
       
-      {/* Subtle grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
-        style={{
-          backgroundImage: `
-            linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)
-          `,
-          backgroundSize: '80px 80px',
-          transform: `translateY(${parallaxOffset * 0.1}px)`,
-        }}
-      />
+      {/* Subtle grid pattern - Only if parallax is enabled */}
+      {enableParallax && (
+        <div 
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px',
+            transform: `translateY(${parallaxOffset * 0.1}px)`,
+          }}
+        />
+      )}
 
       {/* Radial vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.4)_100%)]" />
