@@ -63,6 +63,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           className="input-field w-full pr-16 resize-none text-base min-h-[52px] max-h-[200px] overflow-y-auto"
           rows={1}
           disabled={isLoading}
+          autoFocus
         />
         <Button
           onClick={onSend}
