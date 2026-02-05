@@ -31,7 +31,7 @@ const themeTemplates: ThemeTemplate[] = [
   {
     id: 'elegant',
     name: 'Elegant',
-    description: 'Playfair Display + Inter. Rundade hörn, glassmorfism, parallax-animationer.',
+    description: 'Playfair Display + Inter. Rounded corners, glassmorphism, parallax animations.',
     icon: <Sparkles className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-slate-50 to-slate-100',
@@ -39,12 +39,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-400',
       text: 'text-slate-800',
     },
-    tags: ['Serif', 'Glass', 'Animerad'],
+    tags: ['Serif', 'Glass', 'Animated'],
   },
   {
     id: 'grok',
     name: 'Grok',
-    description: 'Darker Grotesque. Vassa kanter, versaler, kompakt. Inga animationer.',
+    description: 'Darker Grotesque. Sharp edges, uppercase, compact. No animations.',
     icon: <Zap className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-neutral-50 to-neutral-100',
@@ -52,12 +52,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-500',
       text: 'text-neutral-900',
     },
-    tags: ['Brutalist', 'Statisk', 'Minimal'],
+    tags: ['Brutalist', 'Static', 'Minimal'],
   },
   {
     id: 'sana',
     name: 'Sana',
-    description: 'System UI. Mjuka hörn, generöst radavstånd, subtila fades.',
+    description: 'System UI. Soft corners, generous line-height, subtle fades.',
     icon: <Palette className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-white to-slate-50',
@@ -65,12 +65,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-violet-400',
       text: 'text-slate-900',
     },
-    tags: ['SaaS', 'Läsbar', 'Professionell'],
+    tags: ['SaaS', 'Readable', 'Professional'],
   },
   {
     id: 'terminal',
     name: 'Terminal',
-    description: 'JetBrains Mono. Neon-glow, hårda kanter, kommandorad-estetik.',
+    description: 'JetBrains Mono. Neon glow, hard edges, command-line aesthetic.',
     icon: <Terminal className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-black to-neutral-900',
@@ -78,7 +78,7 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-cyan-400',
       text: 'text-green-400',
     },
-    tags: ['Monospace', 'Hacker', 'Mörk'],
+    tags: ['Monospace', 'Hacker', 'Dark'],
   },
 ];
 
