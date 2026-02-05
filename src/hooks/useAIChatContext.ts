@@ -61,17 +61,24 @@ const extractBlockContent = (blockType: string, config: Record<string, unknown>)
     }
   }
 
-  // Extract from arrays (items, features, skills, stats, etc.)
+  // Extract from arrays (items, features, skills, stats, projects, etc.)
   const arrayFields = [
     'items', 'features', 'skills', 'stats', 'testimonials',
-    'expertise', 'areas', 'links', 'buttons', 'quickActions'
+    'expertise', 'areas', 'links', 'buttons', 'quickActions',
+    'projects', 'categories', 'values', 'quick_actions'
+  ];
+
+  // Additional fields specific to project blocks
+  const projectFields = [
+    'problem_statement', 'why_built', 'demo_link'
   ];
 
   for (const field of arrayFields) {
     if (Array.isArray(config[field])) {
       for (const item of config[field] as Array<Record<string, unknown>>) {
         if (typeof item === 'object' && item !== null) {
-          for (const subField of textFields) {
+          // Extract standard text fields
+          for (const subField of [...textFields, ...projectFields]) {
             if (item[subField] && typeof item[subField] === 'string') {
               parts.push(item[subField] as string);
             }
