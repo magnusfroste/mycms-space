@@ -1,134 +1,130 @@
 
-# Plan: Konfigurerbar AI för Admin-verktyg
+# Plan: Separat Admin AI Provider-inställning
 
 ## Bakgrund
 
-Admin-panelen har tre AI-drivna funktioner som idag är hårdkodade mot Lovable AI:
-1. **PromptEnhancer** - Förbättrar system prompts
-2. **AITextActions** - Förbättrar/genererar text i blogg/sidor
-3. **PageBuilderChat** - AI-sidbyggare
-
-Vid self-hosting utan Lovable Cloud slutar dessa fungera.
+Nuvarande implementation har ett problem:
+- **Chat** kan använda n8n-webhook med tool calls (Telegram, e-post, etc.) - fungerar perfekt
+- **Admin-verktyg** (PromptEnhancer, AITextActions, PageBuilderChat) läser samma `active_integration` och försöker anropa n8n-webhooken, som inte är designad för enkla text-operationer
 
 ## Lösning
 
-Återanvänd den befintliga AI-integrationskonfigurationen från AI Module och låt edge functions välja provider baserat på admins val.
-
----
-
-## Teknisk Implementation
-
-### 1. Skapa delad AI Provider-logik (ny fil)
-
-**Fil:** `supabase/functions/_shared/ai-provider.ts`
+Lägg till en **separat** inställning för admin-verktyg i AI-modulens config:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  AI Provider Utility                                            │
+│  AIModuleConfig                                                 │
 ├─────────────────────────────────────────────────────────────────┤
-│  • getAICompletion(messages, options)                           │
-│  • Läser active_integration från modules-tabellen               │
-│  • Stödjer: lovable, openai, gemini, n8n                        │
-│  • Fallback: Lovable → Error om ingen nyckel finns              │
+│  active_integration: 'n8n'        ← Chat (besökare)             │
+│  integration: { webhook_url, ... }                              │
+│                                                                 │
+│  NEW: admin_ai_provider: 'lovable' | 'openai' | 'gemini' | 'n8n'│
+│  NEW: admin_ai_config?: {                                       │
+│         model?: string                                          │
+│         webhook_url?: string  ← Om n8n valts, separat webhook   │
+│       }                                                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-Provider-logik:
-- **lovable**: Använd `LOVABLE_API_KEY` (default i Lovable Cloud)
-- **openai**: Använd `OPENAI_API_KEY` secret
-- **gemini**: Använd `GEMINI_API_KEY` secret  
-- **n8n**: Kalla webhook (befintlig logik)
+## Teknisk Implementation
 
-### 2. Uppdatera Edge Functions
+### 1. Uppdatera TypeScript Types
 
-Alla tre funktioner uppdateras att använda den delade providern:
+**Fil:** `src/types/modules.ts`
+
+Lägg till nya fält i `AIModuleConfig`:
+- `admin_ai_provider: 'lovable' | 'openai' | 'gemini' | 'n8n'` - Default: `'lovable'`
+- `admin_ai_config?: { model?: string; webhook_url?: string }` - Valfri konfiguration
+
+### 2. Uppdatera Shared AI Provider
+
+**Fil:** `supabase/functions/_shared/ai-provider.ts`
+
+Ny funktion: `getAdminAICompletion()` som:
+- Läser `admin_ai_provider` istället för `active_integration`
+- Använder `admin_ai_config` för model/webhook_url
+- Fallback till Lovable om inget är konfigurerat
+
+### 3. Uppdatera Edge Functions
 
 | Edge Function | Ändring |
 |--------------|---------|
-| `enhance-text` | Importera shared provider, läs config |
-| `enhance-prompt` | Importera shared provider, läs config |
-| `page-builder-chat` | Importera shared provider, läs config |
+| `enhance-text` | Använd `getAdminAICompletion()` |
+| `enhance-prompt` | Använd `getAdminAICompletion()` |
+| `page-builder-chat` | Använd `getAdminAICompletion()` |
 
-### 3. UI - Tydlig indikation
+### 4. UI för Admin AI Provider
 
-Lägg till en liten badge/notis i admin som visar vilken AI-provider som används för admin-verktyg:
+**Fil:** `src/components/admin/AIModuleSettings.tsx`
+
+Lägg till nytt kort "Admin AI Tools" med:
+- Dropdown för att välja provider (Lovable/OpenAI/Gemini/n8n)
+- Om n8n väljs: input för separat webhook-URL
+- Tydlig förklaring om skillnaden
 
 ```text
 ┌─────────────────────────────────────────┐
-│  Persona & Instructions                 │
+│  Admin AI Tools                         │
 │  ────────────────────────────────────   │
-│  System Prompt          [AI Assist ▾]   │
-│  ┌─────────────────────────────────┐    │
-│  │ Du är en hjälpsam assistent...  │    │
-│  └─────────────────────────────────┘    │
+│  Provider for in-app AI assistance      │
 │                                         │
-│  ⓘ AI tools use: Lovable AI            │
-│    (Configure in Integration section)   │
+│  Provider:  [Lovable AI ▾]              │
+│                                         │
+│  ⓘ Used by: Prompt Enhancer,           │
+│     Text Actions, Page Builder          │
+│                                         │
+│  Note: This is separate from visitor    │
+│  chat which uses n8n with tool calls.   │
 └─────────────────────────────────────────┘
 ```
+
+### 5. Uppdatera Befintlig UI-indikator
+
+Den badge som redan finns uppdateras att visa:
+- "Admin AI tools use: **Lovable AI**" (eller vald provider)
+- Länk till ny inställningssektion
 
 ---
 
 ## Implementation - Steg
 
-### Steg 1: Skapa shared provider
-- Ny fil: `supabase/functions/_shared/ai-provider.ts`
-- Hämta modul-config från Supabase
-- Route till rätt provider (Lovable/OpenAI/Gemini/n8n)
-- Hantera saknade API-nycklar med tydliga felmeddelanden
-
-### Steg 2: Migrera enhance-text
-- Importera shared provider
-- Ta bort hårdkodad Lovable-logik
-- Behåll samma API-kontrakt
-
-### Steg 3: Migrera enhance-prompt
-- Samma som ovan
-
-### Steg 4: Migrera page-builder-chat
-- Samma som ovan (mer komplex pga tool-calling)
-
-### Steg 5: UI-feedback
-- Lägg till info-badge i AIModuleSettings
-- Visa vilken provider som är aktiv för admin-verktyg
-
-### Steg 6: Dokumentation
-- Uppdatera DEPLOYMENT.md med info om vilka secrets som behövs vid self-hosting
+1. **Types** - Lägg till `admin_ai_provider` och `admin_ai_config` i `AIModuleConfig`
+2. **Default config** - Sätt `admin_ai_provider: 'lovable'` som default
+3. **Shared provider** - Skapa `getAdminAICompletion()` funktion
+4. **Edge functions** - Byt från `getAICompletion()` till `getAdminAICompletion()`
+5. **UI** - Lägg till Admin AI Provider-kort i AIModuleSettings
+6. **Deploy** - Deploya uppdaterade edge functions
 
 ---
 
-## Alternativ som övervägdes
+## Provider-val för Admin
 
-**A) Separata inställningar för admin-AI**
-- Fördel: Mer flexibilitet
-- Nackdel: Mer komplext, duplicerad konfiguration
-
-**B) Hårdkoda fallback-kedja** (Lovable → OpenAI → Gemini)
-- Fördel: "Just works"
-- Nackdel: Svårare att förstå vilken som används
-
-**Valt: Återanvänd befintlig integration-config** - enklast, minst kod, följer separation of concerns.
+| Provider | Krav | Användningsfall |
+|----------|------|-----------------|
+| Lovable AI | Lovable Cloud | Default - fungerar direkt |
+| OpenAI | `OPENAI_API_KEY` secret | Self-hosting |
+| Gemini | `GEMINI_API_KEY` secret | Self-hosting |
+| n8n | Separat webhook-URL | Avancerad - egen logik |
 
 ---
 
-## Self-hosting krav efter implementation
+## Varför Inte Återanvända Chat-webhooken?
 
-För att AI-verktyg ska fungera vid self-hosting:
+n8n-webhooken för chat är byggd för konversationer med:
+- Tool calls (Telegram, e-post, sökningar)
+- Session-hantering
+- Komplex response-parsing
 
-| Provider | Krav |
-|----------|------|
-| OpenAI | Sätt `OPENAI_API_KEY` secret |
-| Gemini | Sätt `GEMINI_API_KEY` secret |
-| n8n | Konfigurera webhook URL i admin |
-| Lovable | Endast Lovable Cloud (automatiskt) |
+Admin-verktygen behöver enkla text-in/text-ut operationer, vilket inte matchar chat-webhookens design.
 
 ---
 
 ## Tidsuppskattning
 
-- Shared provider: ~30 min
-- Migrera 3 edge functions: ~45 min
-- UI-feedback: ~15 min
-- Testning: ~15 min
+- Types + defaults: ~10 min
+- Shared provider: ~20 min  
+- Edge functions: ~15 min
+- UI: ~30 min
+- Test: ~15 min
 
-**Totalt: ~2 timmar**
+**Totalt: ~1.5 timmar**
