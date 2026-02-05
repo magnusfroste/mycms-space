@@ -61,7 +61,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="w-full bg-background border border-border/50 rounded-3xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[52px] max-h-[200px] overflow-y-auto"
+            className="input-field w-full pr-16 resize-none text-base min-h-[52px] max-h-[200px] overflow-y-auto"
             rows={1}
             disabled={isLoading}
           />
@@ -69,7 +69,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onClick={onSend}
             disabled={!value.trim() || isLoading}
             size="icon"
-            className="absolute bottom-3 right-3 rounded-full h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
+            className="absolute bottom-3 right-3 h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
+            style={{ borderRadius: 'var(--radius)' }}
           >
             <Send className="h-4 w-4" />
           </Button>
