@@ -26,8 +26,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
-import { useUpdateBlockConfig } from '@/models/blockContent';
-import { useQueryClient } from '@tanstack/react-query';
 import SortableProjectItem from './SortableProjectItem';
 import ProjectForm from './ProjectForm';
 import CategoryManagerInline from './CategoryManagerInline';
@@ -35,7 +33,6 @@ import CategoryManagerInline from './CategoryManagerInline';
 interface ProjectShowcaseEditorProps {
   config: ProjectShowcaseBlockConfig;
   onChange: (config: ProjectShowcaseBlockConfig) => void;
-  blockId?: string; // Pass block ID to enable auto-save
 }
 
 type ProjectItem = NonNullable<ProjectShowcaseBlockConfig['projects']>[number];
@@ -61,11 +58,8 @@ const emptyFormData: ProjectFormData = {
 const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
   config,
   onChange,
-  blockId,
 }) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const updateBlockConfig = useUpdateBlockConfig();
   const projects = config.projects || [];
   const sortedProjects = [...projects].sort((a, b) => a.order_index - b.order_index);
 
@@ -74,7 +68,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
   const [editData, setEditData] = useState<ProjectFormData>(emptyFormData);
   const [newProjectData, setNewProjectData] = useState<ProjectFormData>(emptyFormData);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // DnD sensors
@@ -85,34 +79,9 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
 
   const enabledProjects = projects.filter((p) => p.enabled);
 
-  // Auto-save helper - saves directly to database if blockId is provided
-  const saveToDatabase = async (updatedProjects: ProjectItem[]) => {
-    if (!blockId) {
-      // Fallback to onChange only if no blockId
-      onChange({ ...config, projects: updatedProjects });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await updateBlockConfig.mutateAsync({
-        blockId,
-        config: { projects: updatedProjects },
-      });
-      // Also update local state for immediate UI feedback
-      onChange({ ...config, projects: updatedProjects });
-      toast({ title: 'Changes saved' });
-    } catch (err) {
-      console.error('Save error:', err);
-      toast({ title: 'Could not save changes', variant: 'destructive' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Helper to update projects array (now auto-saves)
+  // Helper to update projects array - just updates local state
   const updateProjects = (updatedProjects: ProjectItem[]) => {
-    saveToDatabase(updatedProjects);
+    onChange({ ...config, projects: updatedProjects });
   };
 
   // Edit handlers
@@ -226,7 +195,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
     }
 
     setUploadingFor(projectId);
-    setIsSaving(true);
+    setIsUploading(true);
 
     try {
       // Compress the image
@@ -274,7 +243,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
       toast({ title: 'Could not upload image', variant: 'destructive' });
     } finally {
       setUploadingFor(null);
-      setIsSaving(false);
+      setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -342,26 +311,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
 
   // Category management handler
   const handleCategoriesChange = (updatedCategories: Category[]) => {
-    if (!blockId) {
-      onChange({ ...config, categories: updatedCategories });
-      return;
-    }
-    
-    setIsSaving(true);
-    updateBlockConfig.mutate(
-      { blockId, config: { categories: updatedCategories } },
-      {
-        onSuccess: () => {
-          onChange({ ...config, categories: updatedCategories });
-          toast({ title: 'Categories saved' });
-          setIsSaving(false);
-        },
-        onError: () => {
-          toast({ title: 'Could not save categories', variant: 'destructive' });
-          setIsSaving(false);
-        },
-      }
-    );
+    onChange({ ...config, categories: updatedCategories });
   };
 
   const [showCategories, setShowCategories] = useState(false);
@@ -431,7 +381,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
                   onChange={setEditData}
                   onSave={saveEditing}
                   onCancel={cancelEditing}
-                  isSaving={isSaving}
+                  isSaving={false}
                   projectId={project.id}
                   images={project.images.map((img) => ({
                     id: img.id,

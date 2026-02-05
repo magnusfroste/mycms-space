@@ -2,6 +2,7 @@
 // Inline Block Editor
 // In-place content editing for blocks
 // All data now stored in block_config JSONB
+// Changes are saved when clicking "Done"
 // ============================================
 
 import React from 'react';
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Check, X } from 'lucide-react';
+import { Check, X, Save } from 'lucide-react';
 import type { PageBlock } from '@/types';
 import type {
   HeroBlockConfig,
@@ -518,7 +519,6 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         <ProjectShowcaseEditor
           config={projectConfig}
           onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
-          blockId={block.id}
         />
       </div>
     );
@@ -1060,15 +1060,38 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
     }
   };
 
+  const hasPendingChanges = pendingChanges && Object.keys(pendingChanges).length > 0;
+
   return (
     <Card className="border-2 border-primary/50 bg-card/95">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4 bg-primary/5">
-        <CardTitle className="text-base font-medium">
-          Editing: {blockTypeLabels[block.block_type] || block.block_type}
-        </CardTitle>
-        <Button variant="ghost" size="sm" onClick={onDone} className="h-8">
-          <Check className="h-4 w-4 mr-1" />
-          Done
+        <div className="flex items-center gap-3">
+          <CardTitle className="text-base font-medium">
+            Editing: {blockTypeLabels[block.block_type] || block.block_type}
+          </CardTitle>
+          {hasPendingChanges && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              Unsaved changes
+            </span>
+          )}
+        </div>
+        <Button 
+          variant={hasPendingChanges ? "default" : "ghost"} 
+          size="sm" 
+          onClick={onDone} 
+          className="h-8"
+        >
+          {hasPendingChanges ? (
+            <>
+              <Save className="h-4 w-4 mr-1" />
+              Save & Close
+            </>
+          ) : (
+            <>
+              <Check className="h-4 w-4 mr-1" />
+              Done
+            </>
+          )}
         </Button>
       </CardHeader>
       <CardContent className="p-4">
