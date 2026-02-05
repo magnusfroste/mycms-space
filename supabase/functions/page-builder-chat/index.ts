@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
-  getAICompletion, 
+  getAdminAICompletion, 
   getAIModuleConfig,
   handleProviderError,
   type AIMessage,
@@ -333,8 +333,8 @@ serve(async (req) => {
       ...messages,
     ];
 
-    // Initial request with tools
-    const result = await getAICompletion({
+    // Initial request with tools (using admin AI provider)
+    const result = await getAdminAICompletion({
       messages: initialMessages,
       tools: TOOLS,
       stream: false,
@@ -398,8 +398,8 @@ serve(async (req) => {
         });
       }
       
-      // Continue conversation with tool results
-      const continueResult = await getAICompletion({
+      // Continue conversation with tool results (using admin AI provider)
+      const continueResult = await getAdminAICompletion({
         messages: conversationMessages,
         tools: TOOLS,
         stream: false,

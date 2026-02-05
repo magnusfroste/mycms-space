@@ -23,6 +23,14 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
 
 export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'ollama' | 'lovable';
 
+// Admin AI Provider type (subset - no n8n tool calls)
+export type AdminAIProvider = 'lovable' | 'openai' | 'gemini';
+
+// Admin AI Config
+export interface AdminAIConfig {
+  model?: string;
+}
+
 // Base integration interface
 export interface AIIntegrationBase {
   type: AIIntegrationType;
@@ -250,9 +258,13 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
 
 // AI Module Config - Updated to use integration system
 export interface AIModuleConfig {
-  // Active integration
+  // Active integration for visitor chat
   active_integration: AIIntegrationType;
   integration: AIIntegration;
+  
+  // Admin AI tools provider (separate from chat - no tool calls needed)
+  admin_ai_provider: AdminAIProvider;
+  admin_ai_config?: AdminAIConfig;
   
   // System prompt (sent to all providers)
   system_prompt: string;
@@ -425,6 +437,10 @@ export const defaultModuleConfigs: ModuleTypeConfigMap = {
   ai: {
     active_integration: 'n8n',
     integration: defaultIntegrations.n8n,
+    admin_ai_provider: 'lovable',
+    admin_ai_config: {
+      model: 'google/gemini-2.5-flash',
+    },
     system_prompt: `# Role
 You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creative, and have a great sense of humor! Your biggest interest is product-led AI and the business impact of transformative technology.
 

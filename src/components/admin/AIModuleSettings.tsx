@@ -18,7 +18,7 @@ import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
-import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
+import type { AIModuleConfig, AIIntegrationType, AdminAIProvider } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
@@ -354,31 +354,68 @@ You are [Name], an AI assistant for [Your Website]...
               className="min-h-[200px] font-mono text-sm"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Admin AI Tools Provider */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Admin AI Tools
+          </CardTitle>
+          <CardDescription>
+            AI provider for in-app assistance (Prompt Enhancer, Text Actions, Page Builder)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="admin_ai_provider">Provider</Label>
+            <Select 
+              value={config?.admin_ai_provider || 'lovable'} 
+              onValueChange={(value: AdminAIProvider) => handleConfigUpdate({ 
+                admin_ai_provider: value,
+                admin_ai_config: {
+                  model: value === 'openai' ? 'gpt-4o' : value === 'gemini' ? 'gemini-1.5-flash' : 'google/gemini-2.5-flash'
+                }
+              })}
+            >
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Select provider" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border z-50">
+                <SelectItem value="lovable">
+                  <span className="font-medium">Lovable AI</span>
+                </SelectItem>
+                <SelectItem value="openai">
+                  <span className="font-medium">OpenAI</span>
+                </SelectItem>
+                <SelectItem value="gemini">
+                  <span className="font-medium">Google Gemini</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
-          {/* AI Tools Provider Info */}
           <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 space-y-1">
-            <div className="flex items-center gap-2">
-              <Bot className="h-4 w-4 text-primary" />
-              <p className="text-sm font-medium">
-                Admin AI tools use: <span className="text-primary">{activeIntegrationMeta?.name || 'Lovable AI'}</span>
-              </p>
-            </div>
-            <p className="text-xs text-muted-foreground pl-6">
-              Prompt Enhancer, Text Actions, and Page Builder use this provider.
-              {activeIntegration !== 'lovable' && ' Configure API keys in Integrations.'}
+            <p className="text-sm font-medium">
+              Admin tools use: <span className="text-primary">
+                {config?.admin_ai_provider === 'openai' ? 'OpenAI' : 
+                 config?.admin_ai_provider === 'gemini' ? 'Google Gemini' : 'Lovable AI'}
+              </span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              This is separate from visitor chat which can use n8n with tool calls.
+              {config?.admin_ai_provider === 'openai' && ' Requires OPENAI_API_KEY secret.'}
+              {config?.admin_ai_provider === 'gemini' && ' Requires GEMINI_API_KEY secret.'}
             </p>
           </div>
           
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-            <p className="text-sm font-medium">💡 Separation of Concerns</p>
+            <p className="text-sm font-medium">💡 Why separate providers?</p>
             <p className="text-xs text-muted-foreground">
-              <strong>Here (CMS):</strong> Personality, tone, instructions, showcase content
-            </p>
-            <p className="text-xs text-muted-foreground">
-              <strong>n8n/Backend:</strong> Tool definitions, function calls, technical workflow logic
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              This makes it easy to update the AI's personality without touching the backend workflow.
+              Visitor chat (n8n) supports tool calls for Telegram, email, search, etc.
+              Admin tools only need simple text-in/text-out, so they can use any direct provider.
             </p>
           </div>
         </CardContent>

@@ -805,30 +805,45 @@ npm run build
 - Regular updates of dependencies
 - Use Row Level Security (RLS) in Supabase
 
-### AI Admin Tools (Self-Hosting)
+### AI Configuration (Self-Hosting)
 
-When self-hosting outside of Lovable Cloud, the admin AI tools (Prompt Enhancer, Text Actions, Page Builder Chat) need an AI provider configured:
+When self-hosting outside of Lovable Cloud, there are two separate AI configurations:
+
+#### 1. Visitor Chat (n8n / Direct Providers)
+
+For the visitor-facing chat widget:
+- **n8n** - Full agentic capabilities with tool calls (Telegram, email, search, etc.)
+- **OpenAI/Gemini/Lovable AI** - Direct API calls without tool calls
+
+Configure in Admin → AI Chat → Integration.
+
+#### 2. Admin AI Tools (Direct Providers Only)
+
+For admin tools (Prompt Enhancer, Text Actions, Page Builder Chat):
+- Does NOT support n8n (no tool calls needed)
+- Configure separately in Admin → AI Chat → Admin AI Tools
 
 | Provider | Secret Required | Notes |
 |----------|-----------------|-------|
 | OpenAI | `OPENAI_API_KEY` | Add to Supabase secrets |
 | Gemini | `GEMINI_API_KEY` | Add to Supabase secrets |
-| n8n | Webhook URL | Configure in admin UI |
 | Lovable AI | Auto-configured | Only in Lovable Cloud |
 
 **Setup steps:**
 
-1. Go to Admin → AI Chat → Integration
-2. Select your AI provider (OpenAI, Gemini, or n8n)
+1. Go to Admin → AI Chat → Admin AI Tools
+2. Select your AI provider (Lovable AI, OpenAI, or Gemini)
 3. For OpenAI/Gemini: Add the API key as a Supabase secret:
    ```bash
    npx supabase secrets set OPENAI_API_KEY=sk-your-key
    # or
    npx supabase secrets set GEMINI_API_KEY=your-key
    ```
-4. For n8n: Configure webhook URL in admin UI
 
-The admin tools will automatically use your selected provider.
+**Why separate configurations?**
+- Visitor chat with n8n uses complex tool calls for external integrations
+- Admin tools only need simple text-in/text-out operations
+- This allows flexible configuration for different use cases
 
 ---
 
