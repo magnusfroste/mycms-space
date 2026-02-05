@@ -1,196 +1,134 @@
 
-# Theme System Enhancement Plan
+# Plan: Konfigurerbar AI för Admin-verktyg
 
-## Current State Analysis
+## Bakgrund
 
-The branding system is correctly set up with:
-- **Single `data-theme` attribute** as source of truth (good!)
-- **Three templates**: Elegant (default), Grok, Sana
-- **Color variables** already differentiated per theme
-- **Some style tokens** like `--radius`, `--shadow-*`, `--section-gap`, `--heading-tracking`
+Admin-panelen har tre AI-drivna funktioner som idag är hårdkodade mot Lovable AI:
+1. **PromptEnhancer** - Förbättrar system prompts
+2. **AITextActions** - Förbättrar/genererar text i blogg/sidor
+3. **PageBuilderChat** - AI-sidbyggare
 
-**What's missing**: The themes only differ in colors. True template identity requires typography, animations, spacing, and component behavior to differ.
+Vid self-hosting utan Lovable Cloud slutar dessa fungera.
+
+## Lösning
+
+Återanvänd den befintliga AI-integrationskonfigurationen från AI Module och låt edge functions välja provider baserat på admins val.
 
 ---
 
-## Solution: Theme-Specific Style Tokens
+## Teknisk Implementation
 
-Each theme gets its own "personality" through extended CSS variables.
+### 1. Skapa delad AI Provider-logik (ny fil)
+
+**Fil:** `supabase/functions/_shared/ai-provider.ts`
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│ ELEGANT               │ GROK                 │ SANA            │
+│  AI Provider Utility                                            │
 ├─────────────────────────────────────────────────────────────────┤
-│ Warm, organic         │ Sharp, minimal       │ Clean, airy     │
-│ Soft shadows          │ No shadows           │ Subtle shadows  │
-│ Rounded corners (1rem)│ Tight corners (0.5rem)│ Medium (0.75rem)│
-│ Gradient buttons      │ Solid + border       │ Subtle gradient │
-│ Floating animations   │ No animations        │ Fade only       │
-│ Glass morphism        │ Hard edges           │ Light glass     │
-│ Generous spacing      │ Compact spacing      │ Balanced spacing│
+│  • getAICompletion(messages, options)                           │
+│  • Läser active_integration från modules-tabellen               │
+│  • Stödjer: lovable, openai, gemini, n8n                        │
+│  • Fallback: Lovable → Error om ingen nyckel finns              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+Provider-logik:
+- **lovable**: Använd `LOVABLE_API_KEY` (default i Lovable Cloud)
+- **openai**: Använd `OPENAI_API_KEY` secret
+- **gemini**: Använd `GEMINI_API_KEY` secret  
+- **n8n**: Kalla webhook (befintlig logik)
 
-## Phase 1: Extended Style Variables
+### 2. Uppdatera Edge Functions
 
-Add new CSS custom properties for each theme.
+Alla tre funktioner uppdateras att använda den delade providern:
 
-**New variables to add:**
+| Edge Function | Ändring |
+|--------------|---------|
+| `enhance-text` | Importera shared provider, läs config |
+| `enhance-prompt` | Importera shared provider, läs config |
+| `page-builder-chat` | Importera shared provider, läs config |
 
-```css
-/* Animation & Effects */
---animation-speed: 0.6s;           /* Animation duration */
---enable-glow: 1;                  /* 0 or 1 to toggle glow effects */
---enable-parallax: 1;              /* 0 or 1 for parallax effects */
---glass-blur: 20px;                /* Backdrop blur amount */
---glass-opacity: 0.6;              /* Glass card opacity */
+### 3. UI - Tydlig indikation
 
-/* Typography */
---font-weight-heading: 600;        /* Heading weight */
---font-weight-body: 400;           /* Body weight */
---text-case-heading: none;         /* uppercase for Grok */
+Lägg till en liten badge/notis i admin som visar vilken AI-provider som används för admin-verktyg:
 
-/* Component Shapes */
---button-radius: 9999px;           /* Pill shape default */
---card-radius: 1rem;               /* Card corners */
---input-radius: 0.75rem;           /* Input corners */
-
-/* Transitions */
---transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
---hover-lift: -4px;                /* How much cards lift on hover */
+```text
+┌─────────────────────────────────────────┐
+│  Persona & Instructions                 │
+│  ────────────────────────────────────   │
+│  System Prompt          [AI Assist ▾]   │
+│  ┌─────────────────────────────────┐    │
+│  │ Du är en hjälpsam assistent...  │    │
+│  └─────────────────────────────────┘    │
+│                                         │
+│  ⓘ AI tools use: Lovable AI            │
+│    (Configure in Integration section)   │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## Phase 2: Theme Definitions
+## Implementation - Steg
 
-### Elegant (Default) - "Warm Premium"
-- Gradient buttons with glow
-- Glass morphism cards
-- Floating/parallax animations
-- Organic rounded corners
-- Generous whitespace
+### Steg 1: Skapa shared provider
+- Ny fil: `supabase/functions/_shared/ai-provider.ts`
+- Hämta modul-config från Supabase
+- Route till rätt provider (Lovable/OpenAI/Gemini/n8n)
+- Hantera saknade API-nycklar med tydliga felmeddelanden
 
-### Grok - "Sharp Minimal"
-- Solid buttons with thin border
-- Hard-edge cards, no glass effect
-- No decorative animations
-- Tight, geometric corners
-- Compact layout
-- UPPERCASE headings (optional)
+### Steg 2: Migrera enhance-text
+- Importera shared provider
+- Ta bort hårdkodad Lovable-logik
+- Behåll samma API-kontrakt
 
-### Sana - "Clean Professional"
-- Subtle gradient buttons
-- Light glass effect
-- Fade-in animations only (no float/parallax)
-- Medium rounded corners
-- Balanced whitespace
-- Extra line-height for readability
+### Steg 3: Migrera enhance-prompt
+- Samma som ovan
 
----
+### Steg 4: Migrera page-builder-chat
+- Samma som ovan (mer komplex pga tool-calling)
 
-## Phase 3: Implementation in CSS
+### Steg 5: UI-feedback
+- Lägg till info-badge i AIModuleSettings
+- Visa vilken provider som är aktiv för admin-verktyg
 
-Update `src/index.css` with theme-specific overrides for:
-
-1. **Glass card component** - adjust blur/opacity per theme
-2. **Button styles** - different hover behaviors
-3. **Heading styles** - font-weight, letter-spacing, text-transform
-4. **Animation classes** - conditionally apply based on theme
-5. **Section spacing** - more compact for Grok
-
-Example structure:
-
-```css
-/* Grok: Override component styles */
-[data-theme="grok"] .glass-card {
-  backdrop-filter: none;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-}
-
-[data-theme="grok"] .btn-primary {
-  background: hsl(var(--primary));
-  box-shadow: none;
-  border: 1px solid hsl(var(--accent));
-}
-
-[data-theme="grok"] h1, 
-[data-theme="grok"] h2 {
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Sana: Lighter effects */
-[data-theme="sana"] .glass-card {
-  backdrop-filter: blur(10px);
-  background: hsl(var(--card) / 0.9);
-}
-```
+### Steg 6: Dokumentation
+- Uppdatera DEPLOYMENT.md med info om vilka secrets som behövs vid self-hosting
 
 ---
 
-## Phase 4: Component Adaptations
+## Alternativ som övervägdes
 
-Update key components to respect theme variables:
+**A) Separata inställningar för admin-AI**
+- Fördel: Mer flexibilitet
+- Nackdel: Mer komplext, duplicerad konfiguration
 
-1. **HeroBlock.tsx** - Disable parallax/mesh gradient for Grok
-2. **BlockRenderer.tsx** - Use theme-aware animation classes
-3. **Glass components** - Check `--glass-blur` variable
+**B) Hårdkoda fallback-kedja** (Lovable → OpenAI → Gemini)
+- Fördel: "Just works"
+- Nackdel: Svårare att förstå vilken som används
 
-Add a utility hook or CSS class:
-
-```tsx
-// In components, check theme for conditional rendering
-const theme = document.documentElement.getAttribute('data-theme') || 'elegant';
-const enableParallax = theme !== 'grok';
-```
-
-Or purely CSS-driven:
-
-```css
-[data-theme="grok"] .animate-float {
-  animation: none;
-}
-```
+**Valt: Återanvänd befintlig integration-config** - enklast, minst kod, följer separation of concerns.
 
 ---
 
-## Customization Recommendation
+## Self-hosting krav efter implementation
 
-**My recommendation: Curated templates only (no custom CSS editor)**
+För att AI-verktyg ska fungera vid self-hosting:
 
-### Why?
-1. **Complexity trap** - CSS editors create maintenance nightmares
-2. **User experience** - Non-technical users get overwhelmed
-3. **Brand consistency** - Random customization leads to broken designs
-4. **Support burden** - "My custom CSS broke the site" tickets
-
-### Alternative approach:
-- Keep 3-5 well-designed templates
-- Add ONE toggle: "Minimal mode" (disables animations/effects)
-- Future: Add accent color picker (single color, applied to all themes)
-
-This follows Apple's philosophy: opinionated defaults that just work.
+| Provider | Krav |
+|----------|------|
+| OpenAI | Sätt `OPENAI_API_KEY` secret |
+| Gemini | Sätt `GEMINI_API_KEY` secret |
+| n8n | Konfigurera webhook URL i admin |
+| Lovable | Endast Lovable Cloud (automatiskt) |
 
 ---
 
-## Summary of Changes
+## Tidsuppskattning
 
-| File | Changes |
-|------|---------|
-| `src/index.css` | ~80 lines: Add theme-specific component overrides |
-| `src/hooks/useBrandingTheme.ts` | No changes needed (already simplified) |
-| `src/components/blocks/HeroBlock.tsx` | ~5 lines: Respect theme for parallax |
-| `src/components/admin/BrandingSettings.tsx` | Update descriptions to highlight style differences |
-| `tailwind.config.ts` | Optional: Add animation-none utility |
+- Shared provider: ~30 min
+- Migrera 3 edge functions: ~45 min
+- UI-feedback: ~15 min
+- Testning: ~15 min
 
-## Expected Outcome
-
-- **Elegant**: Warm, animated, premium feel (current default)
-- **Grok**: Sharp, static, X/Tesla-inspired minimal
-- **Sana**: Clean, professional, SaaS-appropriate
-- **No UI customization complexity** - templates that just work
-- **Future-ready** for accent color picker if needed
+**Totalt: ~2 timmar**
