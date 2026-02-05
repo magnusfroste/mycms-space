@@ -1040,7 +1040,8 @@
 }
 
 /* Grok: Solid foreground text - brutalist, no gradients */
-[data-theme="grok"] .gradient-text {
+[data-theme="grok"] .gradient-text,
+[data-theme="grok"] .section-title-gradient {
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
@@ -1117,7 +1118,8 @@
 }
 
 /* Sana: Solid primary color text - professional, clean */
-[data-theme="sana"] .gradient-text {
+[data-theme="sana"] .gradient-text,
+[data-theme="sana"] .section-title-gradient {
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
