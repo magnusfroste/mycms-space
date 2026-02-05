@@ -102,9 +102,9 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Animated Mesh Gradient Background */}
+      {/* Animated Mesh Gradient Background - hidden in Grok theme via CSS */}
       <div 
-        className="absolute inset-0 transition-transform duration-1000 ease-out"
+        className="hero-parallax-orb absolute inset-0 transition-transform duration-1000 ease-out"
         style={{ transform: `translateY(${parallaxOffset * 0.5}px)` }}
       >
         {/* Primary gradient orb */}
@@ -138,39 +138,39 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
         />
       </div>
 
-      {/* Noise texture overlay */}
+      {/* Noise texture overlay - hidden in Grok */}
       <div 
-        className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
+        className="hero-parallax-orb absolute inset-0 opacity-[0.015] dark:opacity-[0.03] pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
       />
 
-      {/* Animated Background Elements */}
+      {/* Animated Background Elements - only when animations enabled and theme supports it */}
       {enableAnimations && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="hero-parallax-orb absolute inset-0 pointer-events-none">
           {animationStyle === 'falling-stars' && <FallingStars />}
           {animationStyle === 'particles' && <ParticleField />}
           {animationStyle === 'gradient-shift' && <GradientShift />}
         </div>
       )}
 
-      {/* Floating Orbs with parallax */}
+      {/* Floating Orbs with parallax - hidden in Grok theme */}
       <div 
-        className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl animate-float"
+        className="hero-parallax-orb absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl animate-float"
         style={{ transform: `translateY(${parallaxOffset * 0.2}px)` }}
       />
       <div 
-        className="absolute bottom-1/4 -right-32 w-80 h-80 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl animate-float"
+        className="hero-parallax-orb absolute bottom-1/4 -right-32 w-80 h-80 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-3xl animate-float"
         style={{ 
           animationDelay: '-3s',
           transform: `translateY(${parallaxOffset * 0.15}px)` 
         }}
       />
       
-      {/* Subtle grid pattern */}
+      {/* Subtle grid pattern - hidden in Grok */}
       <div 
-        className="absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
+        className="hero-parallax-orb absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
         style={{
           backgroundImage: `
             linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
@@ -181,8 +181,8 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
         }}
       />
 
-      {/* Radial vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.4)_100%)]" />
+      {/* Radial vignette - hidden in Grok */}
+      <div className="hero-parallax-orb absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.4)_100%)]" />
 
       {/* Content with parallax */}
       <div 
