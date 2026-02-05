@@ -1,6 +1,7 @@
 // ============================================
 // Skills Bar Block - 2026 Design System
 // Dedicated block for technical competencies
+// Unified theme system compatible
 // ============================================
 
 import React from 'react';
