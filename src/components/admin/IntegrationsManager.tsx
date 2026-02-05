@@ -4,20 +4,20 @@
 // All integration settings consolidated here (n8n pattern)
 // ============================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, Copy, Eye, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 import { Switch } from '@/components/ui/switch';
 
 import { useAIModule, useUpdateAIModule, useGitHubModule, useUpdateGitHubModule } from '@/models/modules';
-import { useAIChatContext } from '@/hooks/useAIChatContext';
+
 import type { AIIntegrationType, UtilityIntegrationType, SourceIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations, defaultModuleConfigs } from '@/types/modules';
 
@@ -62,10 +62,6 @@ const IntegrationsManager: React.FC = () => {
   const updateGitHubModule = useUpdateGitHubModule();
   const { toast } = useToast();
   const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
-  const [showPayloadPreview, setShowPayloadPreview] = useState(false);
-  
-  // Get context data for preview
-  const { contextData, hasContext } = useAIChatContext();
 
   const handleConfigUpdate = (updates: Partial<AIModuleConfig>) => {
     if (!config) return;
@@ -104,24 +100,6 @@ const IntegrationsManager: React.FC = () => {
     });
   };
 
-  // Generate sample payload for preview
-  const samplePayload = useMemo(() => {
-    const payload: Record<string, unknown> = {
-      message: "What services do you offer?",
-      sessionId: "session_1234567890_abc123def",
-    };
-
-    if (hasContext && contextData) {
-      payload.siteContext = contextData;
-    }
-
-    return payload;
-  }, [hasContext, contextData]);
-
-  const copyPayload = () => {
-    navigator.clipboard.writeText(JSON.stringify(samplePayload, null, 2));
-    toast({ title: 'Copied to clipboard' });
-  };
 
   if (isLoading) {
     return (
@@ -353,48 +331,6 @@ const IntegrationsManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Payload Preview - useful for n8n users */}
-      <Card>
-        <CardHeader>
-          <Collapsible open={showPayloadPreview} onOpenChange={setShowPayloadPreview}>
-            <CollapsibleTrigger asChild>
-              <div className="flex items-center justify-between cursor-pointer">
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Webhook Payload Preview
-                </CardTitle>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showPayloadPreview ? 'rotate-180' : ''}`} />
-              </div>
-            </CollapsibleTrigger>
-            <CardDescription>
-              See the JSON structure sent to your webhook (useful for n8n setup)
-            </CardDescription>
-            <CollapsibleContent>
-              <CardContent className="pt-4">
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={copyPayload}
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy
-                  </Button>
-                  <pre className="bg-muted/50 p-4 rounded-lg overflow-x-auto text-xs font-mono max-h-96 overflow-y-auto">
-                    {JSON.stringify(samplePayload, null, 2)}
-                  </pre>
-                </div>
-                {hasContext && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    ✓ Site context includes {contextData?.pages.length || 0} page(s) with {contextData?.pages.reduce((sum, p) => sum + p.blocks.length, 0) || 0} block(s) and {contextData?.blogs.length || 0} blog post(s)
-                  </p>
-                )}
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardHeader>
-      </Card>
     </div>
   );
 };
