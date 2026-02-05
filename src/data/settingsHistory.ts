@@ -16,12 +16,14 @@ export interface SettingsHistoryEntry {
 
 // Table name to display label mapping
 export const tableLabels: Record<string, string> = {
-  about_me_settings: 'Om mig',
-  hero_settings: 'Hero',
-  portfolio_settings: 'Portfolio',
-  modules: 'Moduler',
-  page_blocks: 'Sidblock',
-  projects: 'Projekt',
+  modules: 'Modules',
+  page_blocks: 'Page Blocks',
+  nav_links: 'Navigation',
+  blog_posts: 'Blog Posts',
+  blog_categories: 'Blog Categories',
+  github_repos: 'GitHub Repos',
+  pages: 'Pages',
+  newsletter_campaigns: 'Newsletters',
 };
 
 export const fetchSettingsHistory = async (
@@ -73,17 +75,39 @@ export const fetchHistoryEntry = async (
   return data as SettingsHistoryEntry;
 };
 
+// Supported tables for history restoration
+// Must match tables that have triggers logging to settings_history
+type RestorableTable = 
+  | 'modules' 
+  | 'page_blocks' 
+  | 'nav_links'
+  | 'blog_posts'
+  | 'blog_categories'
+  | 'github_repos'
+  | 'pages'
+  | 'newsletter_campaigns';
+
 // Restore a specific history entry to its original table
 export const restoreHistoryEntry = async (
   entry: SettingsHistoryEntry
 ): Promise<void> => {
   const { table_name, record_id, old_data } = entry;
 
+  // Validate table name before attempting restore
+  const validTables: RestorableTable[] = [
+    'modules', 'page_blocks', 'nav_links', 'blog_posts', 
+    'blog_categories', 'github_repos', 'pages', 'newsletter_campaigns'
+  ];
+  
+  if (!validTables.includes(table_name as RestorableTable)) {
+    throw new Error(`Cannot restore to unsupported table: ${table_name}`);
+  }
+
   // Remove system fields that shouldn't be restored
   const { id, created_at, updated_at, ...restoreData } = old_data as Record<string, unknown>;
 
   const { error } = await supabase
-    .from(table_name as 'modules' | 'page_blocks' | 'nav_links')
+    .from(table_name as RestorableTable)
     .update(restoreData)
     .eq('id', record_id);
 
