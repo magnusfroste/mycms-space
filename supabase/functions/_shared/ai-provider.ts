@@ -22,6 +22,10 @@ export interface AICompletionOptions {
 
 export interface AIProviderConfig {
   active_integration: 'lovable' | 'openai' | 'gemini' | 'n8n';
+  admin_ai_provider?: 'lovable' | 'openai' | 'gemini';
+  admin_ai_config?: {
+    model?: string;
+  };
   integration?: {
     webhook_url?: string;
     model?: string;
@@ -238,7 +242,7 @@ async function callN8N(options: AICompletionOptions, webhookUrl: string): Promis
   return { response };
 }
 
-// Main function to get AI completion using configured provider
+// Main function to get AI completion for CHAT using configured provider
 export async function getAICompletion(
   options: AICompletionOptions,
   configOverride?: AIProviderConfig | null
@@ -250,7 +254,7 @@ export async function getAICompletion(
   const provider = config?.active_integration || 'lovable';
   const model = config?.integration?.model || 'google/gemini-3-flash-preview';
   
-  console.log(`AI Provider: ${provider}, Model: ${model}`);
+  console.log(`Chat AI Provider: ${provider}, Model: ${model}`);
   
   switch (provider) {
     case 'openai':
@@ -261,6 +265,34 @@ export async function getAICompletion(
     
     case 'n8n':
       return callN8N(options, config?.integration?.webhook_url || '');
+    
+    case 'lovable':
+    default:
+      return callLovable(options, model);
+  }
+}
+
+// Admin AI completion for internal tools (PromptEnhancer, AITextActions, PageBuilderChat)
+// Uses admin_ai_provider - does NOT support n8n tool calls
+export async function getAdminAICompletion(
+  options: AICompletionOptions,
+  configOverride?: AIProviderConfig | null
+): Promise<ProviderResult> {
+  // Get config from database or use override
+  const config = configOverride ?? await getAIModuleConfig();
+  
+  // Use admin_ai_provider, fallback to 'lovable'
+  const provider = config?.admin_ai_provider || 'lovable';
+  const model = config?.admin_ai_config?.model || 'google/gemini-2.5-flash';
+  
+  console.log(`Admin AI Provider: ${provider}, Model: ${model}`);
+  
+  switch (provider) {
+    case 'openai':
+      return callOpenAI(options, model);
+    
+    case 'gemini':
+      return callGemini(options, model);
     
     case 'lovable':
     default:

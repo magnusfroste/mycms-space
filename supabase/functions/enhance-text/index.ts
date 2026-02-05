@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { 
-  getAICompletion, 
+  getAdminAICompletion, 
   handleProviderError, 
   handleResponseErrors,
   type AIMessage 
@@ -133,8 +133,8 @@ serve(async (req) => {
       { role: "user", content: userMessage },
     ];
 
-    // Use shared AI provider
-    const result = await getAICompletion({
+    // Use admin AI provider (separate from chat)
+    const result = await getAdminAICompletion({
       messages,
       temperature: action === 'correct' ? 0.1 : 0.7,
       max_tokens: isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : 1000),
