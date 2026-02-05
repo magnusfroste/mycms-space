@@ -1,5 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { 
+  getAICompletion, 
+  getAIModuleConfig,
+  handleProviderError,
+  type AIMessage,
+  type AIProviderConfig
+} from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -236,7 +243,6 @@ async function executeTool(name: string, args: Record<string, unknown>, supabase
         return JSON.stringify({ error: data.error || 'Failed to scrape website' });
       }
       
-      // Extract relevant content
       const markdown = data.data?.markdown || data.markdown || '';
       const metadata = data.data?.metadata || data.metadata || {};
       
@@ -247,7 +253,7 @@ async function executeTool(name: string, args: Record<string, unknown>, supabase
         title: metadata.title || '',
         description: metadata.description || '',
         url: url,
-        content: markdown.substring(0, 5000), // Limit content size
+        content: markdown.substring(0, 5000),
       });
     } catch (error) {
       console.error('Scrape error:', error);
@@ -261,7 +267,6 @@ async function executeTool(name: string, args: Record<string, unknown>, supabase
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
       
-      // Get max order_index
       const { data: existingProjects } = await supabase
         .from('projects')
         .select('order_index')
@@ -308,11 +313,6 @@ serve(async (req) => {
   try {
     const { messages, currentBlocks } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-    
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
@@ -320,55 +320,57 @@ serve(async (req) => {
       throw new Error("Supabase configuration missing");
     }
 
+    // Get AI module config once for all requests
+    const aiConfig = await getAIModuleConfig();
+
     // Add context about current page state
     const contextMessage = currentBlocks?.length 
-      ? `\n\nCurrent page has ${currentBlocks.length} blocks: ${currentBlocks.map((b: any) => b.block_type).join(", ")}`
+      ? `\n\nCurrent page has ${currentBlocks.length} blocks: ${currentBlocks.map((b: { block_type: string }) => b.block_type).join(", ")}`
       : "\n\nThe page is currently empty - this is a fresh start!";
 
-    // Initial request with tools
-    let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT + contextMessage },
-          ...messages,
-        ],
-        tools: TOOLS,
-        stream: false, // Need non-streaming for tool calls
-      }),
-    });
+    const initialMessages: AIMessage[] = [
+      { role: "system", content: SYSTEM_PROMPT + contextMessage },
+      ...messages,
+    ];
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    // Initial request with tools
+    const result = await getAICompletion({
+      messages: initialMessages,
+      tools: TOOLS,
+      stream: false,
+    }, aiConfig);
+
+    // Handle provider errors
+    const providerError = handleProviderError(result, corsHeaders);
+    if (providerError) return providerError;
+
+    if (!result.response!.ok) {
+      const status = result.response!.status;
+      if (status === 429) {
         return new Response(JSON.stringify({ error: "Rate limits exceeded, please try again later." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), {
+      if (status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add funds to your AI workspace." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      const t = await result.response!.text();
+      console.error("AI provider error:", status, t);
+      return new Response(JSON.stringify({ error: "AI provider error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let data = await response.json();
+    let data = await result.response!.json();
     let assistantMessage = data.choices?.[0]?.message;
     
     // Handle tool calls in a loop
-    const conversationMessages = [
+    const conversationMessages: AIMessage[] = [
       { role: "system", content: SYSTEM_PROMPT + contextMessage },
       ...messages,
     ];
@@ -397,27 +399,18 @@ serve(async (req) => {
       }
       
       // Continue conversation with tool results
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: conversationMessages,
-          tools: TOOLS,
-          stream: false,
-        }),
-      });
+      const continueResult = await getAICompletion({
+        messages: conversationMessages,
+        tools: TOOLS,
+        stream: false,
+      }, aiConfig);
       
-      if (!response.ok) {
-        const t = await response.text();
-        console.error("AI gateway error in tool loop:", response.status, t);
+      if (continueResult.error || !continueResult.response?.ok) {
+        console.error("AI provider error in tool loop");
         break;
       }
       
-      data = await response.json();
+      data = await continueResult.response.json();
       assistantMessage = data.choices?.[0]?.message;
     }
     
@@ -428,7 +421,6 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        // Send the content as a single chunk in SSE format
         const sseData = JSON.stringify({
           choices: [{ delta: { content: finalContent } }]
         });

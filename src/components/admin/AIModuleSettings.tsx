@@ -355,6 +355,20 @@ You are [Name], an AI assistant for [Your Website]...
             />
           </div>
           
+          {/* AI Tools Provider Info */}
+          <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 space-y-1">
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium">
+                Admin AI tools use: <span className="text-primary">{activeIntegrationMeta?.name || 'Lovable AI'}</span>
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground pl-6">
+              Prompt Enhancer, Text Actions, and Page Builder use this provider.
+              {activeIntegration !== 'lovable' && ' Configure API keys in Integrations.'}
+            </p>
+          </div>
+          
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
             <p className="text-sm font-medium">💡 Separation of Concerns</p>
             <p className="text-xs text-muted-foreground">
