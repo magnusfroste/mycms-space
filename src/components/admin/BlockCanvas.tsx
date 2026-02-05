@@ -142,6 +142,7 @@ const VisualBlockItem = ({
 
   const renderBlockPreview = () => {
     const config = { ...block.block_config, ...pendingChanges };
+    console.log('[BlockCanvas] Rendering block_type:', block.block_type, 'id:', block.id);
     
     switch (block.block_type) {
       case 'hero':
