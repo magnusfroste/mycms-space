@@ -67,14 +67,41 @@ export const useUpdateGitHubRepo = () => {
   });
 };
 
-// Update order
+// Update order with optimistic update
 export const useUpdateGitHubRepoOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (updates: Array<{ id: string; order_index: number }>) => 
       githubReposData.updateGitHubRepoOrder(updates),
-    onSuccess: () => {
+    onMutate: async (updates) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: githubReposKeys.all });
+
+      // Snapshot previous value
+      const previousRepos = queryClient.getQueryData<GitHubRepoWithImages[]>(githubReposKeys.all);
+
+      // Optimistically update the cache
+      if (previousRepos) {
+        const updatedRepos = previousRepos.map(repo => {
+          const update = updates.find(u => u.id === repo.id);
+          return update ? { ...repo, order_index: update.order_index } : repo;
+        });
+        // Sort by new order
+        updatedRepos.sort((a, b) => a.order_index - b.order_index);
+        queryClient.setQueryData(githubReposKeys.all, updatedRepos);
+      }
+
+      return { previousRepos };
+    },
+    onError: (_err, _updates, context) => {
+      // Rollback on error
+      if (context?.previousRepos) {
+        queryClient.setQueryData(githubReposKeys.all, context.previousRepos);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure sync with server
       queryClient.invalidateQueries({ queryKey: githubReposKeys.all });
     },
   });
