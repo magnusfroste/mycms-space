@@ -359,7 +359,7 @@ export interface GitHubModuleConfig {
 
 // Branding Module Config
 export interface BrandingModuleConfig {
-  theme: 'elegant' | 'grok' | 'sana';
+  theme: 'elegant' | 'grok' | 'sana' | 'terminal';
   // Future: Re-enable when dark mode is added back
   // force_dark?: boolean;
   // color_mode?: 'light' | 'dark' | 'system';
