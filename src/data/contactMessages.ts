@@ -40,6 +40,16 @@ export const createContactMessage = async (input: CreateContactMessageInput): Pr
     .single();
 
   if (error) throw error;
+  
+  // Dispatch webhook after successful creation
+  try {
+    const { dispatchContactWebhook } = await import('@/lib/webhooks/dispatcher');
+    await dispatchContactWebhook(input);
+  } catch (webhookError) {
+    console.error('Webhook dispatch failed:', webhookError);
+    // Don't throw - webhook failure shouldn't fail the message creation
+  }
+  
   return data as ContactMessage;
 };
 

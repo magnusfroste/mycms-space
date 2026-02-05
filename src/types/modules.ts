@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -365,6 +365,29 @@ export interface BrandingModuleConfig {
   // color_mode?: 'light' | 'dark' | 'system';
 }
 
+// Webhook Event Types
+export type WebhookEventType = 
+  | 'contact.message_received'
+  | 'newsletter.subscriber_added'
+  | 'blog.post_published'
+  | 'chat.session_started';
+
+// Webhook Endpoint Config
+export interface WebhookEndpoint {
+  event_type: WebhookEventType;
+  source_module: string;
+  url: string;
+  enabled: boolean;
+  last_triggered?: string;
+  last_status?: 'success' | 'error';
+  description: string;
+}
+
+// Webhooks Module Config
+export interface WebhooksModuleConfig {
+  endpoints: WebhookEndpoint[];
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -376,7 +399,8 @@ export type ModuleConfigType =
   | BlogModuleConfig
   | SEOModuleConfig
   | GitHubModuleConfig
-  | BrandingModuleConfig;
+  | BrandingModuleConfig
+  | WebhooksModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -390,6 +414,7 @@ export interface ModuleTypeConfigMap {
   seo: SEOModuleConfig;
   github: GitHubModuleConfig;
   branding: BrandingModuleConfig;
+  webhooks: WebhooksModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -498,6 +523,38 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
   },
   branding: {
     theme: 'elegant',
+  },
+  webhooks: {
+    endpoints: [
+      {
+        event_type: 'contact.message_received',
+        source_module: 'contact',
+        url: '',
+        enabled: false,
+        description: 'Triggers when a new contact form message is submitted',
+      },
+      {
+        event_type: 'newsletter.subscriber_added',
+        source_module: 'newsletter',
+        url: '',
+        enabled: false,
+        description: 'Triggers when a new newsletter subscriber signs up',
+      },
+      {
+        event_type: 'blog.post_published',
+        source_module: 'blog',
+        url: '',
+        enabled: false,
+        description: 'Triggers when a blog post is published',
+      },
+      {
+        event_type: 'chat.session_started',
+        source_module: 'chat',
+        url: '',
+        enabled: false,
+        description: 'Triggers when a new chat session is started',
+      },
+    ],
   },
 };
 

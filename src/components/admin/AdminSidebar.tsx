@@ -19,6 +19,7 @@ import {
   ImageIcon,
   Palette,
   UserCircle,
+  Webhook,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +59,7 @@ const baseSettingsNavItems = [
   { id: 'branding', label: 'Branding', icon: Palette },
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
   { id: 'integrations', label: 'Integrations', icon: Plug },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook },
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
 ];
 
