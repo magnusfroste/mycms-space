@@ -31,7 +31,7 @@ const themeTemplates: ThemeTemplate[] = [
   {
     id: 'elegant',
     name: 'Elegant',
-    description: 'Warm, refined aesthetic with indigo & coral accents. Perfect for creative professionals.',
+    description: 'Warm premium feel with glass morphism, floating animations, parallax effects, and gradient accents. Perfect for creative professionals.',
     icon: <Sparkles className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-slate-50 to-slate-100',
@@ -39,12 +39,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-400',
       text: 'text-slate-800',
     },
-    tags: ['Creative', 'Warm', 'Premium'],
+    tags: ['Animated', 'Glass', 'Warm'],
   },
   {
     id: 'grok',
     name: 'Grok',
-    description: 'Minimal, high-contrast design with electric orange pop. Sharp and modern.',
+    description: 'Sharp minimal design with no animations, hard edges, compact spacing, and uppercase headings. X/Tesla-inspired.',
     icon: <Zap className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-neutral-50 to-neutral-100',
@@ -52,12 +52,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-500',
       text: 'text-neutral-900',
     },
-    tags: ['Minimal', 'Bold', 'Tech'],
+    tags: ['Static', 'Minimal', 'Sharp'],
   },
   {
     id: 'sana',
     name: 'Sana',
-    description: 'Clean, professional design with soft violet accents. Inspired by modern SaaS.',
+    description: 'Clean professional design with subtle gradients, fade-in animations, balanced whitespace, and extra readability. SaaS-inspired.',
     icon: <Palette className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-white to-slate-50',
@@ -65,7 +65,7 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-violet-400',
       text: 'text-slate-900',
     },
-    tags: ['Clean', 'Professional', 'SaaS'],
+    tags: ['Clean', 'Balanced', 'Pro'],
   },
 ];
 
