@@ -49,32 +49,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={fullPage ? "shrink-0 border-t border-border/30" : "glass-card shadow-apple mt-4"}>
-      <div className="p-6">
-        <div className="relative max-w-4xl mx-auto">
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => {
-              onChange(e.target.value);
-              adjustTextareaHeight();
-            }}
-            onKeyPress={handleKeyPress}
-            placeholder={placeholder}
-            className="input-field w-full pr-16 resize-none text-base min-h-[52px] max-h-[200px] overflow-y-auto"
-            rows={1}
-            disabled={isLoading}
-          />
-          <Button
-            onClick={onSend}
-            disabled={!value.trim() || isLoading}
-            size="icon"
-            className="absolute bottom-3 right-3 h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
-            style={{ borderRadius: 'var(--radius)' }}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className={fullPage ? "shrink-0 border-t border-border/30 p-6" : "mt-4"}>
+      <div className="relative max-w-4xl mx-auto">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            adjustTextareaHeight();
+          }}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder}
+          className="input-field w-full pr-16 resize-none text-base min-h-[52px] max-h-[200px] overflow-y-auto"
+          rows={1}
+          disabled={isLoading}
+        />
+        <Button
+          onClick={onSend}
+          disabled={!value.trim() || isLoading}
+          size="icon"
+          className="absolute bottom-3 right-3 h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
+          style={{ borderRadius: 'var(--radius)' }}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
