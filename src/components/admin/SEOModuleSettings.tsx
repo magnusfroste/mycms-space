@@ -56,7 +56,10 @@ const SEOModuleSettings = () => {
   });
 
   const handleSave = () => {
-    updateMutation.mutate(config);
+    updateMutation.mutate(config, {
+      onSuccess: () => toast({ title: 'SEO settings saved' }),
+      onError: () => toast({ title: 'Error saving settings', variant: 'destructive' }),
+    });
   };
 
   if (isLoading) {

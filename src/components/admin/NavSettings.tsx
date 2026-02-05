@@ -145,13 +145,18 @@ export const NavSettings = () => {
 
     const maxOrder = navLinks.length > 0 ? Math.max(...navLinks.map(l => l.order_index)) : -1;
 
-    await createNavLink.mutateAsync({
-      ...formData,
-      order_index: maxOrder + 1,
-    });
-
-    setIsAddDialogOpen(false);
-    resetForm();
+    try {
+      await createNavLink.mutateAsync({
+        ...formData,
+        order_index: maxOrder + 1,
+      });
+      setIsAddDialogOpen(false);
+      resetForm();
+      toast({ title: 'Success', description: 'Navigation link created' });
+    } catch (error) {
+      console.error('Create failed:', error);
+      toast({ title: 'Error', description: 'Failed to create navigation link', variant: 'destructive' });
+    }
   };
 
   const handleEdit = async () => {
@@ -162,28 +167,43 @@ export const NavSettings = () => {
       return;
     }
 
-    await updateNavLink.mutateAsync({
-      id: editingLink.id,
-      ...formData,
-    });
-
-    setIsEditDialogOpen(false);
-    setEditingLink(null);
-    resetForm();
-    toast({ title: 'Success', description: 'Navigation link updated' });
+    try {
+      await updateNavLink.mutateAsync({
+        id: editingLink.id,
+        ...formData,
+      });
+      setIsEditDialogOpen(false);
+      setEditingLink(null);
+      resetForm();
+      toast({ title: 'Success', description: 'Navigation link updated' });
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast({ title: 'Error', description: 'Failed to update navigation link', variant: 'destructive' });
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteLinkId) return;
-    await deleteNavLink.mutateAsync(deleteLinkId);
-    setDeleteLinkId(null);
+    try {
+      await deleteNavLink.mutateAsync(deleteLinkId);
+      setDeleteLinkId(null);
+      toast({ title: 'Success', description: 'Navigation link deleted' });
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast({ title: 'Error', description: 'Failed to delete navigation link', variant: 'destructive' });
+    }
   };
 
   const handleToggleEnabled = async (link: NavLink) => {
-    await updateNavLink.mutateAsync({
-      id: link.id,
-      enabled: !link.enabled,
-    });
+    try {
+      await updateNavLink.mutateAsync({
+        id: link.id,
+        enabled: !link.enabled,
+      });
+    } catch (error) {
+      console.error('Toggle failed:', error);
+      toast({ title: 'Error', description: 'Failed to update navigation link', variant: 'destructive' });
+    }
   };
 
   const openEditDialog = (link: NavLink) => {

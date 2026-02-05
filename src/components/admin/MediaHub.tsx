@@ -142,11 +142,18 @@ const MediaHub: React.FC = () => {
 
   const handleRename = async () => {
     if (!selectedFile || !newFileName.trim()) return;
-    await renameFile.mutateAsync({
-      bucket: selectedFile.bucket,
-      oldPath: selectedFile.path,
-      newName: newFileName.trim(),
-    });
+    
+    try {
+      await renameFile.mutateAsync({
+        bucket: selectedFile.bucket,
+        oldPath: selectedFile.path,
+        newName: newFileName.trim(),
+      });
+    } catch (error) {
+      console.error('Rename failed:', error);
+      return; // Don't close dialog on error
+    }
+    
     setRenameDialogOpen(false);
     setSelectedFile(null);
     setNewFileName('');
@@ -154,21 +161,35 @@ const MediaHub: React.FC = () => {
 
   const handleDelete = async () => {
     if (!selectedFile) return;
-    await deleteFile.mutateAsync({
-      bucket: selectedFile.bucket,
-      path: selectedFile.path,
-    });
+    
+    try {
+      await deleteFile.mutateAsync({
+        bucket: selectedFile.bucket,
+        path: selectedFile.path,
+      });
+    } catch (error) {
+      console.error('Delete failed:', error);
+      return; // Don't close dialog on error
+    }
+    
     setDeleteDialogOpen(false);
     setSelectedFile(null);
   };
 
   const handleMove = async () => {
     if (!selectedFile || !targetBucket) return;
-    await moveFile.mutateAsync({
-      sourceBucket: selectedFile.bucket,
-      sourcePath: selectedFile.path,
-      targetBucket: targetBucket as StorageBucket,
-    });
+    
+    try {
+      await moveFile.mutateAsync({
+        sourceBucket: selectedFile.bucket,
+        sourcePath: selectedFile.path,
+        targetBucket: targetBucket as StorageBucket,
+      });
+    } catch (error) {
+      console.error('Move failed:', error);
+      return; // Don't close dialog on error
+    }
+    
     setMoveDialogOpen(false);
     setSelectedFile(null);
     setTargetBucket('');
@@ -501,8 +522,12 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
 
   const handleAction = (action: () => void) => {
     setMenuOpen(false);
-    // Defer the action to prevent re-render collision
-    setTimeout(action, 0);
+    // Use requestAnimationFrame for better timing than setTimeout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        action();
+      });
+    });
   };
 
   return (
@@ -592,7 +617,12 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
 
   const handleAction = (action: () => void) => {
     setMenuOpen(false);
-    setTimeout(action, 0);
+    // Use requestAnimationFrame for better timing than setTimeout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        action();
+      });
+    });
   };
 
   return (

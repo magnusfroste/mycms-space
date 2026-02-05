@@ -249,31 +249,45 @@ export const BlockSettings = () => {
   const handleEdit = async () => {
     if (!editingBlock) return;
 
-    await updateBlock.mutateAsync({
-      id: editingBlock.id,
-      block_type: formData.block_type,
-      block_config: formData.block_config,
-      enabled: formData.enabled,
-    });
-
-    setIsEditDialogOpen(false);
-    setEditingBlock(null);
-    resetForm();
-    toast({ title: 'Success', description: 'Block updated' });
+    try {
+      await updateBlock.mutateAsync({
+        id: editingBlock.id,
+        block_type: formData.block_type,
+        block_config: formData.block_config,
+        enabled: formData.enabled,
+      });
+      setIsEditDialogOpen(false);
+      setEditingBlock(null);
+      resetForm();
+      toast({ title: 'Success', description: 'Block updated' });
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast({ title: 'Error', description: 'Failed to update block', variant: 'destructive' });
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteBlockId) return;
-    await deleteBlock.mutateAsync(deleteBlockId);
-    setDeleteBlockId(null);
-    toast({ title: 'Success', description: 'Block deleted' });
+    try {
+      await deleteBlock.mutateAsync(deleteBlockId);
+      setDeleteBlockId(null);
+      toast({ title: 'Success', description: 'Block deleted' });
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast({ title: 'Error', description: 'Failed to delete block', variant: 'destructive' });
+    }
   };
 
   const handleToggleEnabled = async (block: PageBlock) => {
-    await updateBlock.mutateAsync({
-      id: block.id,
-      enabled: !block.enabled,
-    });
+    try {
+      await updateBlock.mutateAsync({
+        id: block.id,
+        enabled: !block.enabled,
+      });
+    } catch (error) {
+      console.error('Toggle failed:', error);
+      toast({ title: 'Error', description: 'Failed to update block', variant: 'destructive' });
+    }
   };
 
   const openEditDialog = (block: PageBlock) => {

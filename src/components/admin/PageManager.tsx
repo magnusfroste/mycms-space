@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { usePages, useCreatePage, useUpdatePage, useDeletePage, usePagesSubscription } from '@/models/pages';
 import { useCreateNavLink, useAllNavLinks, useDeleteNavLink } from '@/models/navLinks';
 import type { Page } from '@/types/pages';
+import { toast } from 'sonner';
 
 const PageManager = () => {
   const { data: pages = [], isLoading } = usePages();
@@ -47,65 +48,99 @@ const PageManager = () => {
   const handleCreate = async () => {
     if (!formData.title || !formData.slug) return;
     
-    await createPage.mutateAsync({
-      title: formData.title,
-      slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      description: formData.description || undefined,
-      is_main_landing: formData.is_main_landing,
-      enabled: formData.enabled,
-    });
-    
-    setIsCreateOpen(false);
-    resetForm();
+    try {
+      await createPage.mutateAsync({
+        title: formData.title,
+        slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        description: formData.description || undefined,
+        is_main_landing: formData.is_main_landing,
+        enabled: formData.enabled,
+      });
+      setIsCreateOpen(false);
+      resetForm();
+      toast.success('Page created');
+    } catch (error) {
+      console.error('Create failed:', error);
+      toast.error('Failed to create page');
+    }
   };
 
   const handleUpdate = async () => {
     if (!editingPage) return;
     
-    await updatePage.mutateAsync({
-      id: editingPage.id,
-      title: formData.title,
-      slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      description: formData.description || undefined,
-      is_main_landing: formData.is_main_landing,
-      enabled: formData.enabled,
-    });
-    
-    setEditingPage(null);
-    resetForm();
+    try {
+      await updatePage.mutateAsync({
+        id: editingPage.id,
+        title: formData.title,
+        slug: formData.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        description: formData.description || undefined,
+        is_main_landing: formData.is_main_landing,
+        enabled: formData.enabled,
+      });
+      setEditingPage(null);
+      resetForm();
+      toast.success('Page updated');
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast.error('Failed to update page');
+    }
   };
 
   const handleDelete = async (page: Page) => {
-    // Also remove from nav_links if exists
-    const navLink = navLinks.find(link => link.url === `/${page.slug}`);
-    if (navLink) {
-      await deleteNavLink.mutateAsync(navLink.id);
+    try {
+      // Also remove from nav_links if exists
+      const navLink = navLinks.find(link => link.url === `/${page.slug}`);
+      if (navLink) {
+        await deleteNavLink.mutateAsync(navLink.id);
+      }
+      await deletePage.mutateAsync(page.id);
+      toast.success('Page deleted');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast.error('Failed to delete page');
     }
-    await deletePage.mutateAsync(page.id);
   };
 
   const handleSetMainLanding = async (page: Page) => {
-    await updatePage.mutateAsync({
-      id: page.id,
-      is_main_landing: true,
-    });
+    try {
+      await updatePage.mutateAsync({
+        id: page.id,
+        is_main_landing: true,
+      });
+      toast.success('Main landing page updated');
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast.error('Failed to update page');
+    }
   };
 
   const handleAddToNav = async (page: Page) => {
-    const maxOrder = navLinks.reduce((max, link) => Math.max(max, link.order_index), 0);
-    await createNavLink.mutateAsync({
-      label: page.title,
-      url: `/${page.slug}`,
-      order_index: maxOrder + 1,
-      enabled: true,
-      is_external: false,
-    });
+    try {
+      const maxOrder = navLinks.reduce((max, link) => Math.max(max, link.order_index), 0);
+      await createNavLink.mutateAsync({
+        label: page.title,
+        url: `/${page.slug}`,
+        order_index: maxOrder + 1,
+        enabled: true,
+        is_external: false,
+      });
+      toast.success('Added to navigation');
+    } catch (error) {
+      console.error('Add to nav failed:', error);
+      toast.error('Failed to add to navigation');
+    }
   };
 
   const handleRemoveFromNav = async (page: Page) => {
-    const navLink = navLinks.find(link => link.url === `/${page.slug}`);
-    if (navLink) {
-      await deleteNavLink.mutateAsync(navLink.id);
+    try {
+      const navLink = navLinks.find(link => link.url === `/${page.slug}`);
+      if (navLink) {
+        await deleteNavLink.mutateAsync(navLink.id);
+        toast.success('Removed from navigation');
+      }
+    } catch (error) {
+      console.error('Remove from nav failed:', error);
+      toast.error('Failed to remove from navigation');
     }
   };
 
