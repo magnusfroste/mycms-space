@@ -226,32 +226,31 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               className="animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
-              <div className="glass-card shadow-apple p-2">
-                <div className="relative">
-                  <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder={placeholder}
-                    className="w-full bg-background border border-border/50 rounded-2xl px-6 py-4 pr-14 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none text-base text-foreground placeholder:text-muted-foreground shadow-sm min-h-[56px] max-h-[120px] overflow-y-auto"
-                    rows={1}
-                    disabled={isLoading}
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={!inputValue.trim() || isLoading}
-                    className="absolute bottom-3 right-3 h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
-                </div>
+              <div className="relative max-w-full">
+                <textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={placeholder}
+                  className="input-field w-full pr-14 resize-none text-base min-h-[56px] max-h-[120px] overflow-y-auto"
+                  rows={1}
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="absolute bottom-3 right-3 h-10 w-10 bg-primary text-primary-foreground flex items-center justify-center shadow-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ borderRadius: 'var(--radius)' }}
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
               </div>
             </div>
 
