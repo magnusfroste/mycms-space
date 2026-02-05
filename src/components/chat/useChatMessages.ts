@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
+import { optimizeMessagesForApi } from "./messageOptimizer";
 import type { Message, SiteContext, ChatMessage } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
@@ -148,11 +149,14 @@ export const useChatMessages = ({
         // Note: We need to get current messages + the new user message
         const currentMessages = [...messages, { id: Date.now().toString(), text: messageText, isUser: true }];
         const apiMessages = toApiMessages(currentMessages);
+        
+        // Optimize messages: summarize older ones to reduce payload size
+        const optimizedMessages = optimizeMessagesForApi(apiMessages);
 
         // All integrations now go through edge function for consistency
         const { data, error } = await supabase.functions.invoke("ai-chat", {
           body: {
-            messages: apiMessages,
+            messages: optimizedMessages,
             sessionId: sessionId,
             systemPrompt: systemPrompt,
             integration: {
