@@ -3,8 +3,8 @@
 // Chat behavior and context configuration
 // ============================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -12,9 +12,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
+import { useAIChatContext } from '@/hooks/useAIChatContext';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
@@ -28,6 +30,10 @@ const AIModuleSettings: React.FC = () => {
   const updateModule = useUpdateAIModule();
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
+  const [showPayloadPreview, setShowPayloadPreview] = useState(false);
+  
+  // Get context data for preview
+  const { contextData, hasContext } = useAIChatContext();
   
   // Local state for system_prompt to avoid DB calls on every keystroke
   const [localPrompt, setLocalPrompt] = useState('');
@@ -174,6 +180,25 @@ const AIModuleSettings: React.FC = () => {
 
   const goToIntegrations = () => {
     setSearchParams({ tab: 'integrations' });
+  };
+
+  // Generate sample payload for preview
+  const samplePayload = useMemo(() => {
+    const payload: Record<string, unknown> = {
+      message: "What services do you offer?",
+      sessionId: "session_1234567890_abc123def",
+    };
+
+    if (hasContext && contextData) {
+      payload.siteContext = contextData;
+    }
+
+    return payload;
+  }, [hasContext, contextData]);
+
+  const copyPayload = () => {
+    navigator.clipboard.writeText(JSON.stringify(samplePayload, null, 2));
+    toast({ title: 'Copied to clipboard' });
   };
 
   if (isLoading) {
@@ -580,6 +605,49 @@ You are [Name], an AI assistant for [Your Website]...
             </div>
           )}
         </CardContent>
+      </Card>
+
+      {/* Context Payload Preview */}
+      <Card>
+        <CardHeader>
+          <Collapsible open={showPayloadPreview} onOpenChange={setShowPayloadPreview}>
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-between cursor-pointer">
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Context Payload Preview
+                </CardTitle>
+                <ChevronDown className={`h-4 w-4 transition-transform ${showPayloadPreview ? 'rotate-180' : ''}`} />
+              </div>
+            </CollapsibleTrigger>
+            <CardDescription>
+              See the JSON structure sent to your AI provider (useful for n8n setup)
+            </CardDescription>
+            <CollapsibleContent>
+              <CardContent className="pt-4">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={copyPayload}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy
+                  </Button>
+                  <pre className="bg-muted/50 p-4 rounded-lg overflow-x-auto text-xs font-mono max-h-96 overflow-y-auto">
+                    {JSON.stringify(samplePayload, null, 2)}
+                  </pre>
+                </div>
+                {hasContext && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ✓ Site context includes {contextData?.pages.length || 0} page(s) with {contextData?.pages.reduce((sum, p) => sum + p.blocks.length, 0) || 0} block(s) and {contextData?.blogs.length || 0} blog post(s)
+                  </p>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardHeader>
       </Card>
     </div>
   );
