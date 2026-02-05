@@ -3,8 +3,9 @@
 // Chat behavior and context configuration
 // ============================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database } from 'lucide-react';
+import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -262,7 +263,13 @@ const AIModuleSettings: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="system_prompt">System Prompt</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="system_prompt">System Prompt</Label>
+              <PromptEnhancer
+                currentPrompt={config?.system_prompt || ''}
+                onEnhanced={(newPrompt) => handleConfigUpdate({ system_prompt: newPrompt })}
+              />
+            </div>
             <Textarea
               id="system_prompt"
               value={config?.system_prompt || ''}
