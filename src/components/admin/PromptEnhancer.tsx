@@ -29,7 +29,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const enhancePrompt = async (action: EnhanceAction) => {
+  const enhancePrompt = (action: EnhanceAction) => {
     if (!currentPrompt.trim()) {
       toast({
         title: 'No prompt to enhance',
@@ -41,27 +41,38 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
 
     setIsLoading(true);
 
-    try {
-      const { data, error } = await supabase.functions.invoke('enhance-prompt', {
-        body: { text: currentPrompt, action },
-      });
+    // Use .then/.catch pattern to prevent unhandled promise rejections
+    // that can freeze the UI when async errors bypass React error boundaries
+    supabase.functions.invoke('enhance-prompt', {
+      body: { text: currentPrompt, action },
+    })
+      .then(({ data, error }) => {
+        if (error) {
+          throw error;
+        }
 
-      if (error) throw error;
-
-      if (data?.text) {
-        onEnhanced(data.text);
-        toast({ title: 'Prompt enhanced!' });
-      }
-    } catch (err) {
-      console.error('Enhance prompt error:', err);
-      toast({
-        title: 'Enhancement failed',
-        description: err instanceof Error ? err.message : 'Please try again',
-        variant: 'destructive',
+        if (data?.text) {
+          onEnhanced(data.text);
+          toast({ title: 'Prompt enhanced!' });
+        } else {
+          toast({
+            title: 'No response',
+            description: 'AI did not return enhanced text',
+            variant: 'destructive',
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Enhance prompt error:', err);
+        toast({
+          title: 'Enhancement failed',
+          description: err instanceof Error ? err.message : 'Please try again',
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
