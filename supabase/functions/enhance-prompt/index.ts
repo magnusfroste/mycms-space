@@ -1,5 +1,6 @@
+// Enhance prompt edge function - v2
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { 
+import {
   getAdminAICompletion, 
   handleProviderError, 
   handleResponseErrors,
