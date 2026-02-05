@@ -21,6 +21,7 @@ import MessagesManager from '@/components/admin/MessagesManager';
 import { SettingsHistory } from '@/components/admin/SettingsHistory';
 import ChatHistoryManager from '@/components/admin/ChatHistoryManager';
 import ProfileSettings from '@/components/admin/ProfileSettings';
+import GeneralSettings from '@/components/admin/GeneralSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -154,6 +155,8 @@ const Admin = () => {
         return <ChatHistoryManager />;
       case 'profile':
         return <ProfileSettings />;
+      case 'settings':
+        return <GeneralSettings />;
       default:
         return <AnalyticsDashboard />;
     }
