@@ -34,16 +34,28 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
-  const { contextData, contextSummary, hasContext } = useAIChatContext();
+  const { contextData, contextSummary, hasContext, isLoading: contextLoading } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
+  
+  // Track if we should wait for context before auto-sending
+  const hasInitialMessages = Boolean(location.state?.messages?.length);
+  const [contextReady, setContextReady] = React.useState(!hasInitialMessages);
+  
+  // Mark context as ready once it's loaded (only matters for initial navigation with messages)
+  React.useEffect(() => {
+    if (hasInitialMessages && !contextLoading && !contextReady) {
+      setContextReady(true);
+    }
+  }, [hasInitialMessages, contextLoading, contextReady]);
   
   // Get configured integration from module, allow user override
   const configuredIntegration = aiConfig?.active_integration || 'n8n';
   const [selectedIntegration, setSelectedIntegration] = React.useState<AIIntegrationType>(configuredIntegration);
 
   // Get initial messages, sessionId and placeholder from navigation state if available
-  const initialMessages = location.state?.messages as Message[] | undefined;
+  // Only pass them once context is ready
+  const initialMessages = contextReady ? (location.state?.messages as Message[] | undefined) : undefined;
   const initialSessionId = location.state?.sessionId as string | undefined;
   const passedPlaceholder = location.state?.placeholder as string | undefined;
   
@@ -127,20 +139,30 @@ const Chat = () => {
 
       {/* Chat Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <ChatInterface
-          webhookUrl={webhookUrl}
-          fullPage={true}
-          initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
-          activePlaceholder={passedPlaceholder || "How can Magnet help?"}
-          initialMessages={initialMessages}
-          initialSessionId={initialSessionId}
-          resetTrigger={resetTrigger}
-          showQuickActions={true}
-          siteContext={contextData}
-          integration={selectedIntegration}
-          integrationConfig={aiConfig?.integration}
-          systemPrompt={aiConfig?.system_prompt || ''}
-        />
+        {/* Show loading while waiting for context on initial navigation */}
+        {hasInitialMessages && !contextReady ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <span>Loading context...</span>
+            </div>
+          </div>
+        ) : (
+          <ChatInterface
+            webhookUrl={webhookUrl}
+            fullPage={true}
+            initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
+            activePlaceholder={passedPlaceholder || "How can Magnet help?"}
+            initialMessages={initialMessages}
+            initialSessionId={initialSessionId}
+            resetTrigger={resetTrigger}
+            showQuickActions={true}
+            siteContext={contextData}
+            integration={selectedIntegration}
+            integrationConfig={aiConfig?.integration}
+            systemPrompt={aiConfig?.system_prompt || ''}
+          />
+        )}
       </main>
 
       {/* New Chat Confirmation Dialog */}
