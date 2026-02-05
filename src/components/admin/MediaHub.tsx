@@ -522,7 +522,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
         menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
       )}>
         <div className="flex justify-end">
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-white">
                 <MoreVertical className="h-4 w-4" />
@@ -619,7 +619,7 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
         <Button variant="ghost" size="icon" onClick={onCopy}>
           <Copy className="h-4 w-4" />
         </Button>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-4 w-4" />
