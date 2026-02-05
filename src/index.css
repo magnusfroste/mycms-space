@@ -1020,6 +1020,15 @@
   display: none;
 }
 
+/* Solid text color instead of gradient in Grok */
+[data-theme="grok"] .hero-gradient-text {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  color: hsl(var(--foreground)) !important;
+}
+
 /* Simplified section dividers for Grok */
 [data-theme="grok"] .section-divider-fade,
 [data-theme="grok"] .section-divider-gradient {
