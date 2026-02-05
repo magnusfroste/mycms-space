@@ -247,10 +247,15 @@ const BrandingSettings: React.FC = () => {
         )}
       </div>
 
-      {/* Pro tip */}
-      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-        <strong className="text-foreground">Pro tip:</strong> The selected theme affects your entire site. 
-        Light/dark mode support will be added in a future update.
+      {/* Feature reference */}
+      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-2">
+        <p><strong className="text-foreground">How themes work:</strong></p>
+        <ul className="list-disc list-inside space-y-1 text-xs">
+          <li><strong>Elegant:</strong> Glass effects, parallax, hover lifts, glow, full animations</li>
+          <li><strong>Grok:</strong> No glass, no parallax, no hover lifts, no glow, no animations</li>
+          <li><strong>Sana:</strong> Light glass, no parallax, subtle hover lifts, no glow, subtle animations</li>
+          <li><strong>Terminal:</strong> No glass, neon glow, no hover lifts, scanlines, blink animations</li>
+        </ul>
       </div>
     </div>
   );

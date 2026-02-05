@@ -29,12 +29,11 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
 
   const isLoading = !typedConfig.name;
   
-  // Grok theme disables parallax and mesh gradients
-  const isGrokTheme = currentTheme === 'grok';
-  const isSanaTheme = currentTheme === 'sana';
-  const enableParallax = !isGrokTheme;
-  const enableMeshGradient = !isGrokTheme;
-  const enableFloatingOrbs = !isGrokTheme && !isSanaTheme;
+  // Check theme for feature toggles (CSS handles most, but some need JS)
+  const isStaticTheme = currentTheme === 'grok' || currentTheme === 'terminal';
+  const enableParallax = currentTheme === 'elegant'; // Only Elegant gets parallax
+  const enableMeshGradient = currentTheme === 'elegant' || currentTheme === 'sana';
+  const enableFloatingOrbs = currentTheme === 'elegant';
 
   // Track current theme
   useEffect(() => {
