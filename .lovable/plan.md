@@ -1,130 +1,142 @@
 
-# Plan: Separat Admin AI Provider-inställning
+# Plan: Strukturell fix för Mini-menyer
 
-## Bakgrund
+## Problem-analys
 
-Nuvarande implementation har ett problem:
-- **Chat** kan använda n8n-webhook med tool calls (Telegram, e-post, etc.) - fungerar perfekt
-- **Admin-verktyg** (PromptEnhancer, AITextActions, PageBuilderChat) läser samma `active_integration` och försöker anropa n8n-webhooken, som inte är designad för enkla text-operationer
+Systemet har återkommande problem med dropdown-menyer och popovers:
+- Menyer flickrar och försvinner oväntat
+- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
+- Problemet är systematiskt och påverkar flera komponenter
 
-## Lösning
+### Rotorsaker
 
-Lägg till en **separat** inställning för admin-verktyg i AI-modulens config:
+1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
+2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
+3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
+4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  AIModuleConfig                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  active_integration: 'n8n'        ← Chat (besökare)             │
-│  integration: { webhook_url, ... }                              │
-│                                                                 │
-│  NEW: admin_ai_provider: 'lovable' | 'openai' | 'gemini' | 'n8n'│
-│  NEW: admin_ai_config?: {                                       │
-│         model?: string                                          │
-│         webhook_url?: string  ← Om n8n valts, separat webhook   │
-│       }                                                         │
-└─────────────────────────────────────────────────────────────────┘
+---
+
+## Lösningsstrategi
+
+### Fas 1: Standardisera dropdown-mönster
+
+Skapa ett konsekvent mönster för alla "action menus":
+
+**Princip: "Close first, act later"**
+```typescript
+const [menuOpen, setMenuOpen] = useState(false);
+
+const handleAction = (action: () => void) => {
+  setMenuOpen(false);
+  // Defer action to next tick to ensure menu closes cleanly
+  setTimeout(action, 0);
+};
+
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
 ```
 
-## Teknisk Implementation
+---
 
-### 1. Uppdatera TypeScript Types
+### Fas 2: Fixa PromptEnhancer (AI Assist)
 
-**Fil:** `src/types/modules.ts`
+**Problem**: Använder `onClick` och saknar kontrollerad state
 
-Lägg till nya fält i `AIModuleConfig`:
-- `admin_ai_provider: 'lovable' | 'openai' | 'gemini' | 'n8n'` - Default: `'lovable'`
-- `admin_ai_config?: { model?: string; webhook_url?: string }` - Valfri konfiguration
+**Åtgärd**:
+- Lägg till `open`/`onOpenChange` state
+- Byt från `onClick` till `onSelect`
+- Stäng menyn explicit innan async operation
 
-### 2. Uppdatera Shared AI Provider
+```typescript
+const [menuOpen, setMenuOpen] = useState(false);
 
-**Fil:** `supabase/functions/_shared/ai-provider.ts`
+const handleEnhance = (action: EnhanceAction) => {
+  setMenuOpen(false);
+  setTimeout(() => enhancePrompt(action), 0);
+};
 
-Ny funktion: `getAdminAICompletion()` som:
-- Läser `admin_ai_provider` istället för `active_integration`
-- Använder `admin_ai_config` för model/webhook_url
-- Fallback till Lovable om inget är konfigurerat
-
-### 3. Uppdatera Edge Functions
-
-| Edge Function | Ändring |
-|--------------|---------|
-| `enhance-text` | Använd `getAdminAICompletion()` |
-| `enhance-prompt` | Använd `getAdminAICompletion()` |
-| `page-builder-chat` | Använd `getAdminAICompletion()` |
-
-### 4. UI för Admin AI Provider
-
-**Fil:** `src/components/admin/AIModuleSettings.tsx`
-
-Lägg till nytt kort "Admin AI Tools" med:
-- Dropdown för att välja provider (Lovable/OpenAI/Gemini/n8n)
-- Om n8n väljs: input för separat webhook-URL
-- Tydlig förklaring om skillnaden
-
-```text
-┌─────────────────────────────────────────┐
-│  Admin AI Tools                         │
-│  ────────────────────────────────────   │
-│  Provider for in-app AI assistance      │
-│                                         │
-│  Provider:  [Lovable AI ▾]              │
-│                                         │
-│  ⓘ Used by: Prompt Enhancer,           │
-│     Text Actions, Page Builder          │
-│                                         │
-│  Note: This is separate from visitor    │
-│  chat which uses n8n with tool calls.   │
-└─────────────────────────────────────────┘
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
 ```
 
-### 5. Uppdatera Befintlig UI-indikator
+---
 
-Den badge som redan finns uppdateras att visa:
-- "Admin AI tools use: **Lovable AI**" (eller vald provider)
-- Länk till ny inställningssektion
+### Fas 3: Fixa MediaHub delete-funktion
+
+**Problem**: `modal={false}` + race condition vid delete
+
+**Åtgärd**:
+- Ta bort `modal={false}` (låt Radix hantera focus)
+- Säkerställ att `handleAction` använder `onSelect` korrekt
+- Verifiera att delete-dialogen öppnas korrekt
 
 ---
 
-## Implementation - Steg
+### Fas 4: Granska och uppdatera UI-komponenter
 
-1. **Types** - Lägg till `admin_ai_provider` och `admin_ai_config` i `AIModuleConfig`
-2. **Default config** - Sätt `admin_ai_provider: 'lovable'` som default
-3. **Shared provider** - Skapa `getAdminAICompletion()` funktion
-4. **Edge functions** - Byt från `getAICompletion()` till `getAdminAICompletion()`
-5. **UI** - Lägg till Admin AI Provider-kort i AIModuleSettings
-6. **Deploy** - Deploya uppdaterade edge functions
+**dropdown-menu.tsx**:
+- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
 
 ---
 
-## Provider-val för Admin
+## Filer som ändras
 
-| Provider | Krav | Användningsfall |
-|----------|------|-----------------|
-| Lovable AI | Lovable Cloud | Default - fungerar direkt |
-| OpenAI | `OPENAI_API_KEY` secret | Self-hosting |
-| Gemini | `GEMINI_API_KEY` secret | Self-hosting |
-| n8n | Separat webhook-URL | Avancerad - egen logik |
+| Fil | Ändring |
+|-----|---------|
+| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
+| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
 
 ---
 
-## Varför Inte Återanvända Chat-webhooken?
+## Tekniska detaljer
 
-n8n-webhooken för chat är byggd för konversationer med:
-- Tool calls (Telegram, e-post, sökningar)
-- Session-hantering
-- Komplex response-parsing
+### PromptEnhancer - före/efter
 
-Admin-verktygen behöver enkla text-in/text-ut operationer, vilket inte matchar chat-webhookens design.
+**Före:**
+```tsx
+<DropdownMenu>
+  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
+```
+
+**Efter:**
+```tsx
+const [menuOpen, setMenuOpen] = useState(false);
+
+const safeEnhance = (action: EnhanceAction) => {
+  setMenuOpen(false);
+  setTimeout(() => enhancePrompt(action), 0);
+};
+
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
+```
+
+### MediaHub - justering
+
+**Ta bort:**
+```tsx
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+```
+
+**Ändra till:**
+```tsx
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+```
 
 ---
 
-## Tidsuppskattning
+## Förväntade resultat
 
-- Types + defaults: ~10 min
-- Shared provider: ~20 min  
-- Edge functions: ~15 min
-- UI: ~30 min
-- Test: ~15 min
+- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
+- Media Hub delete/rename/move fungerar korrekt
+- Konsekvent beteende över alla admin-dropdowns
 
-**Totalt: ~1.5 timmar**
+---
+
+## Validering
+
+Efter implementering:
+1. Testa AI Assist-knappen i AI Chat-inställningar
+2. Testa delete på bilder i Media Hub
+3. Verifiera att inga flickering eller oväntade stängningar sker
