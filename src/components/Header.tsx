@@ -103,7 +103,7 @@ const Header = () => {
     return (
       <Link
         to="/"
-        className="text-xl font-semibold bg-gradient-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+        className="text-xl font-semibold gradient-text hover:opacity-80 transition-opacity"
       >
         {headerConfig?.logo_text || 'froste.eu'}
       </Link>

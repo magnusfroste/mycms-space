@@ -200,12 +200,12 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               <span className="text-sm font-medium text-primary">{welcomeBadge}</span>
             </div>
 
-            {/* Agent Name - uses gradient except in Grok theme */}
+            {/* Agent Name - uses theme-aware gradient-text */}
             <h1
               className="text-display-sm md:text-display lg:text-display-lg font-bold mb-4 animate-fade-in"
               style={{ animationDelay: '0.1s' }}
             >
-              <span className="hero-gradient-text bg-gradient-primary bg-clip-text text-transparent drop-shadow-sm">
+              <span className="gradient-text drop-shadow-sm">
                 {agentName}
               </span>
             </h1>
