@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
 import { optimizeMessagesForApi } from "./messageOptimizer";
+import { saveChatMessage } from "@/data/chatMessages";
 import type { Message, SiteContext, ChatMessage } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
@@ -143,6 +144,9 @@ export const useChatMessages = ({
       addUserMessage(messageText);
       messageCountRef.current += 1;
       setIsLoading(true);
+      
+      // Save user message to database for history
+      saveChatMessage(sessionId, 'user', messageText);
 
       try {
         // Build full conversation history for API
@@ -177,6 +181,9 @@ export const useChatMessages = ({
         );
         addBotMessage(botResponse);
         messageCountRef.current += 1;
+        
+        // Save assistant response to database for history
+        saveChatMessage(sessionId, 'assistant', botResponse);
         
         // Update analytics with message count
         await updateSessionMessageCount(messageCountRef.current);

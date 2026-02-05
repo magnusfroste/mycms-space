@@ -20,6 +20,7 @@ import {
   Palette,
   UserCircle,
   Webhook,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -61,6 +62,7 @@ const baseSettingsNavItems = [
   { id: 'integrations', label: 'Integrations', icon: Plug },
   { id: 'webhooks', label: 'Webhooks', icon: Webhook },
   { id: 'ai-module', label: 'AI Chat', icon: Bot },
+  { id: 'chat-history', label: 'Chat History', icon: MessageSquare },
 ];
 
 const bottomSettingsNavItems = [

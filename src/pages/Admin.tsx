@@ -19,6 +19,7 @@ import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import MessagesManager from '@/components/admin/MessagesManager';
 import { SettingsHistory } from '@/components/admin/SettingsHistory';
+import ChatHistoryManager from '@/components/admin/ChatHistoryManager';
 import ProfileSettings from '@/components/admin/ProfileSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -149,6 +150,8 @@ const Admin = () => {
         return <NewsletterManager />;
       case 'history':
         return <SettingsHistory />;
+      case 'chat-history':
+        return <ChatHistoryManager />;
       case 'profile':
         return <ProfileSettings />;
       default:
