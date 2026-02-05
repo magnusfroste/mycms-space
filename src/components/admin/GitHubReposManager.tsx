@@ -110,11 +110,11 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = ({
       <div className="flex items-center gap-3">
         {/* Drag handle */}
         <button
-          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 -ml-1 touch-none"
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-5 w-5" />
         </button>
 
         {/* Toggle */}
@@ -542,18 +542,39 @@ const GitHubReposManager: React.FC = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    console.log('[DnD] handleDragEnd triggered', { activeId: active?.id, overId: over?.id });
+    
+    if (!over || active.id === over.id) {
+      console.log('[DnD] No change needed');
+      return;
+    }
 
     const oldIndex = sortedRepos.findIndex((r) => r.id === active.id);
     const newIndex = sortedRepos.findIndex((r) => r.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
+    console.log('[DnD] Indices', { oldIndex, newIndex });
+    
+    if (oldIndex === -1 || newIndex === -1) {
+      console.log('[DnD] Invalid indices, aborting');
+      return;
+    }
 
     const reordered = [...sortedRepos];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
 
     const updates = reordered.map((r, idx) => ({ id: r.id, order_index: idx }));
-    updateOrderMutation.mutate(updates);
+    console.log('[DnD] Updating order with', updates.length, 'items');
+    
+    updateOrderMutation.mutate(updates, {
+      onSuccess: () => {
+        console.log('[DnD] Order updated successfully');
+        toast({ title: 'Order updated' });
+      },
+      onError: (error) => {
+        console.error('[DnD] Order update failed', error);
+        toast({ title: 'Could not update order', variant: 'destructive' });
+      },
+    });
   };
 
   if (isLoading) {
