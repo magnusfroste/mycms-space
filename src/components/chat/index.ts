@@ -10,3 +10,4 @@ export { default as ChatQuickActions } from "./ChatQuickActions";
 export { useChatMessages } from "./useChatMessages";
 export * from "./types";
 export * from "./utils";
+export * from "./messageOptimizer";
