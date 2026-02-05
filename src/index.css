@@ -890,6 +890,25 @@
   }
 
   /* ─────────────────────────────────────────
+     Theme-aware gradient text
+     - Elegant: Full gradient (premium feel)
+     - Sana: Solid primary (professional, clean)
+     - Grok: Solid foreground (brutalist)
+     - Terminal: Glow text
+     ───────────────────────────────────────── */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-mid)),
+      hsl(var(--gradient-end))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ─────────────────────────────────────────
      Section Layouts
      ───────────────────────────────────────── */
 
@@ -1020,8 +1039,8 @@
   display: none;
 }
 
-/* Solid text color instead of gradient in Grok */
-[data-theme="grok"] .hero-gradient-text {
+/* Grok: Solid foreground text - brutalist, no gradients */
+[data-theme="grok"] .gradient-text {
   background: none !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
@@ -1095,6 +1114,15 @@
 /* Disable floating animations in Sana (keep fade-in) */
 [data-theme="sana"] .animate-float {
   animation: none !important;
+}
+
+/* Sana: Solid primary color text - professional, clean */
+[data-theme="sana"] .gradient-text {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  color: hsl(var(--primary)) !important;
 }
 
 /* Softer parallax orbs in Sana */

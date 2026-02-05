@@ -200,7 +200,7 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
                   className="text-display-sm md:text-display lg:text-display-lg font-bold mb-6 animate-fade-in"
                   style={{ animationDelay: '0.1s' }}
                 >
-                  <span className="bg-gradient-primary bg-clip-text text-transparent drop-shadow-sm">
+                  <span className="gradient-text drop-shadow-sm">
                     {name}
                   </span>
                 </h1>
