@@ -3,7 +3,7 @@
 // Chat behavior and context configuration
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,65 @@ const AIModuleSettings: React.FC = () => {
   const updateModule = useUpdateAIModule();
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
+  
+  // Local state for system_prompt to avoid DB calls on every keystroke
+  const [localPrompt, setLocalPrompt] = useState('');
+  const [promptDirty, setPromptDirty] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Sync local state when config loads
+  useEffect(() => {
+    if (config?.system_prompt !== undefined && !promptDirty) {
+      setLocalPrompt(config.system_prompt || '');
+    }
+  }, [config?.system_prompt, promptDirty]);
+  
+  // Debounced save for system_prompt (1.5s after last keystroke)
+  const debouncedSavePrompt = useCallback((newPrompt: string) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      if (config) {
+        updateModule.mutate(
+          { module_config: { ...config, system_prompt: newPrompt } },
+          {
+            onSuccess: () => {
+              setPromptDirty(false);
+              toast({ title: 'Saved' });
+            },
+            onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+          }
+        );
+      }
+    }, 1500);
+  }, [config, updateModule, toast]);
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Handle local prompt changes
+  const handlePromptChange = (newPrompt: string) => {
+    setLocalPrompt(newPrompt);
+    setPromptDirty(true);
+    debouncedSavePrompt(newPrompt);
+  };
+  
+  // Handle AI-enhanced prompt (save immediately)
+  const handleEnhancedPrompt = (newPrompt: string) => {
+    setLocalPrompt(newPrompt);
+    setPromptDirty(false);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    handleConfigUpdate({ system_prompt: newPrompt });
+  };
   
   // Fetch pages, blog posts, and GitHub repos for selection
   const { data: pages = [] } = usePages();
@@ -264,16 +323,23 @@ const AIModuleSettings: React.FC = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="system_prompt">System Prompt</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="system_prompt">System Prompt</Label>
+                {promptDirty && (
+                  <span className="text-xs text-muted-foreground animate-pulse">
+                    Saving...
+                  </span>
+                )}
+              </div>
               <PromptEnhancer
-                currentPrompt={config?.system_prompt || ''}
-                onEnhanced={(newPrompt) => handleConfigUpdate({ system_prompt: newPrompt })}
+                currentPrompt={localPrompt}
+                onEnhanced={handleEnhancedPrompt}
               />
             </div>
             <Textarea
               id="system_prompt"
-              value={config?.system_prompt || ''}
-              onChange={(e) => handleConfigUpdate({ system_prompt: e.target.value })}
+              value={localPrompt}
+              onChange={(e) => handlePromptChange(e.target.value)}
               placeholder={`# Role
 You are [Name], an AI assistant for [Your Website]...
 
