@@ -27,6 +27,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
   onEnhanced,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { toast } = useToast();
 
   const enhancePrompt = (action: EnhanceAction) => {
@@ -41,16 +42,11 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
 
     setIsLoading(true);
 
-    // Use .then/.catch pattern to prevent unhandled promise rejections
-    // that can freeze the UI when async errors bypass React error boundaries
     supabase.functions.invoke('enhance-prompt', {
       body: { text: currentPrompt, action },
     })
       .then(({ data, error }) => {
-        if (error) {
-          throw error;
-        }
-
+        if (error) throw error;
         if (data?.text) {
           onEnhanced(data.text);
           toast({ title: 'Prompt enhanced!' });
@@ -70,13 +66,17 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
           variant: 'destructive',
         });
       })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      .finally(() => setIsLoading(false));
+  };
+
+  // Close menu first, then trigger action on next tick
+  const handleEnhance = (action: EnhanceAction) => {
+    setMenuOpen(false);
+    setTimeout(() => enhancePrompt(action), 0);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -93,7 +93,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
+        <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
           <Sparkles className="h-4 w-4 mr-2" />
           <div>
             <p className="font-medium">Improve</p>
@@ -102,7 +102,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
             </p>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => enhancePrompt('expand-prompt')}>
+        <DropdownMenuItem onSelect={() => handleEnhance('expand-prompt')}>
           <Wand2 className="h-4 w-4 mr-2" />
           <div>
             <p className="font-medium">Expand</p>
@@ -111,7 +111,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
             </p>
           </div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => enhancePrompt('structure-prompt')}>
+        <DropdownMenuItem onSelect={() => handleEnhance('structure-prompt')}>
           <Wand2 className="h-4 w-4 mr-2" />
           <div>
             <p className="font-medium">Structure</p>
