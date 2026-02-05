@@ -1,7 +1,7 @@
 // ============================================
 // Prompt Enhancer Component
 // AI assistant for improving system prompts
-// Isolated from parent re-renders via React.memo
+// Uses Dialog instead of Dropdown for stability
 // ============================================
 
 import React, { useState, useCallback, useRef } from 'react';
@@ -25,13 +25,7 @@ interface PromptEnhancerProps {
 
 type EnhanceAction = 'enhance-prompt' | 'expand-prompt' | 'structure-prompt';
 
-const actions: { action: EnhanceAction; icon: React.ElementType; title: string; description: string }[] = [
-  { action: 'enhance-prompt', icon: Sparkles, title: 'Improve', description: 'Make it clearer and more effective' },
-  { action: 'expand-prompt', icon: Wand2, title: 'Expand', description: 'Add more detail and examples' },
-  { action: 'structure-prompt', icon: Wand2, title: 'Structure', description: 'Organize with headings and sections' },
-];
-
-const PromptEnhancer: React.FC<PromptEnhancerProps> = React.memo(({
+const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
   currentPrompt,
   onEnhanced,
 }) => {
@@ -116,19 +110,38 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = React.memo(({
           </DialogHeader>
           
           <div className="space-y-2 py-4">
-            {actions.map(({ action, icon: Icon, title, description }) => (
-              <button
-                key={action}
-                onClick={() => enhancePrompt(action)}
-                className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
-              >
-                <Icon className="h-5 w-5 mt-0.5 text-primary shrink-0" />
-                <div>
-                  <p className="font-medium">{title}</p>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                </div>
-              </button>
-            ))}
+            <button
+              onClick={() => enhancePrompt('enhance-prompt')}
+              className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
+            >
+              <Sparkles className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+              <div>
+                <p className="font-medium">Improve</p>
+                <p className="text-sm text-muted-foreground">Make it clearer and more effective</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => enhancePrompt('expand-prompt')}
+              className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
+            >
+              <Wand2 className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+              <div>
+                <p className="font-medium">Expand</p>
+                <p className="text-sm text-muted-foreground">Add more detail and examples</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => enhancePrompt('structure-prompt')}
+              className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted transition-colors text-left"
+            >
+              <Wand2 className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+              <div>
+                <p className="font-medium">Structure</p>
+                <p className="text-sm text-muted-foreground">Organize with headings and sections</p>
+              </div>
+            </button>
           </div>
           
           <DialogFooter>
@@ -140,8 +153,6 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = React.memo(({
       </Dialog>
     </>
   );
-});
-
-PromptEnhancer.displayName = 'PromptEnhancer';
+};
 
 export default PromptEnhancer;
