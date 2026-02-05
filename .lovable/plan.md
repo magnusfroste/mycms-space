@@ -1,218 +1,196 @@
 
-# Theme System Refactoring Plan
+# Theme System Enhancement Plan
 
-## Problem Summary
+## Current State Analysis
 
-The current codebase has **three competing theme systems** that fight for control:
+The branding system is correctly set up with:
+- **Single `data-theme` attribute** as source of truth (good!)
+- **Three templates**: Elegant (default), Grok, Sana
+- **Color variables** already differentiated per theme
+- **Some style tokens** like `--radius`, `--shadow-*`, `--section-gap`, `--heading-tracking`
 
-1. **`next-themes`** - Manages `.dark` class for light/dark mode
-2. **`data-theme`** - Branding templates (elegant/grok/sana)
-3. **`data-section-theme`** - Scroll-triggered section backgrounds
+**What's missing**: The themes only differ in colors. True template identity requires typography, animations, spacing, and component behavior to differ.
 
-This creates race conditions, CSS conflicts, and unpredictable behavior.
+---
 
-## Solution: Unified Single Theme System
+## Solution: Theme-Specific Style Tokens
 
-Remove all complexity and use **only `data-theme`** with one attribute that controls everything.
+Each theme gets its own "personality" through extended CSS variables.
 
 ```text
-CURRENT (3 systems fighting):
-┌──────────────────────────────────────────┐
-│  next-themes (.dark class)               │──┐
-│  data-theme (elegant/grok/sana)          │──┼─→ CONFLICTS!
-│  data-section-theme (scroll-triggered)   │──┘
-└──────────────────────────────────────────┘
-
-NEW (1 unified system):
-┌──────────────────────────────────────────┐
-│  data-theme="sana" (single source)       │
-│  - Defines ALL colors for that theme     │
-│  - No .dark class needed                 │
-│  - No scroll-triggered overrides         │
-└──────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ ELEGANT               │ GROK                 │ SANA            │
+├─────────────────────────────────────────────────────────────────┤
+│ Warm, organic         │ Sharp, minimal       │ Clean, airy     │
+│ Soft shadows          │ No shadows           │ Subtle shadows  │
+│ Rounded corners (1rem)│ Tight corners (0.5rem)│ Medium (0.75rem)│
+│ Gradient buttons      │ Solid + border       │ Subtle gradient │
+│ Floating animations   │ No animations        │ Fade only       │
+│ Glass morphism        │ Hard edges           │ Light glass     │
+│ Generous spacing      │ Compact spacing      │ Balanced spacing│
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Phase 1: Remove Complexity
+## Phase 1: Extended Style Variables
 
-### 1.1 Remove `next-themes` Package
+Add new CSS custom properties for each theme.
 
-**Files to modify:**
-- `src/App.tsx` - Remove `ThemeProvider` wrapper
-- `src/components/ThemeToggle.tsx` - Delete file (temporarily, can restore later)
-- `src/components/Header.tsx` - Remove `ThemeToggle` import and usage
-- `src/pages/Chat.tsx` - Remove `ThemeToggle` import and usage
-- `src/hooks/useBrandingTheme.ts` - Remove `useTheme` from next-themes
-
-### 1.2 Remove Scroll-Triggered Themes
-
-**Files to delete:**
-- `src/hooks/useScrollTheme.ts` - Delete entirely
-- `src/components/blocks/ScrollThemeSection.tsx` - Delete entirely
-
-**Files to modify:**
-- `src/components/blocks/BlockRenderer.tsx` - Remove `ScrollThemeSection` wrapper
-- `src/index.css` - Remove lines 716-835 (all `data-section-theme` CSS, ~120 lines)
-
----
-
-## Phase 2: Simplify Branding Hook
-
-### 2.2 New `useBrandingTheme.ts`
-
-Simple hook that only sets `data-theme` once on mount:
-
-```typescript
-import { useEffect } from 'react';
-import { useModule } from '@/models/modules';
-import type { BrandingModuleConfig } from '@/types/modules';
-
-export const useBrandingTheme = () => {
-  const { data: module, isLoading } = useModule('branding');
-  
-  useEffect(() => {
-    if (isLoading || !module) return;
-    
-    const config = module.module_config as BrandingModuleConfig | undefined;
-    const theme = config?.theme || 'elegant';
-    
-    // Single source of truth - just set the attribute
-    if (theme === 'elegant') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-    
-    console.log('[Branding] Applied theme:', theme);
-  }, [module, isLoading]);
-  
-  return {
-    theme: (module?.module_config as BrandingModuleConfig | undefined)?.theme || 'elegant',
-    isLoading,
-  };
-};
-```
-
----
-
-## Phase 3: Simplify CSS
-
-### 3.1 CSS Structure After Cleanup
-
-From **835 lines** to approximately **550 lines**.
-
-**Remove:**
-- All `data-section-theme` rules (lines 716-835) - 120 lines
-- `.dark` variants for each theme - consolidate into single theme definitions
-- `force_dark` option from BrandingModuleConfig
-
-**Keep:**
-- `:root` base variables
-- `[data-theme="grok"]` - full theme definition
-- `[data-theme="sana"]` - full theme definition
-- Component styles (glass-card, btn-primary, etc.)
-
-### 3.2 Theme Definitions
-
-Each theme defines its own complete color palette (no light/dark variants for now):
+**New variables to add:**
 
 ```css
-/* Elegant = default, no data-theme needed */
-:root {
-  --background: 220 20% 97%;
-  --foreground: 220 25% 10%;
-  /* ... rest of colors */
-}
+/* Animation & Effects */
+--animation-speed: 0.6s;           /* Animation duration */
+--enable-glow: 1;                  /* 0 or 1 to toggle glow effects */
+--enable-parallax: 1;              /* 0 or 1 for parallax effects */
+--glass-blur: 20px;                /* Backdrop blur amount */
+--glass-opacity: 0.6;              /* Glass card opacity */
 
-/* Grok - Sharp minimal */
-[data-theme="grok"] {
-  --background: 0 0% 98%;
-  --foreground: 0 0% 8%;
-  /* ... complete palette */
-}
+/* Typography */
+--font-weight-heading: 600;        /* Heading weight */
+--font-weight-body: 400;           /* Body weight */
+--text-case-heading: none;         /* uppercase for Grok */
 
-/* Sana - Clean professional */
-[data-theme="sana"] {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 10%;
-  /* ... complete palette */
-}
+/* Component Shapes */
+--button-radius: 9999px;           /* Pill shape default */
+--card-radius: 1rem;               /* Card corners */
+--input-radius: 0.75rem;           /* Input corners */
+
+/* Transitions */
+--transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+--hover-lift: -4px;                /* How much cards lift on hover */
 ```
 
 ---
 
-## Phase 4: Update Admin UI
+## Phase 2: Theme Definitions
 
-### 4.1 Simplify BrandingSettings.tsx
+### Elegant (Default) - "Warm Premium"
+- Gradient buttons with glow
+- Glass morphism cards
+- Floating/parallax animations
+- Organic rounded corners
+- Generous whitespace
 
-Remove `force_dark` toggle since we're removing dark mode for now.
+### Grok - "Sharp Minimal"
+- Solid buttons with thin border
+- Hard-edge cards, no glass effect
+- No decorative animations
+- Tight, geometric corners
+- Compact layout
+- UPPERCASE headings (optional)
 
-**Before:**
-- Theme selector (elegant/grok/sana)
-- Force Dark Mode toggle
-
-**After:**
-- Theme selector only
-- Pro tip about future light/dark mode support
-
-### 4.2 Update HeaderModuleConfig
-
-Remove `show_theme_toggle` option since there's no toggle anymore.
+### Sana - "Clean Professional"
+- Subtle gradient buttons
+- Light glass effect
+- Fade-in animations only (no float/parallax)
+- Medium rounded corners
+- Balanced whitespace
+- Extra line-height for readability
 
 ---
 
-## Phase 5: Prepare for Future Dark/Light Mode
+## Phase 3: Implementation in CSS
 
-Create architecture that makes it easy to add back later:
+Update `src/index.css` with theme-specific overrides for:
 
-### 5.1 Reserved CSS Structure
+1. **Glass card component** - adjust blur/opacity per theme
+2. **Button styles** - different hover behaviors
+3. **Heading styles** - font-weight, letter-spacing, text-transform
+4. **Animation classes** - conditionally apply based on theme
+5. **Section spacing** - more compact for Grok
 
-Keep `.dark` variants in CSS but commented out:
+Example structure:
 
 ```css
-/* FUTURE: Dark mode variants
-[data-theme="sana"].dark {
-  --background: 240 10% 6%;
-  ...
+/* Grok: Override component styles */
+[data-theme="grok"] .glass-card {
+  backdrop-filter: none;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
-*/
+
+[data-theme="grok"] .btn-primary {
+  background: hsl(var(--primary));
+  box-shadow: none;
+  border: 1px solid hsl(var(--accent));
+}
+
+[data-theme="grok"] h1, 
+[data-theme="grok"] h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Sana: Lighter effects */
+[data-theme="sana"] .glass-card {
+  backdrop-filter: blur(10px);
+  background: hsl(var(--card) / 0.9);
+}
 ```
 
-### 5.2 Reserved Config Fields
+---
 
-Keep in TypeScript types but mark as optional/deprecated:
+## Phase 4: Component Adaptations
 
-```typescript
-interface BrandingModuleConfig {
-  theme: 'elegant' | 'grok' | 'sana';
-  // Future: Re-enable when dark mode is added back
-  // force_dark?: boolean;
-  // color_mode?: 'light' | 'dark' | 'system';
+Update key components to respect theme variables:
+
+1. **HeroBlock.tsx** - Disable parallax/mesh gradient for Grok
+2. **BlockRenderer.tsx** - Use theme-aware animation classes
+3. **Glass components** - Check `--glass-blur` variable
+
+Add a utility hook or CSS class:
+
+```tsx
+// In components, check theme for conditional rendering
+const theme = document.documentElement.getAttribute('data-theme') || 'elegant';
+const enableParallax = theme !== 'grok';
+```
+
+Or purely CSS-driven:
+
+```css
+[data-theme="grok"] .animate-float {
+  animation: none;
 }
 ```
+
+---
+
+## Customization Recommendation
+
+**My recommendation: Curated templates only (no custom CSS editor)**
+
+### Why?
+1. **Complexity trap** - CSS editors create maintenance nightmares
+2. **User experience** - Non-technical users get overwhelmed
+3. **Brand consistency** - Random customization leads to broken designs
+4. **Support burden** - "My custom CSS broke the site" tickets
+
+### Alternative approach:
+- Keep 3-5 well-designed templates
+- Add ONE toggle: "Minimal mode" (disables animations/effects)
+- Future: Add accent color picker (single color, applied to all themes)
+
+This follows Apple's philosophy: opinionated defaults that just work.
 
 ---
 
 ## Summary of Changes
 
-| File | Action |
-|------|--------|
-| `src/App.tsx` | Remove `ThemeProvider`, keep `useBrandingTheme` |
-| `src/components/ThemeToggle.tsx` | Delete |
-| `src/components/Header.tsx` | Remove ThemeToggle usage |
-| `src/pages/Chat.tsx` | Remove ThemeToggle usage |
-| `src/hooks/useBrandingTheme.ts` | Simplify to single attribute |
-| `src/hooks/useScrollTheme.ts` | Delete |
-| `src/components/blocks/ScrollThemeSection.tsx` | Delete |
-| `src/components/blocks/BlockRenderer.tsx` | Remove ScrollThemeSection wrapper |
-| `src/index.css` | Remove ~280 lines (section themes + .dark variants) |
-| `src/components/admin/BrandingSettings.tsx` | Remove force_dark toggle |
-| `src/types/modules.ts` | Simplify BrandingModuleConfig |
+| File | Changes |
+|------|---------|
+| `src/index.css` | ~80 lines: Add theme-specific component overrides |
+| `src/hooks/useBrandingTheme.ts` | No changes needed (already simplified) |
+| `src/components/blocks/HeroBlock.tsx` | ~5 lines: Respect theme for parallax |
+| `src/components/admin/BrandingSettings.tsx` | Update descriptions to highlight style differences |
+| `tailwind.config.ts` | Optional: Add animation-none utility |
 
 ## Expected Outcome
 
-- **Theme switching works reliably** - Single data-theme attribute, no conflicts
-- **~280 fewer CSS lines** - Easier to maintain
-- **No race conditions** - No multiple systems fighting
-- **Architecture ready** - Easy to add dark mode back when needed
+- **Elegant**: Warm, animated, premium feel (current default)
+- **Grok**: Sharp, static, X/Tesla-inspired minimal
+- **Sana**: Clean, professional, SaaS-appropriate
+- **No UI customization complexity** - templates that just work
+- **Future-ready** for accent color picker if needed
