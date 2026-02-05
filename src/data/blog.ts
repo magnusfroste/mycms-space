@@ -24,6 +24,62 @@ export const fetchBlogPosts = async (options?: {
   limit?: number;
   offset?: number;
 }): Promise<BlogPost[]> => {
+  const limit = options?.limit || 10;
+  const offset = options?.offset || 0;
+
+  // If filtering by category, get post IDs first then fetch those posts
+  if (options?.categorySlug) {
+    // Get category ID from slug
+    const { data: category } = await supabase
+      .from('blog_categories')
+      .select('id')
+      .eq('slug', options.categorySlug)
+      .maybeSingle();
+
+    if (!category) {
+      return []; // Category not found, return empty
+    }
+
+    // Get post IDs in this category
+    const { data: junctionData } = await supabase
+      .from('blog_post_categories')
+      .select('post_id')
+      .eq('category_id', category.id);
+
+    const postIds = (junctionData || []).map((j) => j.post_id);
+
+    if (postIds.length === 0) {
+      return []; // No posts in this category
+    }
+
+    // Build query with post IDs filter
+    let query = supabase
+      .from('blog_posts')
+      .select('*')
+      .in('id', postIds)
+      .order('created_at', { ascending: false });
+
+    if (options?.status) {
+      query = query.eq('status', options.status);
+    }
+    if (options?.featured !== undefined) {
+      query = query.eq('featured', options.featured);
+    }
+
+    // Apply pagination AFTER filtering
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching blog posts by category:', error);
+      throw error;
+    }
+
+    return (data || []) as BlogPost[];
+  }
+
+  // Standard query without category filter
   let query = supabase
     .from('blog_posts')
     .select('*')
@@ -35,37 +91,14 @@ export const fetchBlogPosts = async (options?: {
   if (options?.featured !== undefined) {
     query = query.eq('featured', options.featured);
   }
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
-  if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
-  }
+
+  query = query.range(offset, offset + limit - 1);
 
   const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching blog posts:', error);
     throw error;
-  }
-
-  // If category filter, we need to filter by junction table
-  if (options?.categorySlug) {
-    const categoryResult = await supabase
-      .from('blog_categories')
-      .select('id')
-      .eq('slug', options.categorySlug)
-      .single();
-
-    if (categoryResult.data) {
-      const junctionResult = await supabase
-        .from('blog_post_categories')
-        .select('post_id')
-        .eq('category_id', categoryResult.data.id);
-
-      const postIds = (junctionResult.data || []).map((j) => j.post_id);
-      return (data || []).filter((post) => postIds.includes(post.id)) as BlogPost[];
-    }
   }
 
   return (data || []) as BlogPost[];
