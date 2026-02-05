@@ -46,6 +46,17 @@
     --radius: 1rem;
 
     /* ─────────────────────────────────────────
+       Visual Feature Toggles (1 = on, 0 = off)
+       Templates control these automatically
+       ───────────────────────────────────────── */
+    --enable-glass: 1;
+    --enable-glow: 1;
+    --enable-parallax: 1;
+    --enable-hover-lift: 1;
+    --enable-animations: 1;
+    --animation-duration: 0.4s;
+
+    /* ─────────────────────────────────────────
        Extended Design Tokens
        ───────────────────────────────────────── */
     
@@ -185,6 +196,14 @@
 
     --radius: 0.5rem;
 
+    /* Grok: Static, no frills */
+    --enable-glass: 0;
+    --enable-glow: 0;
+    --enable-parallax: 0;
+    --enable-hover-lift: 0;
+    --enable-animations: 0;
+    --animation-duration: 0s;
+
     /* Gradient - Monochrome with orange pop */
     --gradient-start: 0 0% 8%;
     --gradient-mid: 0 0% 25%;
@@ -308,6 +327,14 @@
     --ring: 250 65% 60%;
 
     --radius: 0.75rem;
+
+    /* Sana: Subtle animations, no parallax */
+    --enable-glass: 1;
+    --enable-glow: 0;
+    --enable-parallax: 0;
+    --enable-hover-lift: 1;
+    --enable-animations: 1;
+    --animation-duration: 0.3s;
 
     /* Gradient - Subtle violet */
     --gradient-start: 250 65% 60%;
@@ -442,6 +469,14 @@
     --ring: 120 100% 50%;
 
     --radius: 0;
+
+    /* Terminal: Glow effects, no lift transforms */
+    --enable-glass: 0;
+    --enable-glow: 1;
+    --enable-parallax: 0;
+    --enable-hover-lift: 0;
+    --enable-animations: 1;
+    --animation-duration: 0.2s;
 
     /* Gradient - Matrix colors */
     --gradient-start: 120 100% 50%;
@@ -604,42 +639,64 @@
      Surface Components
      ───────────────────────────────────────── */
 
-  /* Glass Card - Frosted effect */
+  /* Glass Card - Frosted effect (respects --enable-glass) */
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl;
-    background: hsl(var(--surface-glass));
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid hsl(var(--border) / 0.5);
+    @apply relative overflow-hidden bg-card border border-border;
+    border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Glass effect only when enabled */
+  @supports (backdrop-filter: blur(1px)) {
+    :root:not([data-theme="grok"]):not([data-theme="terminal"]) .glass-card {
+      background: hsl(var(--surface-glass));
+      backdrop-filter: blur(20px) saturate(180%);
+      border-color: hsl(var(--border) / 0.5);
+    }
   }
 
   .glass-card:hover {
     box-shadow: var(--shadow-md);
     border-color: hsl(var(--primary) / 0.2);
+  }
+
+  /* Hover lift only when enabled (not Grok/Terminal) */
+  :root:not([data-theme="grok"]):not([data-theme="terminal"]) .glass-card:hover {
     transform: translateY(-2px);
   }
 
   /* Elevated Card - Solid with depth */
   .elevated-card {
-    @apply relative overflow-hidden rounded-2xl bg-card border border-border;
+    @apply relative overflow-hidden bg-card border border-border;
+    border-radius: var(--radius);
     box-shadow: var(--shadow-md);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .elevated-card:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Glow + lift on hover only when enabled */
+  :root:not([data-theme="grok"]) .elevated-card:hover {
     box-shadow: var(--shadow-lg), var(--shadow-glow);
+  }
+
+  :root:not([data-theme="grok"]):not([data-theme="terminal"]) .elevated-card:hover {
     transform: translateY(-4px);
   }
 
-  /* Glow Card - Subtle ambient glow */
+  /* Glow Card - Subtle ambient glow (respects --enable-glow) */
   .glow-card {
-    @apply relative overflow-hidden rounded-2xl bg-card border border-border;
+    @apply relative overflow-hidden bg-card border border-border;
+    border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .glow-card::before {
+  /* Mouse-tracking glow only for Elegant theme */
+  :root:not([data-theme="grok"]):not([data-theme="sana"]) .glow-card::before {
     content: '';
     @apply absolute inset-0 opacity-0 transition-opacity duration-500;
     background: radial-gradient(
@@ -649,13 +706,23 @@
     );
   }
 
-  .glow-card:hover::before {
+  :root:not([data-theme="grok"]):not([data-theme="sana"]) .glow-card:hover::before {
     @apply opacity-100;
   }
 
   .glow-card:hover {
     box-shadow: var(--shadow-md), var(--shadow-glow);
     border-color: hsl(var(--primary) / 0.15);
+  }
+
+  /* Terminal gets neon glow instead of mouse-tracking */
+  [data-theme="terminal"] .glow-card {
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  [data-theme="terminal"] .glow-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--primary));
   }
 
   /* ─────────────────────────────────────────
@@ -703,8 +770,9 @@
 
   .btn-primary {
     @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
-    @apply rounded-full font-medium text-primary-foreground;
-    @apply transition-all duration-300;
+    @apply font-medium text-primary-foreground;
+    border-radius: var(--radius);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
@@ -714,25 +782,35 @@
   }
 
   .btn-primary:hover {
-    transform: translateY(-2px);
     box-shadow: 0 8px 24px hsl(var(--primary) / 0.45);
+  }
+
+  /* Hover lift only when enabled */
+  :root:not([data-theme="grok"]):not([data-theme="terminal"]) .btn-primary:hover {
+    transform: translateY(-2px);
   }
 
   .btn-secondary {
     @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
-    @apply rounded-full font-medium bg-secondary text-secondary-foreground;
-    @apply border border-border transition-all duration-300;
+    @apply font-medium bg-secondary text-secondary-foreground;
+    @apply border border-border;
+    border-radius: var(--radius);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-secondary:hover {
     @apply bg-muted;
+  }
+
+  :root:not([data-theme="grok"]):not([data-theme="terminal"]) .btn-secondary:hover {
     transform: translateY(-1px);
   }
 
   .btn-ghost {
     @apply relative inline-flex items-center justify-center gap-2 px-6 py-3;
-    @apply rounded-full font-medium text-foreground;
-    @apply transition-all duration-300;
+    @apply font-medium text-foreground;
+    border-radius: var(--radius);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-ghost:hover {
@@ -744,10 +822,11 @@
      ───────────────────────────────────────── */
 
   .input-field {
-    @apply w-full bg-card border border-input rounded-xl px-4 py-3;
+    @apply w-full bg-card border border-input px-4 py-3;
     @apply text-foreground placeholder:text-muted-foreground;
-    @apply transition-all duration-300;
     @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
+    border-radius: var(--radius);
+    transition: all var(--animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* ─────────────────────────────────────────
