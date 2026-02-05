@@ -805,6 +805,31 @@ npm run build
 - Regular updates of dependencies
 - Use Row Level Security (RLS) in Supabase
 
+### AI Admin Tools (Self-Hosting)
+
+When self-hosting outside of Lovable Cloud, the admin AI tools (Prompt Enhancer, Text Actions, Page Builder Chat) need an AI provider configured:
+
+| Provider | Secret Required | Notes |
+|----------|-----------------|-------|
+| OpenAI | `OPENAI_API_KEY` | Add to Supabase secrets |
+| Gemini | `GEMINI_API_KEY` | Add to Supabase secrets |
+| n8n | Webhook URL | Configure in admin UI |
+| Lovable AI | Auto-configured | Only in Lovable Cloud |
+
+**Setup steps:**
+
+1. Go to Admin → AI Chat → Integration
+2. Select your AI provider (OpenAI, Gemini, or n8n)
+3. For OpenAI/Gemini: Add the API key as a Supabase secret:
+   ```bash
+   npx supabase secrets set OPENAI_API_KEY=sk-your-key
+   # or
+   npx supabase secrets set GEMINI_API_KEY=your-key
+   ```
+4. For n8n: Configure webhook URL in admin UI
+
+The admin tools will automatically use your selected provider.
+
 ---
 
 **Need Help?**

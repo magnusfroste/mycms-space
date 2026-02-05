@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { 
+  getAICompletion, 
+  handleProviderError, 
+  handleResponseErrors,
+  type AIMessage 
+} from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +17,7 @@ interface EnhanceRequest {
   text: string;
   action: EnhanceAction;
   context?: string;
-  title?: string; // For blog generation actions
+  title?: string;
 }
 
 const validActions: EnhanceAction[] = ['correct', 'enhance', 'expand', 'generate-outline', 'generate-intro', 'generate-conclusion', 'generate-draft'];
@@ -87,17 +93,11 @@ Return ONLY the complete blog post in Markdown format, no meta-commentary.`;
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     const { text, action, context, title }: EnhanceRequest = await req.json();
 
     if (!action) {
@@ -107,7 +107,6 @@ serve(async (req) => {
       );
     }
 
-    // For generate actions, text can be empty but we need title
     const isGenerateAction = action.startsWith('generate-');
     if (!isGenerateAction && !text) {
       return new Response(
@@ -125,54 +124,31 @@ serve(async (req) => {
 
     console.log(`Processing ${action} request${title ? ` for title: "${title}"` : ''}`);
 
-    // For generate actions, use title as the user message if no text
     const userMessage = isGenerateAction 
       ? (text || title || 'Generate content for a blog post')
       : text;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: getSystemPrompt(action, context, title) },
-          { role: "user", content: userMessage },
-        ],
-        temperature: action === 'correct' ? 0.1 : 0.7,
-        max_tokens: (isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : 1000)),
-      }),
+    const messages: AIMessage[] = [
+      { role: "system", content: getSystemPrompt(action, context, title) },
+      { role: "user", content: userMessage },
+    ];
+
+    // Use shared AI provider
+    const result = await getAICompletion({
+      messages,
+      temperature: action === 'correct' ? 0.1 : 0.7,
+      max_tokens: isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : 1000),
     });
 
-    if (!response.ok) {
-      const status = response.status;
-      const errorText = await response.text();
-      console.error(`AI gateway error: ${status}`, errorText);
+    // Handle provider configuration errors
+    const providerError = handleProviderError(result, corsHeaders);
+    if (providerError) return providerError;
 
-      if (status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    // Handle API response errors
+    const responseError = await handleResponseErrors(result.response!, corsHeaders);
+    if (responseError) return responseError;
 
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: 'AI service error. Please try again.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await response.json();
+    const data = await result.response!.json();
     const enhancedText = data.choices?.[0]?.message?.content?.trim();
 
     if (!enhancedText) {
