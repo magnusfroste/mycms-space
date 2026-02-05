@@ -414,7 +414,11 @@ const GitHubReposManager: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const sortedRepos = [...(repos || [])].sort((a, b) => a.order_index - b.order_index);
+  // Sort: enabled first, then by order_index
+  const sortedRepos = [...(repos || [])].sort((a, b) => {
+    if (a.enabled !== b.enabled) return b.enabled ? 1 : -1;
+    return a.order_index - b.order_index;
+  });
   const enabledCount = sortedRepos.filter((r) => r.enabled).length;
 
   const handleSync = async () => {
