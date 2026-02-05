@@ -219,7 +219,41 @@ Visit `http://localhost:5173`
 
 ## 📦 Deployment Options
 
-### Docker (Recommended for Self-Hosting)
+### 1. Railway (Recommended for Cloud Deployment)
+
+Railway provides the best balance of ease-of-use and features:
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login
+railway login
+
+# Initialize project
+railway init
+
+# Set environment variables
+railway variables set VITE_SUPABASE_URL=https://your-project.supabase.co
+railway variables set VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+
+# Deploy
+railway up
+```
+
+**Why Railway?**
+- Automatic HTTPS
+- Built-in CI/CD
+- Preview deployments
+- Can host frontend + database
+- GitHub integration
+- Real-time logs and metrics
+
+**Recommended Setup:**
+- Frontend on Railway
+- Supabase Cloud for database/backend
+
+### 2. Docker (Recommended for Self-Hosting)
 
 ```bash
 # Build and run

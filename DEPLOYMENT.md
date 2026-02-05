@@ -422,6 +422,133 @@ Vercel automatically detects the build settings:
 
 ---
 
+## 🚂 Railway
+
+### Overview
+
+Railway is a modern cloud platform that can host both your frontend and backend services. It's particularly good for:
+- Full-stack deployments (frontend + database)
+- Automatic scaling
+- Built-in monitoring
+- Easy environment variable management
+
+### Option 1: Frontend on Railway + Supabase Cloud (Recommended)
+
+**Why this setup?**
+- Railway handles frontend deployment
+- Supabase Cloud provides managed database, auth, and edge functions
+- Best of both worlds: Easy frontend, robust backend
+
+#### Deployment Steps
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login
+railway login
+
+# Initialize project
+railway init
+
+# Set environment variables
+railway variables set VITE_SUPABASE_URL=https://your-project.supabase.co
+railway variables set VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+
+# Deploy
+railway up
+```
+
+#### Railway Configuration
+
+Railway automatically detects the build settings:
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Port:** 80 (auto-detected)
+
+#### Environment Variables
+
+In Railway dashboard:
+1. Go to Settings → Variables
+2. Add:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+### Option 2: Full Stack on Railway (Frontend + Self-Hosted Supabase)
+
+**Note:** This requires more setup and maintenance. Supabase Cloud is recommended for most users.
+
+Railway can host a self-hosted Supabase instance, but it's more complex:
+- Requires manual Supabase setup
+- Multiple services to manage (Studio, API, Auth, Realtime)
+- More maintenance overhead
+- No automatic backups like Supabase Cloud
+
+**If you want full control**, Railway can host:
+- Frontend (React/Vite)
+- PostgreSQL database
+- Supabase services (self-hosted)
+
+See [Railway Supabase Template](https://railway.com/deploy/supabase) for details.
+
+### Railway vs Supabase Cloud
+
+| Feature | Railway + Supabase Cloud | Railway Full Stack |
+|---------|-------------------------|-------------------|
+| **Setup** | Easy (5 min) | Complex (30+ min) |
+| **Maintenance** | Minimal | High |
+| **Backups** | Automatic | Manual |
+| **Edge Functions** | Included | Manual setup |
+| **Studio UI** | Included | Manual setup |
+| **Cost** | Free tier available | Higher cost |
+| **Recommended** | ✅ Yes | ❌ For advanced users |
+
+### Railway Features
+
+**Pricing:**
+- **Free Tier:** $5/month credit
+- **Pro Tier:** $20/month
+- **Team Tier:** Custom pricing
+
+**Advantages:**
+- Automatic HTTPS
+- Built-in CI/CD
+- Preview deployments
+- Collaborative team features
+- GitHub integration
+
+**Disadvantages:**
+- Free tier has limited resources
+- Can be more expensive than EasyPanel for long-term
+- Less control than self-hosting
+
+### Deployment Workflow
+
+```bash
+# 1. Connect GitHub repository
+railway init
+
+# 2. Configure environment
+railway variables set VITE_SUPABASE_URL=...
+railway variables set VITE_SUPABASE_PUBLISHABLE_KEY=...
+
+# 3. Deploy
+railway up
+
+# 4. Access your site
+railway open
+```
+
+### Monitoring
+
+Railway provides:
+- Real-time logs
+- Metrics (CPU, memory, network)
+- Error tracking
+- Deployment history
+
+---
+
 ## 🌊 Netlify
 
 ### Deployment
