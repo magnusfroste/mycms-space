@@ -6,12 +6,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { iconMap } from '@/lib/constants/iconMaps';
-import { useAIModule } from '@/models/modules';
 import FallingStars from '@/components/animations/FallingStars';
 import ParticleField from '@/components/animations/ParticleField';
 import GradientShift from '@/components/animations/GradientShift';
 import ChatInput from '@/components/chat/ChatInput';
-import ChatQuickActions from '@/components/chat/ChatQuickActions';
 import type { ChatHeroBlockConfig } from '@/types/blockConfigs';
 import type { QuickActionConfig, Message } from '@/components/chat/types';
 
@@ -21,7 +19,6 @@ interface ChatHeroBlockProps {
 
 const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const navigate = useNavigate();
-  const { config: aiConfig } = useAIModule();
   const typedConfig = config as ChatHeroBlockConfig;
   
   const [scrollY, setScrollY] = useState(0);
@@ -221,37 +218,19 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               {agentTagline}
             </p>
 
-            {/* Chat Input */}
+            {/* Chat Input - använder samma komponent som /chat */}
             <div 
               className="animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
-              <div className="relative max-w-full">
-                <textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder={placeholder}
-                  className="input-field w-full pr-14 resize-none text-base min-h-[56px] max-h-[120px] overflow-y-auto"
-                  rows={1}
-                  disabled={isLoading}
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="absolute bottom-3 right-3 h-10 w-10 bg-primary text-primary-foreground flex items-center justify-center shadow-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ borderRadius: 'var(--radius)' }}
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                </button>
-              </div>
+              <ChatInput
+                value={inputValue}
+                onChange={setInputValue}
+                onSend={handleSend}
+                placeholder={placeholder}
+                isLoading={isLoading}
+                fullPage={false}
+              />
             </div>
 
             {/* Quick Actions */}
