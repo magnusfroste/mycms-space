@@ -15,11 +15,12 @@ import type {
   HeaderModuleConfig,
   FooterModuleConfig,
   GitHubModuleConfig,
+  WebhooksModuleConfig,
 } from '@/types/modules';
 import { defaultModuleConfigs } from '@/types/modules';
 
 // Re-export types
-export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig };
+export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig };
 
 // Query keys
 export const modulesKeys = {
@@ -139,6 +140,20 @@ export const useGitHubModule = () => {
 };
 
 export const useUpdateGitHubModule = () => useUpdateModule('github');
+
+// Webhooks Module
+export const useWebhooksModule = () => {
+  const query = useModule('webhooks');
+  const defaultConfig = defaultModuleConfigs.webhooks;
+  
+  return {
+    ...query,
+    config: (query.data?.module_config as WebhooksModuleConfig) ?? defaultConfig,
+    isEnabled: query.data?.enabled ?? true,
+  };
+};
+
+export const useUpdateWebhooksModule = () => useUpdateModule('webhooks');
 
 // Realtime subscription hook
 export const useModuleSubscription = (moduleType: ModuleType) => {

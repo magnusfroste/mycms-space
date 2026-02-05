@@ -9,6 +9,7 @@ import BrandingSettings from '@/components/admin/BrandingSettings';
 import BlogManager from '@/components/admin/BlogManager';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import IntegrationsManager from '@/components/admin/IntegrationsManager';
+import WebhooksManager from '@/components/admin/WebhooksManager';
 import GitHubReposManager from '@/components/admin/GitHubReposManager';
 import MediaHub from '@/components/admin/MediaHub';
 import { NavSettings } from '@/components/admin/NavSettings';
@@ -130,6 +131,8 @@ const Admin = () => {
         return <BrandingSettings />;
       case 'integrations':
         return <IntegrationsManager />;
+      case 'webhooks':
+        return <WebhooksManager />;
       case 'ai-module':
         return <AIModuleSettings />;
       case 'projects-module':
