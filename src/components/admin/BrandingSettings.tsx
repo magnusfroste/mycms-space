@@ -31,7 +31,7 @@ const themeTemplates: ThemeTemplate[] = [
   {
     id: 'elegant',
     name: 'Elegant',
-    description: 'Warm premium feel with glass morphism, floating animations, parallax effects, and gradient accents. Perfect for creative professionals.',
+    description: 'Playfair Display + Inter. Rundade hörn, glassmorfism, parallax-animationer.',
     icon: <Sparkles className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-slate-50 to-slate-100',
@@ -39,12 +39,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-400',
       text: 'text-slate-800',
     },
-    tags: ['Animated', 'Glass', 'Warm'],
+    tags: ['Serif', 'Glass', 'Animerad'],
   },
   {
     id: 'grok',
     name: 'Grok',
-    description: 'Sharp minimal design with no animations, hard edges, compact spacing, and uppercase headings. X/Tesla-inspired.',
+    description: 'Darker Grotesque. Vassa kanter, versaler, kompakt. Inga animationer.',
     icon: <Zap className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-neutral-50 to-neutral-100',
@@ -52,12 +52,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-orange-500',
       text: 'text-neutral-900',
     },
-    tags: ['Static', 'Minimal', 'Sharp'],
+    tags: ['Brutalist', 'Statisk', 'Minimal'],
   },
   {
     id: 'sana',
     name: 'Sana',
-    description: 'Clean professional design with subtle gradients, fade-in animations, balanced whitespace, and extra readability. SaaS-inspired.',
+    description: 'System UI. Mjuka hörn, generöst radavstånd, subtila fades.',
     icon: <Palette className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-white to-slate-50',
@@ -65,12 +65,12 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-violet-400',
       text: 'text-slate-900',
     },
-    tags: ['Clean', 'Balanced', 'Pro'],
+    tags: ['SaaS', 'Läsbar', 'Professionell'],
   },
   {
     id: 'terminal',
     name: 'Terminal',
-    description: 'Matrix/hacker aesthetic with phosphor green, monospace typography, scanlines, and glow effects. For the self-hosting community.',
+    description: 'JetBrains Mono. Neon-glow, hårda kanter, kommandorad-estetik.',
     icon: <Terminal className="h-5 w-5" />,
     preview: {
       background: 'bg-gradient-to-br from-black to-neutral-900',
@@ -78,7 +78,7 @@ const themeTemplates: ThemeTemplate[] = [
       accent: 'bg-cyan-400',
       text: 'text-green-400',
     },
-    tags: ['Hacker', 'FOSS', 'Dark'],
+    tags: ['Monospace', 'Hacker', 'Mörk'],
   },
 ];
 
