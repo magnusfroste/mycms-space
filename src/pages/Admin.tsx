@@ -25,7 +25,7 @@ import GeneralSettings from '@/components/admin/GeneralSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { usePages } from '@/models/pages';
 
 const Admin = () => {
