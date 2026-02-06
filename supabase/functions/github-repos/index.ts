@@ -59,6 +59,7 @@ interface TransformedRepo {
   createdAt: string;
   isArchived: boolean;
   isFork: boolean;
+  readmeContent: string | null;
 }
 
 interface TransformedProfile {
@@ -376,10 +377,29 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
 
     const repos: GitHubRepo[] = await reposResponse.json();
 
-    // Transform repos
-    const transformedRepos: TransformedRepo[] = repos
-      .filter((repo) => !repo.fork && !repo.archived) // Exclude forks and archived
-      .map((repo) => ({
+    // Transform repos and fetch READMEs
+    const transformedRepos: TransformedRepo[] = [];
+    const filteredRepos = repos.filter((repo) => !repo.fork && !repo.archived);
+    
+    for (const repo of filteredRepos) {
+      // Fetch README for each repo
+      let readmeContent: string | null = null;
+      try {
+        const readmeUrl = `https://api.github.com/repos/${repo.full_name}/readme`;
+        const readmeResponse = await fetch(readmeUrl, {
+          headers: {
+            ...headers,
+            "Accept": "application/vnd.github.v3.raw",
+          },
+        });
+        if (readmeResponse.ok) {
+          readmeContent = await readmeResponse.text();
+        }
+      } catch (e) {
+        console.log(`Could not fetch README for ${repo.full_name}:`, e);
+      }
+
+      transformedRepos.push({
         id: String(repo.id),
         name: repo.name,
         fullName: repo.full_name,
@@ -394,7 +414,9 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
         createdAt: repo.created_at,
         isArchived: repo.archived,
         isFork: repo.fork,
-      }));
+        readmeContent,
+      });
+    }
 
     // Optionally fetch profile
     let profile: TransformedProfile | null = null;

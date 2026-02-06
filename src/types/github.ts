@@ -17,6 +17,7 @@ export interface GitHubRepo {
   createdAt: string;
   isArchived: boolean;
   isFork: boolean;
+  readmeContent: string | null;
 }
 
 export interface GitHubProfile {
