@@ -25,14 +25,13 @@ import GeneralSettings from '@/components/admin/GeneralSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { usePages } from '@/models/pages';
 
 const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, signOut } = useAuth();
-  const { toast } = useToast();
   const { data: pages = [] } = usePages();
   
   // Read active tab from URL, default to dashboard
