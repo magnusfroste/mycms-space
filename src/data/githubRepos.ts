@@ -167,7 +167,7 @@ export const updateGitHubRepo = async (
   id: string,
   updates: Partial<Pick<DbGitHubRepo, 
     'enriched_title' | 'enriched_description' | 'problem_statement' | 
-    'why_it_matters' | 'enabled' | 'order_index'
+    'why_it_matters' | 'enabled' | 'order_index' | 'homepage' | 'topics'
   >>
 ): Promise<DbGitHubRepo> => {
   const { data, error } = await supabase
