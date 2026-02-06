@@ -98,6 +98,144 @@ serve(async (req) => {
     }
 
     // ============================================
+    // ACTION: SUGGEST-TOPICS - Generate topic suggestions using AI
+    // ============================================
+    if (action === "suggest-topics") {
+      const { owner, repo, enrichedDescription, problemStatement, whyItMatters } = body;
+
+      if (!owner || !repo) {
+        return new Response(
+          JSON.stringify({ error: "Owner and repo are required for topic suggestions" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Fetch README from GitHub
+      let readme = "";
+      try {
+        const readmeUrl = `https://api.github.com/repos/${owner}/${repo}/readme`;
+        const readmeResponse = await fetch(readmeUrl, {
+          headers: {
+            ...headers,
+            "Accept": "application/vnd.github.v3.raw",
+          },
+        });
+        if (readmeResponse.ok) {
+          readme = await readmeResponse.text();
+          // Truncate README to first 3000 chars to save tokens
+          if (readme.length > 3000) {
+            readme = readme.substring(0, 3000) + "...";
+          }
+        }
+      } catch (e) {
+        console.log("Could not fetch README:", e);
+      }
+
+      // Build context for AI
+      const contextParts: string[] = [];
+      if (enrichedDescription) contextParts.push(`Description: ${enrichedDescription}`);
+      if (problemStatement) contextParts.push(`Problem it solves: ${problemStatement}`);
+      if (whyItMatters) contextParts.push(`Why it matters: ${whyItMatters}`);
+      if (readme) contextParts.push(`README excerpt:\n${readme}`);
+
+      if (contextParts.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "No content available to generate topics from" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const context = contextParts.join("\n\n");
+
+      // Call Lovable AI
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `You are a GitHub SEO expert. Generate 5-8 relevant topic tags for a repository based on the provided context.
+
+Rules:
+- Topics must be lowercase, hyphen-separated (no spaces or underscores)
+- Each topic should be 1-3 words max
+- Focus on: technologies used, problem domain, use cases, project type
+- Include both specific (react, typescript) and broader (web-app, developer-tools) topics
+- Return ONLY a JSON array of strings, nothing else
+
+Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-app"]`
+            },
+            {
+              role: "user",
+              content: `Generate GitHub topics for this repository:\n\n${context}`
+            }
+          ],
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error("AI error:", aiResponse.status, errText);
+        if (aiResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded, please try again later" }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: "Failed to generate topics" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const aiData = await aiResponse.json();
+      const content = aiData.choices?.[0]?.message?.content || "[]";
+      
+      // Parse topics from response
+      let topics: string[] = [];
+      try {
+        // Extract JSON array from response (might have markdown backticks)
+        const jsonMatch = content.match(/\[[\s\S]*?\]/);
+        if (jsonMatch) {
+          topics = JSON.parse(jsonMatch[0]);
+        }
+      } catch (e) {
+        console.error("Failed to parse topics:", content);
+      }
+
+      // Clean and validate topics
+      topics = topics
+        .filter((t): t is string => typeof t === "string")
+        .map(t => t.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""))
+        .filter(t => t.length > 1 && t.length <= 50)
+        .slice(0, 20); // GitHub allows max 20 topics
+
+      console.log(`Generated ${topics.length} topics for ${owner}/${repo}:`, topics);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          topics,
+          hadReadme: readme.length > 0,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    //
     // ACTION: UPDATE - Push data to GitHub
     // ============================================
     if (action === "update") {
