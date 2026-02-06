@@ -41,6 +41,7 @@ import {
   useAddGitHubRepoImage,
   useDeleteGitHubRepoImage,
   useSyncToGitHub,
+  useSuggestTopics,
   type GitHubRepoWithImages,
 } from '@/models/githubRepos';
 import { useGitHubModule } from '@/models/modules';
@@ -59,6 +60,7 @@ import {
   ImagePlus,
   Upload,
   FolderOpen,
+  Sparkles,
 } from 'lucide-react';
 
 // Language colors
@@ -233,6 +235,32 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaHubOpen, setMediaHubOpen] = useState(false);
+  const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
+  const suggestTopicsMutation = useSuggestTopics();
+
+  const handleSuggestTopics = async () => {
+    setIsGeneratingTopics(true);
+    try {
+      const result = await suggestTopicsMutation.mutateAsync({
+        fullName: repo.full_name,
+        enrichedData: {
+          enrichedDescription: formData.enriched_description,
+          problemStatement: formData.problem_statement,
+          whyItMatters: formData.why_it_matters,
+        },
+      });
+      if (result.success && result.topics) {
+        setFormData(prev => ({ ...prev, topics: result.topics!.join(', ') }));
+        toast.success(`Generated ${result.topics.length} topics${result.hadReadme ? ' (including README)' : ''}`);
+      } else {
+        toast.error(result.error || 'Could not generate topics');
+      }
+    } catch (error) {
+      toast.error('Failed to generate topics');
+    } finally {
+      setIsGeneratingTopics(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -392,7 +420,20 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
 
           {/* Topics */}
           <div className="space-y-2">
-            <Label className="text-xs">Topics (comma-separated)</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Topics (comma-separated)</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSuggestTopics}
+                disabled={isGeneratingTopics}
+                className="h-6 text-xs"
+                title="Generate topics from description, problem statement, and README"
+              >
+                <Sparkles className={`h-3 w-3 mr-1 ${isGeneratingTopics ? 'animate-spin' : ''}`} />
+                {isGeneratingTopics ? 'Generating...' : 'Suggest'}
+              </Button>
+            </div>
             <Input
               value={formData.topics}
               onChange={(e) => setFormData({ ...formData, topics: e.target.value })}

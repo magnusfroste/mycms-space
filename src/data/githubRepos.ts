@@ -283,3 +283,45 @@ export const syncToGitHub = async (
 
   return { success: true, updated: data?.updated };
 };
+
+// Generate topic suggestions using AI
+export const suggestTopics = async (
+  fullName: string,
+  enrichedData: {
+    enrichedDescription?: string;
+    problemStatement?: string;
+    whyItMatters?: string;
+  }
+): Promise<{ success: boolean; topics?: string[]; hadReadme?: boolean; error?: string }> => {
+  const [owner, repo] = fullName.split('/');
+  
+  if (!owner || !repo) {
+    return { success: false, error: 'Invalid repository name' };
+  }
+
+  const { data, error } = await supabase.functions.invoke('github-repos', {
+    body: { 
+      action: 'suggest-topics',
+      owner,
+      repo,
+      enrichedDescription: enrichedData.enrichedDescription,
+      problemStatement: enrichedData.problemStatement,
+      whyItMatters: enrichedData.whyItMatters,
+    },
+  });
+
+  if (error) {
+    console.error('Suggest topics error:', error);
+    return { success: false, error: error.message };
+  }
+
+  if (data?.error) {
+    return { success: false, error: data.error };
+  }
+
+  return { 
+    success: true, 
+    topics: data?.topics,
+    hadReadme: data?.hadReadme,
+  };
+};

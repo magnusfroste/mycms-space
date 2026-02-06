@@ -170,3 +170,20 @@ export const useSyncToGitHub = () => {
     }) => githubReposData.syncToGitHub(fullName, options),
   });
 };
+
+// Suggest topics using AI
+export const useSuggestTopics = () => {
+  return useMutation({
+    mutationFn: ({ 
+      fullName, 
+      enrichedData 
+    }: { 
+      fullName: string; 
+      enrichedData: {
+        enrichedDescription?: string;
+        problemStatement?: string;
+        whyItMatters?: string;
+      };
+    }) => githubReposData.suggestTopics(fullName, enrichedData),
+  });
+};
