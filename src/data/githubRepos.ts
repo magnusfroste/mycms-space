@@ -248,11 +248,15 @@ export const deleteGitHubRepo = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
-// Sync description back to GitHub
+// Sync data back to GitHub
 export const syncToGitHub = async (
   fullName: string,
-  description: string
-): Promise<{ success: boolean; error?: string }> => {
+  options: {
+    description?: string;
+    homepage?: string;
+    topics?: string[];
+  }
+): Promise<{ success: boolean; updated?: Record<string, boolean>; error?: string }> => {
   const [owner, repo] = fullName.split('/');
   
   if (!owner || !repo) {
@@ -264,7 +268,7 @@ export const syncToGitHub = async (
       action: 'update',
       owner,
       repo,
-      description,
+      ...options,
     },
   });
 
@@ -277,5 +281,5 @@ export const syncToGitHub = async (
     return { success: false, error: data.error };
   }
 
-  return { success: true };
+  return { success: true, updated: data?.updated };
 };

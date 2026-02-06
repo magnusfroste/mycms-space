@@ -98,10 +98,10 @@ serve(async (req) => {
     }
 
     // ============================================
-    // ACTION: UPDATE - Push description to GitHub
+    // ACTION: UPDATE - Push data to GitHub
     // ============================================
     if (action === "update") {
-      const { owner, repo, description } = body;
+      const { owner, repo, description, homepage, topics } = body;
 
       if (!owner || !repo) {
         return new Response(
@@ -117,65 +117,88 @@ serve(async (req) => {
         );
       }
 
-      // GitHub has a 350 character limit for descriptions
-      const MAX_DESCRIPTION_LENGTH = 350;
-      const truncatedDescription = description 
-        ? description.length > MAX_DESCRIPTION_LENGTH 
-          ? description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + "..."
-          : description
-        : "";
+      const results: { description?: boolean; homepage?: boolean; topics?: boolean } = {};
+      const errors: string[] = [];
 
-      console.log(`Updating repo ${owner}/${repo} with description (${truncatedDescription.length} chars): ${truncatedDescription.substring(0, 50)}...`);
-
-      const updateUrl = `https://api.github.com/repos/${owner}/${repo}`;
-      const updateResponse = await fetch(updateUrl, {
-        method: "PATCH",
-        headers: {
-          ...headers,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ description: truncatedDescription }),
-      });
-
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text();
-        console.error(`GitHub update error: ${updateResponse.status} - ${errorText}`);
+      // Update description and/or homepage (same endpoint)
+      if (description !== undefined || homepage !== undefined) {
+        const updatePayload: Record<string, string> = {};
         
-        if (updateResponse.status === 404) {
-          return new Response(
-            JSON.stringify({ error: "Repository not found or no access" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        if (description !== undefined) {
+          // GitHub has a 350 character limit for descriptions
+          const MAX_DESCRIPTION_LENGTH = 350;
+          updatePayload.description = description 
+            ? description.length > MAX_DESCRIPTION_LENGTH 
+              ? description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + "..."
+              : description
+            : "";
+          console.log(`Updating repo ${owner}/${repo} with description (${updatePayload.description.length} chars): ${updatePayload.description.substring(0, 50)}...`);
         }
-        if (updateResponse.status === 403) {
-          return new Response(
-            JSON.stringify({ error: "No write permission. Ensure token has 'repo' scope." }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        
+        if (homepage !== undefined) {
+          updatePayload.homepage = homepage || "";
+          console.log(`Updating repo ${owner}/${repo} with homepage: ${updatePayload.homepage}`);
         }
-        if (updateResponse.status === 422) {
-          return new Response(
-            JSON.stringify({ error: "Validation failed. Description may still be too long or contain invalid characters." }),
-            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+
+        const updateUrl = `https://api.github.com/repos/${owner}/${repo}`;
+        const updateResponse = await fetch(updateUrl, {
+          method: "PATCH",
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatePayload),
+        });
+
+        if (!updateResponse.ok) {
+          const errorText = await updateResponse.text();
+          console.error(`GitHub update error: ${updateResponse.status} - ${errorText}`);
+          errors.push(`Failed to update repo: ${updateResponse.status}`);
+        } else {
+          if (description !== undefined) results.description = true;
+          if (homepage !== undefined) results.homepage = true;
         }
+      }
+
+      // Update topics (separate endpoint)
+      if (topics !== undefined && Array.isArray(topics)) {
+        console.log(`Updating repo ${owner}/${repo} with topics:`, topics);
+        
+        const topicsUrl = `https://api.github.com/repos/${owner}/${repo}/topics`;
+        const topicsResponse = await fetch(topicsUrl, {
+          method: "PUT",
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+            "Accept": "application/vnd.github.mercy-preview+json", // Required for topics API
+          },
+          body: JSON.stringify({ names: topics }),
+        });
+
+        if (!topicsResponse.ok) {
+          const errorText = await topicsResponse.text();
+          console.error(`GitHub topics update error: ${topicsResponse.status} - ${errorText}`);
+          errors.push(`Failed to update topics: ${topicsResponse.status}`);
+        } else {
+          results.topics = true;
+          console.log(`Successfully updated topics for ${owner}/${repo}`);
+        }
+      }
+
+      if (Object.keys(results).length === 0 && errors.length > 0) {
         return new Response(
-          JSON.stringify({ error: `GitHub API error: ${updateResponse.status}` }),
-          { status: updateResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ success: false, error: errors.join(", ") }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const updatedRepo = await updateResponse.json();
-      console.log(`Successfully updated ${owner}/${repo}`);
+      console.log(`Successfully updated ${owner}/${repo}:`, results);
 
       return new Response(
         JSON.stringify({
           success: true,
-          repo: {
-            name: updatedRepo.name,
-            fullName: updatedRepo.full_name,
-            description: updatedRepo.description,
-          },
+          updated: results,
+          errors: errors.length > 0 ? errors : undefined,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
