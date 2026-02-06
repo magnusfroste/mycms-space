@@ -198,6 +198,8 @@ interface RepoEditFormProps {
     enriched_description: string;
     problem_statement: string;
     why_it_matters: string;
+    homepage: string;
+    topics: string[];
   }) => void;
   onCancel: () => void;
   onAddImage: (file: File) => void;
@@ -226,6 +228,8 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
     enriched_description: repo.enriched_description || '',
     problem_statement: repo.problem_statement || '',
     why_it_matters: repo.why_it_matters || '',
+    homepage: repo.homepage || '',
+    topics: repo.topics?.join(', ') || '',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaHubOpen, setMediaHubOpen] = useState(false);
@@ -368,19 +372,60 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
           />
         </div>
 
-        {/* Actions */}
+        {/* GitHub Syncable Fields */}
+        <div className="border-t pt-4 mt-4 space-y-4">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+            <Upload className="h-3 w-3" />
+            Syncs to GitHub
+          </Label>
+          
+          {/* Homepage */}
+          <div className="space-y-2">
+            <Label className="text-xs">Website URL</Label>
+            <Input
+              value={formData.homepage}
+              onChange={(e) => setFormData({ ...formData, homepage: e.target.value })}
+              placeholder="https://example.com"
+              type="url"
+            />
+          </div>
+
+          {/* Topics */}
+          <div className="space-y-2">
+            <Label className="text-xs">Topics (comma-separated)</Label>
+            <Input
+              value={formData.topics}
+              onChange={(e) => setFormData({ ...formData, topics: e.target.value })}
+              placeholder="react, typescript, ai"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Current: {repo.topics?.join(', ') || 'None'}
+            </p>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2 pt-2">
-          <Button onClick={() => onSave(formData)} disabled={isSaving}>
+          <Button 
+            onClick={() => onSave({
+              ...formData,
+              topics: formData.topics.split(',').map(t => t.trim()).filter(Boolean),
+            })} 
+            disabled={isSaving}
+          >
             <Check className="h-4 w-4 mr-1" />
             Save
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onSyncToGitHub({ 
-              description: formData.enriched_description || repo.description || '' 
-            })}
+            onClick={() => {
+              const topicsArray = formData.topics.split(',').map(t => t.trim()).filter(Boolean);
+              onSyncToGitHub({ 
+                description: formData.enriched_description || repo.description || '',
+                homepage: formData.homepage || undefined,
+                topics: topicsArray.length > 0 ? topicsArray : undefined,
+              });
+            }}
             disabled={isSyncing || !formData.enriched_description}
-            title="Push description to GitHub"
+            title="Push description, homepage and topics to GitHub"
           >
             <Upload className={`h-4 w-4 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
             Sync to GitHub
@@ -453,6 +498,8 @@ const GitHubReposManager: React.FC = () => {
     enriched_description: string;
     problem_statement: string;
     why_it_matters: string;
+    homepage: string;
+    topics: string[];
   }) => {
     updateMutation.mutate(
       { id, updates },
