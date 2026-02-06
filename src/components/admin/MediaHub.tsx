@@ -3,7 +3,7 @@
 // Centralized media library for browsing and managing all uploaded files
 // ============================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,18 +127,18 @@ const MediaHub: React.FC = () => {
     return { totalFiles: files.length, totalSize, bucketCounts };
   }, [files]);
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = useCallback((bytes: number) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  };
+  }, []);
 
-  const copyToClipboard = (url: string) => {
+  const copyToClipboard = useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success('URL copied to clipboard');
-  };
+  }, []);
 
   const handleRename = async () => {
     if (!selectedFile || !newFileName.trim()) return;
@@ -195,22 +195,22 @@ const MediaHub: React.FC = () => {
     setTargetBucket('');
   };
 
-  const openRenameDialog = (file: MediaFile) => {
+  const openRenameDialog = useCallback((file: MediaFile) => {
     setSelectedFile(file);
     setNewFileName(file.name.replace(/\.[^/.]+$/, '')); // Remove extension
     setRenameDialogOpen(true);
-  };
+  }, []);
 
-  const openDeleteDialog = (file: MediaFile) => {
+  const openDeleteDialog = useCallback((file: MediaFile) => {
     setSelectedFile(file);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const openMoveDialog = (file: MediaFile) => {
+  const openMoveDialog = useCallback((file: MediaFile) => {
     setSelectedFile(file);
     setTargetBucket('');
     setMoveDialogOpen(true);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -367,10 +367,10 @@ const MediaHub: React.FC = () => {
             <MediaFileCard
               key={file.id}
               file={file}
-              onCopy={() => copyToClipboard(file.publicUrl)}
-              onRename={() => openRenameDialog(file)}
-              onMove={() => openMoveDialog(file)}
-              onDelete={() => openDeleteDialog(file)}
+              onCopy={copyToClipboard}
+              onRename={openRenameDialog}
+              onMove={openMoveDialog}
+              onDelete={openDeleteDialog}
             />
           ))}
         </div>
@@ -383,10 +383,10 @@ const MediaHub: React.FC = () => {
                   key={file.id}
                   file={file}
                   formatSize={formatFileSize}
-                  onCopy={() => copyToClipboard(file.publicUrl)}
-                  onRename={() => openRenameDialog(file)}
-                  onMove={() => openMoveDialog(file)}
-                  onDelete={() => openDeleteDialog(file)}
+                  onCopy={copyToClipboard}
+                  onRename={openRenameDialog}
+                  onMove={openMoveDialog}
+                  onDelete={openDeleteDialog}
                 />
               ))}
             </div>
@@ -505,10 +505,10 @@ const MediaHub: React.FC = () => {
 // Grid card component - Memoized with stable dropdown
 interface MediaFileCardProps {
   file: MediaFile;
-  onCopy: () => void;
-  onRename: () => void;
-  onMove: () => void;
-  onDelete: () => void;
+  onCopy: (url: string) => void;
+  onRename: (file: MediaFile) => void;
+  onMove: (file: MediaFile) => void;
+  onDelete: (file: MediaFile) => void;
 }
 
 const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
@@ -522,7 +522,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
 
   const handleAction = (action: () => void) => {
     setMenuOpen(false);
-    // Use requestAnimationFrame for better timing than setTimeout
+    // Delay action until after dropdown close animation
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         action();
@@ -554,7 +554,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[100]" sideOffset={5}>
-              <DropdownMenuItem onSelect={() => handleAction(onCopy)}>
+              <DropdownMenuItem onSelect={() => handleAction(() => onCopy(file.publicUrl))}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
               </DropdownMenuItem>
@@ -563,16 +563,16 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
                 Open in new tab
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleAction(onRename)}>
+              <DropdownMenuItem onSelect={() => handleAction(() => onRename(file))}>
                 <Edit3 className="h-4 w-4 mr-2" />
                 Rename
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleAction(onMove)}>
+              <DropdownMenuItem onSelect={() => handleAction(() => onMove(file))}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Move to bucket
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleAction(onDelete)} className="text-destructive">
+              <DropdownMenuItem onSelect={() => handleAction(() => onDelete(file))} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -599,10 +599,10 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
 interface MediaFileRowProps {
   file: MediaFile;
   formatSize: (bytes: number) => string;
-  onCopy: () => void;
-  onRename: () => void;
-  onMove: () => void;
-  onDelete: () => void;
+  onCopy: (url: string) => void;
+  onRename: (file: MediaFile) => void;
+  onMove: (file: MediaFile) => void;
+  onDelete: (file: MediaFile) => void;
 }
 
 const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
@@ -617,7 +617,7 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
 
   const handleAction = (action: () => void) => {
     setMenuOpen(false);
-    // Use requestAnimationFrame for better timing than setTimeout
+    // Delay action until after dropdown close animation
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         action();
@@ -646,7 +646,7 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={onCopy}>
+        <Button variant="ghost" size="icon" onClick={() => onCopy(file.publicUrl)}>
           <Copy className="h-4 w-4" />
         </Button>
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
@@ -661,16 +661,16 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
               Open in new tab
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => handleAction(onRename)}>
+            <DropdownMenuItem onSelect={() => handleAction(() => onRename(file))}>
               <Edit3 className="h-4 w-4 mr-2" />
               Rename
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => handleAction(onMove)}>
+            <DropdownMenuItem onSelect={() => handleAction(() => onMove(file))}>
               <FolderOpen className="h-4 w-4 mr-2" />
               Move to bucket
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => handleAction(onDelete)} className="text-destructive">
+            <DropdownMenuItem onSelect={() => handleAction(() => onDelete(file))} className="text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>
