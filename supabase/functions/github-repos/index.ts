@@ -134,7 +134,7 @@ serve(async (req) => {
           ...headers,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ description: description || "" }),
+        body: JSON.stringify({ description: truncatedDescription }),
       });
 
       if (!updateResponse.ok) {
@@ -153,7 +153,16 @@ serve(async (req) => {
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        throw new Error(`GitHub API error: ${updateResponse.status}`);
+        if (updateResponse.status === 422) {
+          return new Response(
+            JSON.stringify({ error: "Validation failed. Description may still be too long or contain invalid characters." }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: `GitHub API error: ${updateResponse.status}` }),
+          { status: updateResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       const updatedRepo = await updateResponse.json();
