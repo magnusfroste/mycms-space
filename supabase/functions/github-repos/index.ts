@@ -117,7 +117,15 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Updating repo ${owner}/${repo} with description: ${description?.substring(0, 50)}...`);
+      // GitHub has a 350 character limit for descriptions
+      const MAX_DESCRIPTION_LENGTH = 350;
+      const truncatedDescription = description 
+        ? description.length > MAX_DESCRIPTION_LENGTH 
+          ? description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + "..."
+          : description
+        : "";
+
+      console.log(`Updating repo ${owner}/${repo} with description (${truncatedDescription.length} chars): ${truncatedDescription.substring(0, 50)}...`);
 
       const updateUrl = `https://api.github.com/repos/${owner}/${repo}`;
       const updateResponse = await fetch(updateUrl, {
