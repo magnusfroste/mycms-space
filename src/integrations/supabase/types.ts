@@ -283,6 +283,7 @@ export type Database = {
           order_index: number | null
           problem_statement: string | null
           pushed_at: string | null
+          readme_content: string | null
           stars: number | null
           topics: string[] | null
           updated_at: string | null
@@ -309,6 +310,7 @@ export type Database = {
           order_index?: number | null
           problem_statement?: string | null
           pushed_at?: string | null
+          readme_content?: string | null
           stars?: number | null
           topics?: string[] | null
           updated_at?: string | null
@@ -335,6 +337,7 @@ export type Database = {
           order_index?: number | null
           problem_statement?: string | null
           pushed_at?: string | null
+          readme_content?: string | null
           stars?: number | null
           topics?: string[] | null
           updated_at?: string | null

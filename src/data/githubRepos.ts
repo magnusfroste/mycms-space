@@ -28,6 +28,7 @@ export interface DbGitHubRepo {
   enriched_description: string | null;
   problem_statement: string | null;
   why_it_matters: string | null;
+  readme_content: string | null;
   // Status
   enabled: boolean;
   order_index: number;
@@ -146,6 +147,7 @@ export const syncGitHubRepos = async (username: string): Promise<{ synced: numbe
         created_at_github: repo.createdAt,
         is_fork: repo.isFork,
         is_archived: repo.isArchived,
+        readme_content: repo.readmeContent,
         last_synced_at: new Date().toISOString(),
         // Preserve enabled/order_index on update
         ...(isNew ? { enabled: false, order_index: 999 } : {}),
