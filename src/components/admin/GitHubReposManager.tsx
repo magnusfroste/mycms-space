@@ -203,7 +203,7 @@ interface RepoEditFormProps {
   onAddImage: (file: File) => void;
   onAddImageFromUrl: (url: string) => void;
   onDeleteImage: (imageId: string) => void;
-  onSyncToGitHub: (description: string) => void;
+  onSyncToGitHub: (options: { description?: string; homepage?: string; topics?: string[] }) => void;
   isUploading: boolean;
   isSaving: boolean;
   isSyncing: boolean;
@@ -376,7 +376,9 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onSyncToGitHub(formData.enriched_description || repo.description || '')}
+            onClick={() => onSyncToGitHub({ 
+              description: formData.enriched_description || repo.description || '' 
+            })}
             disabled={isSyncing || !formData.enriched_description}
             title="Push description to GitHub"
           >
@@ -524,12 +526,17 @@ const GitHubReposManager: React.FC = () => {
     }
   };
 
-  const handleSyncToGitHub = async (repoId: string, fullName: string, description: string) => {
+  const handleSyncToGitHub = async (
+    repoId: string, 
+    fullName: string, 
+    options: { description?: string; homepage?: string; topics?: string[] }
+  ) => {
     setSyncingFor(repoId);
     try {
-      const result = await syncToGitHubMutation.mutateAsync({ fullName, description });
+      const result = await syncToGitHubMutation.mutateAsync({ fullName, options });
       if (result.success) {
-        toast.success('Description updated on GitHub');
+        const updated = result.updated ? Object.keys(result.updated).join(', ') : 'data';
+        toast.success(`Updated ${updated} on GitHub`);
       } else {
         toast.error(result.error || 'Sync failed');
       }

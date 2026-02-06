@@ -159,10 +159,14 @@ export const useSyncToGitHub = () => {
   return useMutation({
     mutationFn: ({ 
       fullName, 
-      description 
+      options 
     }: { 
       fullName: string; 
-      description: string;
-    }) => githubReposData.syncToGitHub(fullName, description),
+      options: {
+        description?: string;
+        homepage?: string;
+        topics?: string[];
+      };
+    }) => githubReposData.syncToGitHub(fullName, options),
   });
 };
