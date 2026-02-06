@@ -520,16 +520,6 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleAction = (action: () => void) => {
-    setMenuOpen(false);
-    // Delay action until after dropdown close animation
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        action();
-      });
-    });
-  };
-
   return (
     <div className="group relative">
       <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
@@ -541,38 +531,38 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
         />
       </div>
       
-      {/* Overlay - stays visible when menu is open */}
+      {/* Overlay - pointer-events-none so clicks pass through, except on interactive children */}
       <div className={cn(
-        "absolute inset-0 bg-black/60 transition-opacity rounded-lg flex flex-col justify-between p-2",
+        "absolute inset-0 bg-black/60 transition-opacity rounded-lg flex flex-col justify-between p-2 pointer-events-none",
         menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
       )}>
-        <div className="flex justify-end">
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <div className="flex justify-end pointer-events-auto">
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-white">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[100]" sideOffset={5}>
-              <DropdownMenuItem onSelect={() => handleAction(() => onCopy(file.publicUrl))}>
+              <DropdownMenuItem onSelect={() => onCopy(file.publicUrl)}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleAction(() => window.open(file.publicUrl, '_blank'))}>
+              <DropdownMenuItem onSelect={() => window.open(file.publicUrl, '_blank')}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleAction(() => onRename(file))}>
+              <DropdownMenuItem onSelect={() => onRename(file)}>
                 <Edit3 className="h-4 w-4 mr-2" />
                 Rename
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleAction(() => onMove(file))}>
+              <DropdownMenuItem onSelect={() => onMove(file)}>
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Move to bucket
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleAction(() => onDelete(file))} className="text-destructive">
+              <DropdownMenuItem onSelect={() => onDelete(file)} className="text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </DropdownMenuItem>
@@ -587,7 +577,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
       {/* Bucket badge */}
       <Badge 
         variant="secondary" 
-        className="absolute top-2 left-2 text-xs opacity-80"
+        className="absolute top-2 left-2 text-xs opacity-80 pointer-events-none"
       >
         {BUCKET_LABELS[file.bucket]}
       </Badge>
@@ -615,16 +605,6 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleAction = (action: () => void) => {
-    setMenuOpen(false);
-    // Delay action until after dropdown close animation
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        action();
-      });
-    });
-  };
-
   return (
     <div className="flex items-center gap-4 p-3 hover:bg-muted/50">
       <img
@@ -649,28 +629,28 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
         <Button variant="ghost" size="icon" onClick={() => onCopy(file.publicUrl)}>
           <Copy className="h-4 w-4" />
         </Button>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="z-50">
-            <DropdownMenuItem onSelect={() => handleAction(() => window.open(file.publicUrl, '_blank'))}>
+          <DropdownMenuContent align="end" className="z-[100]">
+            <DropdownMenuItem onSelect={() => window.open(file.publicUrl, '_blank')}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Open in new tab
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => handleAction(() => onRename(file))}>
+            <DropdownMenuItem onSelect={() => onRename(file)}>
               <Edit3 className="h-4 w-4 mr-2" />
               Rename
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => handleAction(() => onMove(file))}>
+            <DropdownMenuItem onSelect={() => onMove(file)}>
               <FolderOpen className="h-4 w-4 mr-2" />
               Move to bucket
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => handleAction(() => onDelete(file))} className="text-destructive">
+            <DropdownMenuItem onSelect={() => onDelete(file)} className="text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>
