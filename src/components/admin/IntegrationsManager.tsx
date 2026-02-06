@@ -30,7 +30,7 @@ const integrationSecrets: Partial<Record<IntegrationType, string>> = {
   gemini: 'GEMINI_API_KEY',
   firecrawl: 'FIRECRAWL_API_KEY',
 };
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // Integration icons
 const integrationIcons: Record<IntegrationType, React.ReactNode> = {
@@ -60,7 +60,6 @@ const IntegrationsManager: React.FC = () => {
   const { data: githubModule, config: githubConfig } = useGitHubModule();
   const updateModule = useUpdateAIModule();
   const updateGitHubModule = useUpdateGitHubModule();
-  const { toast } = useToast();
   const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
 
   const handleConfigUpdate = (updates: Partial<AIModuleConfig>) => {
@@ -68,8 +67,8 @@ const IntegrationsManager: React.FC = () => {
     updateModule.mutate(
       { module_config: { ...config, ...updates } },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -163,8 +162,8 @@ const IntegrationsManager: React.FC = () => {
     updateGitHubModule.mutate(
       { enabled },
       {
-        onSuccess: () => toast({ title: enabled ? 'GitHub enabled' : 'GitHub disabled' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success(enabled ? 'GitHub enabled' : 'GitHub disabled'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -178,8 +177,8 @@ const IntegrationsManager: React.FC = () => {
     updateGitHubModule.mutate(
       { module_config: { ...currentConfig, [field]: value } },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -190,8 +189,8 @@ const IntegrationsManager: React.FC = () => {
     updateGitHubModule.mutate(
       { module_config: { ...githubConfig, username } },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -482,14 +481,13 @@ const FirecrawlConfig: React.FC = () => {
 // Resend Configuration Component
 // ============================================
 const ResendConfig: React.FC = () => {
-  const { toast } = useToast();
   const [fromEmail, setFromEmail] = React.useState(() => 
     localStorage.getItem('resend_from_email') || 'newsletter@froste.eu'
   );
 
   const handleSave = () => {
     localStorage.setItem('resend_from_email', fromEmail);
-    toast({ title: 'From-adress sparad' });
+    toast.success('From-adress sparad');
   };
 
   return (

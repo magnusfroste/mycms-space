@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useModule, useUpdateModule } from '@/models/modules';
 
@@ -83,7 +83,6 @@ const themeTemplates: ThemeTemplate[] = [
 ];
 
 const BrandingSettings: React.FC = () => {
-  const { toast } = useToast();
   const { data: module, isLoading } = useModule('branding');
   const updateModule = useUpdateModule('branding');
   
@@ -128,9 +127,9 @@ const BrandingSettings: React.FC = () => {
         },
       });
       setPreviewTheme(null);
-      toast({ title: 'Theme saved', description: `${themeTemplates.find(t => t.id === selectedTheme)?.name} theme is now active.` });
+      toast.success(`${themeTemplates.find(t => t.id === selectedTheme)?.name} theme is now active.`);
     } catch {
-      toast({ title: 'Error saving theme', variant: 'destructive' });
+      toast.error('Error saving theme');
     }
   };
 

@@ -29,7 +29,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Sparkles } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   usePageBlocks,
@@ -294,7 +294,6 @@ interface LandingPageManagerProps {
 }
 
 const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
@@ -340,10 +339,10 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
       await reorderBlocks.mutateAsync(
         reordered.map((b) => ({ id: b.id, order_index: b.order_index }))
       );
-      toast({ title: 'Order updated' });
+      toast.success('Order updated');
     } catch {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-      toast({ title: 'Error', description: 'Could not update order', variant: 'destructive' });
+      toast.error('Could not update order');
     }
   };
 
@@ -351,9 +350,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
   const handleToggleEnabled = async (block: PageBlock) => {
     try {
       await updateBlock.mutateAsync({ id: block.id, enabled: !block.enabled });
-      toast({ title: block.enabled ? 'Block hidden' : 'Block visible' });
+      toast.success(block.enabled ? 'Block hidden' : 'Block visible');
     } catch {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast.error('Error');
     }
   };
 
@@ -376,35 +375,28 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
       
       // Show toast with undo action
-      toast({
-        title: 'Block deleted',
-        description: `"${blockToDelete.block_type}" has been removed`,
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                await createBlock.mutateAsync({
-                  page_slug: deletedBlockData.page_slug,
-                  block_type: deletedBlockData.block_type,
-                  block_config: deletedBlockData.block_config,
-                  order_index: deletedBlockData.order_index,
-                  enabled: deletedBlockData.enabled ?? true,
-                });
-                queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-                toast({ title: 'Block restored!' });
-              } catch {
-                toast({ title: 'Could not restore block', variant: 'destructive' });
-              }
-            }}
-          >
-            Undo
-          </Button>
-        ),
+      toast.success('Block deleted', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await createBlock.mutateAsync({
+                page_slug: deletedBlockData.page_slug,
+                block_type: deletedBlockData.block_type,
+                block_config: deletedBlockData.block_config,
+                order_index: deletedBlockData.order_index,
+                enabled: deletedBlockData.enabled ?? true,
+              });
+              queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
+              toast.success('Block restored!');
+            } catch {
+              toast.error('Could not restore block');
+            }
+          },
+        },
       });
     } catch {
-      toast({ title: 'Could not delete block', variant: 'destructive' });
+      toast.error('Could not delete block');
     }
     setDeleteBlockId(null);
   };
@@ -450,9 +442,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
       });
       setIsAddDialogOpen(false);
       setNewBlockType('text-section');
-      toast({ title: 'Block added' });
+      toast.success('Block added');
     } catch {
-      toast({ title: 'Error adding block', variant: 'destructive' });
+      toast.error('Error adding block');
     }
   };
 
@@ -467,9 +459,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         order_index: maxOrder + 1,
         enabled: true,
       });
-      toast({ title: 'AI created a block', description: `${blockType} has been added` });
+      toast.success(`${blockType} has been added`);
     } catch {
-      toast({ title: 'Could not create block', variant: 'destructive' });
+      toast.error('Could not create block');
     }
   };
 
@@ -489,9 +481,9 @@ const LandingPageManager = ({ pageSlug = 'home' }: LandingPageManagerProps) => {
         enabled: true,
       });
       setIsLibraryOpen(false); // Close panel after adding
-      toast({ title: 'Block added', description: `${blockTypeLabels[blockType] || blockType} has been added` });
+      toast.success(`${blockTypeLabels[blockType] || blockType} has been added`);
     } catch {
-      toast({ title: 'Could not add block', variant: 'destructive' });
+      toast.error('Could not add block');
     }
   };
 

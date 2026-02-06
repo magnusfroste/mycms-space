@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   useBlogPosts,
   useBlogCategories,
@@ -46,7 +46,6 @@ import BlogCategoryEditor from './block-editor/BlogCategoryEditor';
 import type { BlogPost, BlogCategory } from '@/types/blog';
 
 const BlogManager = () => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('posts');
   const [search, setSearch] = useState('');
   // Store only the ID to avoid race conditions with realtime updates
@@ -83,10 +82,10 @@ const BlogManager = () => {
     if (!deletePostId) return;
     try {
       await deletePost.mutateAsync(deletePostId);
-      toast({ title: 'Post deleted', description: 'The blog post has been deleted.' });
+      toast.success('The blog post has been deleted.');
       setDeletePostId(null);
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete post.', variant: 'destructive' });
+      toast.error('Failed to delete post.');
     }
   };
 
@@ -94,10 +93,10 @@ const BlogManager = () => {
     if (!deleteCategoryId) return;
     try {
       await deleteCategory.mutateAsync(deleteCategoryId);
-      toast({ title: 'Category deleted', description: 'The category has been deleted.' });
+      toast.success('The category has been deleted.');
       setDeleteCategoryId(null);
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete category.', variant: 'destructive' });
+      toast.error('Failed to delete category.');
     }
   };
 

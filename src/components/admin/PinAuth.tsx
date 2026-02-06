@@ -18,16 +18,9 @@ export const PinAuth = ({ onAuthenticated }: PinAuthProps) => {
     if (pin === ADMIN_PIN) {
       sessionStorage.setItem('admin_authenticated', 'true');
       onAuthenticated();
-      toast({
-        title: 'Access granted',
-        description: 'Welcome to the admin panel',
-      });
+      toast.success('Welcome to the admin panel');
     } else {
-      toast({
-        title: 'Invalid PIN',
-        description: 'Please try again',
-        variant: 'destructive',
-      });
+      toast.error('Please try again');
       setPin('');
     }
   };

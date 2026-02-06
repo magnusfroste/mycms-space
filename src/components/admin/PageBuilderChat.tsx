@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePageBuilderChat } from '@/hooks/usePageBuilderChat';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import type { PageBlock } from '@/types';
 
@@ -58,7 +58,6 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
     message?: string;
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
 
   const { messages, isLoading, error, sendMessage, clearMessages } = usePageBuilderChat({
     currentBlocks: currentBlocks.map(b => ({ block_type: b.block_type })),
@@ -106,10 +105,7 @@ const PageBuilderChat: React.FC<PageBuilderChatProps> = ({
       setPendingAction(null);
     } else if (pendingAction.type === 'project' && pendingAction.project) {
       // Projects are now created via block_config - just show a message
-      toast({
-        title: 'Projects are managed via block editor',
-        description: 'Edit the Project Showcase block to add projects.',
-      });
+      toast.success('Edit the Project Showcase block to add projects.');
       setPendingAction(null);
     }
   };

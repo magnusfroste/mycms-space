@@ -10,13 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useModule, useUpdateModule } from '@/models/modules';
 import { BookOpen, Save, Loader2 } from 'lucide-react';
 import type { BlogModuleConfig } from '@/types/modules';
 
 const BlogModuleSettings = () => {
-  const { toast } = useToast();
   const { data: blogModule, isLoading } = useModule('blog');
   const updateModule = useUpdateModule('blog');
 
@@ -51,16 +50,9 @@ const BlogModuleSettings = () => {
       await updateModule.mutateAsync({
         module_config: config,
       });
-      toast({
-        title: 'Settings saved',
-        description: 'Blog settings have been updated.',
-      });
+      toast.success('Blog settings have been updated.');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save settings.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to save settings.');
     }
   };
 

@@ -21,16 +21,9 @@ const ResponseModal: React.FC<ResponseModalProps> = ({
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(content);
-      toast({
-        title: "Copied!",
-        description: "Response copied to clipboard",
-      });
+      toast.success('Copied to clipboard');
     } catch (error) {
-      toast({
-        title: "Copy failed",
-        description: "Unable to copy to clipboard",
-        variant: "destructive",
-      });
+      toast.error('Unable to copy to clipboard');
     }
   };
 

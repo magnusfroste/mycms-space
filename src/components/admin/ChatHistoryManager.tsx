@@ -39,16 +39,9 @@ const ChatHistoryManager: React.FC = () => {
   const handleCleanup = async () => {
     try {
       const deleted = await deleteOldMutation.mutateAsync(90);
-      toast({
-        title: "Cleanup complete",
-        description: `Deleted ${deleted} old messages`,
-      });
+      toast.success(`Deleted ${deleted} old messages`);
     } catch {
-      toast({
-        title: "Error",
-        description: "Failed to delete old messages",
-        variant: "destructive",
-      });
+      toast.error('Failed to delete old messages');
     }
   };
 

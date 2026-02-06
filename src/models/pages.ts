@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import * as pagesData from '@/data/pages';
 import type { Page, CreatePageInput, UpdatePageInput } from '@/types/pages';
 
@@ -56,7 +56,6 @@ export const useMainLandingPage = () => {
 // Create page
 export const useCreatePage = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: pagesData.createPage,
@@ -64,10 +63,10 @@ export const useCreatePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.all });
       queryClient.invalidateQueries({ queryKey: pagesKeys.enabled });
       queryClient.invalidateQueries({ queryKey: pagesKeys.mainLanding });
-      toast({ title: 'Sida skapad', description: 'Den nya sidan har skapats' });
+      toast.success('Sida skapad');
     },
     onError: (error: Error) => {
-      toast({ title: 'Fel', description: error.message, variant: 'destructive' });
+      toast.error('Fel: ' + error.message);
     },
   });
 };
@@ -75,7 +74,6 @@ export const useCreatePage = () => {
 // Update page
 export const useUpdatePage = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: pagesData.updatePage,
@@ -86,7 +84,7 @@ export const useUpdatePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.bySlug(data.slug) });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fel', description: error.message, variant: 'destructive' });
+      toast.error('Fel: ' + error.message);
     },
   });
 };
@@ -94,7 +92,6 @@ export const useUpdatePage = () => {
 // Delete page
 export const useDeletePage = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: pagesData.deletePage,
@@ -102,10 +99,10 @@ export const useDeletePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.all });
       queryClient.invalidateQueries({ queryKey: pagesKeys.enabled });
       queryClient.invalidateQueries({ queryKey: pagesKeys.mainLanding });
-      toast({ title: 'Sida borttagen', description: 'Sidan och alla dess block har tagits bort' });
+      toast.success('Sida borttagen');
     },
     onError: (error: Error) => {
-      toast({ title: 'Fel', description: error.message, variant: 'destructive' });
+      toast.error('Fel: ' + error.message);
     },
   });
 };

@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Plus, GripVertical, Pencil, Trash2, Eye, EyeOff, ExternalLink, Layers, Github } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   usePageBlocks,
@@ -343,7 +343,6 @@ export const BlockCanvas = ({
   headerTitle = 'Block Canvas',
   compact = false,
 }: BlockCanvasProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [deleteBlockId, setDeleteBlockId] = useState<string | null>(null);
@@ -384,19 +383,19 @@ export const BlockCanvas = ({
       await reorderBlocks.mutateAsync(
         reordered.map((b) => ({ id: b.id, order_index: b.order_index }))
       );
-      toast({ title: 'Order updated' });
+      toast.success('Order updated');
     } catch {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-      toast({ title: 'Error', description: 'Could not update order', variant: 'destructive' });
+      toast.error('Could not update order');
     }
   };
 
   const handleToggleEnabled = async (block: PageBlock) => {
     try {
       await updateBlock.mutateAsync({ id: block.id, enabled: !block.enabled });
-      toast({ title: block.enabled ? 'Block hidden' : 'Block visible' });
+      toast.success(block.enabled ? 'Block hidden' : 'Block visible');
     } catch {
-      toast({ title: 'Error', variant: 'destructive' });
+      toast.error('Error');
     }
   };
 
@@ -415,35 +414,28 @@ export const BlockCanvas = ({
       await deleteBlock.mutateAsync(deleteBlockId);
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
       
-      toast({
-        title: 'Block deleted',
-        description: `"${blockTypeLabels[blockToDelete.block_type] || blockToDelete.block_type}" has been removed`,
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                await createBlock.mutateAsync({
-                  page_slug: deletedBlockData.page_slug,
-                  block_type: deletedBlockData.block_type,
-                  block_config: deletedBlockData.block_config,
-                  order_index: deletedBlockData.order_index,
-                  enabled: deletedBlockData.enabled ?? true,
-                });
-                queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
-                toast({ title: 'Block restored!' });
-              } catch {
-                toast({ title: 'Could not restore block', variant: 'destructive' });
-              }
-            }}
-          >
-            Undo
-          </Button>
-        ),
+      toast.success('Block deleted', {
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await createBlock.mutateAsync({
+                page_slug: deletedBlockData.page_slug,
+                block_type: deletedBlockData.block_type,
+                block_config: deletedBlockData.block_config,
+                order_index: deletedBlockData.order_index,
+                enabled: deletedBlockData.enabled ?? true,
+              });
+              queryClient.invalidateQueries({ queryKey: pageBlocksKeys.byPage(pageSlug) });
+              toast.success('Block restored!');
+            } catch {
+              toast.error('Could not restore block');
+            }
+          },
+        },
       });
     } catch {
-      toast({ title: 'Could not delete block', variant: 'destructive' });
+      toast.error('Could not delete block');
     }
     setDeleteBlockId(null);
   };
@@ -464,9 +456,9 @@ export const BlockCanvas = ({
     if (changes && Object.keys(changes).length > 0) {
       try {
         await updateBlockConfig.mutateAsync({ blockId, config: changes });
-        toast({ title: 'Changes saved' });
+        toast.success('Changes saved');
       } catch {
-        toast({ title: 'Could not save changes', variant: 'destructive' });
+        toast.error('Could not save changes');
       }
     }
     // Clear pending changes for this block
@@ -496,9 +488,9 @@ export const BlockCanvas = ({
         enabled: true,
       });
       setIsLibraryOpen(false);
-      toast({ title: 'Block added', description: `${blockTypeLabels[blockType] || blockType} has been added` });
+      toast.success(`${blockTypeLabels[blockType] || blockType} has been added`);
     } catch {
-      toast({ title: 'Could not add block', variant: 'destructive' });
+      toast.error('Could not add block');
     }
   };
 

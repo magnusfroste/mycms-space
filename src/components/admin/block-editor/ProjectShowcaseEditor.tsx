@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Plus, Tags } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
@@ -59,7 +59,6 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
   config,
   onChange,
 }) => {
-  const { toast } = useToast();
   const projects = config.projects || [];
   const sortedProjects = [...projects].sort((a, b) => a.order_index - b.order_index);
 
@@ -103,7 +102,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
 
   const saveEditing = () => {
     if (!editingId || !editData.title || !editData.description) {
-      toast({ title: 'Title and description required', variant: 'destructive' });
+      toast.error('Title and description required');
       return;
     }
     const updatedProjects = projects.map((p) =>
@@ -129,7 +128,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
 
   const saveNewProject = () => {
     if (!newProjectData.title || !newProjectData.description) {
-      toast({ title: 'Title and description required', variant: 'destructive' });
+      toast.error('Title and description required');
       return;
     }
     const newProject: ProjectItem = {
@@ -190,7 +189,7 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
   // Image upload handlers
   const handleImageUpload = async (projectId: string, file: File) => {
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
-      toast({ title: 'Only JPG, PNG, WEBP or GIF', variant: 'destructive' });
+      toast.error('Only JPG, PNG, WEBP or GIF');
       return;
     }
 
@@ -237,10 +236,10 @@ const ProjectShowcaseEditor: React.FC<ProjectShowcaseEditorProps> = ({
       });
 
       updateProjects(updatedProjects);
-      toast({ title: 'Image uploaded' });
+      toast.success('Image uploaded');
     } catch (err) {
       console.error('Upload error:', err);
-      toast({ title: 'Could not upload image', variant: 'destructive' });
+      toast.error('Could not upload image');
     } finally {
       setUploadingFor(null);
       setIsUploading(false);

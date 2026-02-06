@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { User, Mail, Camera } from 'lucide-react';
@@ -21,7 +21,6 @@ interface ProfileData {
 
 export default function ProfileSettings() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
@@ -107,17 +106,10 @@ export default function ProfileSettings() {
         if (error) throw error;
       }
 
-      toast({
-        title: 'Profile saved',
-        description: 'Your author profile has been updated.',
-      });
+      toast.success('Your author profile has been updated.');
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save profile.',
-        variant: 'destructive',
-      });
+      toast.error('Failed to save profile.');
     } finally {
       setSaving(false);
     }

@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { 
   useHeaderModule, 
   useFooterModule, 
@@ -37,7 +37,6 @@ const getSocialIcon = (platform: string) => {
 };
 
 export default function GlobalBlocksSettings() {
-  const { toast } = useToast();
   
   // Header state
   const { data: headerModule, isLoading: headerLoading } = useHeaderModule();
@@ -74,9 +73,9 @@ export default function GlobalBlocksSettings() {
       } else {
         await updateHeader.mutateAsync({ module_config: headerConfig });
       }
-      toast({ title: 'Saved', description: 'Header settings updated' });
+      toast.success('Header settings updated');
     } catch (error) {
-      toast({ title: 'Error', description: 'Could not save settings', variant: 'destructive' });
+      toast.error('Could not save settings');
     }
   };
 
@@ -87,9 +86,9 @@ export default function GlobalBlocksSettings() {
       } else {
         await updateFooter.mutateAsync({ module_config: footerConfig });
       }
-      toast({ title: 'Saved', description: 'Footer settings updated' });
+      toast.success('Footer settings updated');
     } catch (error) {
-      toast({ title: 'Error', description: 'Could not save settings', variant: 'destructive' });
+      toast.error('Could not save settings');
     }
   };
 

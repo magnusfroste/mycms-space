@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useCreateBlogPost, useUpdateBlogPost, useBlogCategories, useBlogPostById } from '@/models/blog';
 import { fetchCategoriesForPost } from '@/data/blog';
 import { format } from 'date-fns';
@@ -43,7 +43,6 @@ interface BlogPostEditorProps {
 }
 
 const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
-  const { toast } = useToast();
   const createPost = useCreateBlogPost();
   const updatePost = useUpdateBlogPost();
   const { data: allCategories = [] } = useBlogCategories(true);
@@ -116,12 +115,12 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
     const finalStatus = saveStatus || status;
 
     if (!title.trim()) {
-      toast({ title: 'Error', description: 'Title is required.', variant: 'destructive' });
+      toast.error('Title is required.');
       return;
     }
 
     if (!slug.trim()) {
-      toast({ title: 'Error', description: 'Slug is required.', variant: 'destructive' });
+      toast.error('Slug is required.');
       return;
     }
 
@@ -147,19 +146,15 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
 
       if (isEditing && postId) {
         await updatePost.mutateAsync({ id: postId, ...postData });
-        toast({ title: 'Post updated', description: 'Your changes have been saved.' });
+        toast.success('Your changes have been saved.');
       } else {
         await createPost.mutateAsync(postData);
-        toast({ title: 'Post created', description: 'Your new post has been created.' });
+        toast.success('Your new post has been created.');
       }
 
       onClose();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error?.message || 'Failed to save post.',
-        variant: 'destructive',
-      });
+      toast.error(error?.message || 'Failed to save post.');
     }
   };
 

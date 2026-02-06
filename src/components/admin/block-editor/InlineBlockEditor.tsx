@@ -46,7 +46,7 @@ import GitHubBlockEditor from './GitHubBlockEditor';
 import SocialLinksEditor from './SocialLinksEditor';
 import SkillsBarEditor from './SkillsBarEditor';
 import ValuesEditor from './ValuesEditor';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import type { GitHubBlockConfig } from '@/types/github';
 
 interface InlineBlockEditorProps {
@@ -86,7 +86,6 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   onBlockConfigChange,
   onDone,
 }) => {
-  const { toast } = useToast();
   
   // Merge pending changes with block config
   const config = { ...block.block_config, ...pendingChanges };

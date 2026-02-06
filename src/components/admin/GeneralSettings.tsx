@@ -11,12 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import type { AdminAIProvider } from '@/types/modules';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const GeneralSettings: React.FC = () => {
   const { config, isLoading } = useAIModule();
   const updateModule = useUpdateAIModule();
-  const { toast } = useToast();
 
   const handleAdminProviderChange = (value: AdminAIProvider) => {
     if (!config) return;
@@ -32,8 +31,8 @@ const GeneralSettings: React.FC = () => {
         } 
       },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 export const Login = () => {
@@ -12,7 +12,6 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,16 +20,9 @@ export const Login = () => {
     const { error } = await signIn(email, password);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     } else {
-      toast({
-        title: 'Success',
-        description: 'Signed in successfully',
-      });
+      toast.success('Signed in successfully');
     }
 
     setIsLoading(false);
@@ -43,16 +35,9 @@ export const Login = () => {
     const { error } = await signUp(email, password);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     } else {
-      toast({
-        title: 'Success',
-        description: 'Account created successfully. You can now sign in.',
-      });
+      toast.success('Account created successfully. You can now sign in.');
     }
 
     setIsLoading(false);

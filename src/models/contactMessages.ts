@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import * as contactMessagesData from '@/data/contactMessages';
 import type { ContactMessage, CreateContactMessageInput } from '@/data/contactMessages';
 
@@ -27,15 +27,13 @@ export const useContactMessages = () => {
 
 // Create a new message (public)
 export const useCreateContactMessage = () => {
-  const { toast } = useToast();
-
   return useMutation({
     mutationFn: contactMessagesData.createContactMessage,
     onSuccess: () => {
-      toast({ title: 'Meddelande skickat', description: 'Tack för ditt meddelande!' });
+      toast.success('Meddelande skickat');
     },
     onError: (error: Error) => {
-      toast({ title: 'Fel', description: error.message, variant: 'destructive' });
+      toast.error('Fel: ' + error.message);
     },
   });
 };
@@ -55,16 +53,15 @@ export const useMarkMessageAsRead = () => {
 // Delete message
 export const useDeleteContactMessage = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: contactMessagesData.deleteContactMessage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contactMessagesKeys.all });
-      toast({ title: 'Meddelande borttaget' });
+      toast.success('Meddelande borttaget');
     },
     onError: (error: Error) => {
-      toast({ title: 'Fel', description: error.message, variant: 'destructive' });
+      toast.error('Fel: ' + error.message);
     },
   });
 };

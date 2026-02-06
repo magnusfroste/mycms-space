@@ -66,11 +66,7 @@ const Admin = () => {
   const handleLogout = async () => {
     const { error } = await signOut();
     if (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     } else {
       navigate('/');
     }

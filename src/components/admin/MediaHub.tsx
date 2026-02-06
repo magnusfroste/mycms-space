@@ -25,13 +25,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Image as ImageIcon,
   Search,
   Trash2,
@@ -519,68 +512,88 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
   onDelete,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const justOpenedRef = React.useRef(false);
+
+  // Close menu on outside click
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    // Skip the first click event that opened the menu
+    justOpenedRef.current = true;
+    const handleClick = (e: MouseEvent) => {
+      if (justOpenedRef.current) {
+        justOpenedRef.current = false;
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [menuOpen]);
+
+  const handleMenuAction = (action: () => void) => {
+    setMenuOpen(false);
+    action();
+  };
 
   return (
-    <div className="group relative">
-      <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
+    <div className="relative rounded-lg border bg-muted">
+      <div className="aspect-square overflow-hidden rounded-t-lg">
         <img
           src={file.publicUrl}
           alt={file.name}
-          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+          className="w-full h-full object-cover"
           loading="lazy"
         />
       </div>
       
-      {/* Overlay - pointer-events-none so clicks pass through, except on interactive children */}
-      <div className={cn(
-        "absolute inset-0 bg-black/60 transition-opacity rounded-lg flex flex-col justify-between p-2 pointer-events-none",
-        menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-      )}>
-        <div className="flex justify-end pointer-events-auto">
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-white">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="z-[100]" sideOffset={5}>
-              <DropdownMenuItem onSelect={() => onCopy(file.publicUrl)}>
+      {/* Bottom bar with file info and actions */}
+      <div className="flex items-center justify-between gap-1 px-2 py-1.5 bg-background border-t rounded-b-lg">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium truncate">{file.name}</p>
+          <Badge variant="outline" className="text-[10px] px-1 py-0">
+            {BUCKET_LABELS[file.bucket]}
+          </Badge>
+        </div>
+        <div className="relative" ref={menuRef}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+          {menuOpen && (
+            <div className="absolute right-0 bottom-full mb-1 z-[100] min-w-[160px] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+              <button onClick={() => handleMenuAction(() => onCopy(file.publicUrl))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => window.open(file.publicUrl, '_blank')}>
+              </button>
+              <button onClick={() => handleMenuAction(() => window.open(file.publicUrl, '_blank'))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => onRename(file)}>
+              </button>
+              <div className="-mx-1 my-1 h-px bg-muted" />
+              <button onClick={() => handleMenuAction(() => onRename(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <Edit3 className="h-4 w-4 mr-2" />
                 Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onMove(file)}>
+              </button>
+              <button onClick={() => handleMenuAction(() => onMove(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <FolderOpen className="h-4 w-4 mr-2" />
                 Move to bucket
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => onDelete(file)} className="text-destructive">
+              </button>
+              <div className="-mx-1 my-1 h-px bg-muted" />
+              <button onClick={() => handleMenuAction(() => onDelete(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <div className="text-white text-xs truncate px-1">
-          {file.name}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Bucket badge */}
-      <Badge 
-        variant="secondary" 
-        className="absolute top-2 left-2 text-xs opacity-80 pointer-events-none"
-      >
-        {BUCKET_LABELS[file.bucket]}
-      </Badge>
     </div>
   );
 });
@@ -604,6 +617,29 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
   onDelete,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const justOpenedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    justOpenedRef.current = true;
+    const handleClick = (e: MouseEvent) => {
+      if (justOpenedRef.current) {
+        justOpenedRef.current = false;
+        return;
+      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [menuOpen]);
+
+  const handleMenuAction = (action: () => void) => {
+    setMenuOpen(false);
+    action();
+  };
 
   return (
     <div className="flex items-center gap-4 p-3 hover:bg-muted/50">
@@ -629,33 +665,33 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
         <Button variant="ghost" size="icon" onClick={() => onCopy(file.publicUrl)}>
           <Copy className="h-4 w-4" />
         </Button>
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="z-[100]">
-            <DropdownMenuItem onSelect={() => window.open(file.publicUrl, '_blank')}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open in new tab
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => onRename(file)}>
-              <Edit3 className="h-4 w-4 mr-2" />
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onMove(file)}>
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Move to bucket
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => onDelete(file)} className="text-destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="relative" ref={menuRef}>
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)}>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+          {menuOpen && (
+            <div className="absolute right-0 bottom-full mb-1 z-[100] min-w-[160px] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+              <button onClick={() => handleMenuAction(() => window.open(file.publicUrl, '_blank'))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open in new tab
+              </button>
+              <div className="-mx-1 my-1 h-px bg-muted" />
+              <button onClick={() => handleMenuAction(() => onRename(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <Edit3 className="h-4 w-4 mr-2" />
+                Rename
+              </button>
+              <button onClick={() => handleMenuAction(() => onMove(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Move to bucket
+              </button>
+              <div className="-mx-1 my-1 h-px bg-muted" />
+              <button onClick={() => handleMenuAction(() => onDelete(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

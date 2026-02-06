@@ -4,7 +4,7 @@
 // ============================================
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import * as navLinksData from '@/data/navLinks';
 import type { NavLink, CreateNavLinkInput, UpdateNavLinkInput } from '@/types';
 
@@ -36,17 +36,16 @@ export const useAllNavLinks = () => {
 // Create nav link
 export const useCreateNavLink = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: navLinksData.createNavLink,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: navLinksKeys.enabled });
       queryClient.invalidateQueries({ queryKey: navLinksKeys.all });
-      toast({ title: 'Success', description: 'Navigation link created' });
+      toast.success('Navigation link created');
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error('Error: ' + error.message);
     },
   });
 };
@@ -54,7 +53,6 @@ export const useCreateNavLink = () => {
 // Update nav link
 export const useUpdateNavLink = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: ({ id, ...updates }: UpdateNavLinkInput) =>
@@ -64,7 +62,7 @@ export const useUpdateNavLink = () => {
       queryClient.invalidateQueries({ queryKey: navLinksKeys.all });
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error('Error: ' + error.message);
     },
   });
 };
@@ -72,17 +70,16 @@ export const useUpdateNavLink = () => {
 // Delete nav link
 export const useDeleteNavLink = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: navLinksData.deleteNavLink,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: navLinksKeys.enabled });
       queryClient.invalidateQueries({ queryKey: navLinksKeys.all });
-      toast({ title: 'Success', description: 'Navigation link deleted' });
+      toast.success('Navigation link deleted');
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error('Error: ' + error.message);
     },
   });
 };
@@ -90,7 +87,6 @@ export const useDeleteNavLink = () => {
 // Reorder nav links
 export const useReorderNavLinks = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: navLinksData.reorderNavLinks,
@@ -99,7 +95,7 @@ export const useReorderNavLinks = () => {
       queryClient.invalidateQueries({ queryKey: navLinksKeys.all });
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast.error('Error: ' + error.message);
     },
   });
 };

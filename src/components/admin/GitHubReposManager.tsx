@@ -28,7 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { RichTextEditor } from '@/components/common';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
@@ -395,7 +395,6 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
 
 // Main component
 const GitHubReposManager: React.FC = () => {
-  const { toast } = useToast();
   const { config: moduleConfig } = useGitHubModule();
   const { data: repos, isLoading } = useGitHubRepos();
   const syncMutation = useSyncGitHubRepos();
@@ -424,18 +423,15 @@ const GitHubReposManager: React.FC = () => {
   const handleSync = async () => {
     const username = moduleConfig?.username;
     if (!username) {
-      toast({ title: 'Configure GitHub username first', variant: 'destructive' });
+      toast.error('Configure GitHub username first');
       return;
     }
 
     try {
       const result = await syncMutation.mutateAsync(username);
-      toast({ 
-        title: 'Sync complete', 
-        description: `${result.synced} repos synced, ${result.new} new` 
-      });
+      toast.success(`${result.synced} repos synced, ${result.new} new`);
     } catch (error) {
-      toast({ title: 'Sync failed', variant: 'destructive' });
+      toast.error('Sync failed');
     }
   };
 
@@ -446,7 +442,7 @@ const GitHubReposManager: React.FC = () => {
   const handleDelete = (repo: GitHubRepoWithImages) => {
     if (confirm(`Remove "${repo.name}" from local database?`)) {
       // Note: This just removes from local DB, not GitHub
-      toast({ title: 'Delete not implemented yet' });
+      toast.success('Delete not implemented yet');
     }
   };
 
@@ -461,10 +457,10 @@ const GitHubReposManager: React.FC = () => {
       {
         onSuccess: () => {
           setEditingId(null);
-          toast({ title: 'Changes saved' });
+          toast.success('Changes saved');
         },
         onError: () => {
-          toast({ title: 'Could not save', variant: 'destructive' });
+          toast.error('Could not save');
         },
       }
     );
@@ -498,10 +494,10 @@ const GitHubReposManager: React.FC = () => {
         imagePath: path,
       });
 
-      toast({ title: 'Image uploaded' });
+      toast.success('Image uploaded');
     } catch (error) {
       console.error('Upload error:', error);
-      toast({ title: 'Upload failed', variant: 'destructive' });
+      toast.error('Upload failed');
     } finally {
       setUploadingFor(null);
     }
@@ -515,10 +511,10 @@ const GitHubReposManager: React.FC = () => {
         imageUrl,
         imagePath: null, // No local path since it's already in storage
       });
-      toast({ title: 'Image added from Media Hub' });
+      toast.success('Image added from Media Hub');
     } catch (error) {
       console.error('Add image error:', error);
-      toast({ title: 'Could not add image', variant: 'destructive' });
+      toast.error('Could not add image');
     }
   };
 
@@ -533,12 +529,12 @@ const GitHubReposManager: React.FC = () => {
     try {
       const result = await syncToGitHubMutation.mutateAsync({ fullName, description });
       if (result.success) {
-        toast({ title: 'Synced to GitHub', description: 'Description updated on GitHub' });
+        toast.success('Description updated on GitHub');
       } else {
-        toast({ title: 'Sync failed', description: result.error, variant: 'destructive' });
+        toast.error(result.error || 'Sync failed');
       }
     } catch (error) {
-      toast({ title: 'Sync failed', variant: 'destructive' });
+      toast.error('Sync failed');
     } finally {
       setSyncingFor(null);
     }
@@ -572,11 +568,11 @@ const GitHubReposManager: React.FC = () => {
     updateOrderMutation.mutate(updates, {
       onSuccess: () => {
         console.log('[DnD] Order updated successfully');
-        toast({ title: 'Order updated' });
+        toast.success('Order updated');
       },
       onError: (error) => {
         console.error('[DnD] Order update failed', error);
-        toast({ title: 'Could not update order', variant: 'destructive' });
+        toast.error('Could not update order');
       },
     });
   };

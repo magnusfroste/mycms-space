@@ -22,13 +22,12 @@ import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
 import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
 import { integrationsMeta, defaultIntegrations } from '@/types/modules';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 
 const AIModuleSettings: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
   const updateModule = useUpdateAIModule();
-  const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
   const [showPayloadPreview, setShowPayloadPreview] = useState(false);
   
@@ -59,9 +58,9 @@ const AIModuleSettings: React.FC = () => {
           {
             onSuccess: () => {
               setPromptDirty(false);
-              toast({ title: 'Saved' });
+              toast.success('Saved');
             },
-            onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+            onError: () => toast.error('Error saving'),
           }
         );
       }
@@ -103,8 +102,8 @@ const AIModuleSettings: React.FC = () => {
     updateModule.mutate(
       { enabled },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -114,8 +113,8 @@ const AIModuleSettings: React.FC = () => {
     updateModule.mutate(
       { module_config: { ...config, ...updates } },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -198,7 +197,7 @@ const AIModuleSettings: React.FC = () => {
 
   const copyPayload = () => {
     navigator.clipboard.writeText(JSON.stringify(samplePayload, null, 2));
-    toast({ title: 'Copied to clipboard' });
+    toast.success('Copied to clipboard');
   };
 
   if (isLoading) {

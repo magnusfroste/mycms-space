@@ -12,14 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, Globe, Share2, FileText, Search, BarChart3 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SEOModuleSettings = () => {
   const { data: seoModule, isLoading } = useSEOModule();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [config, setConfig] = useState<SEOModuleConfig>({
@@ -44,21 +43,17 @@ const SEOModuleSettings = () => {
       updateModule('seo', { module_config: newConfig }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['module', 'seo'] });
-      toast({ title: 'SEO settings saved' });
+      toast.success('SEO settings saved');
     },
     onError: (error) => {
-      toast({
-        title: 'Error saving settings',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     },
   });
 
   const handleSave = () => {
     updateMutation.mutate(config, {
-      onSuccess: () => toast({ title: 'SEO settings saved' }),
-      onError: () => toast({ title: 'Error saving settings', variant: 'destructive' }),
+      onSuccess: () => toast.success('SEO settings saved'),
+      onError: () => toast.error('Error saving settings'),
     });
   };
 

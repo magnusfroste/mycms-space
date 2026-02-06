@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface PromptEnhancerProps {
   currentPrompt: string;
@@ -31,7 +31,6 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { toast } = useToast();
   
   // Store prompt at dialog open time to avoid stale closures
   const promptRef = useRef(currentPrompt);
@@ -41,11 +40,7 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
     const prompt = promptRef.current;
     
     if (!prompt.trim()) {
-      toast({
-        title: 'No prompt to enhance',
-        description: 'Write some text first, then enhance it',
-        variant: 'destructive',
-      });
+      toast.error('Write some text first, then enhance it');
       return;
     }
 
@@ -60,22 +55,14 @@ const PromptEnhancer: React.FC<PromptEnhancerProps> = ({
         if (error) throw error;
         if (data?.text) {
           onEnhanced(data.text);
-          toast({ title: 'Prompt enhanced!' });
+          toast.success('Prompt enhanced!');
         } else {
-          toast({
-            title: 'No response',
-            description: 'AI did not return enhanced text',
-            variant: 'destructive',
-          });
+          toast.error('AI did not return enhanced text');
         }
       })
       .catch((err) => {
         console.error('Enhance prompt error:', err);
-        toast({
-          title: 'Enhancement failed',
-          description: err instanceof Error ? err.message : 'Please try again',
-          variant: 'destructive',
-        });
+        toast.error(err instanceof Error ? err.message : 'Please try again');
       })
       .finally(() => setIsLoading(false));
   }, [onEnhanced, toast]);

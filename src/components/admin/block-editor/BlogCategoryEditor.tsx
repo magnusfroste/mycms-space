@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useCreateBlogCategory, useUpdateBlogCategory } from '@/models/blog';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { generateSlug } from '@/types/blog';
@@ -22,7 +22,6 @@ interface BlogCategoryEditorProps {
 }
 
 const BlogCategoryEditor = ({ category, onClose }: BlogCategoryEditorProps) => {
-  const { toast } = useToast();
   const createCategory = useCreateBlogCategory();
   const updateCategory = useUpdateBlogCategory();
 
@@ -43,12 +42,12 @@ const BlogCategoryEditor = ({ category, onClose }: BlogCategoryEditorProps) => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast({ title: 'Error', description: 'Name is required.', variant: 'destructive' });
+      toast.error('Name is required.');
       return;
     }
 
     if (!slug.trim()) {
-      toast({ title: 'Error', description: 'Slug is required.', variant: 'destructive' });
+      toast.error('Slug is required.');
       return;
     }
 
@@ -62,19 +61,15 @@ const BlogCategoryEditor = ({ category, onClose }: BlogCategoryEditorProps) => {
 
       if (isEditing && category) {
         await updateCategory.mutateAsync({ id: category.id, ...categoryData });
-        toast({ title: 'Category updated', description: 'Your changes have been saved.' });
+        toast.success('Your changes have been saved.');
       } else {
         await createCategory.mutateAsync(categoryData);
-        toast({ title: 'Category created', description: 'Your new category has been created.' });
+        toast.success('Your new category has been created.');
       }
 
       onClose();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error?.message || 'Failed to save category.',
-        variant: 'destructive',
-      });
+      toast.error(error?.message || 'Failed to save category.');
     }
   };
 

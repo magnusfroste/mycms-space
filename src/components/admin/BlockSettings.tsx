@@ -39,7 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, GripVertical, Layout, Type, Image, MessageSquare, Grid, Layers, ArrowRight, Minus, ExternalLink } from 'lucide-react';
 import { ImageUpload } from './block-editor';
 import BlockTypePicker, { BLOCK_TYPE_OPTIONS } from './block-editor/BlockTypePicker';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAllPageBlocks,
@@ -185,7 +185,6 @@ export const BlockSettings = () => {
   const deleteBlock = useDeletePageBlock();
   const reorderBlocks = useReorderPageBlocks();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const [selectedPage, setSelectedPage] = useState<string>('demo');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -220,7 +219,7 @@ export const BlockSettings = () => {
     const targetPage = newPageSlug.trim() || formData.page_slug;
     
     if (!targetPage) {
-      toast({ title: 'Error', description: 'Page slug is required', variant: 'destructive' });
+      toast.error('Page slug is required');
       return;
     }
 
@@ -243,7 +242,7 @@ export const BlockSettings = () => {
       setSelectedPage(targetPage);
     }
     
-    toast({ title: 'Success', description: 'Block added' });
+    toast.success('Block added');
   };
 
   const handleEdit = async () => {
@@ -259,10 +258,10 @@ export const BlockSettings = () => {
       setIsEditDialogOpen(false);
       setEditingBlock(null);
       resetForm();
-      toast({ title: 'Success', description: 'Block updated' });
+      toast.success('Block updated');
     } catch (error) {
       console.error('Update failed:', error);
-      toast({ title: 'Error', description: 'Failed to update block', variant: 'destructive' });
+      toast.error('Failed to update block');
     }
   };
 
@@ -271,10 +270,10 @@ export const BlockSettings = () => {
     try {
       await deleteBlock.mutateAsync(deleteBlockId);
       setDeleteBlockId(null);
-      toast({ title: 'Success', description: 'Block deleted' });
+      toast.success('Block deleted');
     } catch (error) {
       console.error('Delete failed:', error);
-      toast({ title: 'Error', description: 'Failed to delete block', variant: 'destructive' });
+      toast.error('Failed to delete block');
     }
   };
 
@@ -286,7 +285,7 @@ export const BlockSettings = () => {
       });
     } catch (error) {
       console.error('Toggle failed:', error);
-      toast({ title: 'Error', description: 'Failed to update block', variant: 'destructive' });
+      toast.error('Failed to update block');
     }
   };
 
@@ -327,7 +326,7 @@ export const BlockSettings = () => {
       await reorderBlocks.mutateAsync(
         reordered.map((b) => ({ id: b.id, order_index: b.order_index }))
       );
-      toast({ title: 'Success', description: 'Block order updated' });
+      toast.success('Block order updated');
     } catch {
       queryClient.invalidateQueries({ queryKey: pageBlocksKeys.all });
     }

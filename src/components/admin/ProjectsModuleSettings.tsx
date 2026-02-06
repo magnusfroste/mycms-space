@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { useProjectsModule, useUpdateProjectsModule } from '@/models/modules';
 import type { ProjectsModuleConfig } from '@/types/modules';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const layoutOptions = [
   { value: 'alternating', label: 'Alternating (left/right)' },
@@ -25,14 +25,13 @@ const layoutOptions = [
 const ProjectsModuleSettings: React.FC = () => {
   const { data: module, config, isLoading } = useProjectsModule();
   const updateModule = useUpdateProjectsModule();
-  const { toast } = useToast();
 
   const handleToggle = (enabled: boolean) => {
     updateModule.mutate(
       { enabled },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };
@@ -45,8 +44,8 @@ const ProjectsModuleSettings: React.FC = () => {
     updateModule.mutate(
       { module_config: { ...config, [field]: value } },
       {
-        onSuccess: () => toast({ title: 'Saved' }),
-        onError: () => toast({ title: 'Error saving', variant: 'destructive' }),
+        onSuccess: () => toast.success('Saved'),
+        onError: () => toast.error('Error saving'),
       }
     );
   };

@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import * as settingsHistoryData from '@/data/settingsHistory';
 import type { SettingsHistoryEntry } from '@/data/settingsHistory';
 
@@ -60,7 +60,6 @@ export const useHistoryEntry = (id: string) => {
 // Restore history entry
 export const useRestoreHistoryEntry = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: settingsHistoryData.restoreHistoryEntry,
@@ -83,17 +82,10 @@ export const useRestoreHistoryEntry = () => {
         queryClient.invalidateQueries({ queryKey });
       }
 
-      toast({
-        title: 'Återställt',
-        description: 'Data har återställts till den valda versionen',
-      });
+      toast.success('Återställt');
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Fel',
-        description: `Kunde inte återställa: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast.error('Kunde inte återställa: ' + error.message);
     },
   });
 };

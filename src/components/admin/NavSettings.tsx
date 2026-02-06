@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, GripVertical, ExternalLink, Link } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useAllNavLinks,
@@ -112,7 +112,6 @@ export const NavSettings = () => {
   const deleteNavLink = useDeleteNavLink();
   const reorderNavLinks = useReorderNavLinks();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -139,7 +138,7 @@ export const NavSettings = () => {
 
   const handleAdd = async () => {
     if (!formData.label.trim() || !formData.url.trim()) {
-      toast({ title: 'Validation Error', description: 'Label and URL are required', variant: 'destructive' });
+      toast.error('Label and URL are required');
       return;
     }
 
@@ -152,10 +151,10 @@ export const NavSettings = () => {
       });
       setIsAddDialogOpen(false);
       resetForm();
-      toast({ title: 'Success', description: 'Navigation link created' });
+      toast.success('Navigation link created');
     } catch (error) {
       console.error('Create failed:', error);
-      toast({ title: 'Error', description: 'Failed to create navigation link', variant: 'destructive' });
+      toast.error('Failed to create navigation link');
     }
   };
 
@@ -163,7 +162,7 @@ export const NavSettings = () => {
     if (!editingLink) return;
 
     if (!formData.label.trim() || !formData.url.trim()) {
-      toast({ title: 'Validation Error', description: 'Label and URL are required', variant: 'destructive' });
+      toast.error('Label and URL are required');
       return;
     }
 
@@ -175,10 +174,10 @@ export const NavSettings = () => {
       setIsEditDialogOpen(false);
       setEditingLink(null);
       resetForm();
-      toast({ title: 'Success', description: 'Navigation link updated' });
+      toast.success('Navigation link updated');
     } catch (error) {
       console.error('Update failed:', error);
-      toast({ title: 'Error', description: 'Failed to update navigation link', variant: 'destructive' });
+      toast.error('Failed to update navigation link');
     }
   };
 
@@ -187,10 +186,10 @@ export const NavSettings = () => {
     try {
       await deleteNavLink.mutateAsync(deleteLinkId);
       setDeleteLinkId(null);
-      toast({ title: 'Success', description: 'Navigation link deleted' });
+      toast.success('Navigation link deleted');
     } catch (error) {
       console.error('Delete failed:', error);
-      toast({ title: 'Error', description: 'Failed to delete navigation link', variant: 'destructive' });
+      toast.error('Failed to delete navigation link');
     }
   };
 
@@ -202,7 +201,7 @@ export const NavSettings = () => {
       });
     } catch (error) {
       console.error('Toggle failed:', error);
-      toast({ title: 'Error', description: 'Failed to update navigation link', variant: 'destructive' });
+      toast.error('Failed to update navigation link');
     }
   };
 
@@ -237,7 +236,7 @@ export const NavSettings = () => {
       await reorderNavLinks.mutateAsync(
         reordered.map((l) => ({ id: l.id, order_index: l.order_index }))
       );
-      toast({ title: 'Success', description: 'Navigation order updated' });
+      toast.success('Navigation order updated');
     } catch (error) {
       queryClient.invalidateQueries({ queryKey: ['nav-links-all'] });
     }

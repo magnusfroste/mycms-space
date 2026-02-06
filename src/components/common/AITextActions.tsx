@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type TextAction = 'correct' | 'enhance' | 'expand';
@@ -119,16 +119,12 @@ const AITextActions: React.FC<AITextActionsProps> = ({
     const config = actionConfig[action];
     
     if (config.category === 'text' && !text.trim()) {
-      toast({ title: 'No text to process', variant: 'destructive' });
+      toast.error('No text to process');
       return;
     }
     
     if (config.category === 'content' && !title?.trim()) {
-      toast({
-        title: 'Title required',
-        description: 'Please enter a title first so AI can generate relevant content.',
-        variant: 'destructive',
-      });
+      toast.error('Please enter a title first so AI can generate relevant content.');
       return;
     }
 
@@ -147,17 +143,9 @@ const AITextActions: React.FC<AITextActionsProps> = ({
 
       if (error) {
         if (error.message?.includes('429') || error.message?.includes('Rate limit')) {
-          toast({
-            title: 'Too many requests',
-            description: 'Please wait a moment and try again.',
-            variant: 'destructive',
-          });
+          toast.error('Please wait a moment and try again.');
         } else if (error.message?.includes('402') || error.message?.includes('credits')) {
-          toast({
-            title: 'AI credits exhausted',
-            description: 'Please add credits to continue.',
-            variant: 'destructive',
-          });
+          toast.error('Please add credits to continue.');
         } else {
           throw error;
         }
@@ -180,18 +168,11 @@ const AITextActions: React.FC<AITextActionsProps> = ({
         }
 
         onTextChange(newContent);
-        toast({
-          title: config.label + ' complete',
-          description: 'Content has been updated.',
-        });
+        toast.success(config.label + ' complete');
       }
     } catch (err) {
       console.error('AI action error:', err);
-      toast({
-        title: 'Could not process',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
+      toast.error('Please try again later.');
     } finally {
       setIsLoading(false);
       setCurrentAction(null);
