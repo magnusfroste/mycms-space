@@ -29,10 +29,15 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { RichTextEditor } from '@/components/common';
+import { RichTextEditor, MarkdownContent } from '@/components/common';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/utils/imageCompression';
 import MediaHubPicker from './MediaHubPicker';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   useGitHubRepos,
   useSyncGitHubRepos,
@@ -61,6 +66,8 @@ import {
   Upload,
   FolderOpen,
   Sparkles,
+  ChevronDown,
+  FileText,
 } from 'lucide-react';
 
 // Language colors
@@ -399,6 +406,26 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
             aiContext="project importance"
           />
         </div>
+
+        {/* README Content (read-only) */}
+        {repo.readme_content && (
+          <Collapsible className="space-y-2">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-2 h-auto">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  README.md
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border rounded-md p-4 bg-muted/30 max-h-96 overflow-auto">
+                <MarkdownContent content={repo.readme_content} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {/* GitHub Syncable Fields */}
         <div className="border-t pt-4 mt-4 space-y-4">
