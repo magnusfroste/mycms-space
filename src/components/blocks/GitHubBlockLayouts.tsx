@@ -123,15 +123,28 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
                 </div>
               )}
 
-              <a
-                href={repo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
-              >
-                View on GitHub
-                <ExternalLink className="w-3 h-3" />
-              </a>
+              <div className="flex flex-wrap items-center gap-4">
+                <a
+                  href={repo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
+                >
+                  <Github className="w-4 h-4" />
+                  View on GitHub
+                </a>
+                {repo.homepage && (
+                  <a
+                    href={repo.homepage}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
+                  >
+                    Live Demo
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
             </CardContent>
           </Card>
         );
@@ -204,6 +217,17 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
                 </Badge>
               ))}
             </div>
+            {repo.homepage && (
+              <a
+                href={repo.homepage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-primary hover:underline text-xs font-medium mt-2"
+              >
+                Live Demo
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
           </CardContent>
         </Card>
       ))}
@@ -375,6 +399,11 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
                 <p className="text-sm text-muted-foreground truncate mt-0.5">
                   {repo.enriched_description || repo.description}
                 </p>
+              )}
+              {repo.homepage && (
+                <span className="text-xs text-primary truncate mt-0.5 block">
+                  {repo.homepage.replace(/^https?:\/\//, '')}
+                </span>
               )}
             </div>
           </div>
