@@ -38,15 +38,19 @@ const FeaturedCarouselBlock: React.FC<FeaturedCarouselBlockProps> = ({ config })
   return (
     <section id="featured" className="section-container bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center mb-4">
-          <Image className="h-8 w-8 text-apple-purple mr-3" />
-          <h2 className="section-title mb-0">{title}</h2>
+        <div className="text-center mb-12">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Featured
+          </span>
+          <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              {subtitle}
+            </p>
+          )}
         </div>
-        {subtitle && (
-          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-            {subtitle}
-          </p>
-        )}
         
         <div className="relative max-w-5xl mx-auto">
           <Button

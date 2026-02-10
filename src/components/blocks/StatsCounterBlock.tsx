@@ -105,29 +105,30 @@ const StatsCounterBlock: React.FC<StatsCounterBlockProps> = ({ config }) => {
   return (
     <section 
       ref={sectionRef}
-      className="section-container px-6 md:px-12 lg:px-24 relative overflow-hidden"
+      className="section-container relative overflow-hidden"
     >
       {/* Background Decoration */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        {(settings.headline || settings.subheadline) && (
-          <div className="text-center mb-16 space-y-4">
-            {settings.headline && (
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-                {settings.headline}
-              </h2>
-            )}
-            {settings.subheadline && (
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                {settings.subheadline}
-              </p>
-            )}
-          </div>
-        )}
+        <div className="text-center mb-16">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Stats
+          </span>
+          {settings.headline && (
+            <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              {settings.headline}
+            </h2>
+          )}
+          {settings.subheadline && (
+            <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              {settings.subheadline}
+            </p>
+          )}
+        </div>
 
         {/* Stats Grid */}
         <div className={cn(

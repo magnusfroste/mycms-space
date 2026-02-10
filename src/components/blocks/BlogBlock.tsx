@@ -231,12 +231,21 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
     <section className="section-container">
       <div className="container px-4 md:px-6">
         {/* Header */}
-        {(heading || subheading) && (
-          <div className="text-center mb-12">
-            {heading && <h2 className="text-3xl font-bold mb-2">{heading}</h2>}
-            {subheading && <p className="text-muted-foreground max-w-2xl mx-auto">{subheading}</p>}
-          </div>
-        )}
+        <div className="text-center mb-12">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Blog
+          </span>
+          {heading && (
+            <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              {heading}
+            </h2>
+          )}
+          {subheading && (
+            <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              {subheading}
+            </p>
+          )}
+        </div>
 
         {/* Posts Grid */}
         <div className={gridClasses}>{displayPosts.map((post, i) => renderPost(post, i))}</div>

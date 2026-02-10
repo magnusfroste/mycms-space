@@ -50,8 +50,8 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
         style={{ backgroundColor: config.backgroundColor || 'transparent' }}
       >
         <div className="max-w-xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-6">
-            <Check className="h-8 w-8 text-green-500" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-6">
+            <Check className="h-8 w-8 text-primary" />
           </div>
           <h3 className="text-2xl font-bold mb-2">{config.successMessage || 'Tack!'}</h3>
           <p className="text-muted-foreground">Du får snart ett bekräftelsemail.</p>
@@ -66,12 +66,14 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
       style={{ backgroundColor: config.backgroundColor || 'transparent' }}
     >
       <div className="max-w-xl mx-auto text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
-          <Mail className="h-8 w-8 text-primary" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">{config.heading || 'Prenumerera på nyhetsbrevet'}</h2>
-        <p className="text-muted-foreground mb-8">
-          {config.description || 'Få de senaste nyheterna direkt i din inkorg.'}
+        <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+          Newsletter
+        </span>
+        <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          {config.heading || 'Subscribe to Newsletter'}
+        </h2>
+        <p className="section-subtitle mt-4 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          {config.description || 'Get the latest updates straight to your inbox.'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -5,14 +5,8 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { 
-  Sparkles, 
-  Zap, 
-  Shield, 
-  Palette,
-  Code,
-  Rocket
-} from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { iconMap } from '@/lib/constants/iconMaps';
 
 interface BentoItem {
   id: string;
@@ -33,15 +27,6 @@ interface BentoGridBlockConfig {
 interface BentoGridBlockProps {
   config: Record<string, unknown>;
 }
-
-const iconMap: Record<string, React.ReactNode> = {
-  sparkles: <Sparkles className="w-6 h-6" />,
-  zap: <Zap className="w-6 h-6" />,
-  shield: <Shield className="w-6 h-6" />,
-  palette: <Palette className="w-6 h-6" />,
-  code: <Code className="w-6 h-6" />,
-  rocket: <Rocket className="w-6 h-6" />,
-};
 
 const defaultItems: BentoItem[] = [
   {
