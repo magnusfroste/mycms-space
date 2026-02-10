@@ -127,11 +127,16 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Open Source
+          </span>
           {title && (
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>
+            <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              {title}
+            </h2>
           )}
           {subtitle && (
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               {subtitle}
             </p>
           )}

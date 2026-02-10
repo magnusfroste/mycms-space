@@ -117,14 +117,17 @@ const TestimonialCarouselBlock: React.FC<TestimonialCarouselBlockProps> = ({ con
   };
 
   return (
-    <section className="section-container px-6 overflow-hidden">
-      <div className="max-w-6xl mx-auto">
+    <section className="section-container overflow-hidden">
+      <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
+        <div className="text-center mb-16">
+          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+            Testimonials
+          </span>
+          <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {settings.headline || 'What People Say'}
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             {settings.subheadline || 'Trusted by industry leaders and innovators worldwide.'}
           </p>
         </div>
@@ -190,7 +193,7 @@ const TestimonialCarouselBlock: React.FC<TestimonialCarouselBlockProps> = ({ con
                             key={i}
                             className={cn(
                               'w-4 h-4',
-                              i < testimonial.rating! ? 'text-yellow-500' : 'text-muted'
+                              i < testimonial.rating! ? 'text-accent' : 'text-muted'
                             )}
                             fill="currentColor"
                             viewBox="0 0 20 20"
