@@ -502,10 +502,10 @@ const ResendConfig: React.FC = () => {
             onChange={(e) => setFromEmail(e.target.value)}
             placeholder="newsletter@example.com"
           />
-          <Button onClick={handleSave} size="sm">Spara</Button>
+          <Button onClick={handleSave} size="sm">Save</Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          E-postadressen som nyhetsbrev skickas från. Måste tillhöra en verifierad domän i Resend.
+          The email address newsletters are sent from. Must belong to a verified domain in Resend.
         </p>
       </div>
 
@@ -515,7 +515,7 @@ const ResendConfig: React.FC = () => {
           <div className="text-sm">
             <p className="font-medium text-blue-900 dark:text-blue-100">API Key</p>
             <p className="text-blue-700 dark:text-blue-300 mt-1">
-              Konfigurerad via secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>
+              Configured via secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>
             </p>
           </div>
         </div>
@@ -525,9 +525,9 @@ const ResendConfig: React.FC = () => {
         <div className="flex items-start gap-2">
           <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-amber-900 dark:text-amber-100">⚠️ Viktigt: Verifiera din domän</p>
+            <p className="font-medium text-amber-900 dark:text-amber-100">⚠️ Important: Verify your domain</p>
             <p className="text-amber-700 dark:text-amber-300 mt-1">
-              From-adressen måste tillhöra en verifierad domän i Resend.
+              The from address must belong to a verified domain in Resend.
             </p>
             <a 
               href="https://resend.com/domains" 
@@ -535,7 +535,7 @@ const ResendConfig: React.FC = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-amber-800 dark:text-amber-200 underline mt-2 hover:text-amber-900"
             >
-              Verifiera domän i Resend
+              Verify domain in Resend
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
@@ -543,10 +543,10 @@ const ResendConfig: React.FC = () => {
       </div>
 
       <div className="text-sm text-muted-foreground">
-        <p className="font-medium mb-2">Används för:</p>
+        <p className="font-medium mb-2">Used for:</p>
         <ul className="list-disc list-inside space-y-1">
-          <li><strong>Newsletter</strong> - Skicka nyhetsbrev till prenumeranter</li>
-          <li><strong>Transaktionella e-post</strong> - Bekräftelser, notiser</li>
+          <li><strong>Newsletter</strong> - Send newsletters to subscribers</li>
+          <li><strong>Transactional email</strong> - Confirmations, notifications</li>
         </ul>
       </div>
     </div>

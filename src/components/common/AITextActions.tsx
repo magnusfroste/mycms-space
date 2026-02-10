@@ -234,8 +234,8 @@ const AITextActions: React.FC<AITextActionsProps> = ({
               <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs max-w-[200px]">
-              <p><strong>Draft, Outline, Intro, Conclusion</strong> använder titeln.</p>
-              <p className="mt-1 text-muted-foreground">Correct, Enhance, Expand arbetar på texten.</p>
+              <p><strong>Draft, Outline, Intro, Conclusion</strong> use the title.</p>
+              <p className="mt-1 text-muted-foreground">Correct, Enhance, Expand work on the text.</p>
             </TooltipContent>
           </Tooltip>
 

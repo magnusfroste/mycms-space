@@ -91,7 +91,7 @@ const FeatureListEditor: React.FC<FeatureListEditorProps> = ({
           className="w-full"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Lägg till {label.toLowerCase().replace('s', '')}
+          Add {label.toLowerCase()}
         </Button>
       )}
     </div>

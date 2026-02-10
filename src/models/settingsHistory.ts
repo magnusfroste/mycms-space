@@ -82,10 +82,10 @@ export const useRestoreHistoryEntry = () => {
         queryClient.invalidateQueries({ queryKey });
       }
 
-      toast.success('Återställt');
+      toast.success('Restored');
     },
     onError: (error: Error) => {
-      toast.error('Kunde inte återställa: ' + error.message);
+      toast.error('Could not restore: ' + error.message);
     },
   });
 };

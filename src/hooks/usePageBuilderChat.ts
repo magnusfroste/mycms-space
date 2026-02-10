@@ -78,15 +78,15 @@ export const usePageBuilderChat = ({ currentBlocks, onBlockAction }: UsePageBuil
 
       if (!resp.ok) {
         if (resp.status === 429) {
-          throw new Error('För många förfrågningar. Vänta en stund och försök igen.');
+          throw new Error('Too many requests. Please wait a moment and try again.');
         }
         if (resp.status === 402) {
-          throw new Error('AI-krediter slut. Ladda på i inställningarna.');
+          throw new Error('AI credits exhausted. Top up in settings.');
         }
-        throw new Error('Kunde inte ansluta till AI');
+        throw new Error('Could not connect to AI');
       }
 
-      if (!resp.body) throw new Error('Ingen svarsdata');
+      if (!resp.body) throw new Error('No response data');
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
