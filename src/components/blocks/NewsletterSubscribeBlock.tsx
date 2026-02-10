@@ -32,11 +32,11 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
         name: config.showNameField ? name.trim() : undefined,
       });
       setIsSubmitted(true);
-      toast.success(config.successMessage || 'Tack för din prenumeration!');
+      toast.success(config.successMessage || 'Thank you for subscribing!');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Kunde inte prenumerera';
+      const message = error instanceof Error ? error.message : 'Could not subscribe';
       if (message.includes('duplicate')) {
-        toast.error('E-postadressen är redan registrerad');
+        toast.error('This email is already registered');
       } else {
         toast.error(message);
       }
@@ -53,8 +53,8 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-6">
             <Check className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-2xl font-bold mb-2">{config.successMessage || 'Tack!'}</h3>
-          <p className="text-muted-foreground">Du får snart ett bekräftelsemail.</p>
+          <h3 className="text-2xl font-bold mb-2">{config.successMessage || 'Thanks!'}</h3>
+          <p className="text-muted-foreground">You will receive a confirmation email shortly.</p>
         </div>
       </section>
     );

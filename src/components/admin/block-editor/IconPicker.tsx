@@ -98,7 +98,7 @@ const IconPicker: React.FC<IconPickerProps> = React.memo(({ value, onChange, dis
           variant="outline"
           className="w-14 h-10 p-0 justify-center"
           disabled={disabled}
-          title={value || 'Välj ikon'}
+          title={value || 'Pick icon'}
           type="button"
         >
           {currentIcon || <span className="text-xs text-muted-foreground">?</span>}
@@ -106,11 +106,11 @@ const IconPicker: React.FC<IconPickerProps> = React.memo(({ value, onChange, dis
       </DialogTrigger>
       <DialogContent className="max-w-sm p-0">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle className="text-base">Välj ikon</DialogTitle>
+          <DialogTitle className="text-base">Pick icon</DialogTitle>
         </DialogHeader>
         <div className="p-4 pt-2 space-y-3">
           <Input
-            placeholder="Sök ikon..."
+            placeholder="Search icon..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9"

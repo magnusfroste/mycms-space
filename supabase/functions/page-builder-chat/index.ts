@@ -160,7 +160,7 @@ When creating projects, use this format:
 }
 \`\`\`
 
-NEVER ask "Ska vi gå vidare?" or "Vill du att jag skapar nästa block?". Just CREATE all blocks immediately.`;
+NEVER ask "Shall we continue?" or "Do you want me to create the next block?". Just CREATE all blocks immediately.`;
 
 // Tool definitions for function calling
 const TOOLS = [
@@ -415,7 +415,7 @@ serve(async (req) => {
     }
     
     // Final response - stream the last message
-    const finalContent = assistantMessage?.content || "Jag kunde inte slutföra uppgiften.";
+    const finalContent = assistantMessage?.content || "I could not complete the task.";
     
     // Convert to SSE format for consistent frontend handling
     const encoder = new TextEncoder();

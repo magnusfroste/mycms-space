@@ -218,7 +218,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               {agentTagline}
             </p>
 
-            {/* Chat Input - använder samma komponent som /chat */}
+            {/* Chat Input - uses the same component as /chat */}
             <div 
               className="animate-fade-in"
               style={{ animationDelay: '0.3s' }}
