@@ -56,29 +56,7 @@ interface InlineBlockEditorProps {
   onDone: () => void;
 }
 
-const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero',
-  'chat-hero': 'Chat Hero ✨',
-  'about-split': 'About Me',
-  'text-section': 'Text Section',
-  'cta-banner': 'CTA Banner',
-  'image-text': 'Image & Text',
-  'spacer': 'Spacer',
-  'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Services Grid',
-  'skills-bar': 'Skills Bar ✨',
-  'values': 'Values ✨',
-  'project-showcase': 'Project Showcase',
-  'chat-widget': 'Chat Widget',
-  'video-hero': 'Video Hero ✨',
-  'parallax-section': 'Parallax ✨',
-  'bento-grid': 'Bento Grid ✨',
-  'marquee': 'Marquee ✨',
-  'stats-counter': 'Stats Counter ✨',
-  'testimonial-carousel': 'Testimonials ✨',
-  'contact-form': 'Contact Form',
-  'github': 'GitHub Repos ✨',
-};
+import { blockTypeLabels } from '@/lib/constants/blockTypeLabels';
 
 const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
   block,

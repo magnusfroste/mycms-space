@@ -85,25 +85,7 @@ import PageBuilderChat from './PageBuilderChat';
 import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
 import ContactFormBlock from '@/components/blocks/ContactFormBlock';
 
-const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero',
-  'about-split': 'About Me',
-  'text-section': 'Text Section',
-  'cta-banner': 'CTA Banner',
-  'image-text': 'Image & Text',
-  'spacer': 'Spacer',
-  'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertise Grid',
-  'project-showcase': 'Project Showcase',
-  'chat-widget': 'Chat Widget',
-  'video-hero': 'Video Hero ✨',
-  'parallax-section': 'Parallax ✨',
-  'bento-grid': 'Bento Grid ✨',
-  'marquee': 'Marquee ✨',
-  'stats-counter': 'Stats Counter ✨',
-  'testimonial-carousel': 'Testimonials ✨',
-  'blog': 'Blog Posts',
-};
+import { blockTypeLabels } from '@/lib/constants/blockTypeLabels';
 
 interface VisualBlockItemProps {
   block: PageBlock;

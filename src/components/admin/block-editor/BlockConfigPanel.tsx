@@ -37,19 +37,7 @@ interface BlockConfigPanelProps {
   onClose: () => void;
 }
 
-const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero Block',
-  'about-split': 'About Me Block',
-  'text-section': 'Text Section',
-  'cta-banner': 'CTA Banner',
-  'image-text': 'Image & Text',
-  'spacer': 'Spacer',
-  'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertise Grid',
-  'project-showcase': 'Project Showcase',
-  'chat-widget': 'Chat Widget',
-  'contact-form': 'Contact Form',
-};
+import { blockTypeLabels } from '@/lib/constants/blockTypeLabels';
 
 const BlockConfigPanel: React.FC<BlockConfigPanelProps> = ({
   block,
