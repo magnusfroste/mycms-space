@@ -79,31 +79,7 @@ import NewsletterSubscribeBlock from '@/components/blocks/NewsletterSubscribeBlo
 import { InlineBlockEditor } from './block-editor';
 import BlockLibraryPanel from './block-editor/BlockLibraryPanel';
 
-export const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero',
-  'chat-hero': 'Chat Hero ✨',
-  'about-split': 'About Me',
-  'text-section': 'Text Section',
-  'cta-banner': 'CTA Banner',
-  'image-text': 'Image & Text',
-  'spacer': 'Spacer',
-  'featured-carousel': 'Featured',
-  'expertise-grid': 'Expertise',
-  'project-showcase': 'Projects',
-  'chat-widget': 'Chat',
-  'video-hero': 'Video Hero ✨',
-  'parallax-section': 'Parallax ✨',
-  'bento-grid': 'Bento Grid ✨',
-  'marquee': 'Marquee ✨',
-  'stats-counter': 'Stats ✨',
-  'testimonial-carousel': 'Testimonials ✨',
-  'contact-form': 'Contact Form',
-  'blog': 'Blog Posts',
-  'newsletter-subscribe': 'Newsletter',
-  'github': 'GitHub Repos',
-  'skills-bar': 'Skills Bar',
-  'values': 'Values',
-};
+import { blockTypeLabels } from '@/lib/constants/blockTypeLabels';
 
 interface VisualBlockItemProps {
   block: PageBlock;

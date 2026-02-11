@@ -19,18 +19,7 @@ interface EditableBlockWrapperProps {
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-const blockTypeLabels: Record<string, string> = {
-  'hero': 'Hero',
-  'about-split': 'About Me',
-  'text-section': 'Text Section',
-  'cta-banner': 'CTA Banner',
-  'image-text': 'Image & Text',
-  'spacer': 'Spacer',
-  'featured-carousel': 'Featured Carousel',
-  'expertise-grid': 'Expertise Grid',
-  'project-showcase': 'Project Showcase',
-  'chat-widget': 'Chat Widget',
-};
+import { blockTypeLabels } from '@/lib/constants/blockTypeLabels';
 
 const EditableBlockWrapper: React.FC<EditableBlockWrapperProps> = ({
   block,
