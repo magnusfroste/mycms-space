@@ -11,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-type EnhanceAction = 'correct' | 'enhance' | 'expand' | 'generate-outline' | 'generate-intro' | 'generate-conclusion' | 'generate-draft';
+type EnhanceAction = 'correct' | 'enhance' | 'expand' | 'summarize' | 'simplify' | 'tone-professional' | 'tone-casual' | 'tone-technical' | 'generate-outline' | 'generate-intro' | 'generate-conclusion' | 'generate-draft';
 
 interface EnhanceRequest {
   text: string;
@@ -20,7 +20,7 @@ interface EnhanceRequest {
   title?: string;
 }
 
-const validActions: EnhanceAction[] = ['correct', 'enhance', 'expand', 'generate-outline', 'generate-intro', 'generate-conclusion', 'generate-draft'];
+const validActions: EnhanceAction[] = ['correct', 'enhance', 'expand', 'summarize', 'simplify', 'tone-professional', 'tone-casual', 'tone-technical', 'generate-outline', 'generate-intro', 'generate-conclusion', 'generate-draft'];
 
 const getSystemPrompt = (action: EnhanceAction, context?: string, title?: string): string => {
   const contextInfo = context ? `\n\nContext: This is ${context}.` : '';
@@ -35,6 +35,21 @@ const getSystemPrompt = (action: EnhanceAction, context?: string, title?: string
     
     case 'expand':
       return `You are a professional copywriter. Your task is to expand the provided text with more details, examples, or elaboration. Make it roughly 2-3 times longer while maintaining the same professional tone. Return ONLY the expanded text without any explanations or additional commentary.${contextInfo}`;
+    
+    case 'summarize':
+      return `You are a professional editor. Your task is to condense the provided text to roughly half its length or less while preserving all key points and meaning. Remove redundancy, tighten sentences, and keep only what's essential. Return ONLY the summarized text without any explanations.${contextInfo}`;
+    
+    case 'simplify':
+      return `You are a plain-language expert. Your task is to rewrite the provided text using simple, accessible language. Remove jargon, shorten sentences, and make it easy for a general audience to understand. Keep the same meaning and approximately the same length. Return ONLY the simplified text without any explanations.${contextInfo}`;
+    
+    case 'tone-professional':
+      return `You are a professional copywriter. Rewrite the provided text in a formal, business-appropriate tone. Use confident, authoritative language suitable for corporate communication. Keep the same meaning and approximately the same length. Return ONLY the rewritten text without any explanations.${contextInfo}`;
+    
+    case 'tone-casual':
+      return `You are a friendly writer. Rewrite the provided text in a warm, conversational tone. Use approachable language as if talking to a friend while keeping it informative. Keep the same meaning and approximately the same length. Return ONLY the rewritten text without any explanations.${contextInfo}`;
+    
+    case 'tone-technical':
+      return `You are a technical writer. Rewrite the provided text in a precise, technical tone. Use accurate terminology, specific details, and a structured approach suitable for a developer or engineering audience. Keep the same meaning and approximately the same length. Return ONLY the rewritten text without any explanations.${contextInfo}`;
     
     case 'generate-outline':
       return `You are a professional blog writer. Generate a well-structured outline for a blog post in Markdown format. Include:
@@ -124,8 +139,9 @@ serve(async (req) => {
 
     console.log(`Processing ${action} request${title ? ` for title: "${title}"` : ''}`);
 
+    const isSummarize = action === 'summarize';
     const userMessage = isGenerateAction 
-      ? (text || title || 'Generate content for a blog post')
+      ? (text || title || 'Generate content')
       : text;
 
     const messages: AIMessage[] = [
@@ -133,11 +149,10 @@ serve(async (req) => {
       { role: "user", content: userMessage },
     ];
 
-    // Use admin AI provider (separate from chat)
     const result = await getAdminAICompletion({
       messages,
       temperature: action === 'correct' ? 0.1 : 0.7,
-      max_tokens: isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : 1000),
+      max_tokens: isGenerateAction ? (action === 'generate-draft' ? 4000 : 2000) : (action === 'expand' ? 2000 : (isSummarize ? 500 : 1000)),
     });
 
     // Handle provider configuration errors
