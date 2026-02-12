@@ -173,7 +173,7 @@ const GitHubBlockEditor: React.FC<GitHubBlockEditorProps> = ({ config, onChange 
           value={[config.maxRepos || 6]}
           onValueChange={([value]) => updateConfig({ maxRepos: value })}
           min={3}
-          max={12}
+          max={24}
           step={1}
           className="w-full"
         />
