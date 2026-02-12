@@ -77,13 +77,17 @@ interface SortableRepoItemProps {
   onEdit: () => void;
   onToggle: (enabled: boolean) => void;
   onDelete: () => void;
+  onPushToGitHub: () => void;
+  isPushing: boolean;
 }
 
 const SortableRepoItem: React.FC<SortableRepoItemProps> = ({ 
   repo, 
   onEdit, 
   onToggle, 
-  onDelete 
+  onDelete,
+  onPushToGitHub,
+  isPushing,
 }) => {
   const {
     attributes,
@@ -163,6 +167,15 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = ({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onPushToGitHub}
+            disabled={isPushing || !repo.enriched_description}
+            title="Push description, homepage & topics to GitHub"
+          >
+            <Upload className={`h-4 w-4 ${isPushing ? 'animate-spin' : ''}`} />
+          </Button>
           <Button variant="ghost" size="icon" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
           </Button>
@@ -755,6 +768,12 @@ const GitHubReposManager: React.FC = () => {
                     onEdit={() => setEditingId(repo.id)}
                     onToggle={(enabled) => handleToggle(repo.id, enabled)}
                     onDelete={() => handleDelete(repo)}
+                    onPushToGitHub={() => handleSyncToGitHub(repo.id, repo.full_name, {
+                      description: repo.enriched_description || repo.description || '',
+                      homepage: repo.homepage || undefined,
+                      topics: repo.topics?.length ? repo.topics : undefined,
+                    })}
+                    isPushing={syncingFor === repo.id}
                   />
                 )
               )}
