@@ -1,52 +1,87 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
-import AIModuleSettings from '@/components/admin/AIModuleSettings';
-import ProjectsModuleSettings from '@/components/admin/ProjectsModuleSettings';
-import BlogModuleSettings from '@/components/admin/BlogModuleSettings';
-import SEOModuleSettings from '@/components/admin/SEOModuleSettings';
-import BrandingSettings from '@/components/admin/BrandingSettings';
-import BlogManager from '@/components/admin/BlogManager';
-import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
-import IntegrationsManager from '@/components/admin/IntegrationsManager';
-import WebhooksManager from '@/components/admin/WebhooksManager';
-import GitHubReposManager from '@/components/admin/GitHubReposManager';
-import MediaHub from '@/components/admin/MediaHub';
-import { NavSettings } from '@/components/admin/NavSettings';
-import LandingPageManager from '@/components/admin/LandingPageManager';
-import ClassicPageBuilder from '@/components/admin/ClassicPageBuilder';
-import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
-import NewsletterManager from '@/components/admin/NewsletterManager';
-import MessagesManager from '@/components/admin/MessagesManager';
-import { SettingsHistory } from '@/components/admin/SettingsHistory';
-import ChatHistoryManager from '@/components/admin/ChatHistoryManager';
-import ProfileSettings from '@/components/admin/ProfileSettings';
-import GeneralSettings from '@/components/admin/GeneralSettings';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { usePages } from '@/models/pages';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy-loaded admin tabs
+const AnalyticsDashboard = lazy(() => import('@/components/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
+const ClassicPageBuilder = lazy(() => import('@/components/admin/ClassicPageBuilder'));
+const BlogManager = lazy(() => import('@/components/admin/BlogManager'));
+const NavSettings = lazy(() => import('@/components/admin/NavSettings').then(m => ({ default: m.NavSettings })));
+const MessagesManager = lazy(() => import('@/components/admin/MessagesManager'));
+const GlobalBlocksSettings = lazy(() => import('@/components/admin/GlobalBlocksSettings'));
+const BrandingSettings = lazy(() => import('@/components/admin/BrandingSettings'));
+const IntegrationsManager = lazy(() => import('@/components/admin/IntegrationsManager'));
+const WebhooksManager = lazy(() => import('@/components/admin/WebhooksManager'));
+const AIModuleSettings = lazy(() => import('@/components/admin/AIModuleSettings'));
+const ProjectsModuleSettings = lazy(() => import('@/components/admin/ProjectsModuleSettings'));
+const BlogModuleSettings = lazy(() => import('@/components/admin/BlogModuleSettings'));
+const SEOModuleSettings = lazy(() => import('@/components/admin/SEOModuleSettings'));
+const GitHubReposManager = lazy(() => import('@/components/admin/GitHubReposManager'));
+const MediaHub = lazy(() => import('@/components/admin/MediaHub'));
+const NewsletterManager = lazy(() => import('@/components/admin/NewsletterManager'));
+const SettingsHistory = lazy(() => import('@/components/admin/SettingsHistory').then(m => ({ default: m.SettingsHistory })));
+const ChatHistoryManager = lazy(() => import('@/components/admin/ChatHistoryManager'));
+const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'));
+const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
+const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
+
+// Route map: tab key → lazy component
+const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
+  dashboard: AnalyticsDashboard,
+  pages: ClassicPageBuilder,
+  blog: BlogManager,
+  navigation: NavSettings,
+  messages: MessagesManager,
+  'global-blocks': GlobalBlocksSettings,
+  branding: BrandingSettings,
+  integrations: IntegrationsManager,
+  webhooks: WebhooksManager,
+  'ai-module': AIModuleSettings,
+  'projects-module': ProjectsModuleSettings,
+  'blog-module': BlogModuleSettings,
+  'seo-module': SEOModuleSettings,
+  'github-repos': GitHubReposManager,
+  'media-hub': MediaHub,
+  newsletter: NewsletterManager,
+  history: SettingsHistory,
+  'chat-history': ChatHistoryManager,
+  profile: ProfileSettings,
+  settings: GeneralSettings,
+};
+
+const AdminLoadingFallback = () => (
+  <div className="space-y-4 p-4">
+    <Skeleton className="h-8 w-48" />
+    <Skeleton className="h-4 w-full max-w-md" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <Skeleton className="h-32" />
+      <Skeleton className="h-32" />
+    </div>
+  </div>
+);
 
 const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, signOut } = useAuth();
   const { data: pages = [] } = usePages();
-  
-  // Read active tab from URL, default to dashboard
+
   const tabFromUrl = searchParams.get('tab') || 'dashboard';
   const [activeTab, setActiveTab] = useState(tabFromUrl);
-  
-  // Sync activeTab when URL changes (e.g., on refresh or back/forward)
+
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
-  
-  // Update URL when tab changes
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     const pageParam = searchParams.get('page');
@@ -55,10 +90,9 @@ const Admin = () => {
     if (pageParam) newParams.set('page', pageParam);
     setSearchParams(newParams);
   };
-  
-  // Get selected page from URL or default to first page
+
   const selectedPageSlug = searchParams.get('page') || 'home';
-  
+
   const handlePageSelect = (slug: string) => {
     setSearchParams({ page: slug });
   };
@@ -71,7 +105,6 @@ const Admin = () => {
       navigate('/');
     }
   };
-
 
   if (loading) {
     return (
@@ -86,13 +119,13 @@ const Admin = () => {
   }
 
   const renderContent = () => {
-    // Sidbyggaren gets immersive full-width layout
+    // Landing page gets special layout with page selector
     if (activeTab === 'landing') {
       return (
         <div className="h-[calc(100vh-2rem)]">
           {pages.length > 1 && (
             <div className="flex items-center gap-2 mb-4 px-2">
-              <span className="text-sm text-muted-foreground">Redigerar:</span>
+              <span className="text-sm text-muted-foreground">Editing:</span>
               <select
                 value={selectedPageSlug}
                 onChange={(e) => handlePageSelect(e.target.value)}
@@ -100,74 +133,41 @@ const Admin = () => {
               >
                 {pages.map((page) => (
                   <option key={page.id} value={page.slug}>
-                    {page.title} {page.is_main_landing ? '(Startsida)' : ''}
+                    {page.title} {page.is_main_landing ? '(Home)' : ''}
                   </option>
                 ))}
               </select>
             </div>
           )}
-          <LandingPageManager pageSlug={selectedPageSlug} />
+          <Suspense fallback={<AdminLoadingFallback />}>
+            <LandingPageManager pageSlug={selectedPageSlug} />
+          </Suspense>
         </div>
       );
     }
 
-    switch (activeTab) {
-      case 'dashboard':
-        return <AnalyticsDashboard />;
-      case 'pages':
-        return <ClassicPageBuilder />;
-      case 'blog':
-        return <BlogManager />;
-      case 'navigation':
-        return <NavSettings />;
-      case 'messages':
-        return <MessagesManager />;
-      case 'global-blocks':
-        return <GlobalBlocksSettings />;
-      case 'branding':
-        return <BrandingSettings />;
-      case 'integrations':
-        return <IntegrationsManager />;
-      case 'webhooks':
-        return <WebhooksManager />;
-      case 'ai-module':
-        return <AIModuleSettings />;
-      case 'projects-module':
-        return <ProjectsModuleSettings />;
-      case 'blog-module':
-        return <BlogModuleSettings />;
-      case 'seo-module':
-        return <SEOModuleSettings />;
-      case 'github-repos':
-        return <GitHubReposManager />;
-      case 'media-hub':
-        return <MediaHub />;
-      case 'newsletter':
-        return <NewsletterManager />;
-      case 'history':
-        return <SettingsHistory />;
-      case 'chat-history':
-        return <ChatHistoryManager />;
-      case 'profile':
-        return <ProfileSettings />;
-      case 'settings':
-        return <GeneralSettings />;
-      default:
-        return <AnalyticsDashboard />;
-    }
+    // Standard tabs via route map
+    const TabComponent = TAB_COMPONENTS[activeTab] || AnalyticsDashboard;
+    return (
+      <Suspense fallback={<AdminLoadingFallback />}>
+        <TabComponent />
+      </Suspense>
+    );
   };
+
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages';
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar 
-          activeTab={activeTab} 
+        <AdminSidebar
+          activeTab={activeTab}
           onTabChange={handleTabChange}
           onLogout={handleLogout}
         />
         <SidebarInset>
-          <div className={activeTab === 'landing' || activeTab === 'pages' ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
-            <div className={activeTab === 'landing' || activeTab === 'pages' ? '' : 'max-w-6xl mx-auto'}>
+          <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+            <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
               {renderContent()}
             </div>
           </div>
