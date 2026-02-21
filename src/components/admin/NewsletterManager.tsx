@@ -78,17 +78,17 @@ export default function NewsletterManager() {
 
   const handleCreateCampaign = async () => {
     if (!formData.subject.trim() || !formData.content.trim()) {
-      toast.error('Ämne och innehåll krävs');
+      toast.error('Subject and content are required');
       return;
     }
 
     try {
       await createCampaign.mutateAsync(formData);
-      toast.success('Kampanj skapad');
+      toast.success('Campaign created');
       setFormData({ subject: '', content: '' });
       setIsCreating(false);
     } catch {
-      toast.error('Kunde inte skapa kampanj');
+      toast.error('Could not create campaign');
     }
   };
 
@@ -103,26 +103,25 @@ export default function NewsletterManager() {
           content: formData.content,
         },
       });
-      toast.success('Kampanj uppdaterad');
+      toast.success('Campaign updated');
       setEditingCampaign(null);
       setFormData({ subject: '', content: '' });
     } catch {
-      toast.error('Kunde inte uppdatera kampanj');
+      toast.error('Could not update campaign');
     }
   };
 
   const handleSendCampaign = async (campaign: NewsletterCampaign) => {
     try {
-      // Get from email from localStorage (set in Integrations)
       const fromEmail = localStorage.getItem('resend_from_email') || 'newsletter@froste.eu';
       const result = await sendNewsletter.mutateAsync({ campaignId: campaign.id, fromEmail });
       if (result.success) {
-        toast.success(`Nyhetsbrev skickat till ${result.sent} av ${result.total} prenumeranter`);
+        toast.success(`Newsletter sent to ${result.sent} of ${result.total} subscribers`);
       } else {
-        toast.error(result.error || 'Kunde inte skicka nyhetsbrev');
+        toast.error(result.error || 'Could not send newsletter');
       }
     } catch {
-      toast.error('Kunde inte skicka nyhetsbrev');
+      toast.error('Could not send newsletter');
     }
   };
 
@@ -132,13 +131,13 @@ export default function NewsletterManager() {
     try {
       if (deleteTarget.type === 'campaign') {
         await deleteCampaign.mutateAsync(deleteTarget.id);
-        toast.success('Kampanj raderad');
+        toast.success('Campaign deleted');
       } else {
         await deleteSubscriber.mutateAsync(deleteTarget.id);
-        toast.success('Prenumerant raderad');
+        toast.success('Subscriber deleted');
       }
     } catch {
-      toast.error('Kunde inte radera');
+      toast.error('Could not delete');
     } finally {
       setDeleteTarget(null);
     }
@@ -168,13 +167,13 @@ export default function NewsletterManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Nyhetsbrev</h2>
-          <p className="text-muted-foreground">Hantera prenumeranter och skicka nyhetsbrev</p>
+          <h2 className="text-2xl font-bold">Newsletter</h2>
+          <p className="text-muted-foreground">Manage subscribers and send newsletters</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="gap-2">
             <Users className="h-4 w-4" />
-            {activeSubscribers} aktiva prenumeranter
+            {activeSubscribers} active subscribers
           </Badge>
         </div>
       </div>
@@ -183,11 +182,11 @@ export default function NewsletterManager() {
         <TabsList>
           <TabsTrigger value="campaigns" className="gap-2">
             <FileText className="h-4 w-4" />
-            Kampanjer
+            Campaigns
           </TabsTrigger>
           <TabsTrigger value="subscribers" className="gap-2">
             <Users className="h-4 w-4" />
-            Prenumeranter
+            Subscribers
           </TabsTrigger>
         </TabsList>
 
@@ -195,32 +194,32 @@ export default function NewsletterManager() {
           {(isCreating || editingCampaign) && (
             <Card>
               <CardHeader>
-                <CardTitle>{editingCampaign ? 'Redigera kampanj' : 'Ny kampanj'}</CardTitle>
+                <CardTitle>{editingCampaign ? 'Edit campaign' : 'New campaign'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="campaign-subject">Ämne</Label>
+                  <Label htmlFor="campaign-subject">Subject</Label>
                   <Input
                     id="campaign-subject"
-                    placeholder="Nyhetsbrevets ämne..."
+                    placeholder="Newsletter subject..."
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Innehåll</Label>
+                  <Label>Content</Label>
                   <RichTextEditor
                     value={formData.content}
                     onChange={(content) => setFormData({ ...formData, content })}
                     title={formData.subject}
-                    placeholder="Skriv ditt nyhetsbrev i Markdown..."
+                    placeholder="Write your newsletter in Markdown..."
                     minHeight="min-h-[300px]"
                     showAI={true}
                     aiMode="content"
                     aiContext="newsletter email content"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Använd Markdown för formatering. HTML stöds också.
+                    Use Markdown for formatting. HTML is also supported.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -231,10 +230,10 @@ export default function NewsletterManager() {
                     {(createCampaign.isPending || updateCampaign.isPending) && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {editingCampaign ? 'Spara' : 'Skapa'}
+                    {editingCampaign ? 'Save' : 'Create'}
                   </Button>
                   <Button variant="outline" onClick={cancelEdit}>
-                    Avbryt
+                    Cancel
                   </Button>
                 </div>
               </CardContent>
@@ -244,14 +243,14 @@ export default function NewsletterManager() {
           {!isCreating && !editingCampaign && (
             <Button onClick={startCreate} className="gap-2">
               <Plus className="h-4 w-4" />
-              Ny kampanj
+              New campaign
             </Button>
           )}
 
           <Card>
             <CardHeader>
-              <CardTitle>Kampanjer</CardTitle>
-              <CardDescription>Dina nyhetsbrevskampanjer</CardDescription>
+              <CardTitle>Campaigns</CardTitle>
+              <CardDescription>Your newsletter campaigns</CardDescription>
             </CardHeader>
             <CardContent>
               {loadingCampaigns ? (
@@ -262,17 +261,17 @@ export default function NewsletterManager() {
                 </div>
               ) : !campaigns?.length ? (
                 <p className="text-muted-foreground text-center py-8">
-                  Inga kampanjer ännu
+                  No campaigns yet
                 </p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Ämne</TableHead>
+                      <TableHead>Subject</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Mottagare</TableHead>
-                      <TableHead>Skickad</TableHead>
-                      <TableHead className="text-right">Åtgärder</TableHead>
+                      <TableHead>Recipients</TableHead>
+                      <TableHead>Sent</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -299,7 +298,7 @@ export default function NewsletterManager() {
                                   variant="outline"
                                   onClick={() => startEdit(campaign)}
                                 >
-                                  Redigera
+                                  Edit
                                 </Button>
                                 <Button
                                   size="sm"
@@ -312,7 +311,7 @@ export default function NewsletterManager() {
                                   ) : (
                                     <Send className="h-4 w-4" />
                                   )}
-                                  Skicka
+                                  Send
                                 </Button>
                               </>
                             )}
@@ -339,8 +338,8 @@ export default function NewsletterManager() {
         <TabsContent value="subscribers">
           <Card>
             <CardHeader>
-              <CardTitle>Prenumeranter</CardTitle>
-              <CardDescription>Alla som prenumererar på ditt nyhetsbrev</CardDescription>
+              <CardTitle>Subscribers</CardTitle>
+              <CardDescription>Everyone subscribed to your newsletter</CardDescription>
             </CardHeader>
             <CardContent>
               {loadingSubscribers ? (
@@ -352,20 +351,20 @@ export default function NewsletterManager() {
               ) : !subscribers?.length ? (
                 <div className="text-center py-8">
                   <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Inga prenumeranter ännu</p>
+                  <p className="text-muted-foreground">No subscribers yet</p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Lägg till ett prenumerationsblock på din sida
+                    Add a subscription block to your page
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>E-post</TableHead>
-                      <TableHead>Namn</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Name</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Prenumererade</TableHead>
-                      <TableHead className="text-right">Åtgärder</TableHead>
+                      <TableHead>Subscribed</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -405,16 +404,16 @@ export default function NewsletterManager() {
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Är du säker?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.type === 'campaign'
-                ? 'Kampanjen raderas permanent.'
-                : 'Prenumeranten raderas permanent.'}
+                ? 'The campaign will be permanently deleted.'
+                : 'The subscriber will be permanently deleted.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Radera</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

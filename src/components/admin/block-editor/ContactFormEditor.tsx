@@ -29,31 +29,31 @@ const ContactFormEditor: React.FC<ContactFormEditorProps> = ({ config, onChange 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="title">Rubrik</Label>
+        <Label htmlFor="title">Title</Label>
         <Input
           id="title"
           value={config.title || ''}
           onChange={(e) => updateConfig({ title: e.target.value })}
-          placeholder="Kontakta mig"
+          placeholder="Contact me"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="subtitle">Underrubrik</Label>
+        <Label htmlFor="subtitle">Subtitle</Label>
         <Textarea
           id="subtitle"
           value={config.subtitle || ''}
           onChange={(e) => updateConfig({ subtitle: e.target.value })}
-          placeholder="Beskriv vad kontaktformuläret är till för..."
+          placeholder="Describe what the contact form is for..."
           rows={2}
         />
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <Label htmlFor="showSubject">Visa ämnesfält</Label>
+          <Label htmlFor="showSubject">Show subject field</Label>
           <p className="text-sm text-muted-foreground">
-            Låt besökare ange ett ämne för sitt meddelande
+            Let visitors specify a subject for their message
           </p>
         </div>
         <Switch
@@ -64,22 +64,22 @@ const ContactFormEditor: React.FC<ContactFormEditorProps> = ({ config, onChange 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="buttonText">Knapptext</Label>
+        <Label htmlFor="buttonText">Button text</Label>
         <Input
           id="buttonText"
           value={config.buttonText || ''}
           onChange={(e) => updateConfig({ buttonText: e.target.value })}
-          placeholder="Skicka meddelande"
+          placeholder="Send message"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="successMessage">Bekräftelsemeddelande</Label>
+        <Label htmlFor="successMessage">Confirmation message</Label>
         <Textarea
           id="successMessage"
           value={config.successMessage || ''}
           onChange={(e) => updateConfig({ successMessage: e.target.value })}
-          placeholder="Tack för ditt meddelande!"
+          placeholder="Thank you for your message!"
           rows={2}
         />
       </div>

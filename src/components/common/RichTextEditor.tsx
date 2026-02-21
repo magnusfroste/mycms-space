@@ -42,16 +42,16 @@ interface FormatAction {
 }
 
 const formatActions: FormatAction[] = [
-  { icon: <Bold className="h-4 w-4" />, label: 'Fet', prefix: '**', suffix: '**' },
-  { icon: <Italic className="h-4 w-4" />, label: 'Kursiv', prefix: '_', suffix: '_' },
-  { icon: <Heading1 className="h-4 w-4" />, label: 'Rubrik 1', prefix: '# ', block: true },
-  { icon: <Heading2 className="h-4 w-4" />, label: 'Rubrik 2', prefix: '## ', block: true },
-  { icon: <Quote className="h-4 w-4" />, label: 'Citat', prefix: '> ', block: true },
-  { icon: <List className="h-4 w-4" />, label: 'Lista', prefix: '- ', block: true },
-  { icon: <ListOrdered className="h-4 w-4" />, label: 'Numrerad lista', prefix: '1. ', block: true },
-  { icon: <Code className="h-4 w-4" />, label: 'Kod', prefix: '`', suffix: '`' },
-  { icon: <Link className="h-4 w-4" />, label: 'Länk', prefix: '[', suffix: '](url)' },
-  { icon: <Minus className="h-4 w-4" />, label: 'Avdelare', prefix: '\n---\n', block: true },
+  { icon: <Bold className="h-4 w-4" />, label: 'Bold', prefix: '**', suffix: '**' },
+  { icon: <Italic className="h-4 w-4" />, label: 'Italic', prefix: '_', suffix: '_' },
+  { icon: <Heading1 className="h-4 w-4" />, label: 'Heading 1', prefix: '# ', block: true },
+  { icon: <Heading2 className="h-4 w-4" />, label: 'Heading 2', prefix: '## ', block: true },
+  { icon: <Quote className="h-4 w-4" />, label: 'Quote', prefix: '> ', block: true },
+  { icon: <List className="h-4 w-4" />, label: 'List', prefix: '- ', block: true },
+  { icon: <ListOrdered className="h-4 w-4" />, label: 'Ordered list', prefix: '1. ', block: true },
+  { icon: <Code className="h-4 w-4" />, label: 'Code', prefix: '`', suffix: '`' },
+  { icon: <Link className="h-4 w-4" />, label: 'Link', prefix: '[', suffix: '](url)' },
+  { icon: <Minus className="h-4 w-4" />, label: 'Divider', prefix: '\n---\n', block: true },
 ];
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -162,13 +162,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             {showPreview ? (
               <>
                 <Edit3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Redigera</span>
+                <span className="hidden sm:inline">Edit</span>
               </>
             ) : (
               <>
                 <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline">Förhandsgranska</span>
+                <span className="hidden sm:inline">Preview</span>
               </>
+
             )}
           </Button>
         </TooltipProvider>
@@ -185,7 +186,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           {value ? (
             <MarkdownContent content={value} />
           ) : (
-            <p className="text-muted-foreground italic">Inget innehåll ännu</p>
+            <p className="text-muted-foreground italic">No content yet</p>
           )}
         </div>
       ) : (

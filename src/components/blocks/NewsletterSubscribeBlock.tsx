@@ -101,7 +101,7 @@ export default function NewsletterSubscribeBlock({ config }: Props) {
               ) : (
                 <Mail className="h-4 w-4" />
               )}
-              {config.buttonText || 'Prenumerera'}
+              {config.buttonText || 'Subscribe'}
             </Button>
           </div>
         </form>

@@ -487,13 +487,13 @@ const ResendConfig: React.FC = () => {
 
   const handleSave = () => {
     localStorage.setItem('resend_from_email', fromEmail);
-    toast.success('From-adress sparad');
+    toast.success('From address saved');
   };
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="resend_from_email">From-adress</Label>
+        <Label htmlFor="resend_from_email">From address</Label>
         <div className="flex gap-2">
           <Input
             id="resend_from_email"
