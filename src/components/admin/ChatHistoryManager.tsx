@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,7 +107,9 @@ const ChatHistoryManager: React.FC = () => {
           <CardContent className="p-0">
             <ScrollArea className="h-[400px]">
               {loadingSessions ? (
-                <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                <div className="space-y-2 p-2">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
               ) : sessions.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
                   No chat sessions yet
@@ -158,7 +161,14 @@ const ChatHistoryManager: React.FC = () => {
                   Select a session to view messages
                 </div>
               ) : loadingMessages ? (
-                <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                      <Skeleton className="h-16 flex-1" />
+                    </div>
+                  ))}
+                </div>
               ) : !messages?.length ? (
                 <div className="p-4 text-center text-muted-foreground">
                   No messages in this session
