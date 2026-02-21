@@ -15,11 +15,14 @@ import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useBrandingTheme } from "@/hooks/useBrandingTheme";
+import { useColorMode } from "@/hooks/useColorMode";
 import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 
 // Theme and tracking component
 const AppBootstrap = () => {
   const location = useLocation();
+  // Apply color mode (light/dark)
+  useColorMode();
   
   // Apply branding theme (single source of truth)
   useBrandingTheme();
