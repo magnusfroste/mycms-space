@@ -4,7 +4,7 @@
 // with enrichment (images, problem, why it matters)
 // ============================================
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -81,7 +81,7 @@ interface SortableRepoItemProps {
   isPushing: boolean;
 }
 
-const SortableRepoItem: React.FC<SortableRepoItemProps> = ({ 
+const SortableRepoItem: React.FC<SortableRepoItemProps> = React.memo(({ 
   repo, 
   onEdit, 
   onToggle, 
@@ -200,7 +200,7 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = ({
       </div>
     </Card>
   );
-};
+});
 
 // Edit form for repo enrichment
 interface RepoEditFormProps {
@@ -532,13 +532,15 @@ const GitHubReposManager: React.FC = () => {
   );
 
   // Sort: enabled first, then by order_index
-  const sortedRepos = [...(repos || [])].sort((a, b) => {
-    if (a.enabled !== b.enabled) return b.enabled ? 1 : -1;
-    return a.order_index - b.order_index;
-  });
-  const enabledCount = sortedRepos.filter((r) => r.enabled).length;
+  const sortedRepos = useMemo(() => 
+    [...(repos || [])].sort((a, b) => {
+      if (a.enabled !== b.enabled) return b.enabled ? 1 : -1;
+      return a.order_index - b.order_index;
+    }), [repos]
+  );
+  const enabledCount = useMemo(() => sortedRepos.filter((r) => r.enabled).length, [sortedRepos]);
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     const username = moduleConfig?.username;
     if (!username) {
       toast.error('Configure GitHub username first');
@@ -551,20 +553,19 @@ const GitHubReposManager: React.FC = () => {
     } catch (error) {
       toast.error('Sync failed');
     }
-  };
+  }, [moduleConfig?.username, syncMutation]);
 
-  const handleToggle = (id: string, enabled: boolean) => {
+  const handleToggle = useCallback((id: string, enabled: boolean) => {
     updateMutation.mutate({ id, updates: { enabled } });
-  };
+  }, [updateMutation]);
 
-  const handleDelete = (repo: GitHubRepoWithImages) => {
+  const handleDelete = useCallback((repo: GitHubRepoWithImages) => {
     if (confirm(`Remove "${repo.name}" from local database?`)) {
-      // Note: This just removes from local DB, not GitHub
       toast.success('Delete not implemented yet');
     }
-  };
+  }, []);
 
-  const handleSaveEnrichment = (id: string, updates: {
+  const handleSaveEnrichment = useCallback((id: string, updates: {
     enriched_title: string;
     enriched_description: string;
     problem_statement: string;
@@ -584,7 +585,7 @@ const GitHubReposManager: React.FC = () => {
         },
       }
     );
-  };
+  }, [updateMutation]);
 
   const handleAddImage = async (repoId: string, file: File) => {
     setUploadingFor(repoId);
@@ -638,11 +639,11 @@ const GitHubReposManager: React.FC = () => {
     }
   };
 
-  const handleDeleteImage = (imageId: string) => {
+  const handleDeleteImage = useCallback((imageId: string) => {
     if (confirm('Delete this image?')) {
       deleteImageMutation.mutate(imageId);
     }
-  };
+  }, [deleteImageMutation]);
 
   const handleSyncToGitHub = async (
     repoId: string, 

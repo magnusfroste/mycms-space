@@ -3,7 +3,7 @@
 // Admin interface for managing blog posts and categories
 // ============================================
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,20 +65,20 @@ const BlogManager = () => {
   // React Query already handles cache updates after mutations
 
   // Filter posts based on search
-  const filteredPosts = posts.filter(
+  const filteredPosts = useMemo(() => posts.filter(
     (post) =>
       post.title.toLowerCase().includes(search.toLowerCase()) ||
       post.slug.toLowerCase().includes(search.toLowerCase())
-  );
+  ), [posts, search]);
 
   // Filter categories based on search
-  const filteredCategories = categories.filter(
+  const filteredCategories = useMemo(() => categories.filter(
     (cat) =>
       cat.name.toLowerCase().includes(search.toLowerCase()) ||
       cat.slug.toLowerCase().includes(search.toLowerCase())
-  );
+  ), [categories, search]);
 
-  const handleDeletePost = async () => {
+  const handleDeletePost = useCallback(async () => {
     if (!deletePostId) return;
     try {
       await deletePost.mutateAsync(deletePostId);
@@ -87,9 +87,9 @@ const BlogManager = () => {
     } catch (error) {
       toast.error('Failed to delete post.');
     }
-  };
+  }, [deletePostId, deletePost]);
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteCategory = useCallback(async () => {
     if (!deleteCategoryId) return;
     try {
       await deleteCategory.mutateAsync(deleteCategoryId);
@@ -98,9 +98,9 @@ const BlogManager = () => {
     } catch (error) {
       toast.error('Failed to delete category.');
     }
-  };
+  }, [deleteCategoryId, deleteCategory]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = useCallback((status: string) => {
     switch (status) {
       case 'published':
         return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Published</Badge>;
@@ -109,7 +109,7 @@ const BlogManager = () => {
       default:
         return <Badge variant="secondary">Draft</Badge>;
     }
-  };
+  }, []);
 
   // Show editor if creating or editing
   if (isCreatingPost || editingPostId) {
