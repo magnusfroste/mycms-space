@@ -63,10 +63,10 @@ export const useCreatePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.all });
       queryClient.invalidateQueries({ queryKey: pagesKeys.enabled });
       queryClient.invalidateQueries({ queryKey: pagesKeys.mainLanding });
-      toast.success('Sida skapad');
+      toast.success('Page created');
     },
     onError: (error: Error) => {
-      toast.error('Fel: ' + error.message);
+      toast.error('Error: ' + error.message);
     },
   });
 };
@@ -84,7 +84,7 @@ export const useUpdatePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.bySlug(data.slug) });
     },
     onError: (error: Error) => {
-      toast.error('Fel: ' + error.message);
+      toast.error('Error: ' + error.message);
     },
   });
 };
@@ -99,10 +99,10 @@ export const useDeletePage = () => {
       queryClient.invalidateQueries({ queryKey: pagesKeys.all });
       queryClient.invalidateQueries({ queryKey: pagesKeys.enabled });
       queryClient.invalidateQueries({ queryKey: pagesKeys.mainLanding });
-      toast.success('Sida borttagen');
+      toast.success('Page deleted');
     },
     onError: (error: Error) => {
-      toast.error('Fel: ' + error.message);
+      toast.error('Error: ' + error.message);
     },
   });
 };

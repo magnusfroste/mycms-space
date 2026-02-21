@@ -64,7 +64,7 @@ const SkillListEditor: React.FC<SkillListEditorProps> = ({
             <Input
               value={skill.title}
               onChange={(e) => handleSkillChange(index, 'title', e.target.value)}
-              placeholder="Titel..."
+              placeholder="Title..."
               className="flex-1 h-9"
             />
             <Button
@@ -86,7 +86,7 @@ const SkillListEditor: React.FC<SkillListEditorProps> = ({
           className="w-full"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Lägg till
+          Add
         </Button>
       )}
     </div>

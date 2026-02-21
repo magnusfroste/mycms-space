@@ -67,7 +67,7 @@ const EditableCtaBannerBlock: React.FC<EditableCtaBannerBlockProps> = ({
               value={title}
               isEditMode={isEditMode}
               onChange={(value) => onChange({ ...config, title: value })}
-              placeholder="CTA rubrik..."
+              placeholder="CTA heading..."
             />
           </h2>
           
@@ -81,20 +81,20 @@ const EditableCtaBannerBlock: React.FC<EditableCtaBannerBlockProps> = ({
               value={subtitle}
               isEditMode={isEditMode}
               onChange={(value) => onChange({ ...config, subtitle: value })}
-              placeholder="Underrubrik (valfritt)..."
+              placeholder="Subtitle (optional)..."
             />
           </p>
 
           <div className="flex items-center justify-center gap-2">
             {isEditMode && (
               <div className="flex gap-2 items-center bg-muted/50 px-3 py-1 rounded text-sm">
-                <span className="text-muted-foreground">Knapp:</span>
+                <span className="text-muted-foreground">Button:</span>
                 <input
                   type="text"
                   value={button_text}
                   onChange={(e) => onChange({ ...config, button_text: e.target.value })}
                   className="bg-transparent border-b border-primary outline-none w-24"
-                  placeholder="Knapptext"
+                  placeholder="Button text"
                 />
                 <span className="text-muted-foreground">→</span>
                 <input
