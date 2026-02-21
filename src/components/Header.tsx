@@ -9,6 +9,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useNavLinks } from "@/hooks/useNavLinks";
 import { useHeaderModule } from "@/models/modules";
 import { cn } from "@/lib/utils";
+import ColorModeToggle from "@/components/ColorModeToggle";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -151,11 +152,12 @@ const Header = () => {
                 Home
               </Link>
             )}
-            {/* Theme toggle removed - single theme system */}
+            <ColorModeToggle />
           </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-2">
+            <ColorModeToggle />
             <button 
               className={cn(
                 "relative p-2 rounded-xl transition-all duration-200",
