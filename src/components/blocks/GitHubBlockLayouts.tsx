@@ -4,8 +4,8 @@
 // ============================================
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Star, 
@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { GitHubRepoWithImages } from '@/data/githubRepos';
-import { languageColors } from '@/lib/constants/languageColors';
+import TechBadge from '@/components/common/TechBadge';
 
 interface LayoutProps {
   repos: GitHubRepoWithImages[];
@@ -53,18 +53,18 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
         return (
           <Card key={repo.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300">
             {showImages && mainImage && (
-              <div className="aspect-video overflow-hidden bg-muted">
+              <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted">
                 <img
                   src={mainImage}
                   alt={title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-              </div>
+              </Link>
             )}
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                  {title}
+                  <Link to={`/project/${repo.name}`}>{title}</Link>
                 </CardTitle>
                 {showStats && (
                   <div className="flex items-center gap-3 text-sm text-muted-foreground flex-shrink-0">
@@ -82,10 +82,7 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
                 )}
               </div>
               {repo.language && (
-                <Badge variant="secondary" className="w-fit flex items-center gap-1.5 mt-2">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} className="w-fit mt-2" />
               )}
             </CardHeader>
             <CardContent className="space-y-4">
@@ -155,16 +152,13 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-                <a 
-                  href={repo.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <Link 
+                  to={`/project/${repo.name}`}
                   className="flex items-center gap-2"
                 >
                   <BookOpen className="w-4 h-4 flex-shrink-0" />
                   {repo.enriched_title || repo.name}
-                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </Link>
               </CardTitle>
               {showStats && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -190,15 +184,10 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
             )}
             <div className="flex flex-wrap items-center gap-2">
               {showLanguages && repo.language && (
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} />
               )}
               {showTopics && repo.topics?.slice(0, 3).map((topic) => (
-                <Badge key={topic} variant="outline" className="text-xs">
-                  {topic}
-                </Badge>
+                <TechBadge key={topic} name={topic} variant="outline" showDot={false} className="text-xs" />
               ))}
             </div>
             {repo.homepage && (
@@ -267,10 +256,7 @@ export const ShowcaseHeroLayout: React.FC<LayoutProps> = ({
           <div>
             <div className="flex items-center gap-3 mb-2">
               {repo.language && (
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} />
               )}
               {showStats && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -373,10 +359,7 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
                   {repo.enriched_title || repo.name}
                 </span>
                 {showLanguages && repo.language && (
-                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                    {repo.language}
-                  </Badge>
+                  <TechBadge name={repo.language} className="text-xs" />
                 )}
               </div>
               {(repo.enriched_description || repo.description) && (

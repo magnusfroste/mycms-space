@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import BlogPost from "./pages/BlogPost";
 import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
+import ProjectCaseStudy from "./pages/ProjectCaseStudy";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useBrandingTheme } from "@/hooks/useBrandingTheme";
 import { useColorMode } from "@/hooks/useColorMode";
@@ -77,6 +78,7 @@ const App = () => {
             <Route path="/admin" element={<Admin />} />
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/project/:repoName" element={<ProjectCaseStudy />} />
             {/* Dynamic page route - catches any slug */}
             <Route path="/:slug" element={<DynamicPage />} />
             {/* 404 fallback */}
