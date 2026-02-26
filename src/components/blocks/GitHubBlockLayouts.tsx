@@ -29,6 +29,7 @@ interface LayoutProps {
   showProblemStatement?: boolean;
   showWhyItMatters?: boolean;
   showForks?: boolean;
+  animateFromIndex?: number;
 }
 
 // ============================================
