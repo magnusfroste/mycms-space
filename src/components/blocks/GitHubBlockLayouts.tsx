@@ -409,7 +409,8 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
             <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </a>
-      ))}
+        );
+      })}
     </div>
   );
 };
