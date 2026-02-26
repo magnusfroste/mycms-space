@@ -43,16 +43,24 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
   showProblemStatement = true,
   showWhyItMatters = true,
   showForks = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="grid gap-8 md:grid-cols-2">
-      {repos.map(repo => {
+      {repos.map((repo, index) => {
         const title = repo.enriched_title || repo.name;
         const description = repo.enriched_description || repo.description;
         const mainImage = repo.images?.[0]?.image_url;
+        const isNew = index >= animateFromIndex;
 
         return (
-          <Card key={repo.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300">
+          <Card
+            key={repo.id}
+            className="group overflow-hidden hover:shadow-xl transition-all duration-300"
+            style={isNew ? {
+              animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+            } : undefined}
+          >
             {showImages && mainImage && (
               <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted">
                 <img
