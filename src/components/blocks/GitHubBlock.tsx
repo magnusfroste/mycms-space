@@ -62,19 +62,20 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
 
   const [visibleCount, setVisibleCount] = useState(maxRepos);
   const scrollTargetRef = useRef<HTMLDivElement>(null);
+  const prevVisibleRef = useRef(maxRepos);
   const displayRepos = shuffledRepos.slice(0, visibleCount);
   const hasMore = visibleCount < shuffledRepos.length;
 
   const handleShowMore = useCallback(() => {
+    prevVisibleRef.current = visibleCount;
     setVisibleCount(prev => {
       const next = Math.min(prev + maxRepos, shuffledRepos.length);
-      // Scroll to the first newly revealed repo after render
       setTimeout(() => {
         scrollTargetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
       return next;
     });
-  }, [maxRepos, shuffledRepos.length]);
+  }, [maxRepos, shuffledRepos.length, visibleCount]);
 
   if (error) {
     return (
