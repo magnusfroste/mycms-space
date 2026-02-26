@@ -61,8 +61,16 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
       )}
     >
       <ReactMarkdown 
-        remarkPlugins={[remarkBreaks]} 
+        remarkPlugins={[remarkBreaks, remarkGfm]} 
         rehypePlugins={[rehypeRaw]}
+        components={{
+          table: ({ children }) => <Table>{children}</Table>,
+          thead: ({ children }) => <TableHeader>{children}</TableHeader>,
+          tbody: ({ children }) => <TableBody>{children}</TableBody>,
+          tr: ({ children }) => <TableRow>{children}</TableRow>,
+          th: ({ children }) => <TableHead>{children}</TableHead>,
+          td: ({ children }) => <TableCell>{children}</TableCell>,
+        }}
       >
         {processedContent}
       </ReactMarkdown>
