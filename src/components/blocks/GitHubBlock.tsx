@@ -4,7 +4,7 @@
 // Uses local database for enabled repos with enrichment
 // ============================================
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,8 +61,20 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
   }, [repos, maxRepos]);
 
   const [visibleCount, setVisibleCount] = useState(maxRepos);
+  const scrollTargetRef = useRef<HTMLDivElement>(null);
   const displayRepos = shuffledRepos.slice(0, visibleCount);
   const hasMore = visibleCount < shuffledRepos.length;
+
+  const handleShowMore = useCallback(() => {
+    setVisibleCount(prev => {
+      const next = Math.min(prev + maxRepos, shuffledRepos.length);
+      // Scroll to the first newly revealed repo after render
+      setTimeout(() => {
+        scrollTargetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+      return next;
+    });
+  }, [maxRepos, shuffledRepos.length]);
 
   if (error) {
     return (
@@ -156,13 +168,16 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
           renderLayout()
         )}
 
+        {/* Scroll target for new repos */}
+        <div ref={scrollTargetRef} />
+
         {/* Show More */}
         {!isLoading && hasMore && (
           <div className="text-center mt-10">
             <Button
               variant="outline"
               className="rounded-full px-8"
-              onClick={() => setVisibleCount(prev => Math.min(prev + maxRepos, shuffledRepos.length))}
+              onClick={handleShowMore}
             >
               Show more projects
             </Button>
