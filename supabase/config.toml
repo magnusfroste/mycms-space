@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-newsletter]
 verify_jwt = false
+
+[functions.og-blog]
+verify_jwt = false

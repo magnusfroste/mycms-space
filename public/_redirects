@@ -1,2 +1,3 @@
 
+/blog/:slug https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/og-blog?slug=:slug 200
 /* /index.html 200
