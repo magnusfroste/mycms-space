@@ -171,6 +171,14 @@ export const useSyncToGitHub = () => {
   });
 };
 
+// Enrich repo with AI
+export const useEnrichGitHubRepo = () => {
+  return useMutation({
+    mutationFn: (repoData: Parameters<typeof githubReposData.enrichWithAI>[0]) => 
+      githubReposData.enrichWithAI(repoData),
+  });
+};
+
 // Suggest topics using AI
 export const useSuggestTopics = () => {
   return useMutation({

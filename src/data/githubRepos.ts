@@ -286,6 +286,49 @@ export const syncToGitHub = async (
   return { success: true, updated: data?.updated };
 };
 
+// Enrich repo with AI-generated content
+export const enrichWithAI = async (
+  repoData: {
+    name: string;
+    description: string | null;
+    language: string | null;
+    topics: string[];
+    stars: number;
+    readme: string | null;
+    homepage: string | null;
+  }
+): Promise<{
+  success: boolean;
+  title?: string;
+  description?: string;
+  problemStatement?: string;
+  whyItMatters?: string;
+  hadHomepage?: boolean;
+  error?: string;
+}> => {
+  const { data, error } = await supabase.functions.invoke('enrich-github-repo', {
+    body: repoData,
+  });
+
+  if (error) {
+    console.error('Enrich error:', error);
+    return { success: false, error: error.message };
+  }
+
+  if (data?.error) {
+    return { success: false, error: data.error };
+  }
+
+  return {
+    success: true,
+    title: data?.title,
+    description: data?.description,
+    problemStatement: data?.problemStatement,
+    whyItMatters: data?.whyItMatters,
+    hadHomepage: data?.hadHomepage,
+  };
+};
+
 // Generate topic suggestions using AI
 export const suggestTopics = async (
   fullName: string,
