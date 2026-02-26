@@ -1,142 +1,70 @@
 
-# Plan: Strukturell fix för Mini-menyer
 
-## Problem-analys
+# Blog OG Image for Social Media Sharing
 
-Systemet har återkommande problem med dropdown-menyer och popovers:
-- Menyer flickrar och försvinner oväntat
-- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
-- Problemet är systematiskt och påverkar flera komponenter
+## Problem
+When sharing a blog post on social media (Facebook, LinkedIn, Twitter), the preview always shows the generic froste.eu OG image instead of the blog post's cover image. This happens because the site is a Single Page Application (SPA) -- social media crawlers don't execute JavaScript, so they only see the static meta tags in `index.html`.
 
-### Rotorsaker
+The current `SEOHead` component correctly updates OG tags via JavaScript, but crawlers never run that code.
 
-1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
-2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
-3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
-4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
+## Solution
+Create a backend function that detects social media crawlers and serves HTML with the correct OG meta tags (blog title, description, and cover image) for blog post URLs.
 
----
+### How it works
 
-## Lösningsstrategi
+1. **New edge function: `og-blog`** -- When called with a blog slug, it:
+   - Fetches the blog post from the database
+   - Returns a minimal HTML page with the correct `og:title`, `og:description`, `og:image`, `twitter:image`, etc.
+   - Includes a JavaScript redirect so real users get sent to the SPA
 
-### Fas 1: Standardisera dropdown-mönster
+2. **Vercel rewrite rule** -- Add a rewrite so that `/blog/:slug` requests go through the edge function first (only for crawler user agents), or simpler: add an `og-image` rewrite pattern that crawlers will follow.
 
-Skapa ett konsekvent mönster för alla "action menus":
+### Recommended approach (simplest, most reliable)
+Since Vercel rewrites can't easily filter by user-agent, the cleanest pattern is:
 
-**Princip: "Close first, act later"**
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
+- Create edge function `og-blog` that accepts a `slug` query parameter
+- The function returns a full HTML document with correct OG tags + a JS redirect to the real page
+- Add a Vercel rewrite: `/og/blog/:slug` -> edge function
+- **But** this doesn't help because crawlers hit `/blog/:slug` directly
 
-const handleAction = (action: () => void) => {
-  setMenuOpen(false);
-  // Defer action to next tick to ensure menu closes cleanly
-  setTimeout(action, 0);
-};
+**Better approach**: Use the edge function as a catch-all for `/blog/*` paths via Vercel rewrite, and have it return the full `index.html` content but with OG meta tags injected server-side.
 
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
+### Implementation plan
+
+1. **Create `supabase/functions/og-blog/index.ts`**
+   - Accept the blog slug from the URL path or query param
+   - Fetch the blog post (title, excerpt, cover_image_url) from database
+   - Read the base `index.html` template
+   - Replace the static OG meta tags with post-specific values
+   - Return the modified HTML (the SPA still boots normally for real users)
+
+2. **Update `vercel.json`**
+   - Add a rewrite rule *before* the SPA catch-all:
+   ```
+   { "source": "/blog/:slug", "destination": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/og-blog?slug=:slug" }
+   ```
+
+3. **Update `public/_redirects`** (for Netlify/Lovable hosting)
+   - Add equivalent redirect rule for blog post paths
+
+### Technical details
+
+**Edge function (`og-blog`):**
+- Fetches post by slug from `blog_posts` table
+- Constructs HTML with proper OG tags:
+  - `og:title` = post title
+  - `og:description` = post excerpt
+  - `og:image` = post cover_image_url (full URL)
+  - `og:type` = article
+  - `twitter:card` = summary_large_image
+  - `twitter:image` = post cover_image_url
+- Returns the full SPA `index.html` with meta tags replaced, so the app works normally for browsers
+- Falls back to default OG tags if post not found
+
+**Vercel rewrite (before the catch-all):**
+```json
+{ "source": "/blog/:slug", "destination": "https://[project].supabase.co/functions/v1/og-blog?slug=:slug" }
 ```
 
----
+This ensures every request to `/blog/my-post` gets the correct OG meta tags server-side, whether from a crawler or a real browser (the SPA still boots and takes over).
 
-### Fas 2: Fixa PromptEnhancer (AI Assist)
-
-**Problem**: Använder `onClick` och saknar kontrollerad state
-
-**Åtgärd**:
-- Lägg till `open`/`onOpenChange` state
-- Byt från `onClick` till `onSelect`
-- Stäng menyn explicit innan async operation
-
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
-
-const handleEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
-```
-
----
-
-### Fas 3: Fixa MediaHub delete-funktion
-
-**Problem**: `modal={false}` + race condition vid delete
-
-**Åtgärd**:
-- Ta bort `modal={false}` (låt Radix hantera focus)
-- Säkerställ att `handleAction` använder `onSelect` korrekt
-- Verifiera att delete-dialogen öppnas korrekt
-
----
-
-### Fas 4: Granska och uppdatera UI-komponenter
-
-**dropdown-menu.tsx**:
-- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
-
----
-
-## Filer som ändras
-
-| Fil | Ändring |
-|-----|---------|
-| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
-| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
-
----
-
-## Tekniska detaljer
-
-### PromptEnhancer - före/efter
-
-**Före:**
-```tsx
-<DropdownMenu>
-  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
-```
-
-**Efter:**
-```tsx
-const [menuOpen, setMenuOpen] = useState(false);
-
-const safeEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
-```
-
-### MediaHub - justering
-
-**Ta bort:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-```
-
-**Ändra till:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-```
-
----
-
-## Förväntade resultat
-
-- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
-- Media Hub delete/rename/move fungerar korrekt
-- Konsekvent beteende över alla admin-dropdowns
-
----
-
-## Validering
-
-Efter implementering:
-1. Testa AI Assist-knappen i AI Chat-inställningar
-2. Testa delete på bilder i Media Hub
-3. Verifiera att inga flickering eller oväntade stängningar sker
