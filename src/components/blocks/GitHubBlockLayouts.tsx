@@ -152,16 +152,13 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-                <a 
-                  href={repo.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <Link 
+                  to={`/project/${repo.name}`}
                   className="flex items-center gap-2"
                 >
                   <BookOpen className="w-4 h-4 flex-shrink-0" />
                   {repo.enriched_title || repo.name}
-                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </Link>
               </CardTitle>
               {showStats && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
