@@ -373,7 +373,7 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
             onChange={(text) => setFormData({ ...formData, enriched_description: text })}
             title={repo.name}
             placeholder={repo.description || 'Add a rich description...'}
-            minHeight="min-h-[100px]"
+            minHeight="min-h-[200px]"
             showAI
             aiMode="text"
             aiContext="project description"
@@ -388,7 +388,7 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
             onChange={(text) => setFormData({ ...formData, problem_statement: text })}
             title={repo.name}
             placeholder="What problem does this solve?"
-            minHeight="min-h-[80px]"
+            minHeight="min-h-[160px]"
             showAI
             aiMode="text"
             aiContext="problem statement"
@@ -403,7 +403,7 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
             onChange={(text) => setFormData({ ...formData, why_it_matters: text })}
             title={repo.name}
             placeholder="Why is this project important?"
-            minHeight="min-h-[80px]"
+            minHeight="min-h-[160px]"
             showAI
             aiMode="text"
             aiContext="project importance"
