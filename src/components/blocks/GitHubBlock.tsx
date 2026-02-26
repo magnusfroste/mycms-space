@@ -168,13 +168,16 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
           renderLayout()
         )}
 
+        {/* Scroll target for new repos */}
+        <div ref={scrollTargetRef} />
+
         {/* Show More */}
         {!isLoading && hasMore && (
           <div className="text-center mt-10">
             <Button
               variant="outline"
               className="rounded-full px-8"
-              onClick={() => setVisibleCount(prev => Math.min(prev + maxRepos, shuffledRepos.length))}
+              onClick={handleShowMore}
             >
               Show more projects
             </Button>
