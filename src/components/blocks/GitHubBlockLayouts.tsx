@@ -53,13 +53,13 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
         return (
           <Card key={repo.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300">
             {showImages && mainImage && (
-              <div className="aspect-video overflow-hidden bg-muted">
+              <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted">
                 <img
                   src={mainImage}
                   alt={title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-              </div>
+              </Link>
             )}
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
