@@ -156,6 +156,19 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
           renderLayout()
         )}
 
+        {/* Show More */}
+        {!isLoading && hasMore && (
+          <div className="text-center mt-10">
+            <Button
+              variant="outline"
+              className="rounded-full px-8"
+              onClick={() => setVisibleCount(prev => Math.min(prev + maxRepos, shuffledRepos.length))}
+            >
+              Show more projects
+            </Button>
+          </div>
+        )}
+
         {/* View All Link */}
         {moduleConfig?.username && (
           <div className="text-center mt-8">
