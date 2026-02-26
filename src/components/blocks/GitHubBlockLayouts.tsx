@@ -29,6 +29,7 @@ interface LayoutProps {
   showProblemStatement?: boolean;
   showWhyItMatters?: boolean;
   showForks?: boolean;
+  animateFromIndex?: number;
 }
 
 // ============================================
@@ -42,16 +43,24 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
   showProblemStatement = true,
   showWhyItMatters = true,
   showForks = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="grid gap-8 md:grid-cols-2">
-      {repos.map(repo => {
+      {repos.map((repo, index) => {
         const title = repo.enriched_title || repo.name;
         const description = repo.enriched_description || repo.description;
         const mainImage = repo.images?.[0]?.image_url;
+        const isNew = index >= animateFromIndex;
 
         return (
-          <Card key={repo.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300">
+          <Card
+            key={repo.id}
+            className="group overflow-hidden hover:shadow-xl transition-all duration-300"
+            style={isNew ? {
+              animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+            } : undefined}
+          >
             {showImages && mainImage && (
               <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted">
                 <img
@@ -144,11 +153,20 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
   showLanguages = true,
   showTopics = true,
   showForks = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {repos.map(repo => (
-        <Card key={repo.id} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
+      {repos.map((repo, index) => {
+        const isNew = index >= animateFromIndex;
+        return (
+        <Card
+          key={repo.id}
+          className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          style={isNew ? {
+            animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+          } : undefined}
+        >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
@@ -203,7 +221,8 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
             )}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -340,16 +359,22 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
   repos,
   showLanguages = true,
   showStats = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
-      {repos.map(repo => (
+      {repos.map((repo, index) => {
+        const isNew = index >= animateFromIndex;
+        return (
         <a
           key={repo.id}
           href={repo.url}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-between py-4 px-6 rounded-lg border hover:bg-muted/50 hover:border-primary/50 transition-colors group"
+          style={isNew ? {
+            animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+          } : undefined}
         >
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <Github className="w-5 h-5 text-muted-foreground flex-shrink-0" />
@@ -384,7 +409,8 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
             <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </a>
-      ))}
+        );
+      })}
     </div>
   );
 };
