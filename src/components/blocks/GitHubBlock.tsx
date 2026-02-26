@@ -4,7 +4,7 @@
 // Uses local database for enabled repos with enrichment
 // ============================================
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,8 +53,12 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
   // Get forks visibility from module config
   const showForks = moduleConfig?.show_forks ?? true;
 
-  // Limit repos to maxRepos
-  const displayRepos = repos.slice(0, maxRepos);
+  // Shuffle and limit repos to maxRepos for variety on each visit
+  const displayRepos = useMemo(() => {
+    if (repos.length <= maxRepos) return repos;
+    const shuffled = [...repos].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, maxRepos);
+  }, [repos, maxRepos]);
 
   if (error) {
     return (
