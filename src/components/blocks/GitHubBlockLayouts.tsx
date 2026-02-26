@@ -4,8 +4,8 @@
 // ============================================
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Star, 
@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import type { GitHubRepoWithImages } from '@/data/githubRepos';
-import { languageColors } from '@/lib/constants/languageColors';
+import TechBadge from '@/components/common/TechBadge';
 
 interface LayoutProps {
   repos: GitHubRepoWithImages[];

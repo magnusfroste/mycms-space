@@ -78,6 +78,7 @@ const App = () => {
             <Route path="/admin" element={<Admin />} />
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/project/:repoName" element={<ProjectCaseStudy />} />
             {/* Dynamic page route - catches any slug */}
             <Route path="/:slug" element={<DynamicPage />} />
             {/* 404 fallback */}
