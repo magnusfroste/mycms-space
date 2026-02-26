@@ -187,15 +187,10 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
             )}
             <div className="flex flex-wrap items-center gap-2">
               {showLanguages && repo.language && (
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} />
               )}
               {showTopics && repo.topics?.slice(0, 3).map((topic) => (
-                <Badge key={topic} variant="outline" className="text-xs">
-                  {topic}
-                </Badge>
+                <TechBadge key={topic} name={topic} variant="outline" showDot={false} className="text-xs" />
               ))}
             </div>
             {repo.homepage && (
