@@ -247,7 +247,40 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaHubOpen, setMediaHubOpen] = useState(false);
   const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
   const suggestTopicsMutation = useSuggestTopics();
+  const enrichMutation = useEnrichGitHubRepo();
+
+  const handleAutoEnrich = async () => {
+    setIsEnriching(true);
+    try {
+      const result = await enrichMutation.mutateAsync({
+        name: repo.name,
+        description: repo.description,
+        language: repo.language,
+        topics: repo.topics || [],
+        stars: repo.stars,
+        readme: repo.readme_content,
+        homepage: formData.homepage || repo.homepage,
+      });
+      if (result.success) {
+        setFormData(prev => ({
+          ...prev,
+          enriched_title: result.title || prev.enriched_title,
+          enriched_description: result.description || prev.enriched_description,
+          problem_statement: result.problemStatement || prev.problem_statement,
+          why_it_matters: result.whyItMatters || prev.why_it_matters,
+        }));
+        toast.success(`Fields generated${result.hadHomepage ? ' (incl. homepage)' : ''} — review and save`);
+      } else {
+        toast.error(result.error || 'Could not enrich');
+      }
+    } catch (error) {
+      toast.error('Auto-enrich failed');
+    } finally {
+      setIsEnriching(false);
+    }
+  };
 
   const handleSuggestTopics = async () => {
     setIsGeneratingTopics(true);
