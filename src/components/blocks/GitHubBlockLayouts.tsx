@@ -82,10 +82,7 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
                 )}
               </div>
               {repo.language && (
-                <Badge variant="secondary" className="w-fit flex items-center gap-1.5 mt-2">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} className="w-fit mt-2" />
               )}
             </CardHeader>
             <CardContent className="space-y-4">
