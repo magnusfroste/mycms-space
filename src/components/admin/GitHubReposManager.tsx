@@ -317,11 +317,22 @@ const RepoEditForm: React.FC<RepoEditFormProps> = ({
   return (
     <Card className="p-4 border-primary/50">
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <Github className="h-5 w-5" />
-          <span className="font-medium">{repo.name}</span>
-          <Badge variant="secondary">{repo.language}</Badge>
+        {/* Header + Auto-enrich */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Github className="h-5 w-5" />
+            <span className="font-medium">{repo.name}</span>
+            <Badge variant="secondary">{repo.language}</Badge>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAutoEnrich}
+            disabled={isEnriching}
+          >
+            <Sparkles className={`h-4 w-4 mr-1 ${isEnriching ? 'animate-spin' : ''}`} />
+            {isEnriching ? 'Generating...' : 'Auto-enrich'}
+          </Button>
         </div>
 
         {/* Image Gallery */}
