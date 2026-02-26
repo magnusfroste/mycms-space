@@ -64,7 +64,7 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <CardTitle className="text-xl group-hover:text-primary transition-colors">
-                  {title}
+                  <Link to={`/project/${repo.name}`}>{title}</Link>
                 </CardTitle>
                 {showStats && (
                   <div className="flex items-center gap-3 text-sm text-muted-foreground flex-shrink-0">
