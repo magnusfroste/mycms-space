@@ -98,9 +98,6 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
     );
   }
 
-  // Track previous visible count for fade-in animation
-  const prevVisibleRef = useRef(maxRepos);
-
   const layoutProps = {
     repos: displayRepos,
     showStats,
