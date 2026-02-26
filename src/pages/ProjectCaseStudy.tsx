@@ -14,6 +14,7 @@ import SEOHead from '@/components/common/SEOHead';
 import MarkdownContent from '@/components/common/MarkdownContent';
 import TechBadge from '@/components/common/TechBadge';
 import { useGitHubRepoByName } from '@/models/githubRepoByName';
+import RelatedProjects from '@/components/blocks/RelatedProjects';
 
 const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
