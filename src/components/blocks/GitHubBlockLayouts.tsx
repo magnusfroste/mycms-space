@@ -221,7 +221,8 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
             )}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 };
