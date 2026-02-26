@@ -47,6 +47,7 @@ import {
   useDeleteGitHubRepoImage,
   useSyncToGitHub,
   useSuggestTopics,
+  useEnrichGitHubRepo,
   type GitHubRepoWithImages,
 } from '@/models/githubRepos';
 import { useGitHubModule } from '@/models/modules';
