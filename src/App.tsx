@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import BlogPost from "./pages/BlogPost";
 import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
+import ProjectCaseStudy from "./pages/ProjectCaseStudy";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useBrandingTheme } from "@/hooks/useBrandingTheme";
 import { useColorMode } from "@/hooks/useColorMode";
