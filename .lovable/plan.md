@@ -1,142 +1,117 @@
 
-# Plan: Strukturell fix för Mini-menyer
 
-## Problem-analys
+# Project Case Studies + Tech Stack Badges
 
-Systemet har återkommande problem med dropdown-menyer och popovers:
-- Menyer flickrar och försvinner oväntat
-- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
-- Problemet är systematiskt och påverkar flera komponenter
+## Overview
+Two features that level up the GitHub portfolio module:
+1. **Deep Dive Case Study Pages** -- dedicated `/project/:repoName` route per repo
+2. **Tech Stack Badges** -- icon-based visual badges replacing plain text labels
 
-### Rotorsaker
-
-1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
-2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
-3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
-4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
+No database changes needed -- all data already exists.
 
 ---
 
-## Lösningsstrategi
+## Feature 1: Project Case Study Pages
 
-### Fas 1: Standardisera dropdown-mönster
+### New route: `/project/:repoName`
+A clean, editorial page combining CMS storytelling with GitHub technical data.
 
-Skapa ett konsekvent mönster för alla "action menus":
+### Page layout (responsive)
+```text
+Desktop:
++------------------------------------------+
+|  Header (existing)                        |
++------------------------------------------+
+|  < Back to Portfolio                      |
+|                                           |
+|  [Language Badge]  [Stars]  [Forks]       |
+|  Project Title (large, bold)              |
+|  Short description                        |
+|                                           |
+|  [====== Hero Image (full width) ======]  |
+|                                           |
+|  --- The Problem ---                      |
+|  problem_statement                        |
+|                                           |
+|  --- Why It Matters ---                   |
+|  why_it_matters                           |
+|                                           |
+|  --- Tech Stack ---                       |
+|  [TypeScript] [React] [Supabase] badges   |
+|                                           |
+|  --- About This Project ---               |
+|  README rendered as markdown              |
+|                                           |
+|  [Image Gallery if multiple images]       |
+|                                           |
+|  [View on GitHub]  [Live Demo]            |
++------------------------------------------+
+|  Footer (existing)                        |
++------------------------------------------+
 
-**Princip: "Close first, act later"**
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
-
-const handleAction = (action: () => void) => {
-  setMenuOpen(false);
-  // Defer action to next tick to ensure menu closes cleanly
-  setTimeout(action, 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
+Mobile: same sections, stacked vertically,
+smaller typography, full-bleed images
 ```
 
+### Files
+
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `src/pages/ProjectCaseStudy.tsx` | Page component with editorial layout |
+| Create | `src/data/githubRepoByName.ts` | Single repo fetch by name |
+| Create | `src/models/githubRepoByName.ts` | React Query hook for single repo |
+| Modify | `src/App.tsx` | Add `/project/:repoName` route |
+| Modify | `src/components/blocks/GitHubBlockLayouts.tsx` | Link card titles/images to case study page |
+
+### Key design decisions
+- Use existing `Header`, `Footer`, `SEOHead`, `MarkdownContent` components
+- Internal `Link` on titles/images; external GitHub link stays as separate button
+- Graceful fallback if repo has no enrichment -- still shows README + stats
+- Loading skeleton while data fetches
+- 404 redirect if repo not found or not enabled
+
 ---
 
-### Fas 2: Fixa PromptEnhancer (AI Assist)
+## Feature 2: Tech Stack Badges with Icons
 
-**Problem**: Använder `onClick` och saknar kontrollerad state
+### Concept
+Replace plain text language/topic labels with small icon + text badges using Lucide icons and a mapping table.
 
-**Åtgärd**:
-- Lägg till `open`/`onOpenChange` state
-- Byt från `onClick` till `onSelect`
-- Stäng menyn explicit innan async operation
-
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
-
-const handleEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
+### Badge design
+```text
+[icon TypeScript]  -- language gets colored accent dot
+[icon React]       -- topic gets outline style  
+[icon Supabase]    -- unmapped items get generic Code icon
 ```
 
----
+### Files
 
-### Fas 3: Fixa MediaHub delete-funktion
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `src/lib/constants/techStackIcons.tsx` | Map of tech names to Lucide icon components |
+| Create | `src/components/common/TechBadge.tsx` | Reusable badge with icon lookup |
+| Modify | `src/components/blocks/GitHubBlockLayouts.tsx` | Use TechBadge for languages and topics |
 
-**Problem**: `modal={false}` + race condition vid delete
-
-**Åtgärd**:
-- Ta bort `modal={false}` (låt Radix hantera focus)
-- Säkerställ att `handleAction` använder `onSelect` korrekt
-- Verifiera att delete-dialogen öppnas korrekt
-
----
-
-### Fas 4: Granska och uppdatera UI-komponenter
-
-**dropdown-menu.tsx**:
-- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
+### Icon mapping approach
+- Use Lucide icons that visually suggest the technology (e.g., `Code2` for TypeScript, `Terminal` for Python, `Database` for Supabase, `Globe` for web-app)
+- Extend existing `languageColors.ts` for color accents
+- Fallback: generic `Code` icon for any unmapped technology
+- Case-insensitive lookup so "typescript" and "TypeScript" both work
 
 ---
 
-## Filer som ändras
-
-| Fil | Ändring |
-|-----|---------|
-| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
-| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
-
----
-
-## Tekniska detaljer
-
-### PromptEnhancer - före/efter
-
-**Före:**
-```tsx
-<DropdownMenu>
-  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
-```
-
-**Efter:**
-```tsx
-const [menuOpen, setMenuOpen] = useState(false);
-
-const safeEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
-```
-
-### MediaHub - justering
-
-**Ta bort:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-```
-
-**Ändra till:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-```
+## Implementation order
+1. Create `techStackIcons.tsx` and `TechBadge.tsx` (standalone, no side effects)
+2. Create data/model layer for single repo fetch
+3. Create `ProjectCaseStudy.tsx` page (uses TechBadge + MarkdownContent)
+4. Add route in `App.tsx`
+5. Update `GitHubBlockLayouts.tsx` -- add internal links + swap to TechBadge
 
 ---
 
-## Förväntade resultat
+## What stays unchanged
+- All existing layouts continue to work
+- Database schema unchanged
+- Admin enrichment workflow unchanged
+- External GitHub links preserved alongside new internal links
 
-- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
-- Media Hub delete/rename/move fungerar korrekt
-- Konsekvent beteende över alla admin-dropdowns
-
----
-
-## Validering
-
-Efter implementering:
-1. Testa AI Assist-knappen i AI Chat-inställningar
-2. Testa delete på bilder i Media Hub
-3. Verifiera att inga flickering eller oväntade stängningar sker
