@@ -153,11 +153,20 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
   showLanguages = true,
   showTopics = true,
   showForks = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {repos.map(repo => (
-        <Card key={repo.id} className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
+      {repos.map((repo, index) => {
+        const isNew = index >= animateFromIndex;
+        return (
+        <Card
+          key={repo.id}
+          className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50"
+          style={isNew ? {
+            animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+          } : undefined}
+        >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
               <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
