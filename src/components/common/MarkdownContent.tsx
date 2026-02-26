@@ -6,7 +6,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
+import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 interface MarkdownContentProps {
