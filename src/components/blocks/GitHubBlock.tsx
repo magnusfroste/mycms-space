@@ -97,7 +97,9 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
     );
   }
 
-  // Shared layout props
+  // Track previous visible count for fade-in animation
+  const prevVisibleRef = useRef(maxRepos);
+
   const layoutProps = {
     repos: displayRepos,
     showStats,
@@ -107,6 +109,7 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
     showProblemStatement,
     showWhyItMatters,
     showForks,
+    animateFromIndex: prevVisibleRef.current,
   };
 
   const renderLayout = () => {
