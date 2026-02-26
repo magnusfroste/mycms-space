@@ -259,10 +259,7 @@ export const ShowcaseHeroLayout: React.FC<LayoutProps> = ({
           <div>
             <div className="flex items-center gap-3 mb-2">
               {repo.language && (
-                <Badge variant="secondary" className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                  {repo.language}
-                </Badge>
+                <TechBadge name={repo.language} />
               )}
               {showStats && (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
