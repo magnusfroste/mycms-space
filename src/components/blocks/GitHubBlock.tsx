@@ -4,7 +4,8 @@
 // Uses local database for enabled repos with enrichment
 // ============================================
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,12 +54,15 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
   // Get forks visibility from module config
   const showForks = moduleConfig?.show_forks ?? true;
 
-  // Shuffle and limit repos to maxRepos for variety on each visit
-  const displayRepos = useMemo(() => {
+  // Shuffle repos once on mount for variety, then paginate
+  const shuffledRepos = useMemo(() => {
     if (repos.length <= maxRepos) return repos;
-    const shuffled = [...repos].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, maxRepos);
+    return [...repos].sort(() => Math.random() - 0.5);
   }, [repos, maxRepos]);
+
+  const [visibleCount, setVisibleCount] = useState(maxRepos);
+  const displayRepos = shuffledRepos.slice(0, visibleCount);
+  const hasMore = visibleCount < shuffledRepos.length;
 
   if (error) {
     return (
@@ -150,6 +154,19 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
           </div>
         ) : (
           renderLayout()
+        )}
+
+        {/* Show More */}
+        {!isLoading && hasMore && (
+          <div className="text-center mt-10">
+            <Button
+              variant="outline"
+              className="rounded-full px-8"
+              onClick={() => setVisibleCount(prev => Math.min(prev + maxRepos, shuffledRepos.length))}
+            >
+              Show more projects
+            </Button>
+          </div>
         )}
 
         {/* View All Link */}
