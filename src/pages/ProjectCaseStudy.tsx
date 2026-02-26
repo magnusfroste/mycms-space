@@ -210,6 +210,9 @@ const ProjectCaseStudy = () => {
               </Button>
             )}
           </div>
+
+          {/* Related Projects */}
+          <RelatedProjects currentRepoName={repo.name} />
         </article>
       </main>
 
