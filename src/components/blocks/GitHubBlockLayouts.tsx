@@ -362,10 +362,7 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
                   {repo.enriched_title || repo.name}
                 </span>
                 {showLanguages && repo.language && (
-                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${languageColors[repo.language] || 'bg-gray-400'}`} />
-                    {repo.language}
-                  </Badge>
+                  <TechBadge name={repo.language} className="text-xs" />
                 )}
               </div>
               {(repo.enriched_description || repo.description) && (
