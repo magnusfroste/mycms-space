@@ -102,6 +102,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     </Button>
   );
 
+  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  const charCount = value.length;
+
   return (
     <div className={cn('space-y-2', className)}>
       <RichTextToolbar
@@ -131,6 +134,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           disabled={disabled}
           className={cn('font-mono text-sm', minHeight)}
         />
+      )}
+
+      {value.length > 0 && (
+        <p className="text-xs text-muted-foreground text-right tabular-nums">
+          {wordCount} {wordCount === 1 ? 'word' : 'words'} · {charCount} chars
+        </p>
       )}
     </div>
   );
