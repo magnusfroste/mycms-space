@@ -359,16 +359,22 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
   repos,
   showLanguages = true,
   showStats = true,
+  animateFromIndex = 0,
 }) => {
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
-      {repos.map(repo => (
+      {repos.map((repo, index) => {
+        const isNew = index >= animateFromIndex;
+        return (
         <a
           key={repo.id}
           href={repo.url}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-between py-4 px-6 rounded-lg border hover:bg-muted/50 hover:border-primary/50 transition-colors group"
+          style={isNew ? {
+            animation: `fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(index - animateFromIndex) * 0.1}s both`,
+          } : undefined}
         >
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <Github className="w-5 h-5 text-muted-foreground flex-shrink-0" />
