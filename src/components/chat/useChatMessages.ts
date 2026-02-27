@@ -124,11 +124,12 @@ export const useChatMessages = ({
     return userMessage;
   }, []);
 
-  const addBotMessage = useCallback((text: string): Message => {
+  const addBotMessage = useCallback((text: string, artifacts?: ChatArtifact[]): Message => {
     const botMessage: Message = {
       id: (Date.now() + 1).toString(),
       text,
       isUser: false,
+      artifacts,
     };
     setMessages((prev) => [...prev, botMessage]);
     return botMessage;
