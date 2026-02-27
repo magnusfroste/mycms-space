@@ -99,7 +99,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
             </h2>
           )}
 
-          {settings.content && (
+          {resolvedContent && (
             <div
               className={cn(
                 'text-lg md:text-xl max-w-2xl mx-auto leading-relaxed',
@@ -108,7 +108,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
                 isLight ? 'text-white/80' : 'text-muted-foreground'
               )}
             >
-              <MarkdownContent content={settings.content} />
+              <MarkdownContent content={resolvedContent} />
             </div>
           )}
 
