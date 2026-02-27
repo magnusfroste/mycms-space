@@ -498,4 +498,12 @@ export const defaultBlockConfigs: Partial<BlockTypeConfigMap> = {
     layout: 'grid',
     sortBy: 'pushed',
   },
+  'cv-agent': {
+    title: 'Is Magnus the Right Fit?',
+    subtitle: 'Paste a job description and let Magnet analyze the match.',
+    badge_text: 'AI-Powered',
+    button_text: 'Analyze Match',
+    placeholder: 'Paste the job description here...',
+    features: ['Skill Match', 'Tailored CV', 'Cover Letter'],
+  },
 };
