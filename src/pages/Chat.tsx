@@ -161,6 +161,7 @@ const Chat = () => {
             integration={selectedIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}
+            enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
           />
         )}
       </main>
