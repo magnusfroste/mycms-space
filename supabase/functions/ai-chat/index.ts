@@ -515,33 +515,37 @@ Always base your analysis on Magnus's actual profile data. Be honest about gaps 
   const data = await response.json();
   const choice = data.choices?.[0];
 
-  // Check if the model called the CV tool
+  // Check if the model called a tool
   if (choice?.message?.tool_calls?.length > 0) {
     const toolCall = choice.message.tool_calls[0];
-    if (toolCall.function?.name === "generate_tailored_cv") {
-      console.log("[CV Agent] Tool called - parsing structured output");
-      try {
-        const toolArgs = JSON.parse(toolCall.function.arguments);
-        const textResponse = choice.message.content || `Here's my analysis of how Magnus matches this role:`;
+    const toolName = toolCall.function?.name;
+    console.log(`[Magnet] Tool called: ${toolName}`);
+    
+    try {
+      const toolArgs = JSON.parse(toolCall.function.arguments);
+      const textResponse = choice.message.content || "";
 
+      const toolArtifactMap: Record<string, { type: string; title: string }> = {
+        generate_tailored_cv: { type: "cv-match", title: "CV Match Analysis" },
+        generate_portfolio: { type: "portfolio", title: toolArgs.title || "Curated Portfolio" },
+        project_deep_dive: { type: "project-deep-dive", title: toolArgs.project_name || "Project Deep Dive" },
+        check_availability: { type: "availability", title: "Availability" },
+      };
+
+      const artifactMeta = toolArtifactMap[toolName!];
+      if (artifactMeta) {
         return {
-          output: textResponse,
+          output: textResponse || `Here's what I found:`,
           artifacts: [{
-            type: "cv-match",
-            title: "CV Match Analysis",
-            data: {
-              overall_score: toolArgs.overall_score,
-              summary: toolArgs.summary,
-              match_analysis: toolArgs.match_analysis,
-              tailored_cv: toolArgs.tailored_cv,
-              cover_letter: toolArgs.cover_letter,
-            },
+            type: artifactMeta.type,
+            title: artifactMeta.title,
+            data: toolArgs,
           }],
         };
-      } catch (e) {
-        console.error("[CV Agent] Failed to parse tool call:", e);
-        return { output: choice.message.content || "I tried to analyze the match but encountered an error." };
       }
+    } catch (e) {
+      console.error(`[Magnet] Failed to parse tool call ${toolName}:`, e);
+      return { output: choice.message.content || "I tried to process your request but encountered an error." };
     }
   }
 
