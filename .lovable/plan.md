@@ -1,142 +1,155 @@
 
-# Plan: Strukturell fix för Mini-menyer
 
-## Problem-analys
+# Magnet Gets Superpowers: CV Agent via Tool Calling + Artifacts
 
-Systemet har återkommande problem med dropdown-menyer och popovers:
-- Menyer flickrar och försvinner oväntat
-- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
-- Problemet är systematiskt och påverkar flera komponenter
+## The Idea
 
-### Rotorsaker
+Instead of building a separate CV Agent page, we **upgrade Magnet** with a new tool: `generate_tailored_cv`. When a recruiter pastes a job description in chat, Magnet analyzes it against Magnus's master knowledge (from the `/resume` page) and returns structured results rendered as **rich artifact cards** directly in the chat -- like Claude's artifacts.
 
-1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
-2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
-3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
-4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
+The landing page gets a premium CTA block that funnels the recruiter into `/chat` with the JD pre-filled.
 
----
+## Architecture
 
-## Lösningsstrategi
-
-### Fas 1: Standardisera dropdown-mönster
-
-Skapa ett konsekvent mönster för alla "action menus":
-
-**Princip: "Close first, act later"**
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
-
-const handleAction = (action: () => void) => {
-  setMenuOpen(false);
-  // Defer action to next tick to ensure menu closes cleanly
-  setTimeout(action, 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
+```text
+Landing Page Block (cv-agent)
+  "Is Magnus the Right Fit?"
+  [textarea: paste JD]
+  [Analyze Match ->]
+        |
+        v
+  navigate('/chat', { state: { messages: [{ text: JD }] } })
+        |
+        v
+  Magnet (ai-chat edge function)
+  - Detects JD via tool calling
+  - Loads /resume page blocks from DB
+  - Calls AI with generate_tailored_cv tool
+  - Returns structured JSON artifact
+        |
+        v
+  ChatMessage renders artifact cards:
+  - Match radar chart (Recharts)
+  - Tailored CV (markdown)
+  - Cover letter (markdown)
 ```
 
----
+## What Gets Built
 
-### Fas 2: Fixa PromptEnhancer (AI Assist)
+### 1. Artifact System for Chat Messages
 
-**Problem**: Använder `onClick` och saknar kontrollerad state
+**Extend `Message` type** (`src/components/chat/types.ts`)
+- Add optional `artifacts` array to `Message`:
+  ```
+  artifacts?: Array<{
+    type: 'cv-match' | 'document';
+    title: string;
+    data: Record<string, unknown>;
+  }>
+  ```
 
-**Åtgärd**:
-- Lägg till `open`/`onOpenChange` state
-- Byt från `onClick` till `onSelect`
-- Stäng menyn explicit innan async operation
+**New component: `src/components/chat/ChatArtifact.tsx`**
+- Renders rich cards below the message text
+- For `cv-match` type: 3-tab card with Match Analysis (Recharts radar), Tailored CV (markdown), Cover Letter (markdown)
+- Copy-to-clipboard on each tab
+- Clean, Apple-design card with subtle border and shadow
 
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
+**Update `ChatMessage.tsx`**
+- After the message bubble, render any `artifacts` using `ChatArtifact`
 
-const handleEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
+### 2. Upgrade `ai-chat` Edge Function
 
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
-```
+**Add tool calling** to the Lovable AI handler in `supabase/functions/ai-chat/index.ts`:
 
----
+- Define `generate_tailored_cv` tool with structured parameters:
+  - `match_analysis`: array of `{ skill, required_level, magnus_level, category }`
+  - `overall_score`: number (0-100)
+  - `tailored_cv`: string (markdown)
+  - `cover_letter`: string (markdown)
+  - `summary`: string (one-line match summary)
 
-### Fas 3: Fixa MediaHub delete-funktion
+- When the AI calls this tool, the edge function returns the structured data as an `artifact` alongside the message text
 
-**Problem**: `modal={false}` + race condition vid delete
+- **Load resume context server-side**: Query `page_blocks` where `page_slug = 'resume'` to get Magnus's master knowledge (same pattern as `useAIChatContext` but on the backend)
 
-**Åtgärd**:
-- Ta bort `modal={false}` (låt Radix hantera focus)
-- Säkerställ att `handleAction` använder `onSelect` korrekt
-- Verifiera att delete-dialogen öppnas korrekt
+- Add a `cv_agent` instruction to the system prompt when resume data is available:
+  ```
+  You have a tool called generate_tailored_cv. When a user pastes a job description,
+  use this tool to analyze the match and generate a tailored CV and cover letter.
+  ```
 
----
+### 3. Update `useChatMessages` Hook
 
-### Fas 4: Granska och uppdatera UI-komponenter
+**Parse artifact responses** (`src/components/chat/useChatMessages.ts`):
+- When the edge function returns `{ output, artifacts }`, attach artifacts to the bot message
+- The artifact data flows through the existing message pipeline
 
-**dropdown-menu.tsx**:
-- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
+### 4. Landing Page Block: `cv-agent`
 
----
+**New block: `src/components/blocks/CvAgentBlock.tsx`**
+- Gradient CTA card (reuses CTA Banner aesthetic)
+- "AI-Powered" badge
+- Title: "Is Magnus the Right Fit?"
+- Subtitle: "Paste a job description and let Magnet analyze the match"
+- Textarea for JD input
+- "Analyze Match" button
+- Three feature pills: Skill Match, Tailored CV, Cover Letter
+- On submit: navigates to `/chat` with JD as initial message
 
-## Filer som ändras
+**Register the block:**
+- `CvAgentBlockConfig` in `src/types/blockConfigs.ts`
+- Default config in `blockDefaults`
+- Label in `blockTypeLabels.ts`
+- Case in `BlockRenderer.tsx`
+- Export in `blocks/index.ts`
 
-| Fil | Ändring |
-|-----|---------|
-| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
-| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
+### 5. Admin Editor
 
----
+**New: `src/components/admin/block-editor/CvAgentBlockEditor.tsx`**
+- Simple form: title, subtitle, badge text, button text, placeholder text
+- Follows existing editor pattern
 
-## Tekniska detaljer
+## File Summary
 
-### PromptEnhancer - före/efter
+| Action | File | What |
+|--------|------|------|
+| Modify | `src/components/chat/types.ts` | Add `artifacts` to `Message` type |
+| Create | `src/components/chat/ChatArtifact.tsx` | Rich artifact card renderer (tabs, radar, markdown, copy) |
+| Modify | `src/components/chat/ChatMessage.tsx` | Render artifacts below message bubble |
+| Modify | `src/components/chat/useChatMessages.ts` | Parse artifact data from edge function response |
+| Modify | `supabase/functions/ai-chat/index.ts` | Add tool calling + resume context loading + artifact response |
+| Create | `src/components/blocks/CvAgentBlock.tsx` | Landing page CTA block with JD input |
+| Modify | `src/types/blockConfigs.ts` | Add `CvAgentBlockConfig` |
+| Modify | `src/lib/constants/blockDefaults.ts` | Add `cv-agent` defaults |
+| Modify | `src/lib/constants/blockTypeLabels.ts` | Add `'cv-agent': 'CV Agent'` |
+| Modify | `src/components/blocks/BlockRenderer.tsx` | Add `cv-agent` case |
+| Modify | `src/components/blocks/index.ts` | Export `CvAgentBlock` |
+| Create | `src/components/admin/block-editor/CvAgentBlockEditor.tsx` | Block config editor |
 
-**Före:**
-```tsx
-<DropdownMenu>
-  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
-```
+## Technical Decisions
 
-**Efter:**
-```tsx
-const [menuOpen, setMenuOpen] = useState(false);
+- **No new pages** -- everything happens in `/chat` via Magnet
+- **No new database tables** -- resume data read from existing `page_blocks` (server-side in edge function)
+- **Tool calling** for structured output (not JSON parsing)
+- **Recharts** (already installed) for match radar visualization
+- **MarkdownContent** (already exists) for CV and cover letter rendering
+- **Lovable AI** with `google/gemini-2.5-flash` (fast, good at tool calling)
+- **Artifact pattern is extensible** -- future tools can return different artifact types (charts, documents, images) rendered as cards in chat
 
-const safeEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
+## Implementation Order
 
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
-```
+1. Extend `Message` type with artifacts + create `ChatArtifact` component
+2. Update `ChatMessage` to render artifacts
+3. Upgrade `ai-chat` edge function with tool calling + resume context
+4. Update `useChatMessages` to parse artifact responses
+5. Build `CvAgentBlock` for landing page
+6. Register block type (configs, defaults, labels, renderer)
+7. Create admin block editor
 
-### MediaHub - justering
+## Future Vision
 
-**Ta bort:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-```
+This artifact system is the foundation for Magnet's evolution:
+- **More tools**: portfolio generator, project deep-dive, availability checker
+- **A2A protocol**: External agents call the same `ai-chat` endpoint, get structured artifact responses
+- **Agent Card** (`/.well-known/agent.json`): Advertises Magnet's capabilities including `generate_tailored_cv`
+- The chat becomes the universal interface; artifacts are the universal output format
 
-**Ändra till:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-```
-
----
-
-## Förväntade resultat
-
-- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
-- Media Hub delete/rename/move fungerar korrekt
-- Konsekvent beteende över alla admin-dropdowns
-
----
-
-## Validering
-
-Efter implementering:
-1. Testa AI Assist-knappen i AI Chat-inställningar
-2. Testa delete på bilder i Media Hub
-3. Verifiera att inga flickering eller oväntade stängningar sker
