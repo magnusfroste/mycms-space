@@ -256,6 +256,22 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
   },
 };
 
+// Magnet Tool Config
+export interface MagnetToolConfig {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  enabled: boolean;
+}
+
+export const defaultMagnetTools: MagnetToolConfig[] = [
+  { id: 'generate_tailored_cv', name: 'CV Agent', description: 'Analyze job descriptions and generate tailored CVs & cover letters', icon: 'FileText', enabled: true },
+  { id: 'generate_portfolio', name: 'Portfolio Generator', description: 'Create curated portfolio presentations by theme or technology', icon: 'FolderOpen', enabled: true },
+  { id: 'project_deep_dive', name: 'Project Deep Dive', description: 'Provide detailed breakdowns of specific projects', icon: 'Search', enabled: true },
+  { id: 'check_availability', name: 'Availability Checker', description: 'Share availability status and engagement types', icon: 'Calendar', enabled: true },
+];
+
 // AI Module Config - Updated to use integration system
 export interface AIModuleConfig {
   // Active integration for visitor chat
@@ -268,6 +284,9 @@ export interface AIModuleConfig {
   
   // System prompt (sent to all providers)
   system_prompt: string;
+  
+  // Magnet tools
+  magnet_tools?: MagnetToolConfig[];
   
   // Legacy fields (for backwards compatibility)
   webhook_url?: string;
