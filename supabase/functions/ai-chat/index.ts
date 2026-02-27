@@ -659,6 +659,7 @@ Deno.serve(async (req) => {
       systemPrompt,
       siteContext,
       integration,
+      enabledTools,
     } = await req.json();
 
     console.log("AI Chat request:", {
