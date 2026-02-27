@@ -30,9 +30,10 @@ import NewsletterSubscribeBlock from './NewsletterSubscribeBlock';
 import GitHubBlock from './GitHubBlock';
 import SkillsBarBlock from './SkillsBarBlock';
 import ValuesBlock from './ValuesBlock';
+import CvAgentBlock from './CvAgentBlock';
 
 // Block types that should have dividers after them
-const BLOCKS_WITH_DIVIDER = ['hero', 'chat-hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github', 'skills-bar', 'values'];
+const BLOCKS_WITH_DIVIDER = ['hero', 'chat-hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github', 'skills-bar', 'values', 'cv-agent'];
 
 interface BlockRendererProps {
   block: PageBlock;
