@@ -43,6 +43,7 @@ import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
 import GitHubBlockEditor from './GitHubBlockEditor';
+import CvAgentBlockEditor from './CvAgentBlockEditor';
 import SocialLinksEditor from './SocialLinksEditor';
 import SkillsBarEditor from './SkillsBarEditor';
 import ValuesEditor from './ValuesEditor';
