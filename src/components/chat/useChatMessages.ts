@@ -180,7 +180,8 @@ export const useChatMessages = ({
         const botResponse = cleanWebhookResponse(
           data?.output || data?.message || "No response"
         );
-        addBotMessage(botResponse);
+        const artifacts = data?.artifacts as ChatArtifact[] | undefined;
+        addBotMessage(botResponse, artifacts);
         messageCountRef.current += 1;
         
         // Save assistant response to database for history
