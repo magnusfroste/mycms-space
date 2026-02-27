@@ -333,6 +333,52 @@ const AIModuleSettings: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Magnet Tools */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5" />
+            Magnet Tools
+          </CardTitle>
+          <CardDescription>
+            Enable or disable AI tools that Magnet can use during conversations
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(config?.magnet_tools || defaultMagnetTools).map((tool) => {
+            const iconMap: Record<string, React.ReactNode> = {
+              FileText: <FileText className="h-4 w-4 text-muted-foreground" />,
+              FolderOpen: <FolderOpen className="h-4 w-4 text-muted-foreground" />,
+              Search: <Search className="h-4 w-4 text-muted-foreground" />,
+              Calendar: <Calendar className="h-4 w-4 text-muted-foreground" />,
+            };
+            return (
+              <div key={tool.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  {iconMap[tool.icon] || <Wrench className="h-4 w-4 text-muted-foreground" />}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{tool.name}</p>
+                    <p className="text-xs text-muted-foreground">{tool.description}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={tool.enabled}
+                  onCheckedChange={(checked) => {
+                    const tools = (config?.magnet_tools || defaultMagnetTools).map((t) =>
+                      t.id === tool.id ? { ...t, enabled: checked } : t
+                    );
+                    handleConfigUpdate({ magnet_tools: tools });
+                  }}
+                />
+              </div>
+            );
+          })}
+          <p className="text-xs text-muted-foreground pt-1">
+            {(config?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).length} of {(config?.magnet_tools || defaultMagnetTools).length} tools active
+          </p>
+        </CardContent>
+      </Card>
+
       {/* System Prompt - Personality & Behavior */}
       <Card>
         <CardHeader>
