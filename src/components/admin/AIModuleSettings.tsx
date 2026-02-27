@@ -20,8 +20,8 @@ import { useAIChatContext } from '@/hooks/useAIChatContext';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
-import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
-import { integrationsMeta, defaultIntegrations } from '@/types/modules';
+import type { AIModuleConfig, AIIntegrationType, MagnetToolConfig } from '@/types/modules';
+import { integrationsMeta, defaultIntegrations, defaultMagnetTools } from '@/types/modules';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 
