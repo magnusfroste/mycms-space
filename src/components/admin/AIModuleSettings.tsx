@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
