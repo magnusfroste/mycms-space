@@ -98,6 +98,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
         return <SkillsBarBlock config={block_config} />;
       case 'values':
         return <ValuesBlock config={block_config} />;
+      case 'cv-agent':
+        return <CvAgentBlock config={block_config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">

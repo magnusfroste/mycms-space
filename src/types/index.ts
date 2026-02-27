@@ -242,7 +242,8 @@ export type BlockType =
   | 'newsletter-subscribe'
   | 'github'
   | 'skills-bar'
-  | 'values';
+  | 'values'
+  | 'cv-agent';
 
 export interface PageBlock {
   id: string;
