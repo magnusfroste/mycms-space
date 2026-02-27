@@ -164,6 +164,7 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         title: 'Parallax Section',
         content: 'Add content for your parallax section.',
         height: 'md',
+        text_color: 'light',
       };
 
     case 'bento-grid':
