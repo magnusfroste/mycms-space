@@ -23,6 +23,7 @@ interface UseChatMessagesOptions {
   systemPrompt?: string;
   integration?: AIIntegrationType;
   integrationConfig?: AIIntegration;
+  enabledTools?: string[];
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
