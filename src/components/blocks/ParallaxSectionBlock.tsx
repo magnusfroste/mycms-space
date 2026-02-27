@@ -44,11 +44,17 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
     return () => observer.disconnect();
   }, []);
 
-  const heightClasses = {
+  const heightClasses: Record<string, string> = {
     sm: 'min-h-[40vh]',
     md: 'min-h-[60vh]',
+    medium: 'min-h-[60vh]',
     lg: 'min-h-[80vh]',
+    large: 'min-h-[80vh]',
+    full: 'min-h-screen',
   };
+
+  const resolvedTitle = settings.headline || settings.title;
+  const resolvedContent = settings.description || settings.content;
 
   const isLight = settings.text_color !== 'dark';
 
