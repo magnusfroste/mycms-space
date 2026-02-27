@@ -94,6 +94,7 @@ const BLOCK_CATEGORIES = [
       { type: 'cta-banner', name: 'CTA Banner', description: 'Call-to-action with button', icon: ArrowRight },
       { type: 'chat-widget', name: 'Chat Widget', description: 'AI chat for visitors', icon: MessageCircle },
       { type: 'contact-form', name: 'Contact Form', description: 'Form for contact requests', icon: MessageCircle },
+      { type: 'cv-agent', name: 'CV Agent', description: 'AI job-match analysis with CTA', icon: Sparkles },
     ],
   },
   {
