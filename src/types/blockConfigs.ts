@@ -300,6 +300,16 @@ export interface ChatHeroBlockConfig {
   }>;
 }
 
+// CV Agent Block Config
+export interface CvAgentBlockConfig {
+  title?: string;
+  subtitle?: string;
+  badge_text?: string;
+  button_text?: string;
+  placeholder?: string;
+  features?: string[];
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -324,7 +334,8 @@ export type BlockConfigType =
   | BlogBlockConfig
   | NewsletterSubscribeBlockConfig
   | GitHubBlockConfig
-  | ChatHeroBlockConfig;
+  | ChatHeroBlockConfig
+  | CvAgentBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
