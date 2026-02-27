@@ -10,8 +10,10 @@ import { MarkdownContent } from '@/components/common';
 interface ParallaxSectionBlockConfig {
   background_image?: string;
   title?: string;
+  headline?: string;       // legacy alias for title
   content?: string;
-  height?: 'sm' | 'md' | 'lg';
+  description?: string;    // legacy alias for content
+  height?: 'sm' | 'md' | 'lg' | 'medium' | 'large' | 'full';
   text_color?: 'light' | 'dark';
 }
 
