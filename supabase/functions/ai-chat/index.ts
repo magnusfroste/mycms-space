@@ -147,7 +147,7 @@ async function loadResumeContext(): Promise<string | null> {
 }
 
 // ============================================
-// CV Agent Tool Definition
+// Tool Definitions
 // ============================================
 
 const cvAgentTool = {
@@ -164,7 +164,7 @@ const cvAgentTool = {
         },
         summary: {
           type: "string",
-          description: "One-line summary of the match (e.g., 'Strong match in product strategy and AI, gap in specific industry experience')",
+          description: "One-line summary of the match",
         },
         match_analysis: {
           type: "array",
@@ -172,24 +172,128 @@ const cvAgentTool = {
           items: {
             type: "object",
             properties: {
-              skill: { type: "string", description: "Skill or requirement name from the JD" },
-              required_level: { type: "number", description: "How important this skill is for the role (0-100)" },
-              magnus_level: { type: "number", description: "Magnus's proficiency level (0-100)" },
-              category: { type: "string", description: "Category like 'Technical', 'Leadership', 'Domain', 'Soft Skills'" },
+              skill: { type: "string" },
+              required_level: { type: "number" },
+              magnus_level: { type: "number" },
+              category: { type: "string" },
             },
             required: ["skill", "required_level", "magnus_level", "category"],
           },
         },
-        tailored_cv: {
-          type: "string",
-          description: "A tailored CV in markdown format, highlighting the most relevant experience and skills for this specific role",
-        },
-        cover_letter: {
-          type: "string",
-          description: "A professional cover letter in markdown format, tailored to the specific role and company",
-        },
+        tailored_cv: { type: "string", description: "A tailored CV in markdown format" },
+        cover_letter: { type: "string", description: "A professional cover letter in markdown format" },
       },
       required: ["overall_score", "summary", "match_analysis", "tailored_cv", "cover_letter"],
+    },
+  },
+};
+
+const portfolioGeneratorTool = {
+  type: "function" as const,
+  function: {
+    name: "generate_portfolio",
+    description: "Generate a curated portfolio summary based on a specific theme, technology, or audience. Use when a user asks to see relevant work, create a portfolio, or wants a curated selection of projects for a specific purpose.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Portfolio title, e.g. 'AI & Machine Learning Portfolio'" },
+        summary: { type: "string", description: "Brief intro paragraph about this curated portfolio" },
+        projects: {
+          type: "array",
+          description: "Curated list of projects relevant to the theme",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              description: { type: "string", description: "Why this project is relevant to the requested theme" },
+              tech_stack: { type: "array", items: { type: "string" } },
+              highlights: { type: "array", items: { type: "string" }, description: "2-3 key achievements or outcomes" },
+              url: { type: "string" },
+            },
+            required: ["name", "description", "tech_stack", "highlights"],
+          },
+        },
+        skills_highlight: {
+          type: "array",
+          description: "Top skills demonstrated across the curated projects",
+          items: {
+            type: "object",
+            properties: {
+              skill: { type: "string" },
+              proficiency: { type: "number", description: "0-100" },
+            },
+            required: ["skill", "proficiency"],
+          },
+        },
+      },
+      required: ["title", "summary", "projects", "skills_highlight"],
+    },
+  },
+};
+
+const projectDeepDiveTool = {
+  type: "function" as const,
+  function: {
+    name: "project_deep_dive",
+    description: "Provide a comprehensive deep-dive into a specific project. Use when a user asks for details about a particular project, wants to understand the technical decisions, or asks 'tell me more about X project'.",
+    parameters: {
+      type: "object",
+      properties: {
+        project_name: { type: "string" },
+        tagline: { type: "string", description: "One-line project summary" },
+        problem: { type: "string", description: "The problem this project solves" },
+        solution: { type: "string", description: "How it solves it (markdown)" },
+        tech_stack: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              role: { type: "string", description: "What this tech is used for in the project" },
+            },
+            required: ["name", "role"],
+          },
+        },
+        key_features: {
+          type: "array",
+          items: { type: "string" },
+          description: "3-5 notable features or capabilities",
+        },
+        learnings: { type: "string", description: "Key technical learnings or insights (markdown)" },
+        url: { type: "string" },
+      },
+      required: ["project_name", "tagline", "problem", "solution", "tech_stack", "key_features"],
+    },
+  },
+};
+
+const availabilityCheckerTool = {
+  type: "function" as const,
+  function: {
+    name: "check_availability",
+    description: "Check Magnus's availability for projects, consulting, or collaboration. Use when a user asks about availability, booking, hiring, or scheduling.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["available", "limited", "unavailable"], description: "Current availability status" },
+        summary: { type: "string", description: "Brief availability summary" },
+        engagement_types: {
+          type: "array",
+          description: "Types of work Magnus is open to",
+          items: {
+            type: "object",
+            properties: {
+              type: { type: "string", description: "e.g. 'Consulting', 'Full-time', 'Advisory'" },
+              available: { type: "boolean" },
+              details: { type: "string" },
+            },
+            required: ["type", "available", "details"],
+          },
+        },
+        preferred_contact: { type: "string", description: "Best way to reach out" },
+        next_steps: { type: "string", description: "Suggested next steps (markdown)" },
+      },
+      required: ["status", "summary", "engagement_types", "preferred_contact", "next_steps"],
     },
   },
 };
