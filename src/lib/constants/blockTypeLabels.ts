@@ -23,4 +23,5 @@ export const blockTypeLabels: Record<string, string> = {
   'blog': 'Blog Posts',
   'newsletter-subscribe': 'Newsletter',
   'github': 'GitHub Repos',
+  'cv-agent': 'CV Agent ✨',
 };

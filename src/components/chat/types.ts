@@ -5,10 +5,18 @@
 
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 
+// Artifact types for rich structured content in chat
+export interface ChatArtifact {
+  type: 'cv-match' | 'document';
+  title: string;
+  data: Record<string, unknown>;
+}
+
 export interface Message {
   id: string;
   text: string;
   isUser: boolean;
+  artifacts?: ChatArtifact[];
 }
 
 export interface QuickActionConfig {

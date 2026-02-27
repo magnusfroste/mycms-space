@@ -43,6 +43,7 @@ import BentoItemEditor from './BentoItemEditor';
 import StatsItemEditor from './StatsItemEditor';
 import TestimonialItemEditor from './TestimonialItemEditor';
 import GitHubBlockEditor from './GitHubBlockEditor';
+import CvAgentBlockEditor from './CvAgentBlockEditor';
 import SocialLinksEditor from './SocialLinksEditor';
 import SkillsBarEditor from './SkillsBarEditor';
 import ValuesEditor from './ValuesEditor';
@@ -1025,6 +1026,13 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
         return (
           <GitHubBlockEditor
             config={config as unknown as GitHubBlockConfig}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
+        );
+      case 'cv-agent':
+        return (
+          <CvAgentBlockEditor
+            config={config as Record<string, unknown>}
             onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
           />
         );

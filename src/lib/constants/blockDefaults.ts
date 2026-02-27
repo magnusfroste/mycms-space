@@ -246,6 +246,16 @@ export const getDefaultBlockConfig = (blockType: BlockType): Record<string, unkn
         sortBy: 'pushed',
       };
 
+    case 'cv-agent':
+      return {
+        title: 'Is Magnus the Right Fit?',
+        subtitle: 'Paste a job description and let Magnet analyze the match, generate a tailored CV, and write a cover letter — in seconds.',
+        badge_text: 'AI-Powered',
+        button_text: 'Analyze Match',
+        placeholder: 'Paste the job description here...',
+        features: ['Skill Match', 'Tailored CV', 'Cover Letter'],
+      };
+
     default:
       return {};
   }

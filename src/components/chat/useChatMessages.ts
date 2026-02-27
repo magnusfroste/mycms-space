@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
 import { optimizeMessagesForApi } from "./messageOptimizer";
 import { saveChatMessage } from "@/data/chatMessages";
-import type { Message, SiteContext, ChatMessage } from "./types";
+import type { Message, SiteContext, ChatMessage, ChatArtifact } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
 
@@ -124,11 +124,12 @@ export const useChatMessages = ({
     return userMessage;
   }, []);
 
-  const addBotMessage = useCallback((text: string): Message => {
+  const addBotMessage = useCallback((text: string, artifacts?: ChatArtifact[]): Message => {
     const botMessage: Message = {
       id: (Date.now() + 1).toString(),
       text,
       isUser: false,
+      artifacts,
     };
     setMessages((prev) => [...prev, botMessage]);
     return botMessage;
@@ -179,7 +180,8 @@ export const useChatMessages = ({
         const botResponse = cleanWebhookResponse(
           data?.output || data?.message || "No response"
         );
-        addBotMessage(botResponse);
+        const artifacts = data?.artifacts as ChatArtifact[] | undefined;
+        addBotMessage(botResponse, artifacts);
         messageCountRef.current += 1;
         
         // Save assistant response to database for history

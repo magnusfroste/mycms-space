@@ -300,6 +300,16 @@ export interface ChatHeroBlockConfig {
   }>;
 }
 
+// CV Agent Block Config
+export interface CvAgentBlockConfig {
+  title?: string;
+  subtitle?: string;
+  badge_text?: string;
+  button_text?: string;
+  placeholder?: string;
+  features?: string[];
+}
+
 // Union type for all block configs
 export type BlockConfigType =
   | HeroBlockConfig
@@ -324,7 +334,8 @@ export type BlockConfigType =
   | BlogBlockConfig
   | NewsletterSubscribeBlockConfig
   | GitHubBlockConfig
-  | ChatHeroBlockConfig;
+  | ChatHeroBlockConfig
+  | CvAgentBlockConfig;
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -351,6 +362,7 @@ export interface BlockTypeConfigMap {
   'blog': BlogBlockConfig;
   'newsletter-subscribe': NewsletterSubscribeBlockConfig;
   'github': GitHubBlockConfig;
+  'cv-agent': CvAgentBlockConfig;
 }
 
 // Helper type to get config type from block type
@@ -485,5 +497,13 @@ export const defaultBlockConfigs: Partial<BlockTypeConfigMap> = {
     maxRepos: 6,
     layout: 'grid',
     sortBy: 'pushed',
+  },
+  'cv-agent': {
+    title: 'Is Magnus the Right Fit?',
+    subtitle: 'Paste a job description and let Magnet analyze the match.',
+    badge_text: 'AI-Powered',
+    button_text: 'Analyze Match',
+    placeholder: 'Paste the job description here...',
+    features: ['Skill Match', 'Tailored CV', 'Cover Letter'],
   },
 };

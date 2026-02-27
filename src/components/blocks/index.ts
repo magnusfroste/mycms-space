@@ -21,3 +21,4 @@ export { default as NewsletterSubscribeBlock } from './NewsletterSubscribeBlock'
 export { default as GitHubBlock } from './GitHubBlock';
 export { default as SkillsBarBlock } from './SkillsBarBlock';
 export { default as ValuesBlock } from './ValuesBlock';
+export { default as CvAgentBlock } from './CvAgentBlock';

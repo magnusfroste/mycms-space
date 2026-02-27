@@ -5,6 +5,7 @@
 
 import React from "react";
 import { MarkdownContent } from "@/components/common";
+import ChatArtifactComponent from "./ChatArtifact";
 import type { Message } from "./types";
 
 interface ChatMessageProps {
@@ -14,7 +15,7 @@ interface ChatMessageProps {
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div
-      className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+      className={`flex flex-col ${message.isUser ? "items-end" : "items-start"}`}
       data-user-message={message.isUser ? "true" : "false"}
     >
       <div
@@ -30,6 +31,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           <MarkdownContent content={message.text} compact className="text-left" />
         )}
       </div>
+      {/* Render artifacts below the message bubble */}
+      {message.artifacts?.map((artifact, index) => (
+        <div key={index} className="w-full max-w-[95%]">
+          <ChatArtifactComponent artifact={artifact} />
+        </div>
+      ))}
     </div>
   );
 };
