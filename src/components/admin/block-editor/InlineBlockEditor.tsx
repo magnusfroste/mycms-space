@@ -1029,6 +1029,13 @@ const InlineBlockEditor: React.FC<InlineBlockEditorProps> = ({
             onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
           />
         );
+      case 'cv-agent':
+        return (
+          <CvAgentBlockEditor
+            config={config as Record<string, unknown>}
+            onChange={(newConfig) => onBlockConfigChange(newConfig as unknown as Record<string, unknown>)}
+          />
+        );
       default:
         return (
           <div className="text-center py-8 text-muted-foreground">
