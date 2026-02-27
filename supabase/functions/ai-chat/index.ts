@@ -449,7 +449,8 @@ async function handleLovableAI(
   messages: ChatMessage[],
   model: string,
   systemPrompt: string,
-  siteContext: SiteContext | null
+  siteContext: SiteContext | null,
+  enabledTools?: string[]
 ): Promise<{ output: string; artifacts?: unknown[] }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
