@@ -172,6 +172,7 @@ export const useChatMessages = ({
               webhook_url: integration === 'n8n' ? webhookUrl : undefined,
             },
             siteContext: siteContext,
+            enabledTools: enabledTools,
           },
         });
 
