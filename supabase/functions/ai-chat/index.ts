@@ -489,8 +489,17 @@ Always base your analysis on Magnus's actual profile data. Be honest about gaps 
 
   // Add tool calling if resume context is available
   if (resumeContext) {
-    requestBody.tools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
-    requestBody.tool_choice = "auto";
+    const allTools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
+    // Filter tools based on enabledTools if provided
+    const activeTools = enabledTools?.length
+      ? allTools.filter(t => enabledTools.includes(t.function.name))
+      : allTools;
+    
+    if (activeTools.length > 0) {
+      requestBody.tools = activeTools;
+      requestBody.tool_choice = "auto";
+      console.log(`[Magnet] ${activeTools.length} tools enabled: ${activeTools.map(t => t.function.name).join(', ')}`);
+    }
   }
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
