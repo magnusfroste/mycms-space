@@ -720,7 +720,8 @@ Deno.serve(async (req) => {
           messages,
           integration.model || "google/gemini-3-flash-preview",
           customSystemPrompt,
-          siteContext
+          siteContext,
+          enabledTools
         );
         break;
 
