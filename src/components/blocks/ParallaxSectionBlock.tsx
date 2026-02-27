@@ -10,10 +10,8 @@ import { MarkdownContent } from '@/components/common';
 interface ParallaxSectionBlockConfig {
   background_image?: string;
   title?: string;
-  headline?: string;       // legacy alias for title
   content?: string;
-  description?: string;    // legacy alias for content
-  height?: 'sm' | 'md' | 'lg' | 'medium' | 'large' | 'full';
+  height?: 'sm' | 'md' | 'lg';
   text_color?: 'light' | 'dark';
 }
 
@@ -47,14 +45,8 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
   const heightClasses: Record<string, string> = {
     sm: 'min-h-[40vh]',
     md: 'min-h-[60vh]',
-    medium: 'min-h-[60vh]',
     lg: 'min-h-[80vh]',
-    large: 'min-h-[80vh]',
-    full: 'min-h-screen',
   };
-
-  const resolvedTitle = settings.headline || settings.title;
-  const resolvedContent = settings.description || settings.content;
 
   const isLight = settings.text_color !== 'dark';
 
