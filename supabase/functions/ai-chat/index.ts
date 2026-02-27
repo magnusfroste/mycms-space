@@ -449,7 +449,8 @@ async function handleLovableAI(
   messages: ChatMessage[],
   model: string,
   systemPrompt: string,
-  siteContext: SiteContext | null
+  siteContext: SiteContext | null,
+  enabledTools?: string[]
 ): Promise<{ output: string; artifacts?: unknown[] }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
@@ -466,15 +467,23 @@ async function handleLovableAI(
   // Add resume context and tool instructions if available
   if (resumeContext) {
     fullSystemPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
-    fullSystemPrompt += `\n\n## Tool Instructions
-You have several tools available. Use them appropriately:
-
-1. **generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.
-2. **generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.
-3. **project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says "tell me more about X".
-4. **check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.
-
-Always base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+    
+    // Build tool instructions based on enabled tools
+    const toolDescriptions: Record<string, string> = {
+      generate_tailored_cv: "**generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.",
+      generate_portfolio: "**generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.",
+      project_deep_dive: "**project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says 'tell me more about X'.",
+      check_availability: "**check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.",
+    };
+    
+    const activeToolNames = enabledTools?.length
+      ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k))
+      : Object.keys(toolDescriptions);
+    
+    if (activeToolNames.length > 0) {
+      const instructions = activeToolNames.map((name, i) => `${i + 1}. ${toolDescriptions[name]}`).join('\n');
+      fullSystemPrompt += `\n\n## Tool Instructions\nYou have several tools available. Use them appropriately:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+    }
   }
 
   const requestBody: Record<string, unknown> = {
@@ -488,8 +497,17 @@ Always base your analysis on Magnus's actual profile data. Be honest about gaps 
 
   // Add tool calling if resume context is available
   if (resumeContext) {
-    requestBody.tools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
-    requestBody.tool_choice = "auto";
+    const allTools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
+    // Filter tools based on enabledTools if provided
+    const activeTools = enabledTools?.length
+      ? allTools.filter(t => enabledTools.includes(t.function.name))
+      : allTools;
+    
+    if (activeTools.length > 0) {
+      requestBody.tools = activeTools;
+      requestBody.tool_choice = "auto";
+      console.log(`[Magnet] ${activeTools.length} tools enabled: ${activeTools.map(t => t.function.name).join(', ')}`);
+    }
   }
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -659,6 +677,7 @@ Deno.serve(async (req) => {
       systemPrompt,
       siteContext,
       integration,
+      enabledTools,
     } = await req.json();
 
     console.log("AI Chat request:", {
@@ -701,7 +720,8 @@ Deno.serve(async (req) => {
           messages,
           integration.model || "google/gemini-3-flash-preview",
           customSystemPrompt,
-          siteContext
+          siteContext,
+          enabledTools
         );
         break;
 

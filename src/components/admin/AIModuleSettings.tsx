@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -20,8 +20,8 @@ import { useAIChatContext } from '@/hooks/useAIChatContext';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
-import type { AIModuleConfig, AIIntegrationType } from '@/types/modules';
-import { integrationsMeta, defaultIntegrations } from '@/types/modules';
+import type { AIModuleConfig, AIIntegrationType, MagnetToolConfig } from '@/types/modules';
+import { integrationsMeta, defaultIntegrations, defaultMagnetTools } from '@/types/modules';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 
@@ -330,6 +330,52 @@ const AIModuleSettings: React.FC = () => {
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Magnet Tools */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5" />
+            Magnet Tools
+          </CardTitle>
+          <CardDescription>
+            Enable or disable AI tools that Magnet can use during conversations
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {(config?.magnet_tools || defaultMagnetTools).map((tool) => {
+            const iconMap: Record<string, React.ReactNode> = {
+              FileText: <FileText className="h-4 w-4 text-muted-foreground" />,
+              FolderOpen: <FolderOpen className="h-4 w-4 text-muted-foreground" />,
+              Search: <Search className="h-4 w-4 text-muted-foreground" />,
+              Calendar: <Calendar className="h-4 w-4 text-muted-foreground" />,
+            };
+            return (
+              <div key={tool.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  {iconMap[tool.icon] || <Wrench className="h-4 w-4 text-muted-foreground" />}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{tool.name}</p>
+                    <p className="text-xs text-muted-foreground">{tool.description}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={tool.enabled}
+                  onCheckedChange={(checked) => {
+                    const tools = (config?.magnet_tools || defaultMagnetTools).map((t) =>
+                      t.id === tool.id ? { ...t, enabled: checked } : t
+                    );
+                    handleConfigUpdate({ magnet_tools: tools });
+                  }}
+                />
+              </div>
+            );
+          })}
+          <p className="text-xs text-muted-foreground pt-1">
+            {(config?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).length} of {(config?.magnet_tools || defaultMagnetTools).length} tools active
+          </p>
         </CardContent>
       </Card>
 

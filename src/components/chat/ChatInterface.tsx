@@ -27,6 +27,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   integration = "n8n",
   integrationConfig,
   systemPrompt = '',
+  enabledTools,
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -40,6 +41,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     systemPrompt,
     integration,
     integrationConfig,
+    enabledTools,
     onMessagesChange,
     onSessionIdChange,
   });

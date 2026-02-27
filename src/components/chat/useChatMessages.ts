@@ -23,6 +23,7 @@ interface UseChatMessagesOptions {
   systemPrompt?: string;
   integration?: AIIntegrationType;
   integrationConfig?: AIIntegration;
+  enabledTools?: string[];
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
@@ -45,6 +46,7 @@ export const useChatMessages = ({
   systemPrompt = '',
   integration = "n8n",
   integrationConfig,
+  enabledTools,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
@@ -170,6 +172,7 @@ export const useChatMessages = ({
               webhook_url: integration === 'n8n' ? webhookUrl : undefined,
             },
             siteContext: siteContext,
+            enabledTools: enabledTools,
           },
         });
 
@@ -213,6 +216,7 @@ export const useChatMessages = ({
       integrationConfig,
       webhookUrl,
       siteContext,
+      enabledTools,
       addUserMessage,
       addBotMessage,
       ensureChatSessionTracked,

@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { integrationsMeta, type AIIntegrationType } from "@/types/modules";
+import { integrationsMeta, defaultMagnetTools, type AIIntegrationType } from "@/types/modules";
 
 interface Message {
   id: string;
@@ -161,6 +161,7 @@ const Chat = () => {
             integration={selectedIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}
+            enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
           />
         )}
       </main>

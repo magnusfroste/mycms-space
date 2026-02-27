@@ -76,4 +76,5 @@ export interface ChatInterfaceProps {
   integration?: AIIntegrationType;
   integrationConfig?: AIIntegration;
   systemPrompt?: string;
+  enabledTools?: string[];
 }
