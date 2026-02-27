@@ -205,6 +205,22 @@ const VisualBlockItem = ({
         return <SkillsBarBlock config={config} />;
       case 'values':
         return <ValuesBlock config={config} />;
+      case 'cv-agent':
+        return (
+          <section className="py-16 md:py-24">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-12 text-center">
+                <h2 className="text-2xl font-bold mb-2">{(config.title as string) || 'Is Magnus the Right Fit?'}</h2>
+                <p className="text-muted-foreground text-sm mb-4">
+                  {(config.subtitle as string) || 'AI-powered job description analysis'}
+                </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg text-sm">
+                  📋 Job description textarea will appear here in preview
+                </div>
+              </div>
+            </div>
+          </section>
+        );
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
