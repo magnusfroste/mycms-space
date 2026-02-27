@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { integrationsMeta, type AIIntegrationType } from "@/types/modules";
+import { integrationsMeta, defaultMagnetTools, type AIIntegrationType } from "@/types/modules";
 
 interface Message {
   id: string;
