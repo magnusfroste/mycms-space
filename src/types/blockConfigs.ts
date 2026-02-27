@@ -234,10 +234,11 @@ export interface VideoHeroBlockConfig {
 
 // Parallax Section Block Config
 export interface ParallaxSectionBlockConfig {
-  image_url?: string;
+  background_image?: string;
   title?: string;
   content?: string;
   height?: 'sm' | 'md' | 'lg';
+  text_color?: 'light' | 'dark';
 }
 
 // Blog Block Config
@@ -448,8 +449,11 @@ export const defaultBlockConfigs: Partial<BlockTypeConfigMap> = {
     overlay_opacity: 0.5,
   },
   'parallax-section': {
+    background_image: '',
     title: 'Parallax Title',
+    content: '',
     height: 'md',
+    text_color: 'light',
   },
   'blog': {
     display_mode: 'latest',
