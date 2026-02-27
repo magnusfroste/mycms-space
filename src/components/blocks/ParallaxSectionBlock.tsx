@@ -10,8 +10,10 @@ import { MarkdownContent } from '@/components/common';
 interface ParallaxSectionBlockConfig {
   background_image?: string;
   title?: string;
+  headline?: string;       // legacy alias for title
   content?: string;
-  height?: 'sm' | 'md' | 'lg';
+  description?: string;    // legacy alias for content
+  height?: 'sm' | 'md' | 'lg' | 'medium' | 'large' | 'full';
   text_color?: 'light' | 'dark';
 }
 
@@ -42,11 +44,17 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
     return () => observer.disconnect();
   }, []);
 
-  const heightClasses = {
+  const heightClasses: Record<string, string> = {
     sm: 'min-h-[40vh]',
     md: 'min-h-[60vh]',
+    medium: 'min-h-[60vh]',
     lg: 'min-h-[80vh]',
+    large: 'min-h-[80vh]',
+    full: 'min-h-screen',
   };
+
+  const resolvedTitle = settings.headline || settings.title;
+  const resolvedContent = settings.description || settings.content;
 
   const isLight = settings.text_color !== 'dark';
 
@@ -80,18 +88,18 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
             isVisible && 'opacity-100 translate-y-0'
           )}
         >
-          {settings.title && (
+          {resolvedTitle && (
             <h2
               className={cn(
                 'text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight',
                 isLight ? 'text-white' : 'text-foreground'
               )}
             >
-              {settings.title}
+              {resolvedTitle}
             </h2>
           )}
 
-          {settings.content && (
+          {resolvedContent && (
             <div
               className={cn(
                 'text-lg md:text-xl max-w-2xl mx-auto leading-relaxed',
@@ -100,7 +108,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
                 isLight ? 'text-white/80' : 'text-muted-foreground'
               )}
             >
-              <MarkdownContent content={settings.content} />
+              <MarkdownContent content={resolvedContent} />
             </div>
           )}
 
