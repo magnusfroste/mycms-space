@@ -234,10 +234,11 @@ export interface VideoHeroBlockConfig {
 
 // Parallax Section Block Config
 export interface ParallaxSectionBlockConfig {
-  image_url?: string;
+  background_image?: string;
   title?: string;
   content?: string;
   height?: 'sm' | 'md' | 'lg';
+  text_color?: 'light' | 'dark';
 }
 
 // Blog Block Config
