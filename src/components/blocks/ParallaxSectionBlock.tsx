@@ -88,14 +88,14 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
             isVisible && 'opacity-100 translate-y-0'
           )}
         >
-          {settings.title && (
+          {resolvedTitle && (
             <h2
               className={cn(
                 'text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight',
                 isLight ? 'text-white' : 'text-foreground'
               )}
             >
-              {settings.title}
+              {resolvedTitle}
             </h2>
           )}
 
