@@ -463,14 +463,18 @@ async function handleLovableAI(
 
   let fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
 
-  // Add resume context and CV agent instructions if available
+  // Add resume context and tool instructions if available
   if (resumeContext) {
-    fullSystemPrompt += `\n\n## Magnus's Complete Profile (for CV Agent)\n${resumeContext}`;
-    fullSystemPrompt += `\n\n## CV Agent Instructions\nYou have a tool called generate_tailored_cv. When a user pastes a job description or asks you to analyze a role for fit, use this tool to:
-1. Analyze how well Magnus matches the job requirements
-2. Generate a tailored CV highlighting relevant experience
-3. Write a professional cover letter for the role
-Always be honest about gaps while highlighting strengths. Base everything on Magnus's actual profile data above.`;
+    fullSystemPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
+    fullSystemPrompt += `\n\n## Tool Instructions
+You have several tools available. Use them appropriately:
+
+1. **generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.
+2. **generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.
+3. **project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says "tell me more about X".
+4. **check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.
+
+Always base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
   }
 
   const requestBody: Record<string, unknown> = {
@@ -484,7 +488,7 @@ Always be honest about gaps while highlighting strengths. Base everything on Mag
 
   // Add tool calling if resume context is available
   if (resumeContext) {
-    requestBody.tools = [cvAgentTool];
+    requestBody.tools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
     requestBody.tool_choice = "auto";
   }
 
