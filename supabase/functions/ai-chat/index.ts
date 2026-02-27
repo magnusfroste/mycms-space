@@ -1,8 +1,10 @@
 // ============================================
 // Universal AI Chat Edge Function
 // Supports: n8n webhook, Lovable AI, OpenAI, Gemini
-// Features: Modular dynamic context sections
+// Features: Modular dynamic context, CV Agent tool calling
 // ============================================
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,8 +48,154 @@ interface IntegrationConfig {
 }
 
 // ============================================
+// Resume Context Loader (Server-side)
+// ============================================
+
+async function loadResumeContext(): Promise<string | null> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) return null;
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Load all page blocks to find resume/CV content
+    const { data: blocks, error } = await supabase
+      .from("page_blocks")
+      .select("block_type, block_config, page_slug")
+      .eq("enabled", true)
+      .order("order_index");
+
+    if (error || !blocks?.length) {
+      console.log("[CV Agent] No page blocks found for resume context");
+      return null;
+    }
+
+    // Extract text content from all blocks across all pages
+    const sections: string[] = [];
+
+    for (const block of blocks) {
+      const config = block.block_config as Record<string, unknown>;
+      if (!config) continue;
+
+      const pageParts: string[] = [];
+
+      // Extract common text fields
+      if (config.name) pageParts.push(`Name: ${config.name}`);
+      if (config.tagline) pageParts.push(`Tagline: ${config.tagline}`);
+      if (config.intro_text) pageParts.push(`About: ${config.intro_text}`);
+      if (config.additional_text) pageParts.push(`${config.additional_text}`);
+      if (config.title && typeof config.title === 'string') pageParts.push(`${config.title}`);
+      if (config.content && typeof config.content === 'string') pageParts.push(`${config.content}`);
+
+      // Extract skills
+      if (Array.isArray(config.skills)) {
+        const skills = config.skills as Array<{ name?: string; level?: number; category?: string }>;
+        const skillTexts = skills.map(s => `${s.name || ''} (${s.level || 0}%, ${s.category || ''})`);
+        if (skillTexts.length) pageParts.push(`Skills: ${skillTexts.join(', ')}`);
+      }
+
+      // Extract values
+      if (Array.isArray(config.values)) {
+        const vals = config.values as Array<{ title?: string; description?: string }>;
+        const valTexts = vals.map(v => `${v.title}: ${v.description}`);
+        if (valTexts.length) pageParts.push(`Values: ${valTexts.join('; ')}`);
+      }
+
+      // Extract expertise/services
+      if (Array.isArray(config.items)) {
+        const items = config.items as Array<{ title?: string; description?: string }>;
+        const itemTexts = items.filter(i => i.title).map(i => `${i.title}: ${i.description || ''}`);
+        if (itemTexts.length) pageParts.push(`${block.block_type}: ${itemTexts.join('; ')}`);
+      }
+
+      // Extract projects
+      if (Array.isArray(config.projects)) {
+        const projects = config.projects as Array<{
+          title?: string; description?: string;
+          problem_statement?: string; why_built?: string;
+        }>;
+        for (const p of projects) {
+          const parts = [`Project: ${p.title}`];
+          if (p.description) parts.push(p.description);
+          if (p.problem_statement) parts.push(`Problem: ${p.problem_statement}`);
+          if (p.why_built) parts.push(`Why: ${p.why_built}`);
+          pageParts.push(parts.join(' - '));
+        }
+      }
+
+      // Extract features
+      if (Array.isArray(config.features)) {
+        const features = config.features as Array<{ text?: string }>;
+        const featureTexts = features.map(f => f.text).filter(Boolean);
+        if (featureTexts.length) pageParts.push(`Features: ${featureTexts.join(', ')}`);
+      }
+
+      if (pageParts.length) {
+        sections.push(`[${block.page_slug}/${block.block_type}]\n${pageParts.join('\n')}`);
+      }
+    }
+
+    if (!sections.length) return null;
+
+    console.log(`[CV Agent] Loaded resume context: ${sections.length} block sections`);
+    return sections.join('\n\n');
+  } catch (e) {
+    console.error("[CV Agent] Failed to load resume context:", e);
+    return null;
+  }
+}
+
+// ============================================
+// CV Agent Tool Definition
+// ============================================
+
+const cvAgentTool = {
+  type: "function" as const,
+  function: {
+    name: "generate_tailored_cv",
+    description: "Analyze a job description against Magnus's profile and generate a match analysis, tailored CV, and cover letter. Use this tool when a user pastes a job description or asks about job fit.",
+    parameters: {
+      type: "object",
+      properties: {
+        overall_score: {
+          type: "number",
+          description: "Overall match score 0-100 based on how well Magnus fits the job requirements",
+        },
+        summary: {
+          type: "string",
+          description: "One-line summary of the match (e.g., 'Strong match in product strategy and AI, gap in specific industry experience')",
+        },
+        match_analysis: {
+          type: "array",
+          description: "Detailed skill-by-skill match analysis",
+          items: {
+            type: "object",
+            properties: {
+              skill: { type: "string", description: "Skill or requirement name from the JD" },
+              required_level: { type: "number", description: "How important this skill is for the role (0-100)" },
+              magnus_level: { type: "number", description: "Magnus's proficiency level (0-100)" },
+              category: { type: "string", description: "Category like 'Technical', 'Leadership', 'Domain', 'Soft Skills'" },
+            },
+            required: ["skill", "required_level", "magnus_level", "category"],
+          },
+        },
+        tailored_cv: {
+          type: "string",
+          description: "A tailored CV in markdown format, highlighting the most relevant experience and skills for this specific role",
+        },
+        cover_letter: {
+          type: "string",
+          description: "A professional cover letter in markdown format, tailored to the specific role and company",
+        },
+      },
+      required: ["overall_score", "summary", "match_analysis", "tailored_cv", "cover_letter"],
+    },
+  },
+};
+
+// ============================================
 // Context Section Builders (Modular Pattern)
-// Each section can be enabled/disabled independently
 // ============================================
 
 interface ContextSection {
@@ -113,7 +261,6 @@ const contextSections: ContextSection[] = [
 
 // ============================================
 // Dynamic Prompt Builder
-// Only includes sections that have data
 // ============================================
 
 function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext | null): string {
@@ -144,17 +291,16 @@ function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext | null)
   return sections.join('');
 }
 
-// Handler for n8n webhook - now receives full messages array
+// Handler for n8n webhook
 async function handleN8n(
   messages: ChatMessage[],
   sessionId: string,
   webhookUrl: string,
   systemPrompt: string,
   siteContext: SiteContext | null
-): Promise<string> {
+): Promise<{ output: string; artifacts?: unknown[] }> {
   console.log("Calling n8n webhook:", webhookUrl, "with", messages.length, "messages");
 
-  // Build complete payload with full conversation history
   const body: Record<string, unknown> = {
     messages,
     sessionId,
@@ -178,24 +324,29 @@ async function handleN8n(
 
   const data = await response.json();
 
-  // Handle various n8n response formats
+  let output: string;
   if (Array.isArray(data) && data.length > 0) {
-    return data[0]?.output || data[0]?.message || JSON.stringify(data[0]);
+    output = data[0]?.output || data[0]?.message || JSON.stringify(data[0]);
+  } else if (data.output) {
+    output = data.output;
+  } else if (data.message) {
+    output = data.message;
+  } else if (typeof data === "string") {
+    output = data;
+  } else {
+    output = JSON.stringify(data);
   }
-  if (data.output) return data.output;
-  if (data.message) return data.message;
-  if (typeof data === "string") return data;
 
-  return JSON.stringify(data);
+  return { output };
 }
 
-// Handler for Lovable AI
+// Handler for Lovable AI (with tool calling support)
 async function handleLovableAI(
   messages: ChatMessage[],
   model: string,
   systemPrompt: string,
   siteContext: SiteContext | null
-): Promise<string> {
+): Promise<{ output: string; artifacts?: unknown[] }> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
     throw new Error("LOVABLE_API_KEY is not configured");
@@ -203,7 +354,35 @@ async function handleLovableAI(
 
   console.log("Calling Lovable AI with model:", model);
 
-  const fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
+  // Load resume context for CV Agent capability
+  const resumeContext = await loadResumeContext();
+
+  let fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
+
+  // Add resume context and CV agent instructions if available
+  if (resumeContext) {
+    fullSystemPrompt += `\n\n## Magnus's Complete Profile (for CV Agent)\n${resumeContext}`;
+    fullSystemPrompt += `\n\n## CV Agent Instructions\nYou have a tool called generate_tailored_cv. When a user pastes a job description or asks you to analyze a role for fit, use this tool to:
+1. Analyze how well Magnus matches the job requirements
+2. Generate a tailored CV highlighting relevant experience
+3. Write a professional cover letter for the role
+Always be honest about gaps while highlighting strengths. Base everything on Magnus's actual profile data above.`;
+  }
+
+  const requestBody: Record<string, unknown> = {
+    model: model || "google/gemini-3-flash-preview",
+    messages: [
+      { role: "system", content: fullSystemPrompt },
+      ...messages,
+    ],
+    stream: false,
+  };
+
+  // Add tool calling if resume context is available
+  if (resumeContext) {
+    requestBody.tools = [cvAgentTool];
+    requestBody.tool_choice = "auto";
+  }
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -211,14 +390,7 @@ async function handleLovableAI(
       Authorization: `Bearer ${LOVABLE_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: model || "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: fullSystemPrompt },
-        ...messages,
-      ],
-      stream: false,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -233,7 +405,39 @@ async function handleLovableAI(
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "No response from AI.";
+  const choice = data.choices?.[0];
+
+  // Check if the model called the CV tool
+  if (choice?.message?.tool_calls?.length > 0) {
+    const toolCall = choice.message.tool_calls[0];
+    if (toolCall.function?.name === "generate_tailored_cv") {
+      console.log("[CV Agent] Tool called - parsing structured output");
+      try {
+        const toolArgs = JSON.parse(toolCall.function.arguments);
+        const textResponse = choice.message.content || `Here's my analysis of how Magnus matches this role:`;
+
+        return {
+          output: textResponse,
+          artifacts: [{
+            type: "cv-match",
+            title: "CV Match Analysis",
+            data: {
+              overall_score: toolArgs.overall_score,
+              summary: toolArgs.summary,
+              match_analysis: toolArgs.match_analysis,
+              tailored_cv: toolArgs.tailored_cv,
+              cover_letter: toolArgs.cover_letter,
+            },
+          }],
+        };
+      } catch (e) {
+        console.error("[CV Agent] Failed to parse tool call:", e);
+        return { output: choice.message.content || "I tried to analyze the match but encountered an error." };
+      }
+    }
+  }
+
+  return { output: choice?.message?.content || "No response from AI." };
 }
 
 // Handler for OpenAI
@@ -242,7 +446,7 @@ async function handleOpenAI(
   model: string,
   systemPrompt: string,
   siteContext: SiteContext | null
-): Promise<string> {
+): Promise<{ output: string; artifacts?: unknown[] }> {
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not configured in Supabase secrets");
@@ -273,7 +477,7 @@ async function handleOpenAI(
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content || "No response from OpenAI.";
+  return { output: data.choices?.[0]?.message?.content || "No response from OpenAI." };
 }
 
 // Handler for Gemini
@@ -282,7 +486,7 @@ async function handleGemini(
   model: string,
   systemPrompt: string,
   siteContext: SiteContext | null
-): Promise<string> {
+): Promise<{ output: string; artifacts?: unknown[] }> {
   const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not configured in Supabase secrets");
@@ -293,10 +497,8 @@ async function handleGemini(
   const fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
   const geminiModel = model || "gemini-1.5-flash";
 
-  // Convert messages to Gemini format
   const contents = [];
 
-  // Add system instruction as first user message for context
   if (fullSystemPrompt) {
     contents.push({
       role: "user",
@@ -308,7 +510,6 @@ async function handleGemini(
     });
   }
 
-  // Add conversation history
   for (const msg of messages) {
     contents.push({
       role: msg.role === "assistant" ? "model" : "user",
@@ -331,7 +532,7 @@ async function handleGemini(
   }
 
   const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
+  return { output: data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini." };
 }
 
 Deno.serve(async (req) => {
@@ -360,23 +561,21 @@ Deno.serve(async (req) => {
       } : null,
     });
 
-    // Validate integration config
     if (!integration?.type) {
       throw new Error("Integration type is required");
     }
 
-    // Use messages array directly
     const messages: ChatMessage[] = conversationHistory || [];
     const customSystemPrompt = systemPrompt || '';
 
-    let responseText: string;
+    let result: { output: string; artifacts?: unknown[] };
 
     switch (integration.type) {
       case "n8n":
         if (!integration.webhook_url) {
           throw new Error("n8n webhook URL is required");
         }
-        responseText = await handleN8n(
+        result = await handleN8n(
           messages,
           sessionId || "default",
           integration.webhook_url,
@@ -386,7 +585,7 @@ Deno.serve(async (req) => {
         break;
 
       case "lovable":
-        responseText = await handleLovableAI(
+        result = await handleLovableAI(
           messages,
           integration.model || "google/gemini-3-flash-preview",
           customSystemPrompt,
@@ -395,7 +594,7 @@ Deno.serve(async (req) => {
         break;
 
       case "openai":
-        responseText = await handleOpenAI(
+        result = await handleOpenAI(
           messages,
           integration.model || "gpt-4o",
           customSystemPrompt,
@@ -404,7 +603,7 @@ Deno.serve(async (req) => {
         break;
 
       case "gemini":
-        responseText = await handleGemini(
+        result = await handleGemini(
           messages,
           integration.model || "gemini-1.5-flash",
           customSystemPrompt,
@@ -416,10 +615,15 @@ Deno.serve(async (req) => {
         throw new Error(`Unsupported integration type: ${integration.type}`);
     }
 
-    console.log("AI response length:", responseText.length);
+    console.log("AI response length:", result.output.length, "artifacts:", result.artifacts?.length || 0);
+
+    const responseBody: Record<string, unknown> = { output: result.output };
+    if (result.artifacts?.length) {
+      responseBody.artifacts = result.artifacts;
+    }
 
     return new Response(
-      JSON.stringify({ output: responseText }),
+      JSON.stringify(responseBody),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
