@@ -147,7 +147,7 @@ async function loadResumeContext(): Promise<string | null> {
 }
 
 // ============================================
-// CV Agent Tool Definition
+// Tool Definitions
 // ============================================
 
 const cvAgentTool = {
@@ -164,7 +164,7 @@ const cvAgentTool = {
         },
         summary: {
           type: "string",
-          description: "One-line summary of the match (e.g., 'Strong match in product strategy and AI, gap in specific industry experience')",
+          description: "One-line summary of the match",
         },
         match_analysis: {
           type: "array",
@@ -172,24 +172,128 @@ const cvAgentTool = {
           items: {
             type: "object",
             properties: {
-              skill: { type: "string", description: "Skill or requirement name from the JD" },
-              required_level: { type: "number", description: "How important this skill is for the role (0-100)" },
-              magnus_level: { type: "number", description: "Magnus's proficiency level (0-100)" },
-              category: { type: "string", description: "Category like 'Technical', 'Leadership', 'Domain', 'Soft Skills'" },
+              skill: { type: "string" },
+              required_level: { type: "number" },
+              magnus_level: { type: "number" },
+              category: { type: "string" },
             },
             required: ["skill", "required_level", "magnus_level", "category"],
           },
         },
-        tailored_cv: {
-          type: "string",
-          description: "A tailored CV in markdown format, highlighting the most relevant experience and skills for this specific role",
-        },
-        cover_letter: {
-          type: "string",
-          description: "A professional cover letter in markdown format, tailored to the specific role and company",
-        },
+        tailored_cv: { type: "string", description: "A tailored CV in markdown format" },
+        cover_letter: { type: "string", description: "A professional cover letter in markdown format" },
       },
       required: ["overall_score", "summary", "match_analysis", "tailored_cv", "cover_letter"],
+    },
+  },
+};
+
+const portfolioGeneratorTool = {
+  type: "function" as const,
+  function: {
+    name: "generate_portfolio",
+    description: "Generate a curated portfolio summary based on a specific theme, technology, or audience. Use when a user asks to see relevant work, create a portfolio, or wants a curated selection of projects for a specific purpose.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Portfolio title, e.g. 'AI & Machine Learning Portfolio'" },
+        summary: { type: "string", description: "Brief intro paragraph about this curated portfolio" },
+        projects: {
+          type: "array",
+          description: "Curated list of projects relevant to the theme",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              description: { type: "string", description: "Why this project is relevant to the requested theme" },
+              tech_stack: { type: "array", items: { type: "string" } },
+              highlights: { type: "array", items: { type: "string" }, description: "2-3 key achievements or outcomes" },
+              url: { type: "string" },
+            },
+            required: ["name", "description", "tech_stack", "highlights"],
+          },
+        },
+        skills_highlight: {
+          type: "array",
+          description: "Top skills demonstrated across the curated projects",
+          items: {
+            type: "object",
+            properties: {
+              skill: { type: "string" },
+              proficiency: { type: "number", description: "0-100" },
+            },
+            required: ["skill", "proficiency"],
+          },
+        },
+      },
+      required: ["title", "summary", "projects", "skills_highlight"],
+    },
+  },
+};
+
+const projectDeepDiveTool = {
+  type: "function" as const,
+  function: {
+    name: "project_deep_dive",
+    description: "Provide a comprehensive deep-dive into a specific project. Use when a user asks for details about a particular project, wants to understand the technical decisions, or asks 'tell me more about X project'.",
+    parameters: {
+      type: "object",
+      properties: {
+        project_name: { type: "string" },
+        tagline: { type: "string", description: "One-line project summary" },
+        problem: { type: "string", description: "The problem this project solves" },
+        solution: { type: "string", description: "How it solves it (markdown)" },
+        tech_stack: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              role: { type: "string", description: "What this tech is used for in the project" },
+            },
+            required: ["name", "role"],
+          },
+        },
+        key_features: {
+          type: "array",
+          items: { type: "string" },
+          description: "3-5 notable features or capabilities",
+        },
+        learnings: { type: "string", description: "Key technical learnings or insights (markdown)" },
+        url: { type: "string" },
+      },
+      required: ["project_name", "tagline", "problem", "solution", "tech_stack", "key_features"],
+    },
+  },
+};
+
+const availabilityCheckerTool = {
+  type: "function" as const,
+  function: {
+    name: "check_availability",
+    description: "Check Magnus's availability for projects, consulting, or collaboration. Use when a user asks about availability, booking, hiring, or scheduling.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["available", "limited", "unavailable"], description: "Current availability status" },
+        summary: { type: "string", description: "Brief availability summary" },
+        engagement_types: {
+          type: "array",
+          description: "Types of work Magnus is open to",
+          items: {
+            type: "object",
+            properties: {
+              type: { type: "string", description: "e.g. 'Consulting', 'Full-time', 'Advisory'" },
+              available: { type: "boolean" },
+              details: { type: "string" },
+            },
+            required: ["type", "available", "details"],
+          },
+        },
+        preferred_contact: { type: "string", description: "Best way to reach out" },
+        next_steps: { type: "string", description: "Suggested next steps (markdown)" },
+      },
+      required: ["status", "summary", "engagement_types", "preferred_contact", "next_steps"],
     },
   },
 };
@@ -359,14 +463,18 @@ async function handleLovableAI(
 
   let fullSystemPrompt = buildDynamicPrompt(systemPrompt, siteContext);
 
-  // Add resume context and CV agent instructions if available
+  // Add resume context and tool instructions if available
   if (resumeContext) {
-    fullSystemPrompt += `\n\n## Magnus's Complete Profile (for CV Agent)\n${resumeContext}`;
-    fullSystemPrompt += `\n\n## CV Agent Instructions\nYou have a tool called generate_tailored_cv. When a user pastes a job description or asks you to analyze a role for fit, use this tool to:
-1. Analyze how well Magnus matches the job requirements
-2. Generate a tailored CV highlighting relevant experience
-3. Write a professional cover letter for the role
-Always be honest about gaps while highlighting strengths. Base everything on Magnus's actual profile data above.`;
+    fullSystemPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
+    fullSystemPrompt += `\n\n## Tool Instructions
+You have several tools available. Use them appropriately:
+
+1. **generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.
+2. **generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.
+3. **project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says "tell me more about X".
+4. **check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.
+
+Always base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
   }
 
   const requestBody: Record<string, unknown> = {
@@ -380,7 +488,7 @@ Always be honest about gaps while highlighting strengths. Base everything on Mag
 
   // Add tool calling if resume context is available
   if (resumeContext) {
-    requestBody.tools = [cvAgentTool];
+    requestBody.tools = [cvAgentTool, portfolioGeneratorTool, projectDeepDiveTool, availabilityCheckerTool];
     requestBody.tool_choice = "auto";
   }
 
@@ -407,33 +515,37 @@ Always be honest about gaps while highlighting strengths. Base everything on Mag
   const data = await response.json();
   const choice = data.choices?.[0];
 
-  // Check if the model called the CV tool
+  // Check if the model called a tool
   if (choice?.message?.tool_calls?.length > 0) {
     const toolCall = choice.message.tool_calls[0];
-    if (toolCall.function?.name === "generate_tailored_cv") {
-      console.log("[CV Agent] Tool called - parsing structured output");
-      try {
-        const toolArgs = JSON.parse(toolCall.function.arguments);
-        const textResponse = choice.message.content || `Here's my analysis of how Magnus matches this role:`;
+    const toolName = toolCall.function?.name;
+    console.log(`[Magnet] Tool called: ${toolName}`);
+    
+    try {
+      const toolArgs = JSON.parse(toolCall.function.arguments);
+      const textResponse = choice.message.content || "";
 
+      const toolArtifactMap: Record<string, { type: string; title: string }> = {
+        generate_tailored_cv: { type: "cv-match", title: "CV Match Analysis" },
+        generate_portfolio: { type: "portfolio", title: toolArgs.title || "Curated Portfolio" },
+        project_deep_dive: { type: "project-deep-dive", title: toolArgs.project_name || "Project Deep Dive" },
+        check_availability: { type: "availability", title: "Availability" },
+      };
+
+      const artifactMeta = toolArtifactMap[toolName!];
+      if (artifactMeta) {
         return {
-          output: textResponse,
+          output: textResponse || `Here's what I found:`,
           artifacts: [{
-            type: "cv-match",
-            title: "CV Match Analysis",
-            data: {
-              overall_score: toolArgs.overall_score,
-              summary: toolArgs.summary,
-              match_analysis: toolArgs.match_analysis,
-              tailored_cv: toolArgs.tailored_cv,
-              cover_letter: toolArgs.cover_letter,
-            },
+            type: artifactMeta.type,
+            title: artifactMeta.title,
+            data: toolArgs,
           }],
         };
-      } catch (e) {
-        console.error("[CV Agent] Failed to parse tool call:", e);
-        return { output: choice.message.content || "I tried to analyze the match but encountered an error." };
       }
+    } catch (e) {
+      console.error(`[Magnet] Failed to parse tool call ${toolName}:`, e);
+      return { output: choice.message.content || "I tried to process your request but encountered an error." };
     }
   }
 
