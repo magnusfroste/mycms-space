@@ -46,6 +46,7 @@ export const useChatMessages = ({
   systemPrompt = '',
   integration = "n8n",
   integrationConfig,
+  enabledTools,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
