@@ -80,18 +80,18 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
             isVisible && 'opacity-100 translate-y-0'
           )}
         >
-          {resolvedTitle && (
+          {settings.title && (
             <h2
               className={cn(
                 'text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight',
                 isLight ? 'text-white' : 'text-foreground'
               )}
             >
-              {resolvedTitle}
+              {settings.title}
             </h2>
           )}
 
-          {resolvedContent && (
+          {settings.content && (
             <div
               className={cn(
                 'text-lg md:text-xl max-w-2xl mx-auto leading-relaxed',
@@ -100,7 +100,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
                 isLight ? 'text-white/80' : 'text-muted-foreground'
               )}
             >
-              <MarkdownContent content={resolvedContent} />
+              <MarkdownContent content={settings.content} />
             </div>
           )}
 
