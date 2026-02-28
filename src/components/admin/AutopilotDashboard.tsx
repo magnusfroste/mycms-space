@@ -135,9 +135,10 @@ export default function AutopilotDashboard() {
         research: 'Research started',
         blog_draft: 'Blog draft created',
         newsletter_draft: 'Newsletter draft created',
+        scout: 'Source discovery complete',
       };
       toast.success(labels[variables.action] || 'Task completed', {
-        description: data.title || data.subject || data.analysis?.substring(0, 100),
+        description: data.title || data.subject || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
       });
     },
     onError: (error) => {
