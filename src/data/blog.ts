@@ -191,6 +191,11 @@ export const updateBlogPost = async (input: UpdateBlogPostInput): Promise<BlogPo
     await updatePostCategories(id, category_ids);
   }
 
+  // Auto-sync: mark related agent tasks as completed when post is published
+  if ((updates as any).status === 'published') {
+    await syncAgentTaskStatus(id, 'completed');
+  }
+
   return data as BlogPost;
 };
 
