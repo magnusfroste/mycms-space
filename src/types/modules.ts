@@ -21,7 +21,7 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
 // Extensible integration system for AI providers
 // ============================================
 
-export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'ollama' | 'lovable';
+export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'custom' | 'lovable';
 
 // Admin AI Provider type (subset - no n8n tool calls)
 export type AdminAIProvider = 'lovable' | 'openai' | 'gemini';
