@@ -13,6 +13,33 @@ import type {
   UpdateBlogCategoryInput,
 } from '@/types/blog';
 
+// Sync agent task status when a blog post changes state
+const syncAgentTaskStatus = async (postId: string, newStatus: string) => {
+  try {
+    const { data: tasks } = await supabase
+      .from('agent_tasks')
+      .select('id, output_data')
+      .eq('task_type', 'blog_draft')
+      .in('status', ['needs_review', 'pending', 'running']);
+
+    if (!tasks || tasks.length === 0) return;
+
+    const matchingTasks = tasks.filter((t) => {
+      const output = t.output_data as Record<string, unknown> | null;
+      return output?.blog_post_id === postId;
+    });
+
+    for (const task of matchingTasks) {
+      await supabase
+        .from('agent_tasks')
+        .update({ status: newStatus, completed_at: new Date().toISOString() })
+        .eq('id', task.id);
+    }
+  } catch (err) {
+    console.error('Failed to sync agent task status:', err);
+  }
+};
+
 // ============================================
 // Blog Posts
 // ============================================
