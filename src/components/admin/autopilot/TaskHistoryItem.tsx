@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -32,11 +32,12 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   blog_draft: { label: 'Blog Draft', icon: PenSquare },
   newsletter_draft: { label: 'Newsletter', icon: Mail },
   inbox_digest: { label: 'Inbox Digest', icon: Inbox },
+  scout: { label: 'Scout', icon: Radar },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
   const o = task.output_data || {};
-  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject);
+  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources);
 }
 
 // Read-only preview for blog drafts and newsletters
@@ -105,6 +106,82 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
   }
 
   return null;
+}
+
+// Scout source discovery preview
+function ScoutPreview({ task, onUseSources }: { task: AgentTask; onUseSources?: (urls: string[]) => void }) {
+  const o = task.output_data || {};
+  const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
+  const synthesis = (o.synthesis as string) || '';
+  const watchList = (o.watch_list as string[]) || [];
+
+  return (
+    <div className="space-y-3 text-sm">
+      {/* Sources list */}
+      {sources.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
+            {onUseSources && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7"
+                onClick={() => onUseSources(sources.map(s => s.url))}
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Use as Sources
+              </Button>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {sources.map((source, i) => (
+              <div key={i} className="flex items-start gap-2 p-2 rounded border bg-background">
+                <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{source.score}/10</Badge>
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium hover:underline flex items-center gap-1"
+                  >
+                    {source.title}
+                    <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                  </a>
+                  {source.rationale && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{source.rationale}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Watch list */}
+      {watchList.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium">Watch List</p>
+          <div className="flex flex-wrap gap-1">
+            {watchList.map((domain, i) => (
+              <Badge key={i} variant="secondary" className="text-xs">{domain}</Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Synthesis */}
+      {synthesis && (
+        <div className="border-t pt-2">
+          <p className="text-xs font-medium mb-1">Synthesis</p>
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto text-xs">
+            {synthesis.substring(0, 2000)}
+            {synthesis.length > 2000 && '…'}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Editable research preview
@@ -194,9 +271,10 @@ interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
+  onUseSources?: (urls: string[]) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -272,6 +350,8 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
           <div className="pt-3">
             {task.task_type === 'research' ? (
               <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
+            ) : task.task_type === 'scout' ? (
+              <ScoutPreview task={task} onUseSources={onUseSources} />
             ) : (
               <ReadOnlyPreview task={task} />
             )}

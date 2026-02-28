@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
@@ -135,9 +135,10 @@ export default function AutopilotDashboard() {
         research: 'Research started',
         blog_draft: 'Blog draft created',
         newsletter_draft: 'Newsletter draft created',
+        scout: 'Source discovery complete',
       };
       toast.success(labels[variables.action] || 'Task completed', {
-        description: data.title || data.subject || data.analysis?.substring(0, 100),
+        description: data.title || data.subject || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
       });
     },
     onError: (error) => {
@@ -159,6 +160,11 @@ export default function AutopilotDashboard() {
 
   const handleNewsletterDraft = () => {
     runAction.mutate({ action: 'newsletter_draft' });
+  };
+
+  const handleScout = () => {
+    if (!topic.trim()) return toast.error('Enter a topic');
+    runAction.mutate({ action: 'scout', topic: topic.trim() });
   };
 
   const isRunning = runAction.isPending;
@@ -248,6 +254,10 @@ export default function AutopilotDashboard() {
                 {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Mail className="h-4 w-4 mr-1.5" />}
                 Draft Newsletter
               </Button>
+              <Button onClick={handleScout} disabled={isRunning || !topic.trim()} variant="outline" size="sm">
+                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Radar className="h-4 w-4 mr-1.5" />}
+                Scout Sources
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -292,13 +302,17 @@ export default function AutopilotDashboard() {
           ) : tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No tasks yet. Start by researching a topic above.</p>
           ) : (
-            <div className="space-y-2">
+             <div className="space-y-2">
               {tasks.map(task => (
                 <TaskHistoryItem
                   key={task.id}
                   task={task}
                   onPublish={(t) => publishDraft.mutate(t)}
                   isPublishing={publishDraft.isPending}
+                  onUseSources={(urls) => {
+                    setSources(urls.join('\n'));
+                    toast.success(`${urls.length} sources loaded`, { description: 'Ready to use for research or blog drafting' });
+                  }}
                 />
               ))}
             </div>

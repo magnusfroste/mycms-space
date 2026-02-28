@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 interface AutopilotRequest {
-  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow';
+  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow' | 'scout';
   topic?: string;
   sources?: string[];
   taskId?: string;
@@ -366,6 +366,184 @@ Keep it concise (300-500 words), engaging, and valuable.`
 }
 
 // ============================================
+// Scout: Intelligent Source Discovery
+// ============================================
+
+async function handleScout(topic: string, supabase: ReturnType<typeof getSupabase>) {
+  const taskId = crypto.randomUUID();
+  await supabase.from('agent_tasks').insert({
+    id: taskId,
+    task_type: 'scout',
+    status: 'running',
+    input_data: { topic },
+  });
+
+  try {
+    const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+    if (!apiKey) throw new Error('Firecrawl not configured');
+
+    // Step 1: AI generates 3 search angles
+    const anglesRaw = await generateContent(
+      `Topic: "${topic}"`,
+      `You are a research strategist. Given a topic, generate exactly 3 diverse web search queries that would find the highest-signal sources. Cover different angles: technical/academic, industry/news, and tools/community.
+
+Return ONLY a JSON array of 3 strings, nothing else. Example:
+["AI agent frameworks comparison 2026", "agentic AI enterprise adoption trends", "open source AI agent projects GitHub"]`
+    );
+
+    let searchQueries: string[];
+    try {
+      const cleaned = anglesRaw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      searchQueries = JSON.parse(cleaned);
+      if (!Array.isArray(searchQueries)) throw new Error('Not an array');
+    } catch {
+      searchQueries = [
+        `${topic} latest trends 2026`,
+        `${topic} tools frameworks`,
+        `${topic} expert analysis`,
+      ];
+    }
+
+    console.log(`[Scout] Search queries:`, searchQueries);
+
+    // Step 2: Parallel Firecrawl searches
+    const searchPromises = searchQueries.map(async (query) => {
+      try {
+        const res = await fetch('https://api.firecrawl.dev/v1/search', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query, limit: 5 }),
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.data || []).map((item: any) => ({
+          url: item.url,
+          title: item.title || item.url,
+          description: item.description || '',
+          query,
+        }));
+      } catch (e) {
+        console.error(`[Scout] Search failed for "${query}":`, e);
+        return [];
+      }
+    });
+
+    const allResults = (await Promise.all(searchPromises)).flat();
+
+    // Step 3: Deduplicate by domain
+    const seen = new Set<string>();
+    const unique = allResults.filter((r: any) => {
+      try {
+        const domain = new URL(r.url).hostname;
+        if (seen.has(domain)) return false;
+        seen.add(domain);
+        return true;
+      } catch { return false; }
+    });
+
+    console.log(`[Scout] ${allResults.length} raw results -> ${unique.length} unique domains`);
+
+    // Step 4: AI ranking
+    const rankingPrompt = `Rank these sources for the topic "${topic}". Score each 1-10 on relevance, authority, and freshness. Return ONLY a JSON array sorted by score descending.
+
+Sources:
+${unique.map((s: any, i: number) => `${i + 1}. ${s.title} - ${s.url}\n   ${s.description}`).join('\n')}
+
+Return format (JSON array only, no markdown):
+[{"url":"...","title":"...","score":9,"rationale":"Why this source is valuable"}]
+
+Return top 8 maximum.`;
+
+    const rankingRaw = await generateContent(rankingPrompt, 'You are a source quality analyst. Return only valid JSON.');
+
+    let rankedSources: Array<{ url: string; title: string; score: number; rationale: string }>;
+    try {
+      const cleaned = rankingRaw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+      rankedSources = JSON.parse(cleaned);
+      if (!Array.isArray(rankedSources)) throw new Error('Not an array');
+    } catch {
+      // Fallback: use first 8 unique results without AI ranking
+      rankedSources = unique.slice(0, 8).map((s: any) => ({
+        url: s.url,
+        title: s.title,
+        score: 5,
+        rationale: 'Auto-discovered',
+      }));
+    }
+
+    // Step 5: Deep-scrape top 5
+    const toScrape = rankedSources.slice(0, 5);
+    const scrapePromises = toScrape.map(async (source) => {
+      try {
+        const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: source.url, formats: ['markdown'], onlyMainContent: true }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return {
+          url: source.url,
+          title: source.title,
+          markdown: (data.data?.markdown || data.markdown || '').substring(0, 2000),
+        };
+      } catch {
+        return null;
+      }
+    });
+
+    const scraped = (await Promise.all(scrapePromises)).filter(Boolean);
+
+    // Step 6: AI synthesis
+    const synthesisPrompt = `Based on deep-reading these ${scraped.length} sources about "${topic}", provide:
+
+${scraped.map((s: any) => `## ${s.title}\n${s.markdown}`).join('\n\n---\n\n')}
+
+Create a synthesis with:
+1. **Key Takeaways** (3-5 bullet points of the most important insights)
+2. **Watch List** (domains/publications worth following regularly for this topic)
+3. **Content Angles** (2-3 specific blog post ideas based on what's trending)
+
+Be concise and actionable.`;
+
+    const synthesis = await generateContent(synthesisPrompt, 'You are a research analyst creating an intelligence brief.');
+
+    // Extract watch list domains
+    const watchList = rankedSources.slice(0, 5).map((s) => {
+      try { return new URL(s.url).hostname; } catch { return s.url; }
+    });
+
+    // Save results
+    await supabase.from('agent_tasks').update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      output_data: {
+        topic,
+        sources: rankedSources,
+        synthesis,
+        watch_list: watchList,
+        search_queries: searchQueries,
+        scraped_count: scraped.length,
+      },
+    }).eq('id', taskId);
+
+    return { success: true, taskId, sources: rankedSources, synthesis };
+  } catch (e) {
+    await supabase.from('agent_tasks').update({
+      status: 'failed',
+      output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
+    }).eq('id', taskId);
+    throw e;
+  }
+}
+
+// ============================================
 // Workflow Handlers
 // ============================================
 
@@ -472,6 +650,11 @@ Deno.serve(async (req) => {
 
       case 'newsletter_draft':
         result = await handleNewsletterDraft(supabase);
+        break;
+
+      case 'scout':
+        if (!effectiveTopic) throw new Error('Topic required for scout');
+        result = await handleScout(effectiveTopic, supabase);
         break;
 
       default:
