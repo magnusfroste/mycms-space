@@ -54,6 +54,7 @@ const integrationColors: Record<IntegrationType, string> = {
   firecrawl: 'text-amber-500',
   resend: 'text-indigo-500',
   github: 'text-gray-700 dark:text-gray-300',
+  gmail: 'text-red-500',
 };
 
 const IntegrationsManager: React.FC = () => {
