@@ -114,7 +114,6 @@ const IntegrationsManager: React.FC = () => {
   const currentIntegrationConfig = config?.integration || defaultIntegrations.n8n;
 
   // Check if an integration is properly configured
-  // Note: For OpenAI/Gemini we show "Requires secret" since we can't check Supabase secrets from client
   const isIntegrationConfigured = (type: IntegrationType): boolean | 'requires_secret' | 'connected' => {
     switch (type) {
       case 'n8n': {
@@ -124,24 +123,19 @@ const IntegrationsManager: React.FC = () => {
         return !!webhookUrl && webhookUrl.trim().length > 0;
       }
       case 'lovable':
-        // Lovable is always configured (no API key needed)
-        return true;
+        return false; // Not available for self-hosted
       case 'openai':
       case 'gemini':
-        // These require Supabase secrets - we can't verify from client
-        return 'requires_secret';
+        // If it's the active integration, it's working (edge function validates the key)
+        // Otherwise show as ready (secrets are managed in backend)
+        return activeIntegration === type ? 'connected' : true;
       case 'firecrawl':
-      case 'resend':
-        // These are connected via secrets/connectors - verified externally
         return 'connected';
       case 'resend':
-        // Resend requires RESEND_API_KEY secret
-        return 'requires_secret';
+        return 'connected';
       case 'github':
-        // GitHub is configured if username is set and module is enabled
         return !!(githubModule?.enabled && githubConfig?.username);
       case 'custom': {
-        // Check for base_url
         if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
         }
