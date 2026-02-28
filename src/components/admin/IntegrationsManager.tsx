@@ -154,7 +154,7 @@ const IntegrationsManager: React.FC = () => {
 
   // Check if this is an AI integration (can be activated for chat)
   const isAIIntegration = (type: IntegrationType): type is AIIntegrationType => {
-    return ['n8n', 'lovable', 'openai', 'gemini', 'ollama'].includes(type);
+    return ['n8n', 'lovable', 'openai', 'gemini', 'custom'].includes(type);
   };
 
   // Toggle GitHub integration
