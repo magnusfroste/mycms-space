@@ -104,9 +104,9 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'lovable',
     name: 'Lovable AI',
-    description: 'Built-in AI using Lovable gateway (no API key needed)',
+    description: 'Requires Lovable Cloud — not available for self-hosted deployments',
     icon: 'Sparkles',
-    available: true,
+    available: false,
     category: 'ai',
   },
   {
