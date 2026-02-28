@@ -289,48 +289,14 @@ export default function AutopilotDashboard() {
             <p className="text-sm text-muted-foreground text-center py-8">No tasks yet. Start by researching a topic above.</p>
           ) : (
             <div className="space-y-2">
-              {tasks.map(task => {
-                const status = statusConfig[task.status] || statusConfig.pending;
-                const type = taskTypeLabels[task.task_type] || taskTypeLabels.research;
-                const StatusIcon = status.icon;
-                const TypeIcon = type.icon;
-                const inputData = task.input_data || {};
-                const outputData = task.output_data || {};
-
-                return (
-                  <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors">
-                    <TypeIcon className="h-4 w-4 mt-1 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{type.label}</span>
-                        <Badge variant={status.variant} className="text-xs">
-                          <StatusIcon className={`h-3 w-3 mr-1 ${task.status === 'running' ? 'animate-spin' : ''}`} />
-                          {status.label}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate mt-0.5">
-                        {(inputData.topic as string) || (outputData.title as string) || (outputData.subject as string) || task.task_type}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(task.created_at), 'MMM d, HH:mm')}
-                        {task.completed_at && ` · Done ${format(new Date(task.completed_at), 'HH:mm')}`}
-                      </p>
-                    </div>
-                    {task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && (outputData.slug as string) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 text-xs"
-                        disabled={publishDraft.isPending}
-                        onClick={() => publishDraft.mutate(task)}
-                      >
-                        {publishDraft.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
-                        Publish
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
+              {tasks.map(task => (
+                <TaskHistoryItem
+                  key={task.id}
+                  task={task}
+                  onPublish={(t) => publishDraft.mutate(t)}
+                  isPublishing={publishDraft.isPending}
+                />
+              ))}
             </div>
           )}
         </CardContent>
