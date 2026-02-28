@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, Clock, CheckCircle, AlertCircle, Eye, RefreshCw, Settings2, Save } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, Clock, CheckCircle, AlertCircle, Eye, RefreshCw, Settings2, Save, Rocket } from 'lucide-react';
 import { format } from 'date-fns';
 
 type AgentTask = {
