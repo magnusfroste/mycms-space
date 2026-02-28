@@ -302,13 +302,17 @@ export default function AutopilotDashboard() {
           ) : tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No tasks yet. Start by researching a topic above.</p>
           ) : (
-            <div className="space-y-2">
+             <div className="space-y-2">
               {tasks.map(task => (
                 <TaskHistoryItem
                   key={task.id}
                   task={task}
                   onPublish={(t) => publishDraft.mutate(t)}
                   isPublishing={publishDraft.isPending}
+                  onUseSources={(urls) => {
+                    setSources(urls.join('\n'));
+                    toast.success(`${urls.length} sources loaded`, { description: 'Ready to use for research or blog drafting' });
+                  }}
                 />
               ))}
             </div>
