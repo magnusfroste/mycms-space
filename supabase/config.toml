@@ -29,3 +29,12 @@ verify_jwt = false
 
 [functions.og-blog]
 verify_jwt = false
+
+[functions.agent-autopilot]
+verify_jwt = false
+
+[functions.gmail-oauth-callback]
+verify_jwt = false
+
+[functions.agent-inbox-scan]
+verify_jwt = false

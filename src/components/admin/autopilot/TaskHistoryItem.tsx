@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   research: { label: 'Research', icon: Search },
   blog_draft: { label: 'Blog Draft', icon: PenSquare },
   newsletter_draft: { label: 'Newsletter', icon: Mail },
+  inbox_digest: { label: 'Inbox Digest', icon: Inbox },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
@@ -72,6 +73,31 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
           <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
             {(o.content as string).substring(0, 2000)}
             {(o.content as string).length > 2000 && '…'}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (task.task_type === 'inbox_digest') {
+    return (
+      <div className="space-y-2 text-sm">
+        {o.email && <p className="text-xs text-muted-foreground">Account: {o.email as string}</p>}
+        <p className="text-xs text-muted-foreground">{o.signal_count as number} signals · {o.scan_period_days as number} day scan</p>
+        {o.analysis && (
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+            {(o.analysis as string).substring(0, 2000)}
+            {(o.analysis as string).length > 2000 && '…'}
+          </div>
+        )}
+        {(o.suggested_topics as string[])?.length > 0 && (
+          <div className="space-y-1 mt-2">
+            <p className="text-xs font-medium">Suggested blog topics:</p>
+            <div className="flex flex-wrap gap-1">
+              {(o.suggested_topics as string[]).map((t, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{t}</Badge>
+              ))}
+            </div>
           </div>
         )}
       </div>

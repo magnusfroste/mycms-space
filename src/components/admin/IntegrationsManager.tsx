@@ -6,7 +6,9 @@
 
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +44,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   firecrawl: <Globe className="h-5 w-5" />,
   resend: <Mail className="h-5 w-5" />,
   github: <Github className="h-5 w-5" />,
+  gmail: <Mail className="h-5 w-5" />,
 };
 
 const integrationColors: Record<IntegrationType, string> = {
@@ -53,6 +56,7 @@ const integrationColors: Record<IntegrationType, string> = {
   firecrawl: 'text-amber-500',
   resend: 'text-indigo-500',
   github: 'text-gray-700 dark:text-gray-300',
+  gmail: 'text-red-500',
 };
 
 const IntegrationsManager: React.FC = () => {
@@ -61,6 +65,18 @@ const IntegrationsManager: React.FC = () => {
   const updateModule = useUpdateAIModule();
   const updateGitHubModule = useUpdateGitHubModule();
   const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
+
+  // Gmail connection status
+  const { data: gmailStatus } = useQuery({
+    queryKey: ['gmail-status'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
+        body: { action: 'status' },
+      });
+      if (error) return { connected: false, email: null, connected_at: null };
+      return data as { connected: boolean; email: string | null; connected_at: string | null };
+    },
+  });
 
   const handleConfigUpdate = (updates: Partial<AIModuleConfig>) => {
     if (!config) return;
@@ -135,6 +151,8 @@ const IntegrationsManager: React.FC = () => {
         return 'connected';
       case 'github':
         return !!(githubModule?.enabled && githubConfig?.username);
+      case 'gmail':
+        return gmailStatus?.connected ? 'connected' : false;
       case 'custom': {
         if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
@@ -291,7 +309,7 @@ const IntegrationsManager: React.FC = () => {
             const isExpanded = expandedIntegration === integration.type;
             const isAvailable = integration.available;
             const isConfigured = isIntegrationConfigured(integration.type);
-            const isActive = integration.type === 'github' && githubModule?.enabled;
+            const isActive = (integration.type === 'github' && githubModule?.enabled) || (integration.type === 'gmail' && gmailStatus?.connected);
             
             return (
               <IntegrationCard
@@ -306,9 +324,14 @@ const IntegrationsManager: React.FC = () => {
                     toggleGitHubIntegration(true);
                     setExpandedIntegration('github');
                   }
+                  if (integration.type === 'gmail') {
+                    // Open OAuth flow in new window
+                    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+                    window.open(url, '_blank', 'width=600,height=700');
+                  }
                 }}
                 onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                showActivate={integration.type === 'github' && !githubModule?.enabled}
+                showActivate={(integration.type === 'github' && !githubModule?.enabled) || (integration.type === 'gmail' && !gmailStatus?.connected)}
               >
                 {integration.type === 'github' && (
                   <GitHubSourceConfig 
@@ -316,6 +339,13 @@ const IntegrationsManager: React.FC = () => {
                     enabled={githubModule?.enabled ?? false}
                     onConfigUpdate={handleGitHubConfigUpdate}
                     onToggle={toggleGitHubIntegration}
+                  />
+                )}
+                {integration.type === 'gmail' && (
+                  <GmailSourceConfig
+                    connected={gmailStatus?.connected ?? false}
+                    email={gmailStatus?.email ?? null}
+                    connectedAt={gmailStatus?.connected_at ?? null}
                   />
                 )}
               </IntegrationCard>
@@ -898,6 +928,95 @@ const ManageReposLink: React.FC = () => {
       Manage Repositories
       <span className="ml-auto text-xs text-muted-foreground">Select & enrich repos</span>
     </Button>
+  );
+};
+
+// ============================================
+// Gmail Source Config Component
+// ============================================
+const GmailSourceConfig: React.FC<{
+  connected: boolean;
+  email: string | null;
+  connectedAt: string | null;
+}> = ({ connected, email, connectedAt }) => {
+  const queryClient = useQueryClient();
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await supabase.functions.invoke('gmail-oauth-callback', {
+        body: { action: 'disconnect' },
+      });
+      queryClient.invalidateQueries({ queryKey: ['gmail-status'] });
+      toast.success('Gmail disconnected');
+    } catch {
+      toast.error('Failed to disconnect');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const handleConnect = () => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+    window.open(url, '_blank', 'width=600,height=700');
+  };
+
+  const handleScan = async () => {
+    try {
+      toast.info('Scanning inbox...');
+      const { data, error } = await supabase.functions.invoke('agent-inbox-scan', {
+        body: { action: 'scan' },
+      });
+      if (error) throw error;
+      toast.success(`Scan complete: ${data.signalCount} signals found`);
+    } catch (e) {
+      toast.error('Scan failed', { description: e instanceof Error ? e.message : 'Unknown error' });
+    }
+  };
+
+  if (connected) {
+    return (
+      <div className="space-y-4">
+        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">Connected</p>
+          {email && <p className="text-xs text-green-600 dark:text-green-400 mt-1">{email}</p>}
+          {connectedAt && <p className="text-xs text-muted-foreground mt-1">Since {new Date(connectedAt).toLocaleDateString()}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Gmail signals are harvested for LinkedIn notifications and newsletters. Configure senders and scan frequency in the Autopilot dashboard.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleScan}>
+              <Search className="h-3 w-3 mr-1" />
+              Scan Now
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
+              {disconnecting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+              Disconnect
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Connect your Gmail account to harvest signals from LinkedIn notifications, newsletters, and industry updates. Only metadata and snippets are read — never full email content.
+      </p>
+      <div className="text-xs text-muted-foreground space-y-1">
+        <p>• Requires <code>gmail.readonly</code> scope</p>
+        <p>• Filters to specific senders (LinkedIn, newsletters)</p>
+        <p>• Privacy-first: only AI summaries are stored</p>
+      </div>
+      <Button size="sm" onClick={handleConnect}>
+        Connect Gmail
+      </Button>
+    </div>
   );
 };
 

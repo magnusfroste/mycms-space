@@ -162,6 +162,15 @@ export const integrationsMeta: IntegrationMeta[] = [
     docs: 'https://docs.github.com/en/rest',
     category: 'source',
   },
+  {
+    type: 'gmail',
+    name: 'Gmail Signals',
+    description: 'Harvest LinkedIn and newsletter signals from Gmail for content generation',
+    icon: 'Mail',
+    available: true,
+    docs: 'https://developers.google.com/gmail/api',
+    category: 'source',
+  },
 ];
 
 // ============================================
@@ -171,10 +180,10 @@ export const integrationsMeta: IntegrationMeta[] = [
 export type UtilityIntegrationType = 'firecrawl' | 'resend';
 
 // ============================================
-// Source Integration Types (GitHub, etc.)
+// Source Integration Types (GitHub, Gmail, etc.)
 // ============================================
 
-export type SourceIntegrationType = 'github';
+export type SourceIntegrationType = 'github' | 'gmail';
 
 export interface SourceIntegrationBase {
   type: SourceIntegrationType;
@@ -186,13 +195,24 @@ export interface GitHubSourceIntegration extends SourceIntegrationBase {
   username: string;
 }
 
-export type SourceIntegration = GitHubSourceIntegration;
+export interface GmailSourceIntegration extends SourceIntegrationBase {
+  type: 'gmail';
+  email?: string;
+  connected?: boolean;
+  connected_at?: string;
+}
+
+export type SourceIntegration = GitHubSourceIntegration | GmailSourceIntegration;
 
 export const defaultSourceIntegrations: Record<SourceIntegrationType, SourceIntegration> = {
   github: {
     type: 'github',
     enabled: false,
     username: '',
+  },
+  gmail: {
+    type: 'gmail',
+    enabled: false,
   },
 };
 
