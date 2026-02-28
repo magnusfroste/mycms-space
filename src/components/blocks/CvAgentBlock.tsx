@@ -45,6 +45,7 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
             id: Date.now().toString(),
             text: jobDescription.trim(),
             isUser: true,
+            source: 'cv-agent' as const,
           },
         ],
       },
