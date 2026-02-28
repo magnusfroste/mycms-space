@@ -472,7 +472,7 @@ interface TaskHistoryItemProps {
   onUseTopic?: (topic: string) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction, onUseTopic }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
