@@ -41,7 +41,7 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
 
 function hasPreviewContent(task: AgentTask): boolean {
   const o = task.output_data || {};
-  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources);
+  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources || o.tweets || o.channels || o.brief);
 }
 
 // Read-only preview for blog drafts and newsletters
