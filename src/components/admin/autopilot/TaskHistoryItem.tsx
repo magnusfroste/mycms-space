@@ -37,6 +37,7 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   linkedin_post: { label: 'LinkedIn', icon: ExternalLink },
   x_thread: { label: 'X Thread', icon: ExternalLink },
   multichannel_draft: { label: 'Multichannel', icon: Radar },
+  signal: { label: 'Signal', icon: Zap },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
