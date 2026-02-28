@@ -72,7 +72,7 @@ export default function AutopilotDashboard() {
 
   const saveConfig = useMutation({
     mutationFn: async () => {
-      const config: AutopilotConfig = {
+      const config = {
         default_topic: configTopic.trim(),
         default_sources: configSources.split('\n').map(s => s.trim()).filter(Boolean),
       };
@@ -80,13 +80,13 @@ export default function AutopilotDashboard() {
       if (configData?.id) {
         const { error } = await supabase
           .from('modules')
-          .update({ module_config: config as unknown as Record<string, unknown> })
+          .update({ module_config: config as any })
           .eq('id', configData.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('modules')
-          .insert({ module_type: 'autopilot', module_config: config as unknown as Record<string, unknown>, enabled: true });
+          .insert([{ module_type: 'autopilot', module_config: config as any, enabled: true }]);
         if (error) throw error;
       }
     },
