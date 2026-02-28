@@ -17,6 +17,7 @@ export interface Message {
   text: string;
   isUser: boolean;
   artifacts?: ChatArtifact[];
+  source?: 'cv-agent' | 'user';
 }
 
 export interface QuickActionConfig {
