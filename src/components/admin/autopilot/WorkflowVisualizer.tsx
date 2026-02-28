@@ -176,15 +176,36 @@ function WorkflowRow({
   cronJob,
   lastRun,
   onToggle,
+  onUpdateSchedule,
   isToggling,
+  isUpdating,
 }: {
   workflow: WorkflowDef;
   cronJob: CronJob;
   lastRun?: { status: string; created_at: string };
   onToggle: (jobName: string, active: boolean) => void;
+  onUpdateSchedule: (jobName: string, schedule: string) => void;
   isToggling: boolean;
+  isUpdating: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(cronJob.schedule);
+
+  const handleSave = () => {
+    if (draft.trim() && draft !== cronJob.schedule) {
+      onUpdateSchedule(cronJob.jobname, draft.trim());
+    }
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') { setDraft(cronJob.schedule); setEditing(false); }
+  };
+
+  // Sync draft when external data changes
+  if (!editing && draft !== cronJob.schedule) setDraft(cronJob.schedule);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -233,13 +254,40 @@ function WorkflowRow({
           ))}
         </div>
 
-        {/* Collapsible details */}
+        {/* Collapsible details with inline schedule editing */}
         <CollapsibleContent>
-          <div className="pt-2 border-t space-y-2 text-xs text-muted-foreground">
+          <div className="pt-2 border-t space-y-3 text-xs text-muted-foreground">
+            {/* Schedule editor */}
+            <div className="space-y-1.5">
+              <span className="font-medium text-foreground">Schedule</span>
+              {editing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleSave}
+                    className="h-7 text-xs font-mono max-w-[180px]"
+                    placeholder="0 6 * * *"
+                    autoFocus
+                  />
+                  <span className="text-[10px] opacity-60">{cronToHuman(draft)}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded border border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors group"
+                >
+                  <code className="text-xs font-mono">{cronJob.schedule}</code>
+                  <span className="text-[10px] opacity-60">({cronToHuman(cronJob.schedule)})</span>
+                  <PenSquare className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                </button>
+              )}
+              {isUpdating && <span className="text-[10px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>}
+            </div>
+
+            {/* Other details */}
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="font-medium">Schedule:</span> {cronJob.schedule}
-              </div>
               <div>
                 <span className="font-medium">Status:</span> {cronJob.active ? 'Active' : 'Paused'}
               </div>
@@ -295,6 +343,20 @@ export default function WorkflowVisualizer() {
     onError: (e) => toast.error('Failed to toggle workflow', { description: e.message }),
   });
 
+  const scheduleMutation = useMutation({
+    mutationFn: async ({ jobName, schedule }: { jobName: string; schedule: string }) => {
+      const { error } = await supabase.functions.invoke('agent-autopilot', {
+        body: { action: 'toggle_workflow', jobName, active: true, schedule },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['autopilot-workflows'] });
+      toast.success('Schedule updated');
+    },
+    onError: (e) => toast.error('Failed to update schedule', { description: e.message }),
+  });
+
   const cronJobs = data?.cronJobs || [];
   const workflows = buildWorkflows(cronJobs);
   const cronMap = Object.fromEntries(cronJobs.map((j) => [j.jobname, j]));
@@ -344,7 +406,9 @@ export default function WorkflowVisualizer() {
                 cronJob={cronMap[wf.jobName] || { jobid: 0, jobname: wf.jobName, schedule: '?', active: false, command: '' }}
                 lastRun={data?.lastRun?.[wf.id.split('-')[0]] as any}
                 onToggle={(name, active) => toggleMutation.mutate({ jobName: name, active })}
+                onUpdateSchedule={(name, schedule) => scheduleMutation.mutate({ jobName: name, schedule })}
                 isToggling={toggleMutation.isPending}
+                isUpdating={scheduleMutation.isPending}
               />
             ))}
           </div>
