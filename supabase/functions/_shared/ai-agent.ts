@@ -153,7 +153,7 @@ export const providerEndpoints: Record<string, { url: string; envKey: string; de
 // ============================================
 
 /** Resolve provider config: endpoint, API key, model */
-function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
+export function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
   // Custom self-hosted endpoint
   if (config.provider === 'custom') {
     if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
