@@ -25,6 +25,39 @@ function getSupabase() {
 }
 
 // ============================================
+// Config Loader
+// ============================================
+
+interface AutopilotConfig {
+  default_topic: string;
+  default_sources: string[];
+  enabled: boolean;
+}
+
+const DEFAULT_CONFIG: AutopilotConfig = {
+  default_topic: 'AI agents, agentic web, digital twins trends',
+  default_sources: ['https://news.ycombinator.com'],
+  enabled: true,
+};
+
+async function loadConfig(supabase: ReturnType<typeof getSupabase>): Promise<AutopilotConfig> {
+  const { data } = await supabase
+    .from('modules')
+    .select('module_config, enabled')
+    .eq('module_type', 'autopilot')
+    .single();
+
+  if (!data) return DEFAULT_CONFIG;
+
+  const config = data.module_config as Record<string, unknown> || {};
+  return {
+    default_topic: (config.default_topic as string) || DEFAULT_CONFIG.default_topic,
+    default_sources: (config.default_sources as string[]) || DEFAULT_CONFIG.default_sources,
+    enabled: data.enabled ?? true,
+  };
+}
+
+// ============================================
 // Firecrawl Research
 // ============================================
 
