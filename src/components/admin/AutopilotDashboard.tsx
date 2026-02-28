@@ -111,6 +111,30 @@ export default function AutopilotDashboard() {
     },
   });
 
+  const publishDraft = useMutation({
+    mutationFn: async (task: AgentTask) => {
+      const output = task.output_data || {};
+      const slug = (output.slug as string) || '';
+      if (!slug) throw new Error('No slug found in task output');
+
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({ status: 'published', published_at: new Date().toISOString() })
+        .eq('slug', slug);
+      if (error) throw error;
+
+      await supabase
+        .from('agent_tasks')
+        .update({ status: 'completed' })
+        .eq('id', task.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agent-tasks'] });
+      toast.success('Blog post published!');
+    },
+    onError: (e) => toast.error('Failed to publish', { description: e.message }),
+  });
+
   const runAction = useMutation({
     mutationFn: async ({ action, topic, sources }: { action: string; topic?: string; sources?: string[] }) => {
       const { data, error } = await supabase.functions.invoke('agent-autopilot', {
