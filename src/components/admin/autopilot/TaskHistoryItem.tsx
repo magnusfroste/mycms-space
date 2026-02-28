@@ -41,6 +41,7 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
+  if (task.task_type === 'signal') return true;
   const o = task.output_data || {};
   return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources || o.tweets || o.channels || o.brief);
 }
