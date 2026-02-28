@@ -546,7 +546,9 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
       {expanded && canExpand && (
         <div className="px-3 pb-3 pl-10 border-t bg-muted/30">
           <div className="pt-3">
-            {task.task_type === 'research' ? (
+            {task.task_type === 'signal' ? (
+              <SignalPreview task={task} onUseTopic={onUseTopic} />
+            ) : task.task_type === 'research' ? (
               <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
             ) : task.task_type === 'scout' ? (
               <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
