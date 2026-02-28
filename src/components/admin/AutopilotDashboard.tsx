@@ -274,6 +274,34 @@ export default function AutopilotDashboard() {
                 Scout Sources
               </Button>
             </div>
+            {/* Channel Selector for Multichannel */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Multichannel</span>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { id: 'blog', label: 'Blog' },
+                  { id: 'newsletter', label: 'Newsletter' },
+                  { id: 'linkedin', label: 'LinkedIn' },
+                  { id: 'x_thread', label: 'X/Twitter' },
+                ].map(ch => (
+                  <label key={ch.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={selectedChannels.includes(ch.id)}
+                      onCheckedChange={() => toggleChannel(ch.id)}
+                      disabled={isRunning}
+                    />
+                    <span className="text-sm">{ch.label}</span>
+                  </label>
+                ))}
+              </div>
+              <Button onClick={handleMultichannel} disabled={isRunning || !topic.trim() || selectedChannels.length === 0} size="sm">
+                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Layers className="h-4 w-4 mr-1.5" />}
+                Create for {selectedChannels.length} Channels
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
