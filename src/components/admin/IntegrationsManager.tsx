@@ -42,6 +42,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   firecrawl: <Globe className="h-5 w-5" />,
   resend: <Mail className="h-5 w-5" />,
   github: <Github className="h-5 w-5" />,
+  gmail: <Mail className="h-5 w-5" />,
 };
 
 const integrationColors: Record<IntegrationType, string> = {
