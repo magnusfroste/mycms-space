@@ -171,6 +171,17 @@ export default function AutopilotDashboard() {
     runAction.mutate({ action: 'scout', topic: topic.trim() });
   };
 
+  const handleMultichannel = () => {
+    if (!topic.trim()) return toast.error('Enter a topic');
+    if (selectedChannels.length === 0) return toast.error('Select at least one channel');
+    const sourceList = sources.split('\n').map(s => s.trim()).filter(Boolean);
+    runAction.mutate({ action: 'multichannel_draft', topic: topic.trim(), sources: sourceList, channels: selectedChannels });
+  };
+
+  const toggleChannel = (ch: string) => {
+    setSelectedChannels(prev => prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch]);
+  };
+
   const isRunning = runAction.isPending;
 
   return (
