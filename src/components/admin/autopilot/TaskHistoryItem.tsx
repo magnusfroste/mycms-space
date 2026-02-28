@@ -17,6 +17,7 @@ type AgentTask = {
   output_data: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
+  batch_id?: string | null;
 };
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
@@ -33,11 +34,14 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   newsletter_draft: { label: 'Newsletter', icon: Mail },
   inbox_digest: { label: 'Inbox Digest', icon: Inbox },
   scout: { label: 'Scout', icon: Radar },
+  linkedin_post: { label: 'LinkedIn', icon: ExternalLink },
+  x_thread: { label: 'X Thread', icon: ExternalLink },
+  multichannel_draft: { label: 'Multichannel', icon: Radar },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
   const o = task.output_data || {};
-  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources);
+  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources || o.tweets || o.channels || o.brief);
 }
 
 // Read-only preview for blog drafts and newsletters
@@ -105,9 +109,90 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
     );
   }
 
+  // LinkedIn post preview
+  if (task.task_type === 'linkedin_post') {
+    return (
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between">
+          <Badge variant="outline" className="text-xs">LinkedIn</Badge>
+          <span className="text-xs text-muted-foreground">{(o.char_count as number) || (o.content as string)?.length || 0} chars</span>
+        </div>
+        {o.content && (
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background">
+            {o.content as string}
+          </div>
+        )}
+        <Button
+          size="sm" variant="outline" className="text-xs h-7"
+          onClick={() => { navigator.clipboard.writeText(o.content as string || ''); toast.success('Copied to clipboard'); }}
+        >
+          <Copy className="h-3 w-3 mr-1" /> Copy
+        </Button>
+      </div>
+    );
+  }
+
+  // X/Twitter thread preview
+  if (task.task_type === 'x_thread') {
+    const tweets = (o.tweets as string[]) || [];
+    return (
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between">
+          <Badge variant="outline" className="text-xs">X Thread</Badge>
+          <span className="text-xs text-muted-foreground">{tweets.length || (o.tweet_count as number) || 0} tweets</span>
+        </div>
+        {tweets.length > 0 ? (
+          <div className="space-y-2">
+            {tweets.map((tweet, i) => (
+              <div key={i} className="border rounded p-2 bg-background text-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-muted-foreground font-mono">{i + 1}/{tweets.length}</span>
+                  <span className={cn("text-[10px]", tweet.length > 280 ? "text-destructive" : "text-muted-foreground")}>{tweet.replace(/^\d+\/\s*/, '').length}/280</span>
+                </div>
+                <p className="whitespace-pre-wrap">{tweet}</p>
+              </div>
+            ))}
+          </div>
+        ) : o.content ? (
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background">
+            {o.content as string}
+          </div>
+        ) : null}
+        <Button
+          size="sm" variant="outline" className="text-xs h-7"
+          onClick={() => { navigator.clipboard.writeText(o.content as string || tweets.join('\n\n')); toast.success('Copied to clipboard'); }}
+        >
+          <Copy className="h-3 w-3 mr-1" /> Copy All
+        </Button>
+      </div>
+    );
+  }
+
+  // Multichannel parent preview
+  if (task.task_type === 'multichannel_draft') {
+    const channels = (o.channels as string[]) || [];
+    return (
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium">Channels:</span>
+          {channels.map(ch => (
+            <Badge key={ch} variant="secondary" className="text-xs">{ch}</Badge>
+          ))}
+        </div>
+        {o.brief && (
+          <div className="border-t pt-2">
+            <p className="text-xs font-medium mb-1">Content Brief</p>
+            <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto text-xs">
+              {(o.brief as string).substring(0, 1500)}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return null;
 }
-
 // Scout source discovery preview
 function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
   const queryClient = useQueryClient();

@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar, Layers } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
@@ -18,6 +19,7 @@ type AgentTask = {
   output_data: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
+  batch_id?: string | null;
 };
 
 interface AutopilotConfig {
@@ -29,6 +31,7 @@ export default function AutopilotDashboard() {
   const queryClient = useQueryClient();
   const [topic, setTopic] = useState('');
   const [sources, setSources] = useState('');
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['blog', 'newsletter', 'linkedin', 'x_thread']);
 
   // Config state
   const [configTopic, setConfigTopic] = useState('');
@@ -122,9 +125,9 @@ export default function AutopilotDashboard() {
   });
 
   const runAction = useMutation({
-    mutationFn: async ({ action, topic, sources }: { action: string; topic?: string; sources?: string[] }) => {
+    mutationFn: async ({ action, topic, sources, channels }: { action: string; topic?: string; sources?: string[]; channels?: string[] }) => {
       const { data, error } = await supabase.functions.invoke('agent-autopilot', {
-        body: { action, topic, sources },
+        body: { action, topic, sources, channels },
       });
       if (error) throw error;
       return data;
@@ -136,9 +139,10 @@ export default function AutopilotDashboard() {
         blog_draft: 'Blog draft created',
         newsletter_draft: 'Newsletter draft created',
         scout: 'Source discovery complete',
+        multichannel_draft: 'Multichannel content created',
       };
       toast.success(labels[variables.action] || 'Task completed', {
-        description: data.title || data.subject || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
+        description: data.title || data.subject || data.batchId || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
       });
     },
     onError: (error) => {
@@ -165,6 +169,17 @@ export default function AutopilotDashboard() {
   const handleScout = () => {
     if (!topic.trim()) return toast.error('Enter a topic');
     runAction.mutate({ action: 'scout', topic: topic.trim() });
+  };
+
+  const handleMultichannel = () => {
+    if (!topic.trim()) return toast.error('Enter a topic');
+    if (selectedChannels.length === 0) return toast.error('Select at least one channel');
+    const sourceList = sources.split('\n').map(s => s.trim()).filter(Boolean);
+    runAction.mutate({ action: 'multichannel_draft', topic: topic.trim(), sources: sourceList, channels: selectedChannels });
+  };
+
+  const toggleChannel = (ch: string) => {
+    setSelectedChannels(prev => prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch]);
   };
 
   const isRunning = runAction.isPending;
@@ -257,6 +272,34 @@ export default function AutopilotDashboard() {
               <Button onClick={handleScout} disabled={isRunning || !topic.trim()} variant="outline" size="sm">
                 {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Radar className="h-4 w-4 mr-1.5" />}
                 Scout Sources
+              </Button>
+            </div>
+            {/* Channel Selector for Multichannel */}
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Multichannel</span>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { id: 'blog', label: 'Blog' },
+                  { id: 'newsletter', label: 'Newsletter' },
+                  { id: 'linkedin', label: 'LinkedIn' },
+                  { id: 'x_thread', label: 'X/Twitter' },
+                ].map(ch => (
+                  <label key={ch.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={selectedChannels.includes(ch.id)}
+                      onCheckedChange={() => toggleChannel(ch.id)}
+                      disabled={isRunning}
+                    />
+                    <span className="text-sm">{ch.label}</span>
+                  </label>
+                ))}
+              </div>
+              <Button onClick={handleMultichannel} disabled={isRunning || !topic.trim() || selectedChannels.length === 0} size="sm">
+                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Layers className="h-4 w-4 mr-1.5" />}
+                Create for {selectedChannels.length} Channels
               </Button>
             </div>
           </CardContent>

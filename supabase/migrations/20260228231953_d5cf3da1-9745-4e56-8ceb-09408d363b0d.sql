@@ -1,0 +1,1 @@
+ALTER TABLE public.agent_tasks ADD COLUMN batch_id text;
