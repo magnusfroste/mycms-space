@@ -159,6 +159,54 @@ export const availabilityCheckerTool: ToolDefinition = {
   },
 };
 
+export const researchTopicTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "research_topic",
+    description: "Research a topic using web search and return a structured analysis. Use when a user asks to research something, explore trends, or investigate a topic.",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string", description: "The topic to research" },
+        key_findings: { type: "array", items: { type: "string" }, description: "3-5 key findings" },
+        trending_angles: { type: "array", items: { type: "string" }, description: "Hot takes or trending angles" },
+        relevance: { type: "string", description: "How this relates to the site owner's expertise" },
+        suggested_posts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              angle: { type: "string" },
+            },
+            required: ["title", "angle"],
+          },
+          description: "2-3 suggested blog post ideas",
+        },
+      },
+      required: ["topic", "key_findings", "trending_angles", "relevance", "suggested_posts"],
+    },
+  },
+};
+
+export const draftBlogPostTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "draft_blog_post",
+    description: "Draft a blog post on a topic. Use when a user asks to write or create a blog post.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Blog post title" },
+        content: { type: "string", description: "Full blog post in markdown" },
+        excerpt: { type: "string", description: "Short excerpt (max 160 chars)" },
+        seo_keywords: { type: "array", items: { type: "string" }, description: "SEO keywords" },
+      },
+      required: ["title", "content", "excerpt"],
+    },
+  },
+};
+
 // ============================================
 // Tool Registry
 // ============================================
@@ -169,6 +217,8 @@ export const allTools: Record<string, ToolDefinition> = {
   generate_portfolio: portfolioGeneratorTool,
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
+  research_topic: researchTopicTool,
+  draft_blog_post: draftBlogPostTool,
 };
 
 /** Tool instructions for the system prompt */
@@ -177,6 +227,8 @@ export const toolDescriptions: Record<string, string> = {
   generate_portfolio: "**generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.",
   project_deep_dive: "**project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says 'tell me more about X'.",
   check_availability: "**check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.",
+  research_topic: "**research_topic** — When a user asks to research a topic, explore trends, or investigate something. Provides structured findings and blog post suggestions.",
+  draft_blog_post: "**draft_blog_post** — When a user asks to write or create a blog post on a topic. Generates a full draft with SEO metadata.",
 };
 
 /** Get filtered tools based on enabled tool IDs */
@@ -210,6 +262,8 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     generate_portfolio: (args) => ({ type: "portfolio", title: (args.title as string) || "Curated Portfolio" }),
     project_deep_dive: (args) => ({ type: "project-deep-dive", title: (args.project_name as string) || "Project Deep Dive" }),
     check_availability: () => ({ type: "availability", title: "Availability" }),
+    research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
+    draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
   };
 
   const factory = mapping[toolName];

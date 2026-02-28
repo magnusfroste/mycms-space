@@ -4,6 +4,7 @@ import {
   Layers, 
   Navigation, 
   Bot,
+  Zap,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
@@ -52,6 +53,7 @@ const mainNavItems = [
   { id: 'blog', label: 'Blog', icon: PenSquare },
   { id: 'media-hub', label: 'Media Hub', icon: ImageIcon },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
+  { id: 'autopilot', label: 'Autopilot', icon: Zap },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
 ];

@@ -30,6 +30,7 @@ const ChatHistoryManager = lazy(() => import('@/components/admin/ChatHistoryMana
 const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'));
 const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
+const AutopilotDashboard = lazy(() => import('@/components/admin/AutopilotDashboard'));
 
 // Route map: tab key → lazy component
 const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
@@ -53,6 +54,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   'chat-history': ChatHistoryManager,
   profile: ProfileSettings,
   settings: GeneralSettings,
+  autopilot: AutopilotDashboard,
 };
 
 const AdminLoadingFallback = () => (
