@@ -171,10 +171,10 @@ export const integrationsMeta: IntegrationMeta[] = [
 export type UtilityIntegrationType = 'firecrawl' | 'resend';
 
 // ============================================
-// Source Integration Types (GitHub, etc.)
+// Source Integration Types (GitHub, Gmail, etc.)
 // ============================================
 
-export type SourceIntegrationType = 'github';
+export type SourceIntegrationType = 'github' | 'gmail';
 
 export interface SourceIntegrationBase {
   type: SourceIntegrationType;
