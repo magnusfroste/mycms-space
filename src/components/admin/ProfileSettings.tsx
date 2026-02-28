@@ -39,6 +39,9 @@ export default function ProfileSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+  const [apiToken, setApiToken] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     display_name: '',
     bio: '',
