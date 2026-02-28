@@ -320,7 +320,66 @@ export default function ProfileSettings() {
         </CardContent>
       </Card>
 
-      {/* Media Picker Modal */}
+      {/* API Tokens */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            API Tokens
+          </CardTitle>
+          <CardDescription>
+            Tokens used by external tools like the Chrome extension to send signals to your CMS.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Signal Ingest Token</Label>
+            {apiToken ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={showToken ? apiToken : '•'.repeat(32)}
+                  className="font-mono text-sm"
+                />
+                <Button variant="ghost" size="icon" onClick={() => setShowToken(v => !v)}>
+                  {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleCopyToken}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={savingToken}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Regenerate token?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        The current token will stop working immediately. You'll need to update it in your Chrome extension.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleGenerateToken}>Regenerate</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ) : (
+              <Button onClick={handleGenerateToken} disabled={savingToken} variant="outline">
+                <Key className="h-4 w-4 mr-2" />
+                {savingToken ? 'Generating...' : 'Generate Token'}
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Used by the Chrome extension and external tools to authenticate when sending signals.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <MediaHubPicker
         open={showMediaPicker}
         onOpenChange={setShowMediaPicker}
