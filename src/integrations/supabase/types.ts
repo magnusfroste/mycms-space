@@ -645,7 +645,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      alter_cron_job: {
+        Args: { job_name: string; new_active?: boolean; new_schedule?: string }
+        Returns: undefined
+      }
+      get_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          database: string
+          jobid: number
+          jobname: string
+          nodename: string
+          nodeport: number
+          schedule: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
