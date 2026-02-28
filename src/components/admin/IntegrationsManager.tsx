@@ -382,10 +382,15 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
         {/* Connection status indicator */}
         {isAvailable && (
           <div className="mt-3">
-            {isConfigured === true || isConfigured === 'connected' ? (
+            {isConfigured === 'connected' ? (
               <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
                 <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
                 Connected
+              </Badge>
+            ) : isConfigured === true ? (
+              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                <Check className="h-3 w-3 mr-1" />
+                Ready
               </Badge>
             ) : isConfigured === 'requires_secret' ? (
               <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
