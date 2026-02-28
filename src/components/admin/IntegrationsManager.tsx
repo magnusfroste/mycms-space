@@ -299,6 +299,7 @@ const IntegrationsManager: React.FC = () => {
               >
                 {integration.type === 'firecrawl' && <FirecrawlConfig />}
                 {integration.type === 'resend' && <ResendConfig />}
+                {integration.type === 'unsplash' && <UnsplashConfig />}
               </IntegrationCard>
             );
           })}
