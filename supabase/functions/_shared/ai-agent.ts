@@ -12,10 +12,14 @@ import type { SiteContext, ChatMessage } from "./ai-context.ts";
 // Types
 // ============================================
 
+export type AgentProvider = 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
+
 export interface AgentConfig {
-  provider: 'lovable' | 'openai' | 'gemini' | 'n8n';
+  provider: AgentProvider;
   model?: string;
-  webhookUrl?: string;
+  webhookUrl?: string;   // n8n webhook
+  baseUrl?: string;      // custom self-hosted endpoint (OpenAI-compatible)
+  apiKeyEnv?: string;    // env var name for custom endpoint API key
 }
 
 export interface AgentRequest {
@@ -33,8 +37,9 @@ export interface AgentResult {
 }
 
 // ============================================
-// Provider: OpenAI-Compatible (Lovable AI + OpenAI)
-// Supports tool calling natively
+// Generic OpenAI-Compatible Provider
+// Works with: Lovable AI, OpenAI, Gemini (via gateway),
+//             Ollama, LM Studio, vLLM, etc.
 // ============================================
 
 async function callOpenAICompatible(params: {
@@ -56,12 +61,18 @@ async function callOpenAICompatible(params: {
     body.tool_choice = params.toolChoice || "auto";
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  // Some self-hosted endpoints don't need auth
+  if (params.apiKey) {
+    headers.Authorization = `Bearer ${params.apiKey}`;
+  }
+
   const response = await fetch(params.url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${params.apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -73,48 +84,6 @@ async function callOpenAICompatible(params: {
   }
 
   return response.json();
-}
-
-// ============================================
-// Provider: Gemini (different API format, no tools)
-// ============================================
-
-async function callGemini(params: {
-  apiKey: string;
-  model: string;
-  systemPrompt: string;
-  messages: ChatMessage[];
-}): Promise<string> {
-  const contents = [];
-
-  if (params.systemPrompt) {
-    contents.push({ role: "user", parts: [{ text: `[System]: ${params.systemPrompt}` }] });
-    contents.push({ role: "model", parts: [{ text: "Understood. I will follow these instructions." }] });
-  }
-
-  for (const msg of params.messages) {
-    contents.push({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    });
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:generateContent?key=${params.apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents }),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini error (${response.status}): ${errorText}`);
-  }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
 }
 
 // ============================================
@@ -156,7 +125,9 @@ async function callN8n(params: {
 }
 
 // ============================================
-// Provider Configs
+// Provider Registry
+// Each entry: endpoint URL, env var for API key, default model
+// All use the OpenAI-compatible chat/completions format
 // ============================================
 
 const providerEndpoints: Record<string, { url: string; envKey: string; defaultModel: string }> = {
@@ -170,11 +141,46 @@ const providerEndpoints: Record<string, { url: string; envKey: string; defaultMo
     envKey: "OPENAI_API_KEY",
     defaultModel: "gpt-4o",
   },
+  gemini: {
+    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    envKey: "LOVABLE_API_KEY",
+    defaultModel: "google/gemini-2.5-flash",
+  },
 };
 
 // ============================================
 // Main Agent Runner
 // ============================================
+
+/** Resolve provider config: endpoint, API key, model */
+function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
+  // Custom self-hosted endpoint
+  if (config.provider === 'custom') {
+    if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
+    const envKey = config.apiKeyEnv || 'CUSTOM_AI_API_KEY';
+    const apiKey = Deno.env.get(envKey) || '';
+    return {
+      url: config.baseUrl.endsWith('/chat/completions') 
+        ? config.baseUrl 
+        : `${config.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`,
+      apiKey,
+      model: config.model || 'default',
+    };
+  }
+
+  // Known provider
+  const endpoint = providerEndpoints[config.provider];
+  if (!endpoint) throw new Error(`Unsupported provider: ${config.provider}`);
+
+  const apiKey = Deno.env.get(endpoint.envKey);
+  if (!apiKey) throw new Error(`${endpoint.envKey} is not configured`);
+
+  return {
+    url: endpoint.url,
+    apiKey,
+    model: config.model || endpoint.defaultModel,
+  };
+}
 
 /** Run the Magnet agent: loads context, builds prompt, calls provider, handles tools */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
@@ -196,26 +202,8 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     return { output };
   }
 
-  // --- Gemini direct: no tool calling support ---
-  if (config.provider === 'gemini') {
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
-    const fullPrompt = buildDynamicPrompt(systemPrompt, siteContext);
-    const output = await callGemini({
-      apiKey,
-      model: config.model || "gemini-1.5-flash",
-      systemPrompt: fullPrompt,
-      messages,
-    });
-    return { output };
-  }
-
-  // --- OpenAI-compatible providers (Lovable AI, OpenAI): full tool support ---
-  const providerConfig = providerEndpoints[config.provider];
-  if (!providerConfig) throw new Error(`Unsupported provider: ${config.provider}`);
-
-  const apiKey = Deno.env.get(providerConfig.envKey);
-  if (!apiKey) throw new Error(`${providerConfig.envKey} is not configured`);
+  // --- All OpenAI-compatible providers: full tool support ---
+  const { url, apiKey, model } = resolveProvider(config);
 
   // Load resume context for tool calling
   const resumeContext = await loadResumeContext();
@@ -233,9 +221,9 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
   // Call provider
   const data = await callOpenAICompatible({
-    url: providerConfig.url,
+    url,
     apiKey,
-    model: config.model || providerConfig.defaultModel,
+    model,
     messages: [
       { role: "system", content: fullPrompt },
       ...messages,

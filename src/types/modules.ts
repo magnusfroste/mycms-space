@@ -21,7 +21,7 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
 // Extensible integration system for AI providers
 // ============================================
 
-export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'ollama' | 'lovable';
+export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'custom' | 'lovable';
 
 // Admin AI Provider type (subset - no n8n tool calls)
 export type AdminAIProvider = 'lovable' | 'openai' | 'gemini';
@@ -58,11 +58,12 @@ export interface GeminiIntegration extends AIIntegrationBase {
   api_key_ref?: string;
 }
 
-// Ollama Integration (future)
-export interface OllamaIntegration extends AIIntegrationBase {
-  type: 'ollama';
+// Custom Self-hosted Integration (Ollama, LM Studio, vLLM, etc.)
+export interface CustomIntegration extends AIIntegrationBase {
+  type: 'custom';
   base_url: string;
   model: string;
+  api_key_env?: string; // env var name for API key (optional)
 }
 
 // Lovable AI Integration (built-in)
@@ -76,7 +77,7 @@ export type AIIntegration =
   | N8nIntegration 
   | OpenAIIntegration 
   | GeminiIntegration 
-  | OllamaIntegration
+  | CustomIntegration
   | LovableIntegration;
 
 // Integration metadata for UI
@@ -120,18 +121,18 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'gemini',
     name: 'Google Gemini',
-    description: 'Direct integration with Google Gemini models',
+    description: 'Google Gemini models via Lovable gateway (tools supported)',
     icon: 'Sparkles',
     available: true,
     docs: 'https://ai.google.dev/docs',
     category: 'ai',
   },
   {
-    type: 'ollama',
-    name: 'Self-hosted Ollama',
-    description: 'Connect to a self-hosted Ollama instance',
+    type: 'custom',
+    name: 'Self-hosted',
+    description: 'Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM)',
     icon: 'Server',
-    available: false,
+    available: true,
     category: 'ai',
   },
   {
@@ -246,10 +247,10 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
   gemini: {
     type: 'gemini',
     enabled: false,
-    model: 'gemini-1.5-flash',
+    model: 'google/gemini-2.5-flash',
   },
-  ollama: {
-    type: 'ollama',
+  custom: {
+    type: 'custom',
     enabled: false,
     base_url: 'http://localhost:11434',
     model: 'llama3',

@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
         provider: integration.type,
         model: integration.model,
         webhookUrl: integration.webhook_url,
+        baseUrl: integration.base_url,
+        apiKeyEnv: integration.api_key_env,
       },
     });
 

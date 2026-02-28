@@ -38,7 +38,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   lovable: <Sparkles className="h-5 w-5" />,
   openai: <Bot className="h-5 w-5" />,
   gemini: <Sparkles className="h-5 w-5" />,
-  ollama: <Server className="h-5 w-5" />,
+  custom: <Server className="h-5 w-5" />,
   firecrawl: <Globe className="h-5 w-5" />,
   resend: <Mail className="h-5 w-5" />,
   github: <Github className="h-5 w-5" />,
@@ -49,7 +49,7 @@ const integrationColors: Record<IntegrationType, string> = {
   lovable: 'text-pink-500',
   openai: 'text-green-500',
   gemini: 'text-blue-500',
-  ollama: 'text-purple-500',
+  custom: 'text-purple-500',
   firecrawl: 'text-amber-500',
   resend: 'text-indigo-500',
   github: 'text-gray-700 dark:text-gray-300',
@@ -140,9 +140,9 @@ const IntegrationsManager: React.FC = () => {
       case 'github':
         // GitHub is configured if username is set and module is enabled
         return !!(githubModule?.enabled && githubConfig?.username);
-      case 'ollama': {
+      case 'custom': {
         // Check for base_url
-        if (config?.integration?.type === 'ollama') {
+        if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
         }
         return false;
@@ -154,7 +154,7 @@ const IntegrationsManager: React.FC = () => {
 
   // Check if this is an AI integration (can be activated for chat)
   const isAIIntegration = (type: IntegrationType): type is AIIntegrationType => {
-    return ['n8n', 'lovable', 'openai', 'gemini', 'ollama'].includes(type);
+    return ['n8n', 'lovable', 'openai', 'gemini', 'custom'].includes(type);
   };
 
   // Toggle GitHub integration
