@@ -3,7 +3,8 @@
 // Renders a single chat message (user or bot)
 // ============================================
 
-import React from "react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { MarkdownContent } from "@/components/common";
 import ChatArtifactComponent from "./ChatArtifact";
 import type { Message } from "./types";
