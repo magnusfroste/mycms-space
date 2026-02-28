@@ -341,6 +341,13 @@ const IntegrationsManager: React.FC = () => {
                     onToggle={toggleGitHubIntegration}
                   />
                 )}
+                {integration.type === 'gmail' && (
+                  <GmailSourceConfig
+                    connected={gmailStatus?.connected ?? false}
+                    email={gmailStatus?.email ?? null}
+                    connectedAt={gmailStatus?.connected_at ?? null}
+                  />
+                )}
               </IntegrationCard>
             );
           })}
