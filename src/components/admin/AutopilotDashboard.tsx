@@ -19,6 +19,7 @@ type AgentTask = {
   output_data: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
+  batch_id?: string | null;
 };
 
 interface AutopilotConfig {
