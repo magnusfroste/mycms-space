@@ -30,6 +30,10 @@ interface ProfileData {
   avatar_url: string;
 }
 
+interface ApiTokenData {
+  signal_ingest_token: string;
+}
+
 export default function ProfileSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
