@@ -121,18 +121,18 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'gemini',
     name: 'Google Gemini',
-    description: 'Direct integration with Google Gemini models',
+    description: 'Google Gemini models via Lovable gateway (tools supported)',
     icon: 'Sparkles',
     available: true,
     docs: 'https://ai.google.dev/docs',
     category: 'ai',
   },
   {
-    type: 'ollama',
-    name: 'Self-hosted Ollama',
-    description: 'Connect to a self-hosted Ollama instance',
+    type: 'custom',
+    name: 'Self-hosted',
+    description: 'Any OpenAI-compatible endpoint (Ollama, LM Studio, vLLM)',
     icon: 'Server',
-    available: false,
+    available: true,
     category: 'ai',
   },
   {
