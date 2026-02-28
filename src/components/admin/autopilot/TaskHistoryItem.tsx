@@ -110,12 +110,44 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
 
 // Scout source discovery preview
 function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
+  const queryClient = useQueryClient();
   const o = task.output_data || {};
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
   const watchList = (o.watch_list as string[]) || [];
   const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
   const sourceUrls = sources.map(s => s.url);
+
+  const saveDefaultsMutation = useMutation({
+    mutationFn: async () => {
+      // Fetch current autopilot config
+      const { data: existing } = await supabase
+        .from('modules')
+        .select('id, module_config')
+        .eq('module_type', 'autopilot')
+        .single();
+
+      const currentConfig = (existing?.module_config as Record<string, unknown>) || {};
+      const updatedConfig = {
+        ...currentConfig,
+        default_topic: topic || currentConfig.default_topic,
+        default_sources: sourceUrls,
+      };
+
+      if (existing?.id) {
+        const { error } = await supabase.from('modules').update({ module_config: updatedConfig as any }).eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('modules').insert([{ module_type: 'autopilot', module_config: updatedConfig as any, enabled: true }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['autopilot-config'] });
+      toast.success('Saved as defaults', { description: `${sourceUrls.length} sources set as default for scheduled research` });
+    },
+    onError: (e) => toast.error('Failed to save defaults', { description: e.message }),
+  });
 
   return (
     <div className="space-y-3 text-sm">
