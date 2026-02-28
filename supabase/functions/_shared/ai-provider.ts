@@ -1,9 +1,11 @@
 // ============================================
 // Shared AI Provider Utility
-// Routes AI requests to configured provider
+// Thin wrapper over ai-agent's provider registry
+// Used by admin tools (PromptEnhancer, AITextActions, PageBuilderChat)
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { callOpenAICompatible, providerEndpoints } from "./ai-agent.ts";
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -38,7 +40,10 @@ interface ProviderResult {
   status?: number;
 }
 
-// Fetch AI module config from database
+// ============================================
+// Database Config Loader
+// ============================================
+
 export async function getAIModuleConfig(): Promise<AIProviderConfig | null> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -68,10 +73,8 @@ export async function getAIModuleConfig(): Promise<AIProviderConfig | null> {
   }
 }
 
-// Get the active provider name for display
 export function getActiveProviderName(config: AIProviderConfig | null): string {
   if (!config) return 'Lovable AI';
-  
   switch (config.active_integration) {
     case 'openai': return 'OpenAI';
     case 'gemini': return 'Google Gemini';
@@ -81,226 +84,99 @@ export function getActiveProviderName(config: AIProviderConfig | null): string {
   }
 }
 
-// Call Lovable AI Gateway
-async function callLovable(options: AICompletionOptions, model: string): Promise<ProviderResult> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!apiKey) {
-    return { 
-      error: "LOVABLE_API_KEY is not configured. This is auto-configured in Lovable Cloud.",
-      status: 500 
-    };
-  }
-  
-  const body: Record<string, unknown> = {
-    model,
-    messages: options.messages,
-    temperature: options.temperature ?? 0.7,
-    max_tokens: options.max_tokens ?? 2000,
-    stream: options.stream ?? false,
-  };
-  
-  if (options.tools) {
-    body.tools = options.tools;
-  }
-  if (options.tool_choice) {
-    body.tool_choice = options.tool_choice;
-  }
-  
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  
-  return { response };
-}
+// ============================================
+// Unified Provider Call
+// Uses the same registry & transport as ai-agent.ts
+// ============================================
 
-// Call OpenAI API
-async function callOpenAI(options: AICompletionOptions, model: string): Promise<ProviderResult> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) {
-    return { 
-      error: "OPENAI_API_KEY is not configured. Add it in backend secrets for self-hosting.",
-      status: 500 
-    };
-  }
-  
-  const body: Record<string, unknown> = {
-    model: model || "gpt-4o-mini",
-    messages: options.messages,
-    temperature: options.temperature ?? 0.7,
-    max_tokens: options.max_tokens ?? 2000,
-    stream: options.stream ?? false,
-  };
-  
-  if (options.tools) {
-    body.tools = options.tools;
-  }
-  if (options.tool_choice) {
-    body.tool_choice = options.tool_choice;
-  }
-  
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  
-  return { response };
-}
-
-// Call Google Gemini API
-async function callGemini(options: AICompletionOptions, model: string): Promise<ProviderResult> {
-  const apiKey = Deno.env.get("GEMINI_API_KEY");
-  if (!apiKey) {
-    return { 
-      error: "GEMINI_API_KEY is not configured. Add it in backend secrets for self-hosting.",
-      status: 500 
-    };
-  }
-  
-  // Convert messages to Gemini format
-  const geminiModel = model || "gemini-1.5-flash";
-  const systemMessage = options.messages.find(m => m.role === 'system');
-  const otherMessages = options.messages.filter(m => m.role !== 'system');
-  
-  const contents = otherMessages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }]
-  }));
-  
-  const body: Record<string, unknown> = {
-    contents,
-    generationConfig: {
-      temperature: options.temperature ?? 0.7,
-      maxOutputTokens: options.max_tokens ?? 2000,
-    },
-  };
-  
-  if (systemMessage) {
-    body.systemInstruction = { parts: [{ text: systemMessage.content }] };
-  }
-  
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-    {
+async function callProvider(
+  providerName: string,
+  options: AICompletionOptions,
+  model: string,
+  webhookUrl?: string,
+): Promise<ProviderResult> {
+  // n8n is special — simple webhook, no OpenAI format
+  if (providerName === 'n8n') {
+    if (!webhookUrl) return { error: "n8n webhook URL is not configured.", status: 500 };
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }
-  );
-  
-  if (!response.ok) {
+      body: JSON.stringify({
+        messages: options.messages,
+        temperature: options.temperature,
+        max_tokens: options.max_tokens,
+      }),
+    });
     return { response };
   }
-  
-  // Convert Gemini response to OpenAI-compatible format
-  const geminiData = await response.json();
-  const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  
-  const openAIFormat = {
-    choices: [{
-      message: { role: 'assistant', content: text },
-      finish_reason: 'stop',
-    }]
-  };
-  
-  return { 
-    response: new Response(JSON.stringify(openAIFormat), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    })
-  };
-}
 
-// Call n8n Webhook
-async function callN8N(options: AICompletionOptions, webhookUrl: string): Promise<ProviderResult> {
-  if (!webhookUrl) {
-    return { 
-      error: "n8n webhook URL is not configured. Set it in AI Module settings.",
-      status: 500 
-    };
+  // All other providers use the shared registry
+  const endpoint = providerEndpoints[providerName];
+  if (!endpoint) return { error: `Unsupported provider: ${providerName}`, status: 500 };
+
+  const apiKey = Deno.env.get(endpoint.envKey);
+  if (!apiKey) {
+    return { error: `${endpoint.envKey} is not configured. Add it in backend secrets.`, status: 500 };
   }
-  
-  // n8n expects a simpler format - send messages directly
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: options.messages,
-      temperature: options.temperature,
-      max_tokens: options.max_tokens,
-    }),
-  });
-  
-  return { response };
+
+  try {
+    const data = await callOpenAICompatible({
+      url: endpoint.url,
+      apiKey,
+      model: model || endpoint.defaultModel,
+      messages: options.messages.map(m => ({ role: m.role, content: m.content })),
+      tools: options.tools,
+      toolChoice: options.tool_choice,
+    });
+
+    return {
+      response: new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "AI provider error";
+    console.error(`[Provider] ${providerName} error:`, msg);
+    
+    if (msg.includes("Rate limit")) return { error: msg, status: 429 };
+    if (msg.includes("credits")) return { error: msg, status: 402 };
+    return { error: msg, status: 500 };
+  }
 }
 
-// Main function to get AI completion for CHAT using configured provider
+// ============================================
+// Public API — Chat & Admin Completions
+// ============================================
+
 export async function getAICompletion(
   options: AICompletionOptions,
   configOverride?: AIProviderConfig | null
 ): Promise<ProviderResult> {
-  // Get config from database or use override
   const config = configOverride ?? await getAIModuleConfig();
-  
-  // Default to Lovable if no config
   const provider = config?.active_integration || 'lovable';
   const model = config?.integration?.model || 'google/gemini-3-flash-preview';
   
   console.log(`Chat AI Provider: ${provider}, Model: ${model}`);
-  
-  switch (provider) {
-    case 'openai':
-      return callOpenAI(options, model);
-    
-    case 'gemini':
-      return callGemini(options, model);
-    
-    case 'n8n':
-      return callN8N(options, config?.integration?.webhook_url || '');
-    
-    case 'lovable':
-    default:
-      return callLovable(options, model);
-  }
+  return callProvider(provider, options, model, config?.integration?.webhook_url);
 }
 
-// Admin AI completion for internal tools (PromptEnhancer, AITextActions, PageBuilderChat)
-// Uses admin_ai_provider - does NOT support n8n tool calls
 export async function getAdminAICompletion(
   options: AICompletionOptions,
   configOverride?: AIProviderConfig | null
 ): Promise<ProviderResult> {
-  // Get config from database or use override
   const config = configOverride ?? await getAIModuleConfig();
-  
-  // Use admin_ai_provider, fallback to 'lovable'
   const provider = config?.admin_ai_provider || 'lovable';
   const model = config?.admin_ai_config?.model || 'google/gemini-2.5-flash';
   
   console.log(`Admin AI Provider: ${provider}, Model: ${model}`);
-  
-  switch (provider) {
-    case 'openai':
-      return callOpenAI(options, model);
-    
-    case 'gemini':
-      return callGemini(options, model);
-    
-    case 'lovable':
-    default:
-      return callLovable(options, model);
-  }
+  return callProvider(provider, options, model);
 }
 
-// Helper to handle standard error responses
+// ============================================
+// Error Helpers
+// ============================================
+
 export function handleProviderError(result: ProviderResult, corsHeaders: Record<string, string>): Response | null {
   if (result.error) {
     return new Response(
@@ -311,7 +187,6 @@ export function handleProviderError(result: ProviderResult, corsHeaders: Record<
   return null;
 }
 
-// Helper to handle rate limit and payment errors
 export async function handleResponseErrors(
   response: Response, 
   corsHeaders: Record<string, string>

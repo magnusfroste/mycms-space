@@ -42,7 +42,7 @@ export interface AgentResult {
 //             Ollama, LM Studio, vLLM, etc.
 // ============================================
 
-async function callOpenAICompatible(params: {
+export async function callOpenAICompatible(params: {
   url: string;
   apiKey: string;
   model: string;
@@ -130,7 +130,7 @@ async function callN8n(params: {
 // All use the OpenAI-compatible chat/completions format
 // ============================================
 
-const providerEndpoints: Record<string, { url: string; envKey: string; defaultModel: string }> = {
+export const providerEndpoints: Record<string, { url: string; envKey: string; defaultModel: string }> = {
   lovable: {
     url: "https://ai.gateway.lovable.dev/v1/chat/completions",
     envKey: "LOVABLE_API_KEY",
@@ -153,7 +153,7 @@ const providerEndpoints: Record<string, { url: string; envKey: string; defaultMo
 // ============================================
 
 /** Resolve provider config: endpoint, API key, model */
-function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
+export function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
   // Custom self-hosted endpoint
   if (config.provider === 'custom') {
     if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
