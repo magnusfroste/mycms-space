@@ -375,19 +375,24 @@ Deno.serve(async (req) => {
     const { action, topic, sources, taskId } = await req.json() as AutopilotRequest;
     const supabase = getSupabase();
 
-    console.log(`[Autopilot] Action: ${action}, Topic: ${topic || 'N/A'}`);
+    // Load config for defaults
+    const config = await loadConfig(supabase);
+
+    // Use provided values or fall back to config defaults
+    const effectiveTopic = topic || config.default_topic;
+    const effectiveSources = sources?.length ? sources : config.default_sources;
+
+    console.log(`[Autopilot] Action: ${action}, Topic: ${effectiveTopic}`);
 
     let result;
 
     switch (action) {
       case 'research':
-        if (!topic) throw new Error('Topic is required for research');
-        result = await handleResearch(topic, sources || [], supabase, taskId);
+        result = await handleResearch(effectiveTopic, effectiveSources, supabase, taskId);
         break;
 
       case 'blog_draft':
-        if (!topic) throw new Error('Topic is required for blog drafting');
-        result = await handleBlogDraft(topic, sources || [], supabase);
+        result = await handleBlogDraft(effectiveTopic, effectiveSources, supabase);
         break;
 
       case 'newsletter_draft':
