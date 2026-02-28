@@ -137,6 +137,8 @@ const IntegrationsManager: React.FC = () => {
         return 'connected';
       case 'github':
         return !!(githubModule?.enabled && githubConfig?.username);
+      case 'gmail':
+        return gmailStatus?.connected ? 'connected' : false;
       case 'custom': {
         if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
