@@ -652,6 +652,11 @@ Deno.serve(async (req) => {
         result = await handleNewsletterDraft(supabase);
         break;
 
+      case 'scout':
+        if (!effectiveTopic) throw new Error('Topic required for scout');
+        result = await handleScout(effectiveTopic, supabase);
+        break;
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
