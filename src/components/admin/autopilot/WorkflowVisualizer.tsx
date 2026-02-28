@@ -343,6 +343,20 @@ export default function WorkflowVisualizer() {
     onError: (e) => toast.error('Failed to toggle workflow', { description: e.message }),
   });
 
+  const scheduleMutation = useMutation({
+    mutationFn: async ({ jobName, schedule }: { jobName: string; schedule: string }) => {
+      const { error } = await supabase.functions.invoke('agent-autopilot', {
+        body: { action: 'toggle_workflow', jobName, active: true, schedule },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['autopilot-workflows'] });
+      toast.success('Schedule updated');
+    },
+    onError: (e) => toast.error('Failed to update schedule', { description: e.message }),
+  });
+
   const cronJobs = data?.cronJobs || [];
   const workflows = buildWorkflows(cronJobs);
   const cronMap = Object.fromEntries(cronJobs.map((j) => [j.jobname, j]));
