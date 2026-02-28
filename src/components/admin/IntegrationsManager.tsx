@@ -140,9 +140,9 @@ const IntegrationsManager: React.FC = () => {
       case 'github':
         // GitHub is configured if username is set and module is enabled
         return !!(githubModule?.enabled && githubConfig?.username);
-      case 'ollama': {
+      case 'custom': {
         // Check for base_url
-        if (config?.integration?.type === 'ollama') {
+        if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
         }
         return false;
