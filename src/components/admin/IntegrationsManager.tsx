@@ -587,6 +587,33 @@ const ResendConfig: React.FC = () => {
   );
 };
 
+// ============================================
+// Unsplash Configuration Component
+// ============================================
+const UnsplashConfig: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+        <div className="flex items-start gap-2">
+          <Check className="h-4 w-4 text-green-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
+            <p className="text-green-700 dark:text-green-300 mt-1">
+              Unsplash is configured via secret <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">UNSPLASH_ACCESS_KEY</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Used in:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>Blog Editor</strong> — Search and set cover images from Unsplash</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 
 interface N8nConfigProps {
   config: N8nIntegration;
