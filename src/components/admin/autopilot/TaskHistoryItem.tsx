@@ -139,6 +139,17 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs"
+              onClick={(e) => { e.stopPropagation(); navigate(`/admin?tab=blog&editPostId=${outputData.blog_post_id}`); }}
+            >
+              <FileEdit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+          )}
           {canPublish && (
             <Button
               size="sm"
