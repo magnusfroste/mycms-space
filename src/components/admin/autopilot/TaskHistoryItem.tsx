@@ -350,6 +350,8 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
           <div className="pt-3">
             {task.task_type === 'research' ? (
               <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
+            ) : task.task_type === 'scout' ? (
+              <ScoutPreview task={task} onUseSources={onUseSources} />
             ) : (
               <ReadOnlyPreview task={task} />
             )}
