@@ -370,8 +370,14 @@ Keep it concise (300-500 words), engaging, and valuable.`
 // ============================================
 
 async function handleWorkflows(supabase: ReturnType<typeof getSupabase>) {
-  // Get cron jobs
-  const { data: cronJobs } = await supabase.rpc('get_cron_jobs').catch(() => ({ data: null }));
+  // Get cron jobs - wrap in try/catch since rpc doesn't have .catch()
+  let cronJobs = null;
+  try {
+    const res = await supabase.rpc('get_cron_jobs');
+    cronJobs = res.data;
+  } catch {
+    cronJobs = null;
+  }
 
   // Get module configs
   const { data: modules } = await supabase
