@@ -658,6 +658,10 @@ Deno.serve(async (req) => {
         result = await handleScout(effectiveTopic, supabase);
         break;
 
+      case 'multichannel_draft':
+        result = await handleMultichannelDraft(effectiveTopic, effectiveSources, supabase, body.channels);
+        break;
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
