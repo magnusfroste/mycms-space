@@ -77,7 +77,7 @@ export type AIIntegration =
   | N8nIntegration 
   | OpenAIIntegration 
   | GeminiIntegration 
-  | OllamaIntegration
+  | CustomIntegration
   | LovableIntegration;
 
 // Integration metadata for UI
