@@ -114,6 +114,8 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
   const watchList = (o.watch_list as string[]) || [];
+  const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
+  const sourceUrls = sources.map(s => s.url);
 
   return (
     <div className="space-y-3 text-sm">
