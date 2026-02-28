@@ -42,7 +42,7 @@ export interface AgentResult {
 //             Ollama, LM Studio, vLLM, etc.
 // ============================================
 
-async function callOpenAICompatible(params: {
+export async function callOpenAICompatible(params: {
   url: string;
   apiKey: string;
   model: string;
