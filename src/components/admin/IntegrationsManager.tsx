@@ -73,7 +73,7 @@ const IntegrationsManager: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
         body: { action: 'status' },
       });
-      if (error) return { connected: false, email: null };
+      if (error) return { connected: false, email: null, connected_at: null };
       return data as { connected: boolean; email: string | null; connected_at: string | null };
     },
   });
