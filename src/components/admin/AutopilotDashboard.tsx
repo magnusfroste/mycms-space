@@ -31,6 +31,7 @@ export default function AutopilotDashboard() {
   const queryClient = useQueryClient();
   const [topic, setTopic] = useState('');
   const [sources, setSources] = useState('');
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['blog', 'newsletter', 'linkedin', 'x_thread']);
 
   // Config state
   const [configTopic, setConfigTopic] = useState('');
