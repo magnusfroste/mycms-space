@@ -274,7 +274,7 @@ interface TaskHistoryItemProps {
   onUseSources?: (urls: string[]) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
