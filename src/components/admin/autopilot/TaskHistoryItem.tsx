@@ -17,6 +17,7 @@ type AgentTask = {
   output_data: Record<string, unknown>;
   created_at: string;
   completed_at: string | null;
+  batch_id?: string | null;
 };
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
