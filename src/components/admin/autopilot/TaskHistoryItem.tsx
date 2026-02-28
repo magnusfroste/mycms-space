@@ -34,6 +34,9 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   newsletter_draft: { label: 'Newsletter', icon: Mail },
   inbox_digest: { label: 'Inbox Digest', icon: Inbox },
   scout: { label: 'Scout', icon: Radar },
+  linkedin_post: { label: 'LinkedIn', icon: ExternalLink },
+  x_thread: { label: 'X Thread', icon: ExternalLink },
+  multichannel_draft: { label: 'Multichannel', icon: Radar },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
