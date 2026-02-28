@@ -49,7 +49,7 @@ const integrationColors: Record<IntegrationType, string> = {
   lovable: 'text-pink-500',
   openai: 'text-green-500',
   gemini: 'text-blue-500',
-  ollama: 'text-purple-500',
+  custom: 'text-purple-500',
   firecrawl: 'text-amber-500',
   resend: 'text-indigo-500',
   github: 'text-gray-700 dark:text-gray-300',
