@@ -109,11 +109,13 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
 }
 
 // Scout source discovery preview
-function ScoutPreview({ task, onUseSources }: { task: AgentTask; onUseSources?: (urls: string[]) => void }) {
+function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
   const o = task.output_data || {};
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
   const watchList = (o.watch_list as string[]) || [];
+  const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
+  const sourceUrls = sources.map(s => s.url);
 
   return (
     <div className="space-y-3 text-sm">
@@ -122,17 +124,26 @@ function ScoutPreview({ task, onUseSources }: { task: AgentTask; onUseSources?: 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
-            {onUseSources && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-7"
-                onClick={() => onUseSources(sources.map(s => s.url))}
-              >
-                <Copy className="h-3 w-3 mr-1" />
-                Use as Sources
-              </Button>
-            )}
+            <div className="flex items-center gap-1.5">
+              {onRunAction && topic && (
+                <>
+                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onRunAction('research', topic, sourceUrls)}>
+                    <Search className="h-3 w-3 mr-1" />
+                    Research
+                  </Button>
+                  <Button size="sm" className="text-xs h-7" onClick={() => onRunAction('blog_draft', topic, sourceUrls)}>
+                    <PenSquare className="h-3 w-3 mr-1" />
+                    Draft Blog
+                  </Button>
+                </>
+              )}
+              {onUseSources && (
+                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => onUseSources(sourceUrls)}>
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy URLs
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             {sources.map((source, i) => (
@@ -272,9 +283,10 @@ interface TaskHistoryItemProps {
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
   onUseSources?: (urls: string[]) => void;
+  onRunAction?: (action: string, topic: string, sources: string[]) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -351,7 +363,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
             {task.task_type === 'research' ? (
               <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
             ) : task.task_type === 'scout' ? (
-              <ScoutPreview task={task} onUseSources={onUseSources} />
+              <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
             ) : (
               <ReadOnlyPreview task={task} />
             )}
