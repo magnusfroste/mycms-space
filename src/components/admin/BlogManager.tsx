@@ -3,7 +3,8 @@
 // Admin interface for managing blog posts and categories
 // ============================================
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,15 +47,25 @@ import BlogCategoryEditor from './block-editor/BlogCategoryEditor';
 import type { BlogPost, BlogCategory } from '@/types/blog';
 
 const BlogManager = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('posts');
   const [search, setSearch] = useState('');
-  // Store only the ID to avoid race conditions with realtime updates
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [deletePostId, setDeletePostId] = useState<string | null>(null);
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+
+  // Open editor if navigated with editPostId param
+  useEffect(() => {
+    const editId = searchParams.get('editPostId');
+    if (editId) {
+      setEditingPostId(editId);
+      searchParams.delete('editPostId');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: posts = [], isLoading: postsLoading } = useBlogPosts();
   const { data: categories = [], isLoading: categoriesLoading } = useBlogCategories(true);

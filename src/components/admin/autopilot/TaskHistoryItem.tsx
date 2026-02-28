@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -97,6 +98,7 @@ interface TaskHistoryItemProps {
 }
 
 export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const status = statusConfig[task.status] || statusConfig.pending;
   const type = taskTypeLabels[task.task_type] || taskTypeLabels.research;
@@ -106,6 +108,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
   const outputData = task.output_data || {};
   const canExpand = hasPreviewContent(task);
   const canPublish = task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && !!(outputData.slug as string);
+  const canEdit = task.task_type === 'blog_draft' && !!(outputData.blog_post_id as string);
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -136,6 +139,17 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs"
+              onClick={(e) => { e.stopPropagation(); navigate(`/admin?tab=blog&editPostId=${outputData.blog_post_id}`); }}
+            >
+              <FileEdit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+          )}
           {canPublish && (
             <Button
               size="sm"
