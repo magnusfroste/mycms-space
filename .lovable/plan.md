@@ -1,80 +1,142 @@
 
+# Plan: Strukturell fix för Mini-menyer
 
-# Workflow Visualizer for Autopilot
+## Problem-analys
 
-## Problem
-Three cron jobs and multiple edge functions are running invisibly in the background. There's no way to see what's scheduled, what parameters are set, or how data flows between steps -- without reading code or querying the database directly.
+Systemet har återkommande problem med dropdown-menyer och popovers:
+- Menyer flickrar och försvinner oväntat
+- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
+- Problemet är systematiskt och påverkar flera komponenter
 
-## Solution
-Add a visual "Workflows" card to the Autopilot dashboard that shows each automation as a mini flow diagram with editable parameters, inspired by n8n's node-based approach but kept simple with CSS-only visuals (no heavy library needed).
+### Rotorsaker
 
-## What it will look like
+1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
+2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
+3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
+4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
 
-Each workflow is rendered as a horizontal flow of connected "nodes":
+---
 
-```text
-[Clock 06:00 UTC] --> [Gmail Inbox Scan] --> [AI Analysis] --> [agent_tasks]
-[Clock 07:00 UTC] --> [Research] --> [Firecrawl + AI] --> [agent_tasks]
-[Clock Mon 08:00] --> [Newsletter Draft] --> [AI] --> [newsletter_campaigns]
+## Lösningsstrategi
+
+### Fas 1: Standardisera dropdown-mönster
+
+Skapa ett konsekvent mönster för alla "action menus":
+
+**Princip: "Close first, act later"**
+```typescript
+const [menuOpen, setMenuOpen] = useState(false);
+
+const handleAction = (action: () => void) => {
+  setMenuOpen(false);
+  // Defer action to next tick to ensure menu closes cleanly
+  setTimeout(action, 0);
+};
+
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
 ```
 
-Each node shows:
-- Icon + label
-- Key parameters (schedule, action, filters)
-- Status indicator (active/paused)
-- Toggle to enable/disable
+---
 
-## Technical approach
+### Fas 2: Fixa PromptEnhancer (AI Assist)
 
-### 1. New component: `WorkflowVisualizer.tsx`
+**Problem**: Använder `onClick` och saknar kontrollerad state
 
-A new component added to `src/components/admin/autopilot/` that:
+**Åtgärd**:
+- Lägg till `open`/`onOpenChange` state
+- Byt från `onClick` till `onSelect`
+- Stäng menyn explicit innan async operation
 
-- Reads cron job data via a new edge function endpoint (or directly queries `cron.job` table via an RPC function)
-- Reads related module configs (gmail_signals, autopilot) from the existing `modules` table
-- Renders each workflow as a row of connected nodes using Tailwind CSS
-- Allows toggling workflows on/off (updates `cron.job.active`)
-- Allows editing schedule (cron expression) and key parameters inline
+```typescript
+const [menuOpen, setMenuOpen] = useState(false);
 
-### 2. Backend: Edge function `agent-autopilot` gets a new `workflows` action
+const handleEnhance = (action: EnhanceAction) => {
+  setMenuOpen(false);
+  setTimeout(() => enhancePrompt(action), 0);
+};
 
-Returns a combined view of:
-- All cron jobs from `cron.job` table (schedule, active status, target function)
-- Related module configs (autopilot defaults, gmail filter settings)
-- Latest run status from `agent_tasks`
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
+```
 
-This avoids exposing `cron.job` directly to the client.
+---
 
-### 3. Enable/disable and schedule editing
+### Fas 3: Fixa MediaHub delete-funktion
 
-- Toggle active/inactive: calls the edge function which runs `cron.alter_job()` 
-- Edit schedule: inline cron expression input with human-readable preview (e.g., "Daily at 06:00 UTC")
-- Edit parameters: links to the relevant config section (Scheduled Defaults or Gmail Settings)
+**Problem**: `modal={false}` + race condition vid delete
 
-### 4. Integration into AutopilotDashboard
+**Åtgärd**:
+- Ta bort `modal={false}` (låt Radix hantera focus)
+- Säkerställ att `handleAction` använder `onSelect` korrekt
+- Verifiera att delete-dialogen öppnas korrekt
 
-The `WorkflowVisualizer` is placed at the top of the Autopilot dashboard, above the existing "Scheduled Defaults" card. It provides the overview, while existing cards handle the detail editing.
+---
 
-## UI Design
+### Fas 4: Granska och uppdatera UI-komponenter
 
-- Each workflow is a Card with a horizontal flex row of "node pills"
-- Nodes are rounded boxes connected by lines (CSS borders/pseudo-elements)
-- Color coding: trigger nodes (blue), action nodes (purple), output nodes (green)
-- Active/paused toggle per workflow with a Switch component
-- Collapsible detail view showing full parameters
-- Mobile: nodes stack vertically with downward arrows
+**dropdown-menu.tsx**:
+- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
 
-## File changes
+---
 
-| File | Change |
-|------|--------|
-| `src/components/admin/autopilot/WorkflowVisualizer.tsx` | New component |
-| `src/components/admin/AutopilotDashboard.tsx` | Import and render WorkflowVisualizer at top |
-| `supabase/functions/agent-autopilot/index.ts` | Add `workflows` action to list/toggle/update cron jobs |
+## Filer som ändras
 
-## Scope boundaries
+| Fil | Ändring |
+|-----|---------|
+| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
+| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
 
-- No drag-and-drop workflow editor (that would be over-engineering)
-- No new workflows can be created from UI (that stays code-driven)
-- Focus is on **visibility and control** of existing automations
-- Clean, Apple-inspired design with minimal chrome
+---
+
+## Tekniska detaljer
+
+### PromptEnhancer - före/efter
+
+**Före:**
+```tsx
+<DropdownMenu>
+  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
+```
+
+**Efter:**
+```tsx
+const [menuOpen, setMenuOpen] = useState(false);
+
+const safeEnhance = (action: EnhanceAction) => {
+  setMenuOpen(false);
+  setTimeout(() => enhancePrompt(action), 0);
+};
+
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
+```
+
+### MediaHub - justering
+
+**Ta bort:**
+```tsx
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+```
+
+**Ändra till:**
+```tsx
+<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+```
+
+---
+
+## Förväntade resultat
+
+- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
+- Media Hub delete/rename/move fungerar korrekt
+- Konsekvent beteende över alla admin-dropdowns
+
+---
+
+## Validering
+
+Efter implementering:
+1. Testa AI Assist-knappen i AI Chat-inställningar
+2. Testa delete på bilder i Media Hub
+3. Verifiera att inga flickering eller oväntade stängningar sker

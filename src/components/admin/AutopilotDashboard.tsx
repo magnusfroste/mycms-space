@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
+import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
 type AgentTask = {
   id: string;
@@ -168,6 +169,9 @@ export default function AutopilotDashboard() {
         <h1 className="text-2xl font-bold tracking-tight">Autopilot</h1>
         <p className="text-muted-foreground">Autonomous content research and generation</p>
       </div>
+
+      {/* Workflow Visualizer */}
+      <WorkflowVisualizer />
 
       {/* Scheduled Defaults Config */}
       <Card>

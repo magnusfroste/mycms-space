@@ -12,10 +12,13 @@ const corsHeaders = {
 };
 
 interface AutopilotRequest {
-  action: 'research' | 'blog_draft' | 'newsletter_draft';
+  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow';
   topic?: string;
   sources?: string[];
   taskId?: string;
+  jobName?: string;
+  active?: boolean;
+  schedule?: string;
 }
 
 function getSupabase() {
@@ -363,6 +366,62 @@ Keep it concise (300-500 words), engaging, and valuable.`
 }
 
 // ============================================
+// Workflow Handlers
+// ============================================
+
+async function handleWorkflows(supabase: ReturnType<typeof getSupabase>) {
+  // Get cron jobs
+  const { data: cronJobs } = await supabase.rpc('get_cron_jobs').catch(() => ({ data: null }));
+
+  // Get module configs
+  const { data: modules } = await supabase
+    .from('modules')
+    .select('module_type, module_config, enabled')
+    .in('module_type', ['autopilot', 'gmail_signals']);
+
+  // Get latest task per type
+  const { data: latestTasks } = await supabase
+    .from('agent_tasks')
+    .select('task_type, status, created_at, completed_at')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  // Group latest task by type
+  const lastRun: Record<string, { status: string; created_at: string; completed_at: string | null }> = {};
+  for (const t of latestTasks || []) {
+    if (!lastRun[t.task_type]) {
+      lastRun[t.task_type] = t;
+    }
+  }
+
+  return {
+    success: true,
+    cronJobs: cronJobs || [],
+    modules: (modules || []).reduce((acc: Record<string, unknown>, m) => {
+      acc[m.module_type] = { config: m.module_config, enabled: m.enabled };
+      return acc;
+    }, {}),
+    lastRun,
+  };
+}
+
+async function handleToggleWorkflow(
+  supabase: ReturnType<typeof getSupabase>,
+  jobName: string,
+  active: boolean,
+  schedule?: string
+) {
+  // Use cron.alter_job to toggle or update schedule
+  if (schedule) {
+    await supabase.rpc('alter_cron_job', { job_name: jobName, new_schedule: schedule, new_active: active });
+  } else {
+    await supabase.rpc('alter_cron_job', { job_name: jobName, new_schedule: null, new_active: active });
+  }
+
+  return { success: true, jobName, active, schedule };
+}
+
+// ============================================
 // Main Handler
 // ============================================
 
@@ -372,7 +431,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, topic, sources, taskId } = await req.json() as AutopilotRequest;
+    const body = await req.json() as AutopilotRequest;
+    const { action, topic, sources, taskId, jobName, active, schedule } = body;
     const supabase = getSupabase();
 
     // Load config for defaults
@@ -387,6 +447,15 @@ Deno.serve(async (req) => {
     let result;
 
     switch (action) {
+      case 'workflows':
+        result = await handleWorkflows(supabase);
+        break;
+
+      case 'toggle_workflow':
+        if (!jobName) throw new Error('jobName required for toggle_workflow');
+        result = await handleToggleWorkflow(supabase, jobName, active ?? true, schedule);
+        break;
+
       case 'research':
         result = await handleResearch(effectiveTopic, effectiveSources, supabase, taskId);
         break;
