@@ -186,13 +186,24 @@ export interface GitHubSourceIntegration extends SourceIntegrationBase {
   username: string;
 }
 
-export type SourceIntegration = GitHubSourceIntegration;
+export interface GmailSourceIntegration extends SourceIntegrationBase {
+  type: 'gmail';
+  email?: string;
+  connected?: boolean;
+  connected_at?: string;
+}
+
+export type SourceIntegration = GitHubSourceIntegration | GmailSourceIntegration;
 
 export const defaultSourceIntegrations: Record<SourceIntegrationType, SourceIntegration> = {
   github: {
     type: 'github',
     enabled: false,
     username: '',
+  },
+  gmail: {
+    type: 'gmail',
+    enabled: false,
   },
 };
 
