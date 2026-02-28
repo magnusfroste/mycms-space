@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          status: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          status?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           created_at: string | null
@@ -93,6 +126,7 @@ export type Database = {
           seo_keywords: string[] | null
           seo_title: string | null
           slug: string
+          source: string
           status: string | null
           title: string
           updated_at: string | null
@@ -115,6 +149,7 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug: string
+          source?: string
           status?: string | null
           title: string
           updated_at?: string | null
@@ -137,6 +172,7 @@ export type Database = {
           seo_keywords?: string[] | null
           seo_title?: string | null
           slug?: string
+          source?: string
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -408,6 +444,7 @@ export type Database = {
       }
       newsletter_campaigns: {
         Row: {
+          agent_notes: string | null
           click_count: number | null
           content: string
           created_at: string
@@ -421,6 +458,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agent_notes?: string | null
           click_count?: number | null
           content: string
           created_at?: string
@@ -434,6 +472,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agent_notes?: string | null
           click_count?: number | null
           content?: string
           created_at?: string
