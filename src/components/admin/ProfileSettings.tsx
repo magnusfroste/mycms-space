@@ -8,7 +8,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Mail, Camera } from 'lucide-react';
+import { User, Mail, Camera, Key, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import MediaHubPicker from './MediaHubPicker';
 import type { MediaFile } from '@/models/mediaHub';
 import type { Json } from '@/integrations/supabase/types';
@@ -19,11 +30,18 @@ interface ProfileData {
   avatar_url: string;
 }
 
+interface ApiTokenData {
+  signal_ingest_token: string;
+}
+
 export default function ProfileSettings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+  const [apiToken, setApiToken] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     display_name: '',
     bio: '',
@@ -33,6 +51,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     if (user) {
       loadProfile();
+      loadApiToken();
     }
   }, [user]);
 
@@ -65,6 +84,75 @@ export default function ProfileSettings() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadApiToken = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('module_config')
+        .eq('module_type', 'api_tokens')
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data?.module_config) {
+        const config = data.module_config as Record<string, unknown>;
+        setApiToken((config.signal_ingest_token as string) || '');
+      }
+    } catch (error) {
+      console.error('Error loading API token:', error);
+    }
+  };
+
+  const generateToken = (): string => {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const saveApiToken = async (token: string) => {
+    setSavingToken(true);
+    try {
+      const configData: Json = { signal_ingest_token: token };
+
+      const { data: existing } = await supabase
+        .from('modules')
+        .select('id')
+        .eq('module_type', 'api_tokens')
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('modules')
+          .update({ module_config: configData, enabled: true })
+          .eq('module_type', 'api_tokens');
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('modules')
+          .insert({ module_type: 'api_tokens', module_config: configData, enabled: true });
+        if (error) throw error;
+      }
+
+      setApiToken(token);
+      toast.success('API token saved.');
+    } catch (error) {
+      console.error('Error saving API token:', error);
+      toast.error('Failed to save API token.');
+    } finally {
+      setSavingToken(false);
+    }
+  };
+
+  const handleGenerateToken = () => {
+    const token = generateToken();
+    saveApiToken(token);
+  };
+
+  const handleCopyToken = () => {
+    navigator.clipboard.writeText(apiToken);
+    toast.success('Token copied to clipboard.');
   };
 
   const handleSave = async () => {
@@ -232,7 +320,66 @@ export default function ProfileSettings() {
         </CardContent>
       </Card>
 
-      {/* Media Picker Modal */}
+      {/* API Tokens */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            API Tokens
+          </CardTitle>
+          <CardDescription>
+            Tokens used by external tools like the Chrome extension to send signals to your CMS.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Signal Ingest Token</Label>
+            {apiToken ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={showToken ? apiToken : '•'.repeat(32)}
+                  className="font-mono text-sm"
+                />
+                <Button variant="ghost" size="icon" onClick={() => setShowToken(v => !v)}>
+                  {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleCopyToken}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={savingToken}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Regenerate token?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        The current token will stop working immediately. You'll need to update it in your Chrome extension.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleGenerateToken}>Regenerate</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ) : (
+              <Button onClick={handleGenerateToken} disabled={savingToken} variant="outline">
+                <Key className="h-4 w-4 mr-2" />
+                {savingToken ? 'Generating...' : 'Generate Token'}
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Used by the Chrome extension and external tools to authenticate when sending signals.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <MediaHubPicker
         open={showMediaPicker}
         onOpenChange={setShowMediaPicker}
