@@ -164,11 +164,31 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       const config = data?.module_config as Record<string, unknown> || {};
+
+      // Also fetch last scan result for preview
+      const { data: lastScan } = await supabase
+        .from('agent_tasks')
+        .select('output_data, created_at')
+        .eq('task_type', 'inbox_digest')
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       return new Response(
         JSON.stringify({
           connected: data?.enabled && config.connected,
           email: config.email || null,
           connected_at: config.connected_at || null,
+          filter_senders: config.filter_senders || [],
+          filter_labels: config.filter_labels || [],
+          max_messages: config.max_messages || 20,
+          scan_days: config.scan_days || 7,
+          last_scan: lastScan ? {
+            scanned_at: lastScan.created_at,
+            signal_count: (lastScan.output_data as any)?.signal_count || 0,
+            suggested_topics: (lastScan.output_data as any)?.suggested_topics || [],
+          } : null,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
