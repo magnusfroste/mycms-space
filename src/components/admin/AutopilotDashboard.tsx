@@ -254,6 +254,10 @@ export default function AutopilotDashboard() {
                 {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Mail className="h-4 w-4 mr-1.5" />}
                 Draft Newsletter
               </Button>
+              <Button onClick={handleScout} disabled={isRunning || !topic.trim()} variant="outline" size="sm">
+                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Radar className="h-4 w-4 mr-1.5" />}
+                Scout Sources
+              </Button>
             </div>
           </CardContent>
         </Card>
