@@ -13,7 +13,16 @@ interface ChatMessageProps {
   message: Message;
 }
 
+const USER_MSG_TRUNCATE = 200;
+
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLongUserMsg = message.isUser && message.text.length > USER_MSG_TRUNCATE;
+
+  const displayText = isLongUserMsg && !expanded
+    ? message.text.substring(0, message.text.lastIndexOf(' ', USER_MSG_TRUNCATE) || USER_MSG_TRUNCATE) + '…'
+    : message.text;
+
   return (
     <div
       className={`flex flex-col ${message.isUser ? "items-end" : "items-start"}`}
@@ -27,12 +36,22 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         }`}
       >
         {message.isUser ? (
-          <p className="text-sm leading-relaxed text-left">{message.text}</p>
+          <div>
+            <p className="text-sm leading-relaxed text-left whitespace-pre-wrap">{displayText}</p>
+            {isLongUserMsg && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1 mt-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
+              >
+                {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                {expanded ? 'Show less' : 'Show full message'}
+              </button>
+            )}
+          </div>
         ) : (
           <MarkdownContent content={message.text} compact className="text-left" />
         )}
       </div>
-      {/* Render artifacts below the message bubble */}
       {message.artifacts?.map((artifact, index) => (
         <div key={index} className="w-full max-w-[95%]">
           <ChatArtifactComponent artifact={artifact} />
