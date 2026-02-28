@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit } from 'lucide-react';
+import { toast } from 'sonner';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -32,25 +35,12 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
 
 function hasPreviewContent(task: AgentTask): boolean {
   const o = task.output_data || {};
-  return !!(o.analysis || o.content || o.excerpt || o.title || o.subject);
+  return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject);
 }
 
-function TaskPreview({ task }: { task: AgentTask }) {
+// Read-only preview for blog drafts and newsletters
+function ReadOnlyPreview({ task }: { task: AgentTask }) {
   const o = task.output_data || {};
-
-  if (task.task_type === 'research') {
-    return (
-      <div className="space-y-2 text-sm">
-        {o.title && <h4 className="font-medium">{o.title as string}</h4>}
-        {o.analysis && (
-          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-            {(o.analysis as string).substring(0, 1500)}
-            {(o.analysis as string).length > 1500 && '…'}
-          </p>
-        )}
-      </div>
-    );
-  }
 
   if (task.task_type === 'blog_draft') {
     return (
@@ -91,6 +81,89 @@ function TaskPreview({ task }: { task: AgentTask }) {
   return null;
 }
 
+// Editable research preview
+function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => void }) {
+  const o = task.output_data || {};
+  const summary = (o.research_summary as string) || (o.analysis as string) || '';
+  const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
+
+  const [editing, setEditing] = useState(false);
+  const [editTopic, setEditTopic] = useState(topic);
+  const [editSummary, setEditSummary] = useState(summary);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const updatedOutput = {
+        ...task.output_data,
+        topic: editTopic,
+        research_summary: editSummary,
+        // Keep analysis in sync if it existed
+        ...(o.analysis ? { analysis: editSummary } : {}),
+      };
+      const { error } = await supabase
+        .from('agent_tasks')
+        .update({ output_data: updatedOutput as any })
+        .eq('id', task.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setEditing(false);
+      onSaved();
+      toast.success('Research updated');
+    },
+    onError: (e) => toast.error('Save failed', { description: e.message }),
+  });
+
+  if (editing) {
+    return (
+      <div className="space-y-3 text-sm">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Topic</label>
+          <input
+            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm"
+            value={editTopic}
+            onChange={(e) => setEditTopic(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Research Summary</label>
+          <textarea
+            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm min-h-[200px] resize-y leading-relaxed"
+            value={editSummary}
+            onChange={(e) => setEditSummary(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+            Save
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setEditTopic(topic); setEditSummary(summary); }}>
+            <X className="h-3 w-3 mr-1" />
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 text-sm">
+      {(topic || editTopic) && <h4 className="font-medium">{topic}</h4>}
+      {summary && (
+        <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+          {summary.substring(0, 1500)}
+          {summary.length > 1500 && '…'}
+        </p>
+      )}
+      <Button size="sm" variant="ghost" className="text-xs mt-1" onClick={() => setEditing(true)}>
+        <PenSquare className="h-3 w-3 mr-1" />
+        Edit Research
+      </Button>
+    </div>
+  );
+}
+
 interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
@@ -99,6 +172,7 @@ interface TaskHistoryItemProps {
 
 export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const status = statusConfig[task.status] || statusConfig.pending;
   const type = taskTypeLabels[task.task_type] || taskTypeLabels.research;
@@ -108,7 +182,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
   const outputData = task.output_data || {};
   const canExpand = hasPreviewContent(task);
   const canPublish = task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && !!(outputData.slug as string);
-  const canEdit = task.task_type === 'blog_draft' && !!(outputData.blog_post_id as string);
+  const canEditBlog = task.task_type === 'blog_draft' && !!(outputData.blog_post_id as string);
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -139,7 +213,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {canEdit && (
+          {canEditBlog && (
             <Button
               size="sm"
               variant="ghost"
@@ -170,7 +244,11 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
       {expanded && canExpand && (
         <div className="px-3 pb-3 pl-10 border-t bg-muted/30">
           <div className="pt-3">
-            <TaskPreview task={task} />
+            {task.task_type === 'research' ? (
+              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
+            ) : (
+              <ReadOnlyPreview task={task} />
+            )}
           </div>
         </div>
       )}
