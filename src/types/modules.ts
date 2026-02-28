@@ -58,11 +58,12 @@ export interface GeminiIntegration extends AIIntegrationBase {
   api_key_ref?: string;
 }
 
-// Ollama Integration (future)
-export interface OllamaIntegration extends AIIntegrationBase {
-  type: 'ollama';
+// Custom Self-hosted Integration (Ollama, LM Studio, vLLM, etc.)
+export interface CustomIntegration extends AIIntegrationBase {
+  type: 'custom';
   base_url: string;
   model: string;
+  api_key_env?: string; // env var name for API key (optional)
 }
 
 // Lovable AI Integration (built-in)
