@@ -162,6 +162,15 @@ export const integrationsMeta: IntegrationMeta[] = [
     docs: 'https://docs.github.com/en/rest',
     category: 'source',
   },
+  {
+    type: 'gmail',
+    name: 'Gmail Signals',
+    description: 'Harvest LinkedIn and newsletter signals from Gmail for content generation',
+    icon: 'Mail',
+    available: true,
+    docs: 'https://developers.google.com/gmail/api',
+    category: 'source',
+  },
 ];
 
 // ============================================
