@@ -50,7 +50,7 @@ const Chat = () => {
   }, [hasInitialMessages, contextLoading, contextReady]);
   
   // Get configured integration from module, allow user override
-  const configuredIntegration = aiConfig?.active_integration || 'n8n';
+  const configuredIntegration = aiConfig?.active_integration || 'openai';
   const [selectedIntegration, setSelectedIntegration] = React.useState<AIIntegrationType>(configuredIntegration);
 
   // Get initial messages, sessionId and placeholder from navigation state if available
