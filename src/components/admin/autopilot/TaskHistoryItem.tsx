@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy, BookmarkPlus } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy, BookmarkPlus, Zap, Linkedin, Globe, Twitter } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -37,9 +37,11 @@ const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
   linkedin_post: { label: 'LinkedIn', icon: ExternalLink },
   x_thread: { label: 'X Thread', icon: ExternalLink },
   multichannel_draft: { label: 'Multichannel', icon: Radar },
+  signal: { label: 'Signal', icon: Zap },
 };
 
 function hasPreviewContent(task: AgentTask): boolean {
+  if (task.task_type === 'signal') return true;
   const o = task.output_data || {};
   return !!(o.analysis || o.research_summary || o.content || o.excerpt || o.title || o.subject || o.sources || o.tweets || o.channels || o.brief);
 }
@@ -405,15 +407,72 @@ function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => vo
   );
 }
 
+const sourceIcons: Record<string, typeof Globe> = {
+  linkedin: Linkedin,
+  x: Twitter,
+  twitter: Twitter,
+  web: Globe,
+};
+
+function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (topic: string) => void }) {
+  const i = task.input_data || {};
+  const url = (i.url as string) || '';
+  const title = (i.title as string) || '';
+  const content = (i.content as string) || '';
+  const note = (i.note as string) || '';
+  const sourceType = (i.source_type as string) || 'web';
+  const SourceIcon = sourceIcons[sourceType] || Globe;
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center gap-2">
+        <SourceIcon className="h-4 w-4 text-muted-foreground" />
+        <Badge variant="outline" className="text-xs capitalize">{sourceType}</Badge>
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:underline flex items-center gap-1 truncate max-w-xs">
+            {new URL(url).hostname}
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </a>
+        )}
+      </div>
+      {title && <h4 className="font-medium">{title}</h4>}
+      {note && (
+        <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>
+      )}
+      {content && (
+        <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background text-xs">
+          {content.substring(0, 3000)}
+          {content.length > 3000 && '…'}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {onUseTopic && (title || url) && (
+          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onUseTopic(title || url)}>
+            <Search className="h-3 w-3 mr-1" />
+            Use as topic
+          </Button>
+        )}
+        {content && (
+          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
+            <Copy className="h-3 w-3 mr-1" />
+            Copy content
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
   onUseSources?: (urls: string[]) => void;
   onRunAction?: (action: string, topic: string, sources: string[]) => void;
+  onUseTopic?: (topic: string) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction, onUseTopic }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -448,7 +507,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground truncate mt-0.5">
-            {(inputData.topic as string) || (outputData.title as string) || (outputData.subject as string) || task.task_type}
+            {(inputData.topic as string) || (inputData.title as string) || (outputData.title as string) || (outputData.subject as string) || task.task_type}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {format(new Date(task.created_at), 'MMM d, HH:mm')}
@@ -487,7 +546,9 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
       {expanded && canExpand && (
         <div className="px-3 pb-3 pl-10 border-t bg-muted/30">
           <div className="pt-3">
-            {task.task_type === 'research' ? (
+            {task.task_type === 'signal' ? (
+              <SignalPreview task={task} onUseTopic={onUseTopic} />
+            ) : task.task_type === 'research' ? (
               <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
             ) : task.task_type === 'scout' ? (
               <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
