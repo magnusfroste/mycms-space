@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       agent_tasks: {
         Row: {
+          batch_id: string | null
           completed_at: string | null
           created_at: string
           id: string
@@ -26,6 +27,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          batch_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
@@ -36,6 +38,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          batch_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
