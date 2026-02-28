@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
