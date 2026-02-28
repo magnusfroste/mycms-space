@@ -86,6 +86,75 @@ export default function ProfileSettings() {
     }
   };
 
+  const loadApiToken = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('modules')
+        .select('module_config')
+        .eq('module_type', 'api_tokens')
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data?.module_config) {
+        const config = data.module_config as Record<string, unknown>;
+        setApiToken((config.signal_ingest_token as string) || '');
+      }
+    } catch (error) {
+      console.error('Error loading API token:', error);
+    }
+  };
+
+  const generateToken = (): string => {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const saveApiToken = async (token: string) => {
+    setSavingToken(true);
+    try {
+      const configData: Json = { signal_ingest_token: token };
+
+      const { data: existing } = await supabase
+        .from('modules')
+        .select('id')
+        .eq('module_type', 'api_tokens')
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('modules')
+          .update({ module_config: configData, enabled: true })
+          .eq('module_type', 'api_tokens');
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('modules')
+          .insert({ module_type: 'api_tokens', module_config: configData, enabled: true });
+        if (error) throw error;
+      }
+
+      setApiToken(token);
+      toast.success('API token saved.');
+    } catch (error) {
+      console.error('Error saving API token:', error);
+      toast.error('Failed to save API token.');
+    } finally {
+      setSavingToken(false);
+    }
+  };
+
+  const handleGenerateToken = () => {
+    const token = generateToken();
+    saveApiToken(token);
+  };
+
+  const handleCopyToken = () => {
+    navigator.clipboard.writeText(apiToken);
+    toast.success('Token copied to clipboard.');
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
