@@ -283,9 +283,10 @@ interface TaskHistoryItemProps {
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
   onUseSources?: (urls: string[]) => void;
+  onRunAction?: (action: string, topic: string, sources: string[]) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
