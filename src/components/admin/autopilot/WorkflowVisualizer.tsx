@@ -406,7 +406,9 @@ export default function WorkflowVisualizer() {
                 cronJob={cronMap[wf.jobName] || { jobid: 0, jobname: wf.jobName, schedule: '?', active: false, command: '' }}
                 lastRun={data?.lastRun?.[wf.id.split('-')[0]] as any}
                 onToggle={(name, active) => toggleMutation.mutate({ jobName: name, active })}
+                onUpdateSchedule={(name, schedule) => scheduleMutation.mutate({ jobName: name, schedule })}
                 isToggling={toggleMutation.isPending}
+                isUpdating={scheduleMutation.isPending}
               />
             ))}
           </div>
