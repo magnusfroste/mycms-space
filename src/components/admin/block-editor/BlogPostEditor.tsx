@@ -33,6 +33,7 @@ import {
   Check,
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import UnsplashPicker from './UnsplashPicker';
 import { RichTextEditor, AITextActions, MarkdownContent } from '@/components/common';
 import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
