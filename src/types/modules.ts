@@ -121,7 +121,7 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'gemini',
     name: 'Google Gemini',
-    description: 'Google Gemini models via Lovable gateway (tools supported)',
+    description: 'Direct integration with Google Gemini API (tools supported)',
     icon: 'Sparkles',
     available: true,
     docs: 'https://ai.google.dev/docs',

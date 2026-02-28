@@ -142,9 +142,9 @@ const providerEndpoints: Record<string, { url: string; envKey: string; defaultMo
     defaultModel: "gpt-4o",
   },
   gemini: {
-    url: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    envKey: "LOVABLE_API_KEY",
-    defaultModel: "google/gemini-2.5-flash",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    envKey: "GEMINI_API_KEY",
+    defaultModel: "gemini-2.5-flash",
   },
 };
 
