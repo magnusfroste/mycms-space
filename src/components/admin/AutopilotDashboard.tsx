@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
