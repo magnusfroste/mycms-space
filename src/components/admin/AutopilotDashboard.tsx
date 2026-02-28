@@ -4,11 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, Clock, CheckCircle, AlertCircle, Eye, RefreshCw, Settings2, Save, Rocket } from 'lucide-react';
-import { format } from 'date-fns';
+import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save } from 'lucide-react';
+import TaskHistoryItem from './autopilot/TaskHistoryItem';
 
 type AgentTask = {
   id: string;
@@ -24,20 +23,6 @@ interface AutopilotConfig {
   default_topic: string;
   default_sources: string[];
 }
-
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
-  pending: { label: 'Pending', variant: 'outline', icon: Clock },
-  running: { label: 'Running', variant: 'secondary', icon: Loader2 },
-  completed: { label: 'Completed', variant: 'default', icon: CheckCircle },
-  needs_review: { label: 'Needs Review', variant: 'secondary', icon: Eye },
-  failed: { label: 'Failed', variant: 'destructive', icon: AlertCircle },
-};
-
-const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
-  research: { label: 'Research', icon: Search },
-  blog_draft: { label: 'Blog Draft', icon: PenSquare },
-  newsletter_draft: { label: 'Newsletter', icon: Mail },
-};
 
 export default function AutopilotDashboard() {
   const queryClient = useQueryClient();
