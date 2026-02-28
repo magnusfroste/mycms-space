@@ -326,7 +326,7 @@ const IntegrationsManager: React.FC = () => {
                   }
                 }}
                 onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                showActivate={integration.type === 'github' && !githubModule?.enabled}
+                showActivate={(integration.type === 'github' && !githubModule?.enabled) || (integration.type === 'gmail' && !gmailStatus?.connected)}
               >
                 {integration.type === 'github' && (
                   <GitHubSourceConfig 
