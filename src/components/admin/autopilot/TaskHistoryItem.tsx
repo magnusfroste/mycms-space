@@ -507,7 +507,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground truncate mt-0.5">
-            {(inputData.topic as string) || (outputData.title as string) || (outputData.subject as string) || task.task_type}
+            {(inputData.topic as string) || (inputData.title as string) || (outputData.title as string) || (outputData.subject as string) || task.task_type}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {format(new Date(task.created_at), 'MMM d, HH:mm')}
