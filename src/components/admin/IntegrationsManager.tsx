@@ -114,7 +114,6 @@ const IntegrationsManager: React.FC = () => {
   const currentIntegrationConfig = config?.integration || defaultIntegrations.n8n;
 
   // Check if an integration is properly configured
-  // Note: For OpenAI/Gemini we show "Requires secret" since we can't check Supabase secrets from client
   const isIntegrationConfigured = (type: IntegrationType): boolean | 'requires_secret' | 'connected' => {
     switch (type) {
       case 'n8n': {
@@ -124,24 +123,19 @@ const IntegrationsManager: React.FC = () => {
         return !!webhookUrl && webhookUrl.trim().length > 0;
       }
       case 'lovable':
-        // Lovable is always configured (no API key needed)
-        return true;
+        return false; // Not available for self-hosted
       case 'openai':
       case 'gemini':
-        // These require Supabase secrets - we can't verify from client
-        return 'requires_secret';
+        // If it's the active integration, it's working (edge function validates the key)
+        // Otherwise show as ready (secrets are managed in backend)
+        return activeIntegration === type ? 'connected' : true;
       case 'firecrawl':
-      case 'resend':
-        // These are connected via secrets/connectors - verified externally
         return 'connected';
       case 'resend':
-        // Resend requires RESEND_API_KEY secret
-        return 'requires_secret';
+        return 'connected';
       case 'github':
-        // GitHub is configured if username is set and module is enabled
         return !!(githubModule?.enabled && githubConfig?.username);
       case 'custom': {
-        // Check for base_url
         if (config?.integration?.type === 'custom') {
           return !!(config.integration as any).base_url;
         }
@@ -388,10 +382,15 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
         {/* Connection status indicator */}
         {isAvailable && (
           <div className="mt-3">
-            {isConfigured === true || isConfigured === 'connected' ? (
+            {isConfigured === 'connected' ? (
               <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
                 <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
                 Connected
+              </Badge>
+            ) : isConfigured === true ? (
+              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                <Check className="h-3 w-3 mr-1" />
+                Ready
               </Badge>
             ) : isConfigured === 'requires_secret' ? (
               <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
