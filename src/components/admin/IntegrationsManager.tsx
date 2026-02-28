@@ -309,7 +309,7 @@ const IntegrationsManager: React.FC = () => {
             const isExpanded = expandedIntegration === integration.type;
             const isAvailable = integration.available;
             const isConfigured = isIntegrationConfigured(integration.type);
-            const isActive = integration.type === 'github' && githubModule?.enabled;
+            const isActive = (integration.type === 'github' && githubModule?.enabled) || (integration.type === 'gmail' && gmailStatus?.connected);
             
             return (
               <IntegrationCard
