@@ -246,11 +246,19 @@ Deno.serve(async (req) => {
             suggested_topics: suggestedTopics,
             email: config.email,
             scan_period_days: config.scan_days,
+            signals: signals.map(s => ({ from: s.from, subject: s.subject, date: s.date })),
           },
         }).eq('id', taskId);
 
         return new Response(
-          JSON.stringify({ success: true, taskId, signalCount: signals.length, analysis, suggestedTopics }),
+          JSON.stringify({
+            success: true,
+            taskId,
+            signalCount: signals.length,
+            analysis,
+            suggestedTopics,
+            signals: signals.map(s => ({ from: s.from, subject: s.subject, date: s.date })),
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (e) {
