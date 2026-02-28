@@ -175,6 +175,16 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
                   Copy URLs
                 </Button>
               )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs h-7"
+                onClick={() => saveDefaultsMutation.mutate()}
+                disabled={saveDefaultsMutation.isPending}
+              >
+                {saveDefaultsMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <BookmarkPlus className="h-3 w-3 mr-1" />}
+                Save as Defaults
+              </Button>
             </div>
           </div>
           <div className="space-y-1.5">
