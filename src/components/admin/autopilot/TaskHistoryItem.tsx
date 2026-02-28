@@ -124,17 +124,26 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
-            {onUseSources && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-7"
-                onClick={() => onUseSources(sources.map(s => s.url))}
-              >
-                <Copy className="h-3 w-3 mr-1" />
-                Use as Sources
-              </Button>
-            )}
+            <div className="flex items-center gap-1.5">
+              {onRunAction && topic && (
+                <>
+                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onRunAction('research', topic, sourceUrls)}>
+                    <Search className="h-3 w-3 mr-1" />
+                    Research
+                  </Button>
+                  <Button size="sm" className="text-xs h-7" onClick={() => onRunAction('blog_draft', topic, sourceUrls)}>
+                    <PenSquare className="h-3 w-3 mr-1" />
+                    Draft Blog
+                  </Button>
+                </>
+              )}
+              {onUseSources && (
+                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => onUseSources(sourceUrls)}>
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy URLs
+                </Button>
+              )}
+            </div>
           </div>
           <div className="space-y-1.5">
             {sources.map((source, i) => (
