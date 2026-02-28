@@ -161,6 +161,11 @@ export default function AutopilotDashboard() {
     runAction.mutate({ action: 'newsletter_draft' });
   };
 
+  const handleScout = () => {
+    if (!topic.trim()) return toast.error('Enter a topic');
+    runAction.mutate({ action: 'scout', topic: topic.trim() });
+  };
+
   const isRunning = runAction.isPending;
 
   return (
