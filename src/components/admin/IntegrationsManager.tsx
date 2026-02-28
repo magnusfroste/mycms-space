@@ -934,6 +934,23 @@ const ManageReposLink: React.FC = () => {
 // ============================================
 // Gmail Source Config Component
 // ============================================
+interface GmailStatusData {
+  connected: boolean;
+  email: string | null;
+  connected_at: string | null;
+  filter_senders: string[];
+  filter_labels: string[];
+  max_messages: number;
+  scan_days: number;
+  last_scan: { scanned_at: string; signal_count: number; suggested_topics: string[] } | null;
+}
+
+interface ScanSignal {
+  from: string;
+  subject: string;
+  date: string;
+}
+
 const GmailSourceConfig: React.FC<{
   connected: boolean;
   email: string | null;
@@ -941,6 +958,70 @@ const GmailSourceConfig: React.FC<{
 }> = ({ connected, email, connectedAt }) => {
   const queryClient = useQueryClient();
   const [disconnecting, setDisconnecting] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanSignals, setScanSignals] = useState<ScanSignal[]>([]);
+
+  // Fetch full status including filter settings
+  const { data: fullStatus } = useQuery({
+    queryKey: ['gmail-status-full'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
+        body: { action: 'status' },
+      });
+      if (error) return null;
+      return data as GmailStatusData;
+    },
+    enabled: connected,
+  });
+
+  // Local filter state
+  const [senderInput, setSenderInput] = useState('');
+  const [localSenders, setLocalSenders] = useState<string[]>([]);
+  const [localScanDays, setLocalScanDays] = useState(7);
+  const [localMaxMessages, setLocalMaxMessages] = useState(20);
+  const [settingsDirty, setSettingsDirty] = useState(false);
+
+  // Sync from server
+  React.useEffect(() => {
+    if (fullStatus) {
+      setLocalSenders(fullStatus.filter_senders || []);
+      setLocalScanDays(fullStatus.scan_days || 7);
+      setLocalMaxMessages(fullStatus.max_messages || 20);
+      setSettingsDirty(false);
+    }
+  }, [fullStatus]);
+
+  const handleAddSender = () => {
+    const trimmed = senderInput.trim();
+    if (trimmed && !localSenders.includes(trimmed)) {
+      setLocalSenders([...localSenders, trimmed]);
+      setSenderInput('');
+      setSettingsDirty(true);
+    }
+  };
+
+  const handleRemoveSender = (sender: string) => {
+    setLocalSenders(localSenders.filter(s => s !== sender));
+    setSettingsDirty(true);
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      await supabase.functions.invoke('gmail-oauth-callback', {
+        body: {
+          action: 'update_settings',
+          filter_senders: localSenders,
+          scan_days: localScanDays,
+          max_messages: localMaxMessages,
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
+      setSettingsDirty(false);
+      toast.success('Settings saved');
+    } catch {
+      toast.error('Failed to save settings');
+    }
+  };
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
@@ -949,6 +1030,7 @@ const GmailSourceConfig: React.FC<{
         body: { action: 'disconnect' },
       });
       queryClient.invalidateQueries({ queryKey: ['gmail-status'] });
+      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
       toast.success('Gmail disconnected');
     } catch {
       toast.error('Failed to disconnect');
@@ -963,42 +1045,151 @@ const GmailSourceConfig: React.FC<{
   };
 
   const handleScan = async () => {
+    setScanning(true);
+    setScanSignals([]);
     try {
       toast.info('Scanning inbox...');
       const { data, error } = await supabase.functions.invoke('agent-inbox-scan', {
         body: { action: 'scan' },
       });
       if (error) throw error;
+      setScanSignals(data.signals || []);
+      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
       toast.success(`Scan complete: ${data.signalCount} signals found`);
     } catch (e) {
       toast.error('Scan failed', { description: e instanceof Error ? e.message : 'Unknown error' });
+    } finally {
+      setScanning(false);
     }
   };
 
   if (connected) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
+        {/* Connection status */}
         <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">Connected</p>
           {email && <p className="text-xs text-green-600 dark:text-green-400 mt-1">{email}</p>}
           {connectedAt && <p className="text-xs text-muted-foreground mt-1">Since {new Date(connectedAt).toLocaleDateString()}</p>}
         </div>
 
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Gmail signals are harvested for LinkedIn notifications and newsletters. Configure senders and scan frequency in the Autopilot dashboard.
-          </p>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={handleScan}>
-              <Search className="h-3 w-3 mr-1" />
-              Scan Now
-            </Button>
-            <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
-              {disconnecting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
-              Disconnect
-            </Button>
+        {/* Filter Settings */}
+        <div className="border-t pt-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Scan Filters</span>
           </div>
+
+          {/* Sender filter */}
+          <div className="space-y-2">
+            <Label>Filter by Sender</Label>
+            <div className="flex gap-2">
+              <Input
+                value={senderInput}
+                onChange={(e) => setSenderInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSender())}
+                placeholder="e.g. notifications@linkedin.com"
+                className="text-sm"
+              />
+              <Button size="sm" variant="outline" onClick={handleAddSender}>Add</Button>
+            </div>
+            {localSenders.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {localSenders.map(sender => (
+                  <Badge key={sender} variant="secondary" className="text-xs gap-1 pr-1">
+                    {sender}
+                    <button onClick={() => handleRemoveSender(sender)} className="ml-1 hover:text-destructive">×</button>
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No filter — all incoming mail will be scanned</p>
+            )}
+          </div>
+
+          {/* Scan period & max */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="scan_days" className="text-xs">Period (days)</Label>
+              <Input
+                id="scan_days"
+                type="number"
+                min={1}
+                max={90}
+                value={localScanDays}
+                onChange={(e) => { setLocalScanDays(parseInt(e.target.value) || 7); setSettingsDirty(true); }}
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="max_messages" className="text-xs">Max messages</Label>
+              <Input
+                id="max_messages"
+                type="number"
+                min={1}
+                max={100}
+                value={localMaxMessages}
+                onChange={(e) => { setLocalMaxMessages(parseInt(e.target.value) || 20); setSettingsDirty(true); }}
+                className="text-sm"
+              />
+            </div>
+          </div>
+
+          {settingsDirty && (
+            <Button size="sm" onClick={handleSaveSettings}>Save Settings</Button>
+          )}
         </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 border-t pt-4">
+          <Button size="sm" variant="outline" onClick={handleScan} disabled={scanning}>
+            {scanning ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Search className="h-3 w-3 mr-1" />}
+            Scan Now
+          </Button>
+          <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
+            {disconnecting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+            Disconnect
+          </Button>
+        </div>
+
+        {/* Signal Preview Table */}
+        {scanSignals.length > 0 && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Scanned Signals ({scanSignals.length})</span>
+            </div>
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">From</th>
+                    <th className="px-3 py-2 text-left font-medium">Subject</th>
+                    <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {scanSignals.map((sig, i) => (
+                    <tr key={i} className="hover:bg-muted/30">
+                      <td className="px-3 py-2 max-w-[140px] truncate">{sig.from}</td>
+                      <td className="px-3 py-2 max-w-[200px] truncate">{sig.subject}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
+                        {sig.date ? new Date(sig.date).toLocaleDateString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Last scan info */}
+        {!scanSignals.length && fullStatus?.last_scan && (
+          <div className="text-xs text-muted-foreground border-t pt-3">
+            Last scan: {new Date(fullStatus.last_scan.scanned_at).toLocaleString()} · {fullStatus.last_scan.signal_count} signals
+          </div>
+        )}
       </div>
     );
   }
@@ -1006,11 +1197,11 @@ const GmailSourceConfig: React.FC<{
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Connect your Gmail account to harvest signals from LinkedIn notifications, newsletters, and industry updates. Only metadata and snippets are read — never full email content.
+        Connect your Gmail to harvest signals from LinkedIn, newsletters, and industry updates. Only metadata and snippets are read.
       </p>
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• Requires <code>gmail.readonly</code> scope</p>
-        <p>• Filters to specific senders (LinkedIn, newsletters)</p>
+        <p>• Configurable sender filters</p>
         <p>• Privacy-first: only AI summaries are stored</p>
       </div>
       <Button size="sm" onClick={handleConnect}>
