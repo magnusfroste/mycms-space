@@ -51,6 +51,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     if (user) {
       loadProfile();
+      loadApiToken();
     }
   }, [user]);
 
