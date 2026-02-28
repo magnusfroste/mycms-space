@@ -324,6 +324,11 @@ const IntegrationsManager: React.FC = () => {
                     toggleGitHubIntegration(true);
                     setExpandedIntegration('github');
                   }
+                  if (integration.type === 'gmail') {
+                    // Open OAuth flow in new window
+                    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+                    window.open(url, '_blank', 'width=600,height=700');
+                  }
                 }}
                 onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
                 showActivate={(integration.type === 'github' && !githubModule?.enabled) || (integration.type === 'gmail' && !gmailStatus?.connected)}
