@@ -64,6 +64,18 @@ const IntegrationsManager: React.FC = () => {
   const updateGitHubModule = useUpdateGitHubModule();
   const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
 
+  // Gmail connection status
+  const { data: gmailStatus } = useQuery({
+    queryKey: ['gmail-status'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
+        body: { action: 'status' },
+      });
+      if (error) return { connected: false, email: null };
+      return data as { connected: boolean; email: string | null; connected_at: string | null };
+    },
+  });
+
   const handleConfigUpdate = (updates: Partial<AIModuleConfig>) => {
     if (!config) return;
     updateModule.mutate(
