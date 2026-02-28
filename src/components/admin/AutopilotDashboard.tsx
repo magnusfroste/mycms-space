@@ -313,6 +313,9 @@ export default function AutopilotDashboard() {
                     setSources(urls.join('\n'));
                     toast.success(`${urls.length} sources loaded`, { description: 'Ready to use for research or blog drafting' });
                   }}
+                  onRunAction={(action, actionTopic, actionSources) => {
+                    runAction.mutate({ action, topic: actionTopic, sources: actionSources });
+                  }}
                 />
               ))}
             </div>
