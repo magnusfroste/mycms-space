@@ -4,6 +4,7 @@ import {
   Layers, 
   Navigation, 
   Bot,
+  Zap,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
