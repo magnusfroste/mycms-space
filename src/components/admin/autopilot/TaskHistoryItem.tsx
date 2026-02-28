@@ -271,6 +271,7 @@ interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
+  onUseSources?: (urls: string[]) => void;
 }
 
 export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
