@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
+import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
 type AgentTask = {
   id: string;
