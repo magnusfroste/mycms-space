@@ -109,7 +109,7 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
 }
 
 // Scout source discovery preview
-function ScoutPreview({ task, onUseSources }: { task: AgentTask; onUseSources?: (urls: string[]) => void }) {
+function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
   const o = task.output_data || {};
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
