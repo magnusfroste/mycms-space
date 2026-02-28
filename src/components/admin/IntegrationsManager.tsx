@@ -151,6 +151,8 @@ const IntegrationsManager: React.FC = () => {
         return 'connected';
       case 'resend':
         return 'connected';
+      case 'unsplash':
+        return 'connected';
       case 'github':
         return !!(githubModule?.enabled && githubConfig?.username);
       case 'gmail':
