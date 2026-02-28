@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, Clock, CheckCircle, AlertCircle, Eye, RefreshCw, Settings2, Save } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, Clock, CheckCircle, AlertCircle, Eye, RefreshCw, Settings2, Save, Rocket } from 'lucide-react';
 import { format } from 'date-fns';
 
 type AgentTask = {
@@ -109,6 +109,30 @@ export default function AutopilotDashboard() {
       if (error) throw error;
       return data as AgentTask[];
     },
+  });
+
+  const publishDraft = useMutation({
+    mutationFn: async (task: AgentTask) => {
+      const output = task.output_data || {};
+      const slug = (output.slug as string) || '';
+      if (!slug) throw new Error('No slug found in task output');
+
+      const { error } = await supabase
+        .from('blog_posts')
+        .update({ status: 'published', published_at: new Date().toISOString() })
+        .eq('slug', slug);
+      if (error) throw error;
+
+      await supabase
+        .from('agent_tasks')
+        .update({ status: 'completed' })
+        .eq('id', task.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agent-tasks'] });
+      toast.success('Blog post published!');
+    },
+    onError: (e) => toast.error('Failed to publish', { description: e.message }),
   });
 
   const runAction = useMutation({
@@ -307,6 +331,18 @@ export default function AutopilotDashboard() {
                         {task.completed_at && ` · Done ${format(new Date(task.completed_at), 'HH:mm')}`}
                       </p>
                     </div>
+                    {task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && (outputData.slug as string) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 text-xs"
+                        disabled={publishDraft.isPending}
+                        onClick={() => publishDraft.mutate(task)}
+                      >
+                        {publishDraft.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
+                        Publish
+                      </Button>
+                    )}
                   </div>
                 );
               })}
