@@ -154,6 +154,15 @@ export const integrationsMeta: IntegrationMeta[] = [
     category: 'utility',
   },
   {
+    type: 'unsplash',
+    name: 'Unsplash',
+    description: 'Search and use high-quality photos for blog cover images',
+    icon: 'Image',
+    available: true,
+    docs: 'https://unsplash.com/developers',
+    category: 'utility',
+  },
+  {
     type: 'github',
     name: 'GitHub',
     description: 'Connect your GitHub profile to display repositories',
