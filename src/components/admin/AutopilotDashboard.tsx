@@ -170,6 +170,9 @@ export default function AutopilotDashboard() {
         <p className="text-muted-foreground">Autonomous content research and generation</p>
       </div>
 
+      {/* Workflow Visualizer */}
+      <WorkflowVisualizer />
+
       {/* Scheduled Defaults Config */}
       <Card>
         <CardHeader>
