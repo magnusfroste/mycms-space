@@ -247,7 +247,7 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
   gemini: {
     type: 'gemini',
     enabled: false,
-    model: 'google/gemini-2.5-flash',
+    model: 'gemini-2.5-flash',
   },
   custom: {
     type: 'custom',
