@@ -331,6 +331,18 @@ export default function AutopilotDashboard() {
                         {task.completed_at && ` · Done ${format(new Date(task.completed_at), 'HH:mm')}`}
                       </p>
                     </div>
+                    {task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && (outputData.slug as string) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0 text-xs"
+                        disabled={publishDraft.isPending}
+                        onClick={() => publishDraft.mutate(task)}
+                      >
+                        {publishDraft.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
+                        Publish
+                      </Button>
+                    )}
                   </div>
                 );
               })}
