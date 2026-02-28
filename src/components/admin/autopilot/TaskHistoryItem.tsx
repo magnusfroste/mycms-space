@@ -79,6 +79,31 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
     );
   }
 
+  if (task.task_type === 'inbox_digest') {
+    return (
+      <div className="space-y-2 text-sm">
+        {o.email && <p className="text-xs text-muted-foreground">Account: {o.email as string}</p>}
+        <p className="text-xs text-muted-foreground">{o.signal_count as number} signals · {o.scan_period_days as number} day scan</p>
+        {o.analysis && (
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+            {(o.analysis as string).substring(0, 2000)}
+            {(o.analysis as string).length > 2000 && '…'}
+          </div>
+        )}
+        {(o.suggested_topics as string[])?.length > 0 && (
+          <div className="space-y-1 mt-2">
+            <p className="text-xs font-medium">Suggested blog topics:</p>
+            <div className="flex flex-wrap gap-1">
+              {(o.suggested_topics as string[]).map((t, i) => (
+                <Badge key={i} variant="outline" className="text-xs">{t}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return null;
 }
 
