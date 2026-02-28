@@ -12,7 +12,7 @@ const corsHeaders = {
 };
 
 interface AutopilotRequest {
-  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow';
+  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow' | 'scout';
   topic?: string;
   sources?: string[];
   taskId?: string;
