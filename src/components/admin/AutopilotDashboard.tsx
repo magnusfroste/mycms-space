@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar } from 'lucide-react';
+import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar, Layers } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
