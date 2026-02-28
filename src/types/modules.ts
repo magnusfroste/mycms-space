@@ -177,7 +177,7 @@ export const integrationsMeta: IntegrationMeta[] = [
 // Utility Integration Types
 // ============================================
 
-export type UtilityIntegrationType = 'firecrawl' | 'resend';
+export type UtilityIntegrationType = 'firecrawl' | 'resend' | 'unsplash';
 
 // ============================================
 // Source Integration Types (GitHub, Gmail, etc.)
