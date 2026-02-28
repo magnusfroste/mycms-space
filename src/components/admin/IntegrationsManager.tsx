@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye, Search, Loader2 } from 'lucide-react';
+import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye, Search, Loader2, ImageIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,7 @@ const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   resend: <Mail className="h-5 w-5" />,
   github: <Github className="h-5 w-5" />,
   gmail: <Mail className="h-5 w-5" />,
+  unsplash: <ImageIcon className="h-5 w-5" />,
 };
 
 const integrationColors: Record<IntegrationType, string> = {
@@ -57,6 +58,7 @@ const integrationColors: Record<IntegrationType, string> = {
   resend: 'text-indigo-500',
   github: 'text-gray-700 dark:text-gray-300',
   gmail: 'text-red-500',
+  unsplash: 'text-slate-700 dark:text-slate-300',
 };
 
 const IntegrationsManager: React.FC = () => {
@@ -148,6 +150,8 @@ const IntegrationsManager: React.FC = () => {
       case 'firecrawl':
         return 'connected';
       case 'resend':
+        return 'connected';
+      case 'unsplash':
         return 'connected';
       case 'github':
         return !!(githubModule?.enabled && githubConfig?.username);
@@ -295,6 +299,7 @@ const IntegrationsManager: React.FC = () => {
               >
                 {integration.type === 'firecrawl' && <FirecrawlConfig />}
                 {integration.type === 'resend' && <ResendConfig />}
+                {integration.type === 'unsplash' && <UnsplashConfig />}
               </IntegrationCard>
             );
           })}
@@ -576,6 +581,33 @@ const ResendConfig: React.FC = () => {
         <ul className="list-disc list-inside space-y-1">
           <li><strong>Newsletter</strong> - Send newsletters to subscribers</li>
           <li><strong>Transactional email</strong> - Confirmations, notifications</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
+// Unsplash Configuration Component
+// ============================================
+const UnsplashConfig: React.FC = () => {
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+        <div className="flex items-start gap-2">
+          <Check className="h-4 w-4 text-green-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
+            <p className="text-green-700 dark:text-green-300 mt-1">
+              Unsplash is configured via secret <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">UNSPLASH_ACCESS_KEY</code>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="text-sm text-muted-foreground">
+        <p className="font-medium mb-2">Used in:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li><strong>Blog Editor</strong> — Search and set cover images from Unsplash</li>
         </ul>
       </div>
     </div>

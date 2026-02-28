@@ -154,6 +154,15 @@ export const integrationsMeta: IntegrationMeta[] = [
     category: 'utility',
   },
   {
+    type: 'unsplash',
+    name: 'Unsplash',
+    description: 'Search and use high-quality photos for blog cover images',
+    icon: 'Image',
+    available: true,
+    docs: 'https://unsplash.com/developers',
+    category: 'utility',
+  },
+  {
     type: 'github',
     name: 'GitHub',
     description: 'Connect your GitHub profile to display repositories',
@@ -177,7 +186,7 @@ export const integrationsMeta: IntegrationMeta[] = [
 // Utility Integration Types
 // ============================================
 
-export type UtilityIntegrationType = 'firecrawl' | 'resend';
+export type UtilityIntegrationType = 'firecrawl' | 'resend' | 'unsplash';
 
 // ============================================
 // Source Integration Types (GitHub, Gmail, etc.)
@@ -232,7 +241,12 @@ export interface ResendIntegration extends UtilityIntegrationBase {
   // API key is stored in Supabase secrets as RESEND_API_KEY
 }
 
-export type UtilityIntegration = FirecrawlIntegration | ResendIntegration;
+export interface UnsplashIntegration extends UtilityIntegrationBase {
+  type: 'unsplash';
+  // API key is stored in Supabase secrets as UNSPLASH_ACCESS_KEY
+}
+
+export type UtilityIntegration = FirecrawlIntegration | ResendIntegration | UnsplashIntegration;
 
 export const defaultUtilityIntegrations: Record<UtilityIntegrationType, UtilityIntegration> = {
   firecrawl: {
@@ -243,6 +257,10 @@ export const defaultUtilityIntegrations: Record<UtilityIntegrationType, UtilityI
     type: 'resend',
     enabled: true,
     from_email: 'newsletter@froste.eu',
+  },
+  unsplash: {
+    type: 'unsplash',
+    enabled: true,
   },
 };
 
