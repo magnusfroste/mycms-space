@@ -125,9 +125,9 @@ export default function AutopilotDashboard() {
   });
 
   const runAction = useMutation({
-    mutationFn: async ({ action, topic, sources }: { action: string; topic?: string; sources?: string[] }) => {
+    mutationFn: async ({ action, topic, sources, channels }: { action: string; topic?: string; sources?: string[]; channels?: string[] }) => {
       const { data, error } = await supabase.functions.invoke('agent-autopilot', {
-        body: { action, topic, sources },
+        body: { action, topic, sources, channels },
       });
       if (error) throw error;
       return data;
@@ -139,9 +139,10 @@ export default function AutopilotDashboard() {
         blog_draft: 'Blog draft created',
         newsletter_draft: 'Newsletter draft created',
         scout: 'Source discovery complete',
+        multichannel_draft: 'Multichannel content created',
       };
       toast.success(labels[variables.action] || 'Task completed', {
-        description: data.title || data.subject || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
+        description: data.title || data.subject || data.batchId || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
       });
     },
     onError: (error) => {
