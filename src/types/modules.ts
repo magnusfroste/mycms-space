@@ -247,10 +247,10 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
   gemini: {
     type: 'gemini',
     enabled: false,
-    model: 'gemini-1.5-flash',
+    model: 'google/gemini-2.5-flash',
   },
-  ollama: {
-    type: 'ollama',
+  custom: {
+    type: 'custom',
     enabled: false,
     base_url: 'http://localhost:11434',
     model: 'llama3',
