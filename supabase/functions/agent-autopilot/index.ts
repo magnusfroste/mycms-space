@@ -12,10 +12,13 @@ const corsHeaders = {
 };
 
 interface AutopilotRequest {
-  action: 'research' | 'blog_draft' | 'newsletter_draft';
+  action: 'research' | 'blog_draft' | 'newsletter_draft' | 'workflows' | 'toggle_workflow';
   topic?: string;
   sources?: string[];
   taskId?: string;
+  jobName?: string;
+  active?: boolean;
+  schedule?: string;
 }
 
 function getSupabase() {
