@@ -104,9 +104,9 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'lovable',
     name: 'Lovable AI',
-    description: 'Built-in AI using Lovable gateway (no API key needed)',
+    description: 'Requires Lovable Cloud — not available for self-hosted deployments',
     icon: 'Sparkles',
-    available: true,
+    available: false,
     category: 'ai',
   },
   {
@@ -121,7 +121,7 @@ export const integrationsMeta: IntegrationMeta[] = [
   {
     type: 'gemini',
     name: 'Google Gemini',
-    description: 'Google Gemini models via Lovable gateway (tools supported)',
+    description: 'Direct integration with Google Gemini API (tools supported)',
     icon: 'Sparkles',
     available: true,
     docs: 'https://ai.google.dev/docs',
@@ -247,7 +247,7 @@ export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
   gemini: {
     type: 'gemini',
     enabled: false,
-    model: 'google/gemini-2.5-flash',
+    model: 'gemini-2.5-flash',
   },
   custom: {
     type: 'custom',
