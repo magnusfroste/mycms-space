@@ -931,4 +931,93 @@ const ManageReposLink: React.FC = () => {
   );
 };
 
+// ============================================
+// Gmail Source Config Component
+// ============================================
+const GmailSourceConfig: React.FC<{
+  connected: boolean;
+  email: string | null;
+  connectedAt: string | null;
+}> = ({ connected, email, connectedAt }) => {
+  const queryClient = useQueryClient();
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await supabase.functions.invoke('gmail-oauth-callback', {
+        body: { action: 'disconnect' },
+      });
+      queryClient.invalidateQueries({ queryKey: ['gmail-status'] });
+      toast.success('Gmail disconnected');
+    } catch {
+      toast.error('Failed to disconnect');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const handleConnect = () => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+    window.open(url, '_blank', 'width=600,height=700');
+  };
+
+  const handleScan = async () => {
+    try {
+      toast.info('Scanning inbox...');
+      const { data, error } = await supabase.functions.invoke('agent-inbox-scan', {
+        body: { action: 'scan' },
+      });
+      if (error) throw error;
+      toast.success(`Scan complete: ${data.signalCount} signals found`);
+    } catch (e) {
+      toast.error('Scan failed', { description: e instanceof Error ? e.message : 'Unknown error' });
+    }
+  };
+
+  if (connected) {
+    return (
+      <div className="space-y-4">
+        <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <p className="text-sm font-medium text-green-800 dark:text-green-200">Connected</p>
+          {email && <p className="text-xs text-green-600 dark:text-green-400 mt-1">{email}</p>}
+          {connectedAt && <p className="text-xs text-muted-foreground mt-1">Since {new Date(connectedAt).toLocaleDateString()}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Gmail signals are harvested for LinkedIn notifications and newsletters. Configure senders and scan frequency in the Autopilot dashboard.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={handleScan}>
+              <Search className="h-3 w-3 mr-1" />
+              Scan Now
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
+              {disconnecting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+              Disconnect
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Connect your Gmail account to harvest signals from LinkedIn notifications, newsletters, and industry updates. Only metadata and snippets are read — never full email content.
+      </p>
+      <div className="text-xs text-muted-foreground space-y-1">
+        <p>• Requires <code>gmail.readonly</code> scope</p>
+        <p>• Filters to specific senders (LinkedIn, newsletters)</p>
+        <p>• Privacy-first: only AI summaries are stored</p>
+      </div>
+      <Button size="sm" onClick={handleConnect}>
+        Connect Gmail
+      </Button>
+    </div>
+  );
+};
+
 export default IntegrationsManager;
