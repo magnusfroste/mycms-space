@@ -407,12 +407,69 @@ function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => vo
   );
 }
 
+const sourceIcons: Record<string, typeof Globe> = {
+  linkedin: Linkedin,
+  x: Twitter,
+  twitter: Twitter,
+  web: Globe,
+};
+
+function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (topic: string) => void }) {
+  const i = task.input_data || {};
+  const url = (i.url as string) || '';
+  const title = (i.title as string) || '';
+  const content = (i.content as string) || '';
+  const note = (i.note as string) || '';
+  const sourceType = (i.source_type as string) || 'web';
+  const SourceIcon = sourceIcons[sourceType] || Globe;
+
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="flex items-center gap-2">
+        <SourceIcon className="h-4 w-4 text-muted-foreground" />
+        <Badge variant="outline" className="text-xs capitalize">{sourceType}</Badge>
+        {url && (
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:underline flex items-center gap-1 truncate max-w-xs">
+            {new URL(url).hostname}
+            <ExternalLink className="h-3 w-3 shrink-0" />
+          </a>
+        )}
+      </div>
+      {title && <h4 className="font-medium">{title}</h4>}
+      {note && (
+        <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>
+      )}
+      {content && (
+        <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background text-xs">
+          {content.substring(0, 3000)}
+          {content.length > 3000 && '…'}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {onUseTopic && (title || url) && (
+          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onUseTopic(title || url)}>
+            <Search className="h-3 w-3 mr-1" />
+            Use as topic
+          </Button>
+        )}
+        {content && (
+          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
+            <Copy className="h-3 w-3 mr-1" />
+            Copy content
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
   onUseSources?: (urls: string[]) => void;
   onRunAction?: (action: string, topic: string, sources: string[]) => void;
+  onUseTopic?: (topic: string) => void;
 }
 
 export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction }: TaskHistoryItemProps) {
