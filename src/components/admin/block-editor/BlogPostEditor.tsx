@@ -33,6 +33,7 @@ import {
   Check,
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import UnsplashPicker from './UnsplashPicker';
 import { RichTextEditor, AITextActions, MarkdownContent } from '@/components/common';
 import { calculateReadingTime, generateSlug } from '@/types/blog';
 import type { BlogPost, BlogPostStatus } from '@/types/blog';
@@ -304,7 +305,7 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
                     Cover Image
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-3">
                   <ImageUpload
                     currentImageUrl={coverImageUrl}
                     onImageChange={(url, path) => {
@@ -316,6 +317,15 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
                     aspectRatio="16/9"
                     compact
                   />
+                  <div className="border-t pt-3">
+                    <p className="text-xs text-muted-foreground mb-2">Or search Unsplash</p>
+                    <UnsplashPicker
+                      onSelect={(url, alt) => {
+                        setCoverImageUrl(url);
+                        setCoverImagePath('');
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
