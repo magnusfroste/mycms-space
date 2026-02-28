@@ -29,7 +29,7 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
   const navigate = useNavigate();
   const [jobDescription, setJobDescription] = useState("");
 
-  const title = c.title || "Is Magnus the Right Fit?";
+  const title = c.title || "Is Magnus the Right Fit for Your Gig?";
   const subtitle = c.subtitle || "Paste a job description and let Magnet analyze the match, generate a tailored CV, and write a cover letter — in seconds.";
   const badgeText = c.badge_text || "AI-Powered";
   const buttonText = c.button_text || "Analyze Match";
