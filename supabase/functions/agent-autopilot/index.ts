@@ -545,63 +545,14 @@ Be concise and actionable.`;
 }
 
 // ============================================
-// Multichannel Draft: Create Once, Post Everywhere
+// Multichannel Draft: Create Once, Format Everywhere
 // ============================================
 
-async function handleMultichannelDraft(
-  topic: string,
-  sources: string[],
-  supabase: ReturnType<typeof getSupabase>,
-  channels?: string[]
-) {
-  const activeChannels = channels?.length
-    ? channels
-    : ['blog', 'newsletter', 'linkedin', 'x_thread'];
-
-  const batchId = crypto.randomUUID();
-
-  // Parent task
-  const parentId = crypto.randomUUID();
-  await supabase.from('agent_tasks').insert({
-    id: parentId,
-    task_type: 'multichannel_draft',
-    status: 'running',
-    input_data: { topic, sources, channels: activeChannels },
-    batch_id: batchId,
-  });
-
-  try {
-    // Step 1: Research
-    const research = await researchTopic(topic, sources);
-
-    // Step 2: Content brief
-    const brief = await generateContent(
-      `Topic: "${topic}"\n\nResearch:\n${research}`,
-      `You are a content strategist. Create a concise content brief with:
-1. Core message (1-2 sentences)
-2. Key angles (3 bullet points)
-3. Target audience insight
-4. Tone direction
-
-This brief will be used to generate content for: ${activeChannels.join(', ')}.
-Be concise and actionable.`
-    );
-
-    // Step 3: Generate channel content in parallel
-    const channelPromises: Promise<void>[] = [];
-
-    if (activeChannels.includes('blog')) {
-      channelPromises.push((async () => {
-        const taskId = crypto.randomUUID();
-        await supabase.from('agent_tasks').insert({
-          id: taskId, task_type: 'blog_draft', status: 'running',
-          input_data: { topic, sources, from_multichannel: true },
-          batch_id: batchId,
-        });
-        try {
-          const content = await generateContent(
-            `Content brief:\n${brief}\n\nResearch:\n${research}\n\nWrite a blog post about: "${topic}"`,
-            `You are a professional tech blogger. Write an engaging, SEO-optimized blog post (800-1200 words).
+// Channel format definitions — pure formatting, no separate pipelines
+const CHANNEL_FORMATS: Record<string, { taskType: string; systemPrompt: string; parseOutput: (content: string, topic: string) => Record<string, unknown> }> = {
+  blog: {
+    taskType: 'blog_draft',
+    systemPrompt: `You are formatting a content brief into a blog post (800-1200 words, markdown).
 
 Output format:
 # [Blog Title]
@@ -613,148 +564,160 @@ METADATA:
 title: [SEO title, max 60 chars]
 excerpt: [Compelling excerpt, max 160 chars]
 seo_description: [Meta description, max 160 chars]
-seo_keywords: [comma-separated keywords]`
-          );
-
-          const lines = content.split('\n');
-          const titleMatch = lines.find(l => l.startsWith('# '));
-          const title = titleMatch?.replace('# ', '').trim() || topic;
-          const metadataStart = content.indexOf('METADATA:');
-          let blogContent = metadataStart > 0 ? content.substring(0, metadataStart).replace(/---\s*$/, '').trim() : content;
-
-          let excerpt = '', seoDesc = '', seoTitle = '', seoKeywords: string[] = [];
-          if (metadataStart > 0) {
-            const meta = content.substring(metadataStart);
-            const extractMeta = (key: string) => meta.match(new RegExp(`${key}:\\s*(.+)`))?.[1]?.trim() || '';
-            seoTitle = extractMeta('title');
-            excerpt = extractMeta('excerpt');
-            seoDesc = extractMeta('seo_description');
-            seoKeywords = extractMeta('seo_keywords').split(',').map(k => k.trim()).filter(Boolean);
-          }
-
-          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-          const { data: post } = await supabase.from('blog_posts').insert({
-            title, slug: `${slug}-${Date.now()}`,
-            content: blogContent.replace(/^# .+\n/, ''),
-            excerpt: excerpt || blogContent.substring(0, 155),
-            status: 'draft', source: 'agent',
-            seo_title: seoTitle || title, seo_description: seoDesc || excerpt,
-            seo_keywords: seoKeywords.length ? seoKeywords : null,
-          }).select('id').single();
-
-          await supabase.from('agent_tasks').update({
-            status: 'needs_review', completed_at: new Date().toISOString(),
-            output_data: { blog_post_id: post?.id, title, slug, topic },
-          }).eq('id', taskId);
-        } catch (e) {
-          await supabase.from('agent_tasks').update({
-            status: 'failed', output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
-          }).eq('id', taskId);
-        }
-      })());
-    }
-
-    if (activeChannels.includes('newsletter')) {
-      channelPromises.push((async () => {
-        const taskId = crypto.randomUUID();
-        await supabase.from('agent_tasks').insert({
-          id: taskId, task_type: 'newsletter_draft', status: 'running',
-          input_data: { topic, from_multichannel: true },
-          batch_id: batchId,
-        });
-        try {
-          const content = await generateContent(
-            `Content brief:\n${brief}\n\nWrite a newsletter snippet about: "${topic}"`,
-            `You are writing a newsletter for a tech professional's personal brand.
+seo_keywords: [comma-separated keywords]`,
+    parseOutput: (content, topic) => {
+      const lines = content.split('\n');
+      const titleMatch = lines.find((l: string) => l.startsWith('# '));
+      const title = titleMatch?.replace('# ', '').trim() || topic;
+      const metadataStart = content.indexOf('METADATA:');
+      const blogContent = metadataStart > 0 ? content.substring(0, metadataStart).replace(/---\s*$/, '').trim() : content;
+      let excerpt = '', seoDesc = '', seoTitle = '', seoKeywords: string[] = [];
+      if (metadataStart > 0) {
+        const meta = content.substring(metadataStart);
+        const extractMeta = (key: string) => meta.match(new RegExp(`${key}:\\s*(.+)`))?.[1]?.trim() || '';
+        seoTitle = extractMeta('title');
+        excerpt = extractMeta('excerpt');
+        seoDesc = extractMeta('seo_description');
+        seoKeywords = extractMeta('seo_keywords').split(',').map((k: string) => k.trim()).filter(Boolean);
+      }
+      return { title, content: blogContent.replace(/^# .+\n/, ''), excerpt, seoTitle, seoDesc, seoKeywords };
+    },
+  },
+  newsletter: {
+    taskType: 'newsletter_draft',
+    systemPrompt: `You are formatting a content brief into a newsletter (300-500 words).
 
 Format:
 Subject: [Compelling subject line]
 
-[Newsletter content, 300-500 words, engaging and valuable]`
-          );
-          const subjectMatch = content.match(/Subject:\s*(.+)/);
-          const subject = subjectMatch?.[1]?.trim() || `${topic} - Newsletter`;
-          const body = content.replace(/Subject:\s*.+\n/, '').trim();
+[Newsletter content — warm, engaging, valuable]`,
+    parseOutput: (content, _topic) => {
+      const subjectMatch = content.match(/Subject:\s*(.+)/);
+      const subject = subjectMatch?.[1]?.trim() || 'Weekly Update';
+      const body = content.replace(/Subject:\s*.+\n/, '').trim();
+      return { subject, body };
+    },
+  },
+  linkedin: {
+    taskType: 'linkedin_post',
+    systemPrompt: `You are formatting a content brief into a LinkedIn post. Max 1300 characters.
+Style: Professional yet personal, storytelling, end with a question or CTA.
+Include 3-5 hashtags at the end. Plain text only (no markdown).`,
+    parseOutput: (content, topic) => ({ content, topic, char_count: content.length }),
+  },
+  x_thread: {
+    taskType: 'x_thread',
+    systemPrompt: `You are formatting a content brief into an X/Twitter thread. 3-5 tweets, each max 280 chars.
+Format each tweet on its own line, prefixed with "1/" "2/" etc.
+Style: Punchy, insightful. First tweet = hook. Last tweet = CTA.`,
+    parseOutput: (content, topic) => {
+      const tweets = content.split('\n').filter((l: string) => /^\d+\//.test(l.trim()));
+      return { content, topic, tweets, tweet_count: tweets.length };
+    },
+  },
+};
 
+async function handleMultichannelDraft(
+  topic: string,
+  sources: string[],
+  supabase: ReturnType<typeof getSupabase>,
+  channels?: string[]
+) {
+  const activeChannels = (channels?.length ? channels : Object.keys(CHANNEL_FORMATS))
+    .filter(ch => ch in CHANNEL_FORMATS);
+
+  const batchId = crypto.randomUUID();
+  const parentId = crypto.randomUUID();
+
+  await supabase.from('agent_tasks').insert({
+    id: parentId,
+    task_type: 'multichannel_draft',
+    status: 'running',
+    input_data: { topic, sources, channels: activeChannels },
+    batch_id: batchId,
+  });
+
+  try {
+    // Step 1: Research (once)
+    console.log(`[Multichannel] Research: "${topic}"`);
+    const research = await researchTopic(topic, sources);
+
+    // Step 2: Content brief (once)
+    console.log(`[Multichannel] Generating content brief`);
+    const brief = await generateContent(
+      `Topic: "${topic}"\n\nResearch:\n${research}`,
+      `You are a content strategist. Create a content brief with:
+1. Core message (1-2 sentences)
+2. Key angles (3 bullet points)  
+3. Target audience insight
+4. Key facts and data points to include
+
+This brief will be reformatted for: ${activeChannels.join(', ')}.
+Be comprehensive but concise — this is the single source of truth.`
+    );
+
+    // Step 3: Format for each channel in parallel (pure formatting, same brief)
+    console.log(`[Multichannel] Formatting for ${activeChannels.length} channels`);
+    const formatPromises = activeChannels.map(async (channel) => {
+      const format = CHANNEL_FORMATS[channel];
+      const taskId = crypto.randomUUID();
+
+      await supabase.from('agent_tasks').insert({
+        id: taskId,
+        task_type: format.taskType,
+        status: 'running',
+        input_data: { topic, channel, from_multichannel: true },
+        batch_id: batchId,
+      });
+
+      try {
+        const formatted = await generateContent(
+          `Content brief:\n${brief}\n\nFormat this for the ${channel} channel about: "${topic}"`,
+          format.systemPrompt
+        );
+
+        const parsed = format.parseOutput(formatted, topic);
+
+        // Channel-specific persistence
+        if (channel === 'blog') {
+          const slug = (parsed.title as string || topic).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          const { data: post } = await supabase.from('blog_posts').insert({
+            title: parsed.title as string, slug: `${slug}-${Date.now()}`,
+            content: parsed.content as string,
+            excerpt: (parsed.excerpt as string) || (parsed.content as string).substring(0, 155),
+            status: 'draft', source: 'agent',
+            seo_title: (parsed.seoTitle as string) || (parsed.title as string),
+            seo_description: (parsed.seoDesc as string) || (parsed.excerpt as string),
+            seo_keywords: (parsed.seoKeywords as string[])?.length ? parsed.seoKeywords as string[] : null,
+          }).select('id').single();
+          parsed.blog_post_id = post?.id;
+          parsed.slug = slug;
+        } else if (channel === 'newsletter') {
           const { data: campaign } = await supabase.from('newsletter_campaigns').insert({
-            subject, content: body, status: 'draft',
+            subject: parsed.subject as string,
+            content: parsed.body as string,
+            status: 'draft',
             agent_notes: `Multichannel batch: ${batchId}`,
           }).select('id').single();
-
-          await supabase.from('agent_tasks').update({
-            status: 'needs_review', completed_at: new Date().toISOString(),
-            output_data: { campaign_id: campaign?.id, subject },
-          }).eq('id', taskId);
-        } catch (e) {
-          await supabase.from('agent_tasks').update({
-            status: 'failed', output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
-          }).eq('id', taskId);
+          parsed.campaign_id = campaign?.id;
         }
-      })());
-    }
 
-    if (activeChannels.includes('linkedin')) {
-      channelPromises.push((async () => {
-        const taskId = crypto.randomUUID();
-        await supabase.from('agent_tasks').insert({
-          id: taskId, task_type: 'linkedin_post', status: 'running',
-          input_data: { topic, from_multichannel: true },
-          batch_id: batchId,
-        });
-        try {
-          const content = await generateContent(
-            `Content brief:\n${brief}\n\nWrite a LinkedIn post about: "${topic}"`,
-            `You are a thought leader writing a LinkedIn post. Max 1300 characters.
+        await supabase.from('agent_tasks').update({
+          status: 'needs_review',
+          completed_at: new Date().toISOString(),
+          output_data: parsed,
+        }).eq('id', taskId);
+      } catch (e) {
+        await supabase.from('agent_tasks').update({
+          status: 'failed',
+          output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
+        }).eq('id', taskId);
+      }
+    });
 
-Style: Professional yet personal, storytelling approach, end with a question or CTA.
-Include 3-5 relevant hashtags at the end.
-No markdown formatting — plain text only (LinkedIn doesn't render markdown).`
-          );
-          await supabase.from('agent_tasks').update({
-            status: 'needs_review', completed_at: new Date().toISOString(),
-            output_data: { content, topic, char_count: content.length },
-          }).eq('id', taskId);
-        } catch (e) {
-          await supabase.from('agent_tasks').update({
-            status: 'failed', output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
-          }).eq('id', taskId);
-        }
-      })());
-    }
+    await Promise.all(formatPromises);
 
-    if (activeChannels.includes('x_thread')) {
-      channelPromises.push((async () => {
-        const taskId = crypto.randomUUID();
-        await supabase.from('agent_tasks').insert({
-          id: taskId, task_type: 'x_thread', status: 'running',
-          input_data: { topic, from_multichannel: true },
-          batch_id: batchId,
-        });
-        try {
-          const content = await generateContent(
-            `Content brief:\n${brief}\n\nWrite an X/Twitter thread about: "${topic}"`,
-            `You are writing a viral X/Twitter thread. 3-5 tweets, each max 280 characters.
-
-Format each tweet on its own line, prefixed with "1/" "2/" etc.
-Style: Punchy, insightful, use hooks. First tweet is the hook. Last tweet has a CTA.
-No hashtags except optionally in the last tweet.`
-          );
-          const tweets = content.split('\n').filter(l => /^\d+\//.test(l.trim()));
-          await supabase.from('agent_tasks').update({
-            status: 'needs_review', completed_at: new Date().toISOString(),
-            output_data: { content, topic, tweets, tweet_count: tweets.length },
-          }).eq('id', taskId);
-        } catch (e) {
-          await supabase.from('agent_tasks').update({
-            status: 'failed', output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
-          }).eq('id', taskId);
-        }
-      })());
-    }
-
-    await Promise.all(channelPromises);
-
-    // Update parent task
+    // Update parent
     await supabase.from('agent_tasks').update({
       status: 'needs_review',
       completed_at: new Date().toISOString(),
@@ -764,7 +727,8 @@ No hashtags except optionally in the last tweet.`
     return { success: true, batchId, channels: activeChannels, topic };
   } catch (e) {
     await supabase.from('agent_tasks').update({
-      status: 'failed', output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
+      status: 'failed',
+      output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
     }).eq('id', parentId);
     throw e;
   }
