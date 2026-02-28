@@ -388,8 +388,18 @@ Deno.serve(async (req) => {
     console.log(`[Autopilot] Action: ${action}, Topic: ${effectiveTopic}`);
 
     let result;
+    const body = await Promise.resolve({ action, topic, sources, taskId } as AutopilotRequest);
+    const rawBody = { ...body, jobName: (await req.clone().json()).jobName, active: (await req.clone().json()).active, schedule: (await req.clone().json()).schedule };
 
     switch (action) {
+      case 'workflows':
+        result = await handleWorkflows(supabase);
+        break;
+
+      case 'toggle_workflow':
+        result = await handleToggleWorkflow(supabase, rawBody.jobName!, rawBody.active!, rawBody.schedule);
+        break;
+
       case 'research':
         result = await handleResearch(effectiveTopic, effectiveSources, supabase, taskId);
         break;
