@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       }
 
       // Redirect back to admin with success
-      const adminUrl = Deno.env.get('SITE_URL') || 'https://mycms-chat.lovable.app';
+      const adminUrl = Deno.env.get('SITE_URL') || 'https://www.froste.eu';
       return Response.redirect(`${adminUrl}/admin?tab=integrations&gmail=connected`, 302);
     } catch (e) {
       console.error('[Gmail OAuth] Error:', e);
