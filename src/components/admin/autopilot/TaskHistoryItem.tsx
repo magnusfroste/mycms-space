@@ -98,6 +98,7 @@ interface TaskHistoryItemProps {
 }
 
 export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const status = statusConfig[task.status] || statusConfig.pending;
   const type = taskTypeLabels[task.task_type] || taskTypeLabels.research;
@@ -107,6 +108,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
   const outputData = task.output_data || {};
   const canExpand = hasPreviewContent(task);
   const canPublish = task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && !!(outputData.slug as string);
+  const canEdit = task.task_type === 'blog_draft' && !!(outputData.blog_post_id as string);
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
