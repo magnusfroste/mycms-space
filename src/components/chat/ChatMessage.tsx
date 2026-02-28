@@ -24,15 +24,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     : message.text;
 
   return (
+    <div
+      className={`flex flex-col ${message.isUser ? "items-end" : "items-start"}`}
+      data-user-message={message.isUser ? "true" : "false"}
+    >
       {message.source === 'cv-agent' && (
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 mr-1">
           Job Description
         </span>
       )}
-      <div
-      className={`flex flex-col ${message.isUser ? "items-end" : "items-start"}`}
-      data-user-message={message.isUser ? "true" : "false"}
-    >
       <div
         className={`max-w-[95%] px-4 py-3 rounded-2xl ${
           message.isUser
