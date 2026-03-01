@@ -28,6 +28,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   integrationConfig,
   systemPrompt = '',
   enabledTools,
+  mode = 'public',
 }) => {
   const [inputValue, setInputValue] = useState("");
 
