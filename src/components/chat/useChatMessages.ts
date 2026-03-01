@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
 import { optimizeMessagesForApi } from "./messageOptimizer";
 import { saveChatMessage } from "@/data/chatMessages";
-import type { Message, SiteContext, ChatMessage, ChatArtifact } from "./types";
+import type { Message, SiteContext, ChatMessage, ChatArtifact, ChatMode } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
 
@@ -24,6 +24,7 @@ interface UseChatMessagesOptions {
   integration?: AIIntegrationType;
   integrationConfig?: AIIntegration;
   enabledTools?: string[];
+  mode?: ChatMode;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
