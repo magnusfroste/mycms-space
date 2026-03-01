@@ -325,7 +325,7 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
 }
 
 // Editable research preview
-function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => void }) {
+function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSaved: () => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
   const o = task.output_data || {};
   const summary = (o.research_summary as string) || (o.analysis as string) || '';
   const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
