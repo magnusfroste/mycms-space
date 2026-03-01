@@ -48,6 +48,7 @@ export const useChatMessages = ({
   integration = "n8n",
   integrationConfig,
   enabledTools,
+  mode = 'public',
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
