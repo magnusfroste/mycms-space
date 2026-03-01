@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 import {
   Clock, Mail, Search, PenSquare, Database, Brain, ChevronDown, RefreshCw, Loader2, Zap,
+  ExternalLink, FileText,
 } from 'lucide-react';
 
 // ============================================
@@ -28,7 +29,7 @@ interface CronJob {
 interface WorkflowsResponse {
   cronJobs: CronJob[];
   modules: Record<string, { config: Record<string, unknown>; enabled: boolean }>;
-  lastRun: Record<string, { status: string; created_at: string; completed_at: string | null }>;
+  lastRun: Record<string, { status: string; created_at: string; completed_at: string | null; output_data?: Record<string, unknown> }>;
 }
 
 interface WorkflowNode {
@@ -38,11 +39,18 @@ interface WorkflowNode {
   variant: 'trigger' | 'action' | 'output';
 }
 
+interface WorkflowLink {
+  label: string;
+  tab: string;
+}
+
 interface WorkflowDef {
   id: string;
   name: string;
   jobName: string;
   nodes: WorkflowNode[];
+  links?: WorkflowLink[];
+  configSummary?: string[];
 }
 
 // ============================================
@@ -63,6 +71,21 @@ function cronToHuman(cron: string): string {
   return cron;
 }
 
+function cronToMinutes(cron: string): number {
+  const parts = cron.split(' ');
+  if (parts.length < 2) return 0;
+  const min = parseInt(parts[0]) || 0;
+  const hour = parseInt(parts[1]) || 0;
+  const dow = parts[4];
+  const weeklyOffset = dow !== '*' ? 10000 : 0;
+  return hour * 60 + min + weeklyOffset;
+}
+
+function truncate(str: string, max: number): string {
+  if (!str || str.length <= max) return str || '';
+  return str.slice(0, max) + '…';
+}
+
 const variantStyles: Record<string, string> = {
   trigger: 'border-blue-500/30 bg-blue-500/5 text-blue-400',
   action: 'border-purple-500/30 bg-purple-500/5 text-purple-400',
@@ -81,18 +104,7 @@ const statusColors: Record<string, string> = {
 // Build workflow definitions from cron data
 // ============================================
 
-function cronToMinutes(cron: string): number {
-  const parts = cron.split(' ');
-  if (parts.length < 2) return 0;
-  const min = parseInt(parts[0]) || 0;
-  const hour = parseInt(parts[1]) || 0;
-  const dow = parts[4];
-  // Push weekly jobs after daily ones by adding a large offset
-  const weeklyOffset = dow !== '*' ? 10000 : 0;
-  return hour * 60 + min + weeklyOffset;
-}
-
-function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
+function buildWorkflows(cronJobs: CronJob[], modules?: WorkflowsResponse['modules']): WorkflowDef[] {
   const workflows: WorkflowDef[] = [];
   const sorted = [...cronJobs].sort((a, b) => cronToMinutes(a.schedule) - cronToMinutes(b.schedule));
 
@@ -100,6 +112,11 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
     const cmd = job.command || '';
 
     if (cmd.includes('agent-inbox-scan') || job.jobname.includes('inbox')) {
+      const gmailConfig = modules?.gmail_signals?.config as Record<string, unknown> | undefined;
+      const senders = (gmailConfig?.filter_senders as string[]) || [];
+      const scanDays = gmailConfig?.scan_days as number || 2;
+      const maxMsg = gmailConfig?.max_messages as number || 20;
+
       workflows.push({
         id: `inbox-${job.jobid}`,
         name: 'Gmail Inbox Scan',
@@ -110,8 +127,18 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
           { icon: <Brain className="h-4 w-4" />, label: 'AI Analysis', detail: 'Trend extraction', variant: 'action' },
           { icon: <Database className="h-4 w-4" />, label: 'agent_tasks', detail: 'inbox_digest', variant: 'output' },
         ],
+        links: [{ label: 'Gmail Settings', tab: 'integrations' }],
+        configSummary: [
+          `Scan last ${scanDays} days`,
+          `Max ${maxMsg} messages`,
+          senders.length > 0 ? `Filter: ${senders.length} senders` : 'All senders',
+        ],
       });
     } else if (cmd.includes('agent-autopilot') && cmd.includes('research')) {
+      const autopilotConfig = modules?.autopilot?.config as Record<string, unknown> | undefined;
+      const topic = autopilotConfig?.default_topic as string || '';
+      const sources = (autopilotConfig?.default_sources as string[]) || [];
+
       workflows.push({
         id: `research-${job.jobid}`,
         name: 'Daily Research',
@@ -121,6 +148,11 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
           { icon: <Search className="h-4 w-4" />, label: 'Firecrawl', detail: 'Web research', variant: 'action' },
           { icon: <Brain className="h-4 w-4" />, label: 'AI Summary', detail: 'Key findings', variant: 'action' },
           { icon: <Database className="h-4 w-4" />, label: 'agent_tasks', detail: 'research', variant: 'output' },
+        ],
+        links: [],
+        configSummary: [
+          topic ? `Topic: ${truncate(topic, 40)}` : 'No default topic',
+          `${sources.length} sources configured`,
         ],
       });
     } else if (cmd.includes('blog_draft') || (cmd.includes('blog') && !cmd.includes('newsletter'))) {
@@ -134,6 +166,8 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
           { icon: <PenSquare className="h-4 w-4" />, label: 'AI Writer', detail: 'Blog post', variant: 'action' },
           { icon: <Database className="h-4 w-4" />, label: 'blog_posts', detail: 'draft', variant: 'output' },
         ],
+        links: [{ label: 'Blog Manager', tab: 'blog' }],
+        configSummary: ['Uses latest research as input', 'Saves as draft for review'],
       });
     } else if (cmd.includes('newsletter')) {
       workflows.push({
@@ -146,6 +180,11 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
           { icon: <Brain className="h-4 w-4" />, label: 'AI Writer', variant: 'action' },
           { icon: <Database className="h-4 w-4" />, label: 'campaigns', variant: 'output' },
         ],
+        links: [
+          { label: 'Newsletter', tab: 'newsletter' },
+          { label: 'Email Settings', tab: 'integrations' },
+        ],
+        configSummary: ['Curates from recent research & signals'],
       });
     } else {
       workflows.push({
@@ -192,6 +231,48 @@ function FlowConnector() {
 }
 
 // ============================================
+// Last Output Preview
+// ============================================
+
+function OutputPreview({ lastRun }: { lastRun?: { status: string; created_at: string; output_data?: Record<string, unknown> } }) {
+  if (!lastRun?.output_data) return null;
+
+  const output = lastRun.output_data;
+  let preview = '';
+
+  if (typeof output.research_summary === 'string') {
+    preview = output.research_summary;
+  } else if (typeof output.title === 'string') {
+    preview = output.title;
+  } else if (typeof output.subject === 'string') {
+    preview = output.subject;
+  } else if (typeof output.synthesis === 'string') {
+    preview = output.synthesis;
+  } else if (typeof output.analysis === 'string') {
+    preview = output.analysis;
+  } else if (Array.isArray(output.signals)) {
+    preview = `${output.signals.length} signals captured`;
+  }
+
+  if (!preview) return null;
+
+  // Take first ~200 chars, strip markdown headers
+  const cleaned = preview.replace(/#{1,3}\s/g, '').replace(/\*\*/g, '');
+
+  return (
+    <div className="space-y-1">
+      <span className="font-medium text-foreground flex items-center gap-1">
+        <FileText className="h-3 w-3" />
+        Last Output
+      </span>
+      <p className="text-[11px] leading-relaxed bg-muted/50 rounded p-2 line-clamp-3">
+        {truncate(cleaned, 200)}
+      </p>
+    </div>
+  );
+}
+
+// ============================================
 // Workflow Row
 // ============================================
 
@@ -206,7 +287,7 @@ function WorkflowRow({
 }: {
   workflow: WorkflowDef;
   cronJob: CronJob;
-  lastRun?: { status: string; created_at: string };
+  lastRun?: { status: string; created_at: string; output_data?: Record<string, unknown> };
   onToggle: (jobName: string, active: boolean) => void;
   onUpdateSchedule: (jobName: string, schedule: string) => void;
   isToggling: boolean;
@@ -226,6 +307,13 @@ function WorkflowRow({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSave();
     if (e.key === 'Escape') { setDraft(cronJob.schedule); setEditing(false); }
+  };
+
+  const navigateToTab = (tab: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    window.history.pushState({}, '', `?${params.toString()}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   // Sync draft when external data changes
@@ -261,7 +349,7 @@ function WorkflowRow({
           </div>
         </div>
 
-        {/* Flow nodes - horizontal on desktop, vertical on mobile */}
+        {/* Flow nodes */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0 overflow-x-auto pb-1">
           {workflow.nodes.map((node, i) => (
             <div key={i} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
@@ -278,7 +366,7 @@ function WorkflowRow({
           ))}
         </div>
 
-        {/* Collapsible details with inline schedule editing */}
+        {/* Collapsible details */}
         <CollapsibleContent>
           <div className="pt-2 border-t space-y-3 text-xs text-muted-foreground">
             {/* Schedule editor */}
@@ -310,7 +398,43 @@ function WorkflowRow({
               {isUpdating && <span className="text-[10px] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>}
             </div>
 
-            {/* Other details */}
+            {/* Config summary */}
+            {workflow.configSummary && workflow.configSummary.length > 0 && (
+              <div className="space-y-1">
+                <span className="font-medium text-foreground">Configuration</span>
+                <ul className="space-y-0.5">
+                  {workflow.configSummary.map((item, i) => (
+                    <li key={i} className="text-[11px] flex items-center gap-1.5">
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground/40 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Deep links */}
+            {workflow.links && workflow.links.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {workflow.links.map((link) => (
+                  <Button
+                    key={link.tab}
+                    variant="outline"
+                    size="sm"
+                    className="h-6 text-[11px] px-2 gap-1"
+                    onClick={() => navigateToTab(link.tab)}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    {link.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {/* Last output preview */}
+            <OutputPreview lastRun={lastRun} />
+
+            {/* Status details */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <span className="font-medium">Status:</span> {cronJob.active ? 'Active' : 'Paused'}
@@ -341,7 +465,7 @@ function WorkflowRow({
 export default function WorkflowVisualizer() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['autopilot-workflows'],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('agent-autopilot', {
@@ -382,8 +506,11 @@ export default function WorkflowVisualizer() {
   });
 
   const cronJobs = data?.cronJobs || [];
-  const workflows = buildWorkflows(cronJobs);
+  const workflows = buildWorkflows(cronJobs, data?.modules);
   const cronMap = Object.fromEntries(cronJobs.map((j) => [j.jobname, j]));
+
+  // Build lastRun map including output_data
+  const lastRunMap = data?.lastRun || {};
 
   if (isLoading) {
     return (
@@ -423,18 +550,21 @@ export default function WorkflowVisualizer() {
           </p>
         ) : (
           <div className="space-y-3">
-            {workflows.map((wf) => (
-              <WorkflowRow
-                key={wf.id}
-                workflow={wf}
-                cronJob={cronMap[wf.jobName] || { jobid: 0, jobname: wf.jobName, schedule: '?', active: false, command: '' }}
-                lastRun={data?.lastRun?.[wf.id.split('-')[0]] as any}
-                onToggle={(name, active) => toggleMutation.mutate({ jobName: name, active })}
-                onUpdateSchedule={(name, schedule) => scheduleMutation.mutate({ jobName: name, schedule })}
-                isToggling={toggleMutation.isPending}
-                isUpdating={scheduleMutation.isPending}
-              />
-            ))}
+            {workflows.map((wf) => {
+              const runKey = wf.id.split('-')[0];
+              return (
+                <WorkflowRow
+                  key={wf.id}
+                  workflow={wf}
+                  cronJob={cronMap[wf.jobName] || { jobid: 0, jobname: wf.jobName, schedule: '?', active: false, command: '' }}
+                  lastRun={lastRunMap[runKey] as any}
+                  onToggle={(name, active) => toggleMutation.mutate({ jobName: name, active })}
+                  onUpdateSchedule={(name, schedule) => scheduleMutation.mutate({ jobName: name, schedule })}
+                  isToggling={toggleMutation.isPending}
+                  isUpdating={scheduleMutation.isPending}
+                />
+              );
+            })}
           </div>
         )}
       </CardContent>

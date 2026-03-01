@@ -757,12 +757,12 @@ async function handleWorkflows(supabase: ReturnType<typeof getSupabase>) {
   // Get latest task per type
   const { data: latestTasks } = await supabase
     .from('agent_tasks')
-    .select('task_type, status, created_at, completed_at')
+    .select('task_type, status, created_at, completed_at, output_data')
     .order('created_at', { ascending: false })
     .limit(20);
 
   // Group latest task by type
-  const lastRun: Record<string, { status: string; created_at: string; completed_at: string | null }> = {};
+  const lastRun: Record<string, { status: string; created_at: string; completed_at: string | null; output_data?: Record<string, unknown> }> = {};
   for (const t of latestTasks || []) {
     if (!lastRun[t.task_type]) {
       lastRun[t.task_type] = t;
