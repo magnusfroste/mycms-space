@@ -29,6 +29,7 @@ export interface AgentRequest {
   siteContext: SiteContext | null;
   enabledTools?: string[];
   config: AgentConfig;
+  mode?: 'public' | 'admin';
 }
 
 export interface AgentResult {
