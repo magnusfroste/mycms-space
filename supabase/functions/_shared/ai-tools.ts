@@ -373,6 +373,11 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     check_availability: () => ({ type: "availability", title: "Availability" }),
     research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
     draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
+    run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
+    draft_all_channels: (args) => ({ type: "document", title: `Multichannel: ${(args.topic as string) || "Content"}` }),
+    list_review_queue: () => ({ type: "document", title: "Review Queue" }),
+    approve_task: () => ({ type: "document", title: "Task Approved" }),
+    get_site_stats: () => ({ type: "document", title: "Site Statistics" }),
   };
 
   const factory = mapping[toolName];
