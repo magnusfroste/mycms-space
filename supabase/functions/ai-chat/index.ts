@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       provider: integration?.type,
       messages: conversationHistory?.length,
       hasContext: !!siteContext,
+      mode: mode || 'public',
     });
 
     if (!integration?.type) {
