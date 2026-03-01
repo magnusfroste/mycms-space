@@ -557,7 +557,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
             {task.task_type === 'signal' ? (
               <SignalPreview task={task} onUseTopic={onUseTopic} />
             ) : task.task_type === 'research' ? (
-              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
+              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} onRunAction={onRunAction} />
             ) : task.task_type === 'scout' ? (
               <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
             ) : (
