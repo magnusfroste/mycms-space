@@ -220,6 +220,7 @@ export const useChatMessages = ({
       webhookUrl,
       siteContext,
       enabledTools,
+      mode,
       addUserMessage,
       addBotMessage,
       ensureChatSessionTracked,
