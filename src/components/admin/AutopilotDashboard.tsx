@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar, Layers } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
@@ -32,6 +33,7 @@ export default function AutopilotDashboard() {
   const [topic, setTopic] = useState('');
   const [sources, setSources] = useState('');
   const [selectedChannels, setSelectedChannels] = useState<string[]>(['blog', 'newsletter', 'linkedin', 'x_thread']);
+  const [taskFilter, setTaskFilter] = useState<'all' | 'signal' | 'research' | 'blog'>('all');
 
   // Config state
   const [configTopic, setConfigTopic] = useState('');
@@ -328,25 +330,39 @@ export default function AutopilotDashboard() {
 
       {/* Task History */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-lg">Task History</CardTitle>
             <CardDescription>Recent autonomous agent activity</CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tabs value={taskFilter} onValueChange={(v) => setTaskFilter(v as typeof taskFilter)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-2.5 h-6">All</TabsTrigger>
+                <TabsTrigger value="signal" className="text-xs px-2.5 h-6">Signals</TabsTrigger>
+                <TabsTrigger value="research" className="text-xs px-2.5 h-6">Research</TabsTrigger>
+                <TabsTrigger value="blog" className="text-xs px-2.5 h-6">Blog</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button variant="ghost" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-            </div>
-          ) : tasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No tasks yet. Start by researching a topic above.</p>
-          ) : (
+          {(() => {
+            const filtered = taskFilter === 'all' ? tasks : tasks.filter(t => t.task_type === taskFilter);
+            return isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {taskFilter === 'all' ? 'No tasks yet. Start by researching a topic above.' : `No ${taskFilter} tasks yet.`}
+              </p>
+            ) : (
              <div className="space-y-2">
-              {tasks.map(task => (
+              {filtered.map(task => (
                 <TaskHistoryItem
                   key={task.id}
                   task={task}
@@ -367,7 +383,8 @@ export default function AutopilotDashboard() {
                 />
               ))}
             </div>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
     </div>
