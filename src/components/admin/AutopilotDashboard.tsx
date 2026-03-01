@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar, Layers } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
