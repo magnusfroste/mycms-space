@@ -311,6 +311,16 @@ export const defaultMagnetTools: MagnetToolConfig[] = [
   { id: 'check_availability', name: 'Availability Checker', description: 'Share availability status and engagement types', icon: 'Calendar', enabled: true },
 ];
 
+// Admin-mode Magnet tools (CMS co-pilot)
+export const defaultAdminMagnetTools: MagnetToolConfig[] = [
+  { id: 'run_research', name: 'Research Topic', description: 'Research a topic and return structured findings', icon: 'Search', enabled: true },
+  { id: 'draft_blog_post', name: 'Draft Blog Post', description: 'Create a blog post draft from a topic or research', icon: 'PenSquare', enabled: true },
+  { id: 'draft_all_channels', name: 'Draft All Channels', description: 'Generate multichannel content (blog + LinkedIn + X)', icon: 'Layers', enabled: true },
+  { id: 'list_review_queue', name: 'Review Queue', description: 'Show pending tasks awaiting review', icon: 'ClipboardList', enabled: true },
+  { id: 'approve_task', name: 'Approve Task', description: 'Approve and publish a pending task', icon: 'CheckCircle', enabled: true },
+  { id: 'get_site_stats', name: 'Site Stats', description: 'Get recent analytics summary', icon: 'BarChart', enabled: true },
+];
+
 // AI Module Config - Updated to use integration system
 export interface AIModuleConfig {
   // Active integration for visitor chat

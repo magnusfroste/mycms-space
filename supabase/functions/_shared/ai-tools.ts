@@ -208,17 +208,114 @@ export const draftBlogPostTool: ToolDefinition = {
 };
 
 // ============================================
+// Admin Tool Definitions (CMS co-pilot mode)
+// ============================================
+
+export const runResearchTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "run_research",
+    description: "Research a topic using web sources. Use when the admin asks to research something, explore trends, or find content ideas.",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string", description: "The topic to research" },
+      },
+      required: ["topic"],
+    },
+  },
+};
+
+export const draftAllChannelsTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "draft_all_channels",
+    description: "Generate multichannel content (blog + LinkedIn + X post) from a topic. Use when admin wants content created for multiple platforms.",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string", description: "The topic to create content about" },
+        blog_title: { type: "string", description: "Blog post title" },
+        blog_content: { type: "string", description: "Full blog post in markdown" },
+        blog_excerpt: { type: "string", description: "Short excerpt (max 160 chars)" },
+        linkedin_post: { type: "string", description: "LinkedIn post text" },
+        x_post: { type: "string", description: "X/Twitter post (max 280 chars)" },
+      },
+      required: ["topic", "blog_title", "blog_content", "linkedin_post", "x_post"],
+    },
+  },
+};
+
+export const listReviewQueueTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "list_review_queue",
+    description: "List pending tasks in the review queue. Use when admin asks what needs review, what's pending, or what the agent has prepared.",
+    parameters: {
+      type: "object",
+      properties: {
+        status_filter: { type: "string", enum: ["needs_review", "all"], description: "Filter by status" },
+      },
+    },
+  },
+};
+
+export const approveTaskTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "approve_task",
+    description: "Approve a pending task for publishing. Use when admin approves a draft or confirms an action.",
+    parameters: {
+      type: "object",
+      properties: {
+        task_id: { type: "string", description: "The task ID to approve" },
+      },
+      required: ["task_id"],
+    },
+  },
+};
+
+export const getSiteStatsTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "get_site_stats",
+    description: "Get recent site analytics summary. Use when admin asks about stats, traffic, or performance.",
+    parameters: {
+      type: "object",
+      properties: {
+        period: { type: "string", enum: ["today", "week", "month"], description: "Time period for stats" },
+      },
+    },
+  },
+};
+
+// ============================================
 // Tool Registry
 // ============================================
 
-/** All available tools indexed by function name */
-export const allTools: Record<string, ToolDefinition> = {
+/** Public visitor tools */
+export const publicTools: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
   generate_portfolio: portfolioGeneratorTool,
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
-  research_topic: researchTopicTool,
+};
+
+/** Admin CMS co-pilot tools */
+export const adminTools: Record<string, ToolDefinition> = {
+  run_research: runResearchTool,
   draft_blog_post: draftBlogPostTool,
+  draft_all_channels: draftAllChannelsTool,
+  list_review_queue: listReviewQueueTool,
+  approve_task: approveTaskTool,
+  get_site_stats: getSiteStatsTool,
+  research_topic: researchTopicTool,
+};
+
+/** All available tools indexed by function name (backwards compat) */
+export const allTools: Record<string, ToolDefinition> = {
+  ...publicTools,
+  ...adminTools,
 };
 
 /** Tool instructions for the system prompt */
@@ -229,25 +326,37 @@ export const toolDescriptions: Record<string, string> = {
   check_availability: "**check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.",
   research_topic: "**research_topic** — When a user asks to research a topic, explore trends, or investigate something. Provides structured findings and blog post suggestions.",
   draft_blog_post: "**draft_blog_post** — When a user asks to write or create a blog post on a topic. Generates a full draft with SEO metadata.",
+  run_research: "**run_research** — Research a topic using web sources and return structured findings.",
+  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X) from a single topic.",
+  list_review_queue: "**list_review_queue** — Show tasks pending review in the autopilot queue.",
+  approve_task: "**approve_task** — Approve and publish a pending task.",
+  get_site_stats: "**get_site_stats** — Get recent site analytics and traffic summary.",
 };
 
-/** Get filtered tools based on enabled tool IDs */
-export function getActiveTools(enabledTools?: string[]): ToolDefinition[] {
-  if (!enabledTools?.length) return Object.values(allTools);
+/** Get filtered tools based on enabled tool IDs and mode */
+export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
+  const toolPool = mode === 'admin' ? adminTools : publicTools;
+  if (!enabledTools?.length) return Object.values(toolPool);
   return enabledTools
-    .filter(id => allTools[id])
-    .map(id => allTools[id]);
+    .filter(id => toolPool[id])
+    .map(id => toolPool[id]);
 }
 
 /** Get tool instructions for the system prompt */
-export function getToolInstructions(enabledTools?: string[]): string {
+export function getToolInstructions(enabledTools?: string[], mode?: string): string {
+  const toolPool = mode === 'admin' ? adminTools : publicTools;
   const activeNames = enabledTools?.length
-    ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k))
-    : Object.keys(toolDescriptions);
+    ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k) && toolPool[k])
+    : Object.keys(toolPool).filter(k => toolDescriptions[k]);
 
   if (activeNames.length === 0) return '';
 
   const instructions = activeNames.map((name, i) => `${i + 1}. ${toolDescriptions[name]}`).join('\n');
+  
+  if (mode === 'admin') {
+    return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
+  }
+  
   return `\n\n## Tool Instructions\nYou have several tools available. Use them appropriately:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
@@ -264,6 +373,11 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     check_availability: () => ({ type: "availability", title: "Availability" }),
     research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
     draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
+    run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
+    draft_all_channels: (args) => ({ type: "document", title: `Multichannel: ${(args.topic as string) || "Content"}` }),
+    list_review_queue: () => ({ type: "document", title: "Review Queue" }),
+    approve_task: () => ({ type: "document", title: "Task Approved" }),
+    get_site_stats: () => ({ type: "document", title: "Site Statistics" }),
   };
 
   const factory = mapping[toolName];

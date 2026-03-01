@@ -23,12 +23,14 @@ Deno.serve(async (req) => {
       siteContext,
       integration,
       enabledTools,
+      mode,
     } = await req.json();
 
     console.log("[AI Chat] Request:", {
       provider: integration?.type,
       messages: conversationHistory?.length,
       hasContext: !!siteContext,
+      mode: mode || 'public',
     });
 
     if (!integration?.type) {
@@ -41,6 +43,7 @@ Deno.serve(async (req) => {
       systemPrompt: systemPrompt || '',
       siteContext: siteContext || null,
       enabledTools,
+      mode: mode || 'public',
       config: {
         provider: integration.type,
         model: integration.model,

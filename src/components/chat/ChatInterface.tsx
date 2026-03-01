@@ -28,6 +28,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   integrationConfig,
   systemPrompt = '',
   enabledTools,
+  mode = 'public',
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -42,6 +43,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     integration,
     integrationConfig,
     enabledTools,
+    mode,
     onMessagesChange,
     onSessionIdChange,
   });

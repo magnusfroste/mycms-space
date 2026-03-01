@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, Database, ChevronDown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -22,7 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { integrationsMeta, defaultMagnetTools, type AIIntegrationType } from "@/types/modules";
+import { integrationsMeta, defaultMagnetTools, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
+import type { ChatMode } from "@/components/chat/types";
 
 interface Message {
   id: string;
@@ -34,6 +36,9 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
+  const { user } = useAuth();
+  const isAdmin = !!user;
+  const chatMode: ChatMode = isAdmin ? 'admin' : 'public';
   const { contextData, contextSummary, hasContext, isLoading: contextLoading } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
@@ -96,8 +101,15 @@ const Chat = () => {
 
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
-              Chat with Magnet
+              {isAdmin ? 'Magnet CMS' : 'Chat with Magnet'}
             </h1>
+            
+            {isAdmin && (
+              <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                <Shield className="h-3 w-3" />
+                Admin
+              </Badge>
+            )}
             
             {/* Integration Selector Dropdown */}
             <DropdownMenu>
@@ -151,8 +163,12 @@ const Chat = () => {
           <ChatInterface
             webhookUrl={webhookUrl}
             fullPage={true}
-            initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
-            activePlaceholder={passedPlaceholder || "How can Magnet help?"}
+            initialPlaceholder={isAdmin 
+              ? "Hey Magnus, what should we work on today?" 
+              : (passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?")}
+            activePlaceholder={isAdmin 
+              ? "What's next?" 
+              : (passedPlaceholder || "How can Magnet help?")}
             initialMessages={initialMessages}
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
@@ -161,7 +177,10 @@ const Chat = () => {
             integration={selectedIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}
-            enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
+            enabledTools={isAdmin 
+              ? defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)
+              : (aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
+            mode={chatMode}
           />
         )}
       </main>

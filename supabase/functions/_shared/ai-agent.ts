@@ -4,7 +4,7 @@
 // Separates "agent intelligence" from "API transport"
 // ============================================
 
-import { buildDynamicPrompt, loadResumeContext } from "./ai-context.ts";
+import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext } from "./ai-context.ts";
 import { getActiveTools, getToolInstructions, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 
@@ -29,6 +29,7 @@ export interface AgentRequest {
   siteContext: SiteContext | null;
   enabledTools?: string[];
   config: AgentConfig;
+  mode?: 'public' | 'admin';
 }
 
 export interface AgentResult {
@@ -184,9 +185,9 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
 
 /** Run the Magnet agent: loads context, builds prompt, calls provider, handles tools */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
-  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config } = request;
+  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public' } = request;
 
-  console.log(`[Agent] Provider: ${config.provider}, Model: ${config.model || 'default'}`);
+  console.log(`[Agent] Provider: ${config.provider}, Model: ${config.model || 'default'}, Mode: ${mode}`);
 
   // --- n8n: delegate entirely to external agent ---
   if (config.provider === 'n8n') {
@@ -208,16 +209,19 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   // Load resume context for tool calling
   const resumeContext = await loadResumeContext();
 
-  // Build full system prompt
-  let fullPrompt = buildDynamicPrompt(systemPrompt, siteContext);
-  if (resumeContext) {
+  // Build full system prompt with mode-aware persona
+  let fullPrompt = mode === 'admin'
+    ? buildAdminPrompt(systemPrompt, siteContext)
+    : buildDynamicPrompt(systemPrompt, siteContext);
+    
+  if (resumeContext && mode === 'public') {
     fullPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
-    fullPrompt += getToolInstructions(enabledTools);
   }
+  fullPrompt += getToolInstructions(enabledTools, mode);
 
-  // Prepare tools
-  const tools = resumeContext ? getActiveTools(enabledTools) : [];
-  console.log(`[Agent] ${tools.length} tools enabled: ${tools.map(t => t.function.name).join(', ')}`);
+  // Prepare tools based on mode
+  const tools = getActiveTools(enabledTools, mode);
+  console.log(`[Agent] ${tools.length} tools enabled (${mode}): ${tools.map(t => t.function.name).join(', ')}`);
 
   // Call provider
   const data = await callOpenAICompatible({
