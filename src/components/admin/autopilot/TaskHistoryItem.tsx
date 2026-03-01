@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy, BookmarkPlus, Zap, Linkedin, Globe, Twitter } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy, BookmarkPlus, Zap, Linkedin, Globe, Twitter, Layers } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -405,10 +405,16 @@ function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSa
           Edit Research
         </Button>
         {onRunAction && topic && (
-          <Button size="sm" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
-            <PenSquare className="h-3 w-3 mr-1" />
-            Draft Blog
-          </Button>
+          <>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
+              <PenSquare className="h-3 w-3 mr-1" />
+              Draft Blog
+            </Button>
+            <Button size="sm" className="text-xs" onClick={() => onRunAction('multichannel_draft', topic, (o.raw_sources as string[]) || [])}>
+              <Layers className="h-3 w-3 mr-1" />
+              Draft All Channels
+            </Button>
+          </>
         )}
       </div>
     </div>
