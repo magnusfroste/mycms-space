@@ -101,8 +101,15 @@ const Chat = () => {
 
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
-              Chat with Magnet
+              {isAdmin ? 'Magnet CMS' : 'Chat with Magnet'}
             </h1>
+            
+            {isAdmin && (
+              <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                <Shield className="h-3 w-3" />
+                Admin
+              </Badge>
+            )}
             
             {/* Integration Selector Dropdown */}
             <DropdownMenu>
