@@ -175,6 +175,7 @@ export const useChatMessages = ({
             },
             siteContext: siteContext,
             enabledTools: enabledTools,
+            mode: mode,
           },
         });
 
