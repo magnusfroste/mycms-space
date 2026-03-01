@@ -1,142 +1,126 @@
 
-# Plan: Strukturell fix för Mini-menyer
 
-## Problem-analys
+# Magnet Dual-Mode: Public Agent vs Private Agent
 
-Systemet har återkommande problem med dropdown-menyer och popovers:
-- Menyer flickrar och försvinner oväntat
-- Klick på menyval (t.ex. "Delete" i Media Hub) fungerar inte
-- Problemet är systematiskt och påverkar flera komponenter
+## The Insight
 
-### Rotorsaker
+Right now there's one Magnet — the public-facing digital twin that helps visitors explore Magnus's profile. But the admin (Magnus) also needs an agent: one that manages content, runs autopilot actions, reviews drafts, and operates the CMS conversationally. Instead of building a separate admin chat, we reuse `/chat` and switch Magnet's personality and tools based on auth state.
 
-1. **Okontrollerad state** - Dropdown-menyer utan explicit `open`/`onOpenChange`-hantering stängs vid parent re-renders
-2. **Race conditions** - Async operationer (API-anrop) triggar re-renders som kolliderar med menyns stängning
-3. **Event-bubbling** - `onClick` i `DropdownMenuItem` propagerar felaktigt; bör använda `onSelect`
-4. **Modal-problem** - `modal={false}` skapar instabilitet vid interaktion
+This mirrors OpenClaw's pattern: the agent IS the interface. No dashboard buttons needed — you just talk to Magnet and it does things for you.
 
----
+## How It Works
 
-## Lösningsstrategi
-
-### Fas 1: Standardisera dropdown-mönster
-
-Skapa ett konsekvent mönster för alla "action menus":
-
-**Princip: "Close first, act later"**
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
-
-const handleAction = (action: () => void) => {
-  setMenuOpen(false);
-  // Defer action to next tick to ensure menu closes cleanly
-  setTimeout(action, 0);
-};
-
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleAction(doSomething)}>
+```text
+/chat (same route, same component)
+         │
+    ┌────┴────┐
+    │ Auth?   │
+    └────┬────┘
+   No    │    Yes
+   │     │     │
+   v           v
+┌──────────┐  ┌──────────────────┐
+│ PUBLIC   │  │ PRIVATE (Admin)  │
+│ MAGNET   │  │ MAGNET           │
+│          │  │                  │
+│ Tools:   │  │ Tools:           │
+│ - CV     │  │ - Research topic │
+│ - Port-  │  │ - Draft blog     │
+│   folio  │  │ - Draft all ch.  │
+│ - Deep   │  │ - Review queue   │
+│   dive   │  │ - Publish post   │
+│ - Avail. │  │ - Scout sources  │
+│          │  │ - Newsletter     │
+│ Persona: │  │ - Site stats     │
+│ "Magnet, │  │                  │
+│  Magnus's│  │ Persona:         │
+│  digital │  │ "Magnet, your    │
+│  twin"   │  │  CMS co-pilot"   │
+└──────────┘  └──────────────────┘
 ```
 
----
+## Implementation
 
-### Fas 2: Fixa PromptEnhancer (AI Assist)
+### 1. Detect Auth in Chat Page
 
-**Problem**: Använder `onClick` och saknar kontrollerad state
+Add `useAuth()` to `src/pages/Chat.tsx`. If `user` exists, Magnet switches to admin mode:
+- Different system prompt (CMS co-pilot vs public twin)
+- Different tool set (admin tools vs visitor tools)
+- Different quick actions ("What's in my review queue?" vs "Tell me about Magnus")
+- Different placeholder text
 
-**Åtgärd**:
-- Lägg till `open`/`onOpenChange` state
-- Byt från `onClick` till `onSelect`
-- Stäng menyn explicit innan async operation
+### 2. Add Admin Tools to Edge Function
 
-```typescript
-const [menuOpen, setMenuOpen] = useState(false);
+New tools in `supabase/functions/_shared/ai-tools.ts`:
 
-const handleEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
+- **`run_research`** — Triggers research on a topic (calls autopilot handler)
+- **`draft_blog_post_from_research`** — Creates a blog draft from recent research
+- **`draft_all_channels`** — Multichannel content from a topic
+- **`list_review_queue`** — Shows pending `needs_review` tasks
+- **`approve_task`** — Publishes a blog post or sends a newsletter
+- **`get_site_stats`** — Recent analytics summary
 
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => handleEnhance('enhance-prompt')}>
-```
+These tools call the existing autopilot handlers internally, so no logic duplication.
 
----
+### 3. Auth-Aware Edge Function
 
-### Fas 3: Fixa MediaHub delete-funktion
+Update `supabase/functions/ai-chat/index.ts` to accept a `mode: 'public' | 'admin'` flag. When `admin`:
+- Load admin tool definitions instead of visitor tools
+- Use admin system prompt
+- Verify the request has a valid auth token (check JWT)
 
-**Problem**: `modal={false}` + race condition vid delete
+### 4. Frontend Changes
 
-**Åtgärd**:
-- Ta bort `modal={false}` (låt Radix hantera focus)
-- Säkerställ att `handleAction` använder `onSelect` korrekt
-- Verifiera att delete-dialogen öppnas korrekt
+**`src/pages/Chat.tsx`:**
+- Import and use `useAuth()`
+- Pass `mode: user ? 'admin' : 'public'` to ChatInterface
+- Set appropriate quick actions per mode
 
----
+**`src/components/chat/ChatInterface.tsx`:**
+- Accept `mode` prop, forward to `useChatMessages`
 
-### Fas 4: Granska och uppdatera UI-komponenter
+**`src/components/chat/useChatMessages.ts`:**
+- Include `mode` in the body sent to `ai-chat` edge function
 
-**dropdown-menu.tsx**:
-- Säkerställ att `bg-popover` och `z-50` är korrekt konfigurerade (redan ok)
+**`src/types/modules.ts`:**
+- Add admin tool configs (similar to `defaultMagnetTools`)
 
----
+### 5. Admin Quick Actions
 
-## Filer som ändras
+When admin is logged in, show contextual quick actions like:
+- "What's pending in my review queue?"
+- "Research AI agent trends today"
+- "Draft a blog post about [recent topic]"
+- "Show me this week's stats"
 
-| Fil | Ändring |
-|-----|---------|
-| `src/components/admin/PromptEnhancer.tsx` | Lägg till kontrollerad state, byt onClick → onSelect |
-| `src/components/admin/MediaHub.tsx` | Ta bort modal={false}, verifiera event-hantering |
+### 6. Tool Execution Flow (Admin)
 
----
+When admin says "Research AI agent security":
+1. Magnet calls `run_research` tool with topic
+2. Edge function calls the existing `handleResearch` from autopilot
+3. Returns structured result as an artifact
+4. Magnet says "Done! I found 5 key findings. Want me to draft a blog post from this?"
 
-## Tekniska detaljer
+This is the conversational OpenClaw pattern — no buttons, just dialogue.
 
-### PromptEnhancer - före/efter
+## What Stays the Same
 
-**Före:**
-```tsx
-<DropdownMenu>
-  <DropdownMenuItem onClick={() => enhancePrompt('enhance-prompt')}>
-```
+- All existing public Magnet functionality (CV agent, portfolio, etc.)
+- The Autopilot dashboard (remains as a visual overview)
+- Edge function architecture (reuses existing handlers)
+- Chat component structure (minimal prop additions)
 
-**Efter:**
-```tsx
-const [menuOpen, setMenuOpen] = useState(false);
+## Technical Summary
 
-const safeEnhance = (action: EnhanceAction) => {
-  setMenuOpen(false);
-  setTimeout(() => enhancePrompt(action), 0);
-};
+| File | Change |
+|------|--------|
+| `src/pages/Chat.tsx` | Add `useAuth()`, pass mode + admin quick actions |
+| `src/components/chat/ChatInterface.tsx` | Accept `mode` prop |
+| `src/components/chat/useChatMessages.ts` | Send `mode` to edge function |
+| `src/components/chat/types.ts` | Add `mode` to props |
+| `supabase/functions/_shared/ai-tools.ts` | Add admin tool definitions |
+| `supabase/functions/ai-chat/index.ts` | Handle `mode`, load correct tools + prompt |
+| `supabase/functions/_shared/ai-agent.ts` | Pass mode to tool selection |
 
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-  <DropdownMenuItem onSelect={() => safeEnhance('enhance-prompt')}>
-```
+No new tables, no new edge functions, no new routes. Just a mode switch that unlocks a different Magnet.
 
-### MediaHub - justering
-
-**Ta bort:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
-```
-
-**Ändra till:**
-```tsx
-<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-```
-
----
-
-## Förväntade resultat
-
-- AI Assist-menyn öppnas stabilt och val fungerar utan frysning
-- Media Hub delete/rename/move fungerar korrekt
-- Konsekvent beteende över alla admin-dropdowns
-
----
-
-## Validering
-
-Efter implementering:
-1. Testa AI Assist-knappen i AI Chat-inställningar
-2. Testa delete på bilder i Media Hub
-3. Verifiera att inga flickering eller oväntade stängningar sker
