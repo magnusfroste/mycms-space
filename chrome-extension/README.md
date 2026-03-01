@@ -29,9 +29,14 @@ The endpoint is pre-configured. Only change it if you self-host.
 
 The signal appears in your **Autopilot → Task History** under the **Signals** tab.
 
+### LinkedIn: Send to CMS from post menu
+
+On `linkedin.com`, the extension automatically injects a **"Send to CMS"** option into the three-dot (⋯) overflow menu on every post. Click it to send the post content directly — no need to open the extension popup.
+
 ## How it works
 
-- Extracts selected text, or falls back to `<article>` / `<body>` content (up to 8 000 chars).
+- **Popup**: Extracts selected text, or falls back to `<article>` / `<body>` content (up to 8 000 chars).
+- **LinkedIn menu injection**: A content script watches for dropdown menus and appends a "Send to CMS" item that extracts the post text, author and URL.
 - Sends a `POST` request to the `signal-ingest` backend function with bearer token auth.
 - The signal is stored as a pending task for the autopilot agent to process.
 
