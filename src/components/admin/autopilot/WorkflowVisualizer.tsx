@@ -111,16 +111,28 @@ function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
           { icon: <Database className="h-4 w-4" />, label: 'agent_tasks', detail: 'research', variant: 'output' },
         ],
       });
-    } else if (cmd.includes('newsletter') || cmd.includes('blog')) {
+    } else if (cmd.includes('blog_draft') || (cmd.includes('blog') && !cmd.includes('newsletter'))) {
       workflows.push({
-        id: `content-${job.jobid}`,
-        name: 'Content Generation',
+        id: `blog_draft-${job.jobid}`,
+        name: 'Daily Blog Draft',
         jobName: job.jobname,
         nodes: [
           { icon: <Clock className="h-4 w-4" />, label: 'Schedule', detail: cronToHuman(job.schedule), variant: 'trigger' },
-          { icon: <PenSquare className="h-4 w-4" />, label: 'Draft', detail: cmd.includes('newsletter') ? 'Newsletter' : 'Blog post', variant: 'action' },
+          { icon: <Search className="h-4 w-4" />, label: 'Research', detail: 'Latest findings', variant: 'action' },
+          { icon: <PenSquare className="h-4 w-4" />, label: 'AI Writer', detail: 'Blog post', variant: 'action' },
+          { icon: <Database className="h-4 w-4" />, label: 'blog_posts', detail: 'draft', variant: 'output' },
+        ],
+      });
+    } else if (cmd.includes('newsletter')) {
+      workflows.push({
+        id: `content-${job.jobid}`,
+        name: 'Weekly Newsletter',
+        jobName: job.jobname,
+        nodes: [
+          { icon: <Clock className="h-4 w-4" />, label: 'Schedule', detail: cronToHuman(job.schedule), variant: 'trigger' },
+          { icon: <PenSquare className="h-4 w-4" />, label: 'Draft', detail: 'Newsletter', variant: 'action' },
           { icon: <Brain className="h-4 w-4" />, label: 'AI Writer', variant: 'action' },
-          { icon: <Database className="h-4 w-4" />, label: cmd.includes('newsletter') ? 'campaigns' : 'blog_posts', variant: 'output' },
+          { icon: <Database className="h-4 w-4" />, label: 'campaigns', variant: 'output' },
         ],
       });
     } else {
