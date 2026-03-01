@@ -339,7 +339,17 @@ export default function AutopilotDashboard() {
             <Tabs value={taskFilter} onValueChange={(v) => setTaskFilter(v as typeof taskFilter)}>
               <TabsList className="h-8">
                 <TabsTrigger value="all" className="text-xs px-2.5 h-6">All</TabsTrigger>
-                <TabsTrigger value="signal" className="text-xs px-2.5 h-6">Signals</TabsTrigger>
+                <TabsTrigger value="signal" className="text-xs px-2.5 h-6 gap-1">
+                  Signals
+                  {(() => {
+                    const count = tasks.filter(t => t.task_type === 'signal' && t.status === 'pending').length;
+                    return count > 0 ? (
+                      <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium min-w-[18px] h-[18px] px-1">
+                        {count}
+                      </span>
+                    ) : null;
+                  })()}
+                </TabsTrigger>
                 <TabsTrigger value="research" className="text-xs px-2.5 h-6">Research</TabsTrigger>
                 <TabsTrigger value="blog" className="text-xs px-2.5 h-6">Blog</TabsTrigger>
               </TabsList>
