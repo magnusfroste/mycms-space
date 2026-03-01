@@ -483,7 +483,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
   const inputData = task.input_data || {};
   const outputData = task.output_data || {};
   const canExpand = hasPreviewContent(task);
-  const canPublish = task.task_type === 'blog_draft' && (task.status === 'needs_review' || task.status === 'completed') && !!(outputData.slug as string);
+  const canPublish = task.task_type === 'blog_draft' && task.status === 'needs_review' && !!(outputData.slug as string);
   const canEditBlog = task.task_type === 'blog_draft' && !!(outputData.blog_post_id as string);
 
   return (
