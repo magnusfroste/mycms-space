@@ -386,6 +386,7 @@ export default function AutopilotDashboard() {
             );
           })()}
         </CardContent>
+      </Card>
     </div>
   );
 }
