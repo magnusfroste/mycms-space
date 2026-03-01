@@ -36,6 +36,9 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
+  const { user } = useAuth();
+  const isAdmin = !!user;
+  const chatMode: ChatMode = isAdmin ? 'admin' : 'public';
   const { contextData, contextSummary, hasContext, isLoading: contextLoading } = useAIChatContext();
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
