@@ -60,6 +60,8 @@ export interface ChatMessage {
   content: string;
 }
 
+export type ChatMode = 'public' | 'admin';
+
 export interface ChatInterfaceProps {
   webhookUrl: string;
   initialPlaceholder?: string;
@@ -78,4 +80,5 @@ export interface ChatInterfaceProps {
   integrationConfig?: AIIntegration;
   systemPrompt?: string;
   enabledTools?: string[];
+  mode?: ChatMode;
 }

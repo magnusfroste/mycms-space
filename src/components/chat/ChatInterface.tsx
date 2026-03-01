@@ -43,6 +43,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     integration,
     integrationConfig,
     enabledTools,
+    mode,
     onMessagesChange,
     onSessionIdChange,
   });
