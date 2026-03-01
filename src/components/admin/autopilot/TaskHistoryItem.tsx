@@ -399,10 +399,18 @@ function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSa
           {summary.length > 1500 && '…'}
         </p>
       )}
-      <Button size="sm" variant="ghost" className="text-xs mt-1" onClick={() => setEditing(true)}>
-        <PenSquare className="h-3 w-3 mr-1" />
-        Edit Research
-      </Button>
+      <div className="flex gap-2 mt-1">
+        <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
+          <PenSquare className="h-3 w-3 mr-1" />
+          Edit Research
+        </Button>
+        {onRunAction && topic && (
+          <Button size="sm" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
+            <PenSquare className="h-3 w-3 mr-1" />
+            Draft Blog
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
