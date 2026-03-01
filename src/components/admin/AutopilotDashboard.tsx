@@ -359,6 +359,11 @@ export default function AutopilotDashboard() {
                   onRunAction={(action, actionTopic, actionSources) => {
                     runAction.mutate({ action, topic: actionTopic, sources: actionSources });
                   }}
+                  onUseTopic={(t) => {
+                    setTopic(t);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    toast.success('Topic set from signal');
+                  }}
                 />
               ))}
             </div>
