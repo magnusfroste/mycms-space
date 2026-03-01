@@ -81,10 +81,22 @@ const statusColors: Record<string, string> = {
 // Build workflow definitions from cron data
 // ============================================
 
+function cronToMinutes(cron: string): number {
+  const parts = cron.split(' ');
+  if (parts.length < 2) return 0;
+  const min = parseInt(parts[0]) || 0;
+  const hour = parseInt(parts[1]) || 0;
+  const dow = parts[4];
+  // Push weekly jobs after daily ones by adding a large offset
+  const weeklyOffset = dow !== '*' ? 10000 : 0;
+  return hour * 60 + min + weeklyOffset;
+}
+
 function buildWorkflows(cronJobs: CronJob[]): WorkflowDef[] {
   const workflows: WorkflowDef[] = [];
+  const sorted = [...cronJobs].sort((a, b) => cronToMinutes(a.schedule) - cronToMinutes(b.schedule));
 
-  for (const job of cronJobs) {
+  for (const job of sorted) {
     const cmd = job.command || '';
 
     if (cmd.includes('agent-inbox-scan') || job.jobname.includes('inbox')) {
