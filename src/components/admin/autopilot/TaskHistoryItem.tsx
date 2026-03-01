@@ -325,7 +325,7 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
 }
 
 // Editable research preview
-function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => void }) {
+function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSaved: () => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
   const o = task.output_data || {};
   const summary = (o.research_summary as string) || (o.analysis as string) || '';
   const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
@@ -399,10 +399,18 @@ function ResearchPreview({ task, onSaved }: { task: AgentTask; onSaved: () => vo
           {summary.length > 1500 && '…'}
         </p>
       )}
-      <Button size="sm" variant="ghost" className="text-xs mt-1" onClick={() => setEditing(true)}>
-        <PenSquare className="h-3 w-3 mr-1" />
-        Edit Research
-      </Button>
+      <div className="flex gap-2 mt-1">
+        <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
+          <PenSquare className="h-3 w-3 mr-1" />
+          Edit Research
+        </Button>
+        {onRunAction && topic && (
+          <Button size="sm" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
+            <PenSquare className="h-3 w-3 mr-1" />
+            Draft Blog
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -549,7 +557,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
             {task.task_type === 'signal' ? (
               <SignalPreview task={task} onUseTopic={onUseTopic} />
             ) : task.task_type === 'research' ? (
-              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} />
+              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} onRunAction={onRunAction} />
             ) : task.task_type === 'scout' ? (
               <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
             ) : (
