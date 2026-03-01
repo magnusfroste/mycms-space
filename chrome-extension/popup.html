@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 360px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      padding: 16px;
+    }
+    h1 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #fff; }
+    label { display: block; font-size: 11px; color: #a1a1aa; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      background: #18181b;
+      color: #e5e5e5;
+      font-size: 13px;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #3b82f6; }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #sendBtn { background: #3b82f6; color: #fff; margin-bottom: 6px; }
+    #sendBtn:hover:not(:disabled) { background: #2563eb; }
+    #settingsToggle { background: transparent; color: #a1a1aa; font-size: 11px; padding: 4px; }
+    #settingsPanel { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #27272a; }
+    #settingsPanel.open { display: block; }
+    #saveSettings { background: #27272a; color: #e5e5e5; margin-top: 4px; }
+    .status { font-size: 12px; text-align: center; margin-top: 8px; min-height: 16px; }
+    .status.ok { color: #22c55e; }
+    .status.err { color: #ef4444; }
+    .meta { font-size: 11px; color: #71717a; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <h1>⚡ Send Signal</h1>
+
+  <div id="pageMeta" class="meta"></div>
+
+  <label for="sourceType">Source</label>
+  <select id="sourceType">
+    <option value="web">Web</option>
+    <option value="linkedin">LinkedIn</option>
+    <option value="x">X / Twitter</option>
+  </select>
+
+  <label for="note">Note (optional)</label>
+  <textarea id="note" placeholder="Why is this interesting?"></textarea>
+
+  <button id="sendBtn">Send Signal</button>
+  <button id="settingsToggle">⚙ Settings</button>
+
+  <div id="settingsPanel">
+    <label for="endpoint">CMS Endpoint</label>
+    <input id="endpoint" placeholder="https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/signal-ingest" />
+    <label for="token">API Token</label>
+    <input id="token" type="password" placeholder="Paste token from Profile → API Tokens" />
+    <button id="saveSettings">Save Settings</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
