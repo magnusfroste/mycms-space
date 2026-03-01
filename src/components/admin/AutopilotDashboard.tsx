@@ -33,6 +33,7 @@ export default function AutopilotDashboard() {
   const [topic, setTopic] = useState('');
   const [sources, setSources] = useState('');
   const [selectedChannels, setSelectedChannels] = useState<string[]>(['blog', 'newsletter', 'linkedin', 'x_thread']);
+  const [taskFilter, setTaskFilter] = useState<'all' | 'signal' | 'research' | 'blog'>('all');
 
   // Config state
   const [configTopic, setConfigTopic] = useState('');
