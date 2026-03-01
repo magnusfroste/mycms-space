@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MessageSquarePlus, Database, ChevronDown } from "lucide-react";
+import { ArrowLeft, MessageSquarePlus, Database, ChevronDown, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -22,7 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { integrationsMeta, defaultMagnetTools, type AIIntegrationType } from "@/types/modules";
+import { integrationsMeta, defaultMagnetTools, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
+import type { ChatMode } from "@/components/chat/types";
 
 interface Message {
   id: string;
