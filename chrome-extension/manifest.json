@@ -3,7 +3,7 @@
   "name": "MyCMS Signal Capture",
   "version": "1.0.0",
   "description": "Capture page content and send signals to your CMS autopilot.",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "scripting"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
