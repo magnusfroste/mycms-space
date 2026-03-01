@@ -163,8 +163,12 @@ const Chat = () => {
           <ChatInterface
             webhookUrl={webhookUrl}
             fullPage={true}
-            initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
-            activePlaceholder={passedPlaceholder || "How can Magnet help?"}
+            initialPlaceholder={isAdmin 
+              ? "Hey Magnus, what should we work on today?" 
+              : (passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?")}
+            activePlaceholder={isAdmin 
+              ? "What's next?" 
+              : (passedPlaceholder || "How can Magnet help?")}
             initialMessages={initialMessages}
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
@@ -173,7 +177,10 @@ const Chat = () => {
             integration={selectedIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}
-            enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
+            enabledTools={isAdmin 
+              ? defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)
+              : (aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
+            mode={chatMode}
           />
         )}
       </main>
