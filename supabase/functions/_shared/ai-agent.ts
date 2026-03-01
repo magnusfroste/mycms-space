@@ -4,7 +4,7 @@
 // Separates "agent intelligence" from "API transport"
 // ============================================
 
-import { buildDynamicPrompt, loadResumeContext } from "./ai-context.ts";
+import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext } from "./ai-context.ts";
 import { getActiveTools, getToolInstructions, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 

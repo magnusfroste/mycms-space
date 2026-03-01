@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
       systemPrompt: systemPrompt || '',
       siteContext: siteContext || null,
       enabledTools,
+      mode: mode || 'public',
       config: {
         provider: integration.type,
         model: integration.model,
