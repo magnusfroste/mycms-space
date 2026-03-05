@@ -163,7 +163,7 @@ const Admin = () => {
     );
   };
 
-  const isImmersive = activeTab === 'landing' || activeTab === 'pages';
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'magnet';
 
   return (
     <SidebarProvider>

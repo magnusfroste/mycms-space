@@ -48,6 +48,7 @@ interface AdminSidebarProps {
 
 const mainNavItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'magnet', label: 'Magnet', icon: Bot },
   { id: 'pages', label: 'Pages', icon: FileText },
   { id: 'landing', label: 'Page Builder', icon: Layers },
   { id: 'blog', label: 'Blog', icon: PenSquare },
