@@ -1,89 +1,67 @@
 
 
-# Magnet som Admin-tab: En agent, två ytor
+# Magnet as Admin Co-Pilot: Replace Buttons with Conversation
 
-## Koncept
+## The Insight from FlowPilot
 
-Magnet är EN agent (en modul med verktyg). Den serverar besökare via det publika `/chat`-blocket och admin via en ny tab i admin-panelen. Ingen ny agent skapas — samma `ChatInterface`, samma `ai-chat` edge function, bara olika verktyg beroende på kontext.
+FlowPilot in flowwink.com has an "Operate Mode" — a chat interface where the agent has **skills** (database-backed tool definitions) and executes them conversationally with SSE streaming, activity logging, and approval workflows. The key patterns:
 
-```text
-        ONE MAGNET AGENT
-        (ai-chat edge fn)
-              |
-     +--------+--------+
-     |                  |
-  PUBLIC SURFACE     ADMIN SURFACE
-  /chat route        /admin?tab=magnet
-  CvAgent block      Admin sidebar tab
-     |                  |
-  Tools:             Tools:
-  - cv_match         - run_research
-  - portfolio        - draft_blog
-  - deep_dive        - review_queue
-  - availability     - approve_task
-                     - site_stats
-```
+1. **Skills registry** in database (`agent_skills` table) — not hardcoded tool arrays
+2. **Activity feed** — every action the agent takes is logged and visible
+3. **SSE streaming** — token-by-token response rendering with tool execution status
+4. **Conversation persistence** — chat history saved to database
+5. **Quick actions** replace buttons: "Write a blog post" instead of a Draft Blog button
 
-## Changes
+In mycms, the Autopilot dashboard currently has ~8 buttons (Research, Draft Blog, Draft Newsletter, Scout Sources, Multichannel, Publish, Save Defaults) plus form inputs. All of this can become conversation with Magnet.
 
-### 1. Add "Magnet" tab to Admin Sidebar
+## What Changes
 
-In `src/components/admin/AdminSidebar.tsx`, add a new nav item:
-```
-{ id: 'magnet', label: 'Magnet', icon: Bot }
-```
+### Phase 1: Create MagnetChat admin tab (replaces Autopilot buttons)
 
-Place it near the top of `mainNavItems` (after Dashboard or after Autopilot) since it's the primary interaction point.
+**New file: `src/components/admin/MagnetChat.tsx`**
 
-### 2. Create Admin Magnet wrapper component
+A full-height chat wrapper that renders `ChatInterface` in admin mode with:
+- Admin quick actions that replace the Autopilot action panel buttons:
+  - "Research AI agent trends" → replaces Research button
+  - "Draft a blog post about..." → replaces Draft Blog button  
+  - "What's in my review queue?" → replaces browsing task history
+  - "Draft newsletter from recent research" → replaces Newsletter button
+  - "Show me this week's stats" → replaces Stats card
+- Integration selector (carry over from current Chat.tsx)
+- Full-page immersive layout
 
-New file: `src/components/admin/MagnetChat.tsx`
+**Modify: `src/components/admin/AdminSidebar.tsx`**
 
-A thin wrapper that renders `ChatInterface` with admin-mode props:
-- `mode="admin"`
-- `fullPage={true}` 
-- Admin placeholders ("Hey Magnus, what should we work on?")
-- Admin-specific quick actions
-- Loads `useAIModule()` config and `useAIChatContext()` for site context
-- Uses the same integration selector logic currently in `Chat.tsx`
+Add "Magnet" as a main nav item with Bot icon, positioned after Dashboard (top of list — this is the primary interaction point).
 
-This keeps all the admin chat logic that's currently in `Chat.tsx` but embedded in the admin layout.
+**Modify: `src/pages/Admin.tsx`**
 
-### 3. Register in Admin route map
+- Register `magnet` tab in `TAB_COMPONENTS`
+- Mark it as immersive layout (full height like page builder)
 
-In `src/pages/Admin.tsx`:
-- Lazy-load `MagnetChat`
-- Add `magnet: MagnetChat` to `TAB_COMPONENTS`
-- Mark it as immersive layout (full height, like the page builder)
+### Phase 2: Simplify Chat.tsx to public-only
 
-### 4. Simplify `/chat` page back to public-only
+**Modify: `src/pages/Chat.tsx`**
 
-`src/pages/Chat.tsx` becomes simpler:
-- Remove all admin detection logic (`useAuth`, admin badge, admin tools)
-- Always runs in `mode="public"`
-- No integration selector dropdown (uses configured default)
-- Clean, visitor-focused experience
+Strip out all admin detection logic:
+- Remove `useAuth`, admin badge, admin tools, integration selector
+- Always `mode="public"` 
+- Clean visitor-only experience
 
-### 5. No edge function changes needed
+### Phase 3: Keep Autopilot as read-only dashboard
 
-The `ai-chat` edge function already supports `mode: 'public' | 'admin'`. The admin tools and prompts added in the previous implementation remain as-is. The only change is WHERE the admin surface lives (admin panel tab instead of `/chat` with auth detection).
+The Autopilot dashboard stays but becomes a **read-only activity log** — you view task history and stats there, but all actions happen through Magnet chat. The action buttons ("Research", "Draft Blog", etc.) get removed over time as the admin tools in the edge function handle them conversationally.
 
-## What this achieves
-
-- **One agent**: Magnet is a single module, not two separate agents
-- **Two surfaces**: Public visitors use `/chat`, admin uses the sidebar tab
-- **No navigation away**: Admin stays in the admin panel to talk to Magnet
-- **Clean separation**: `/chat` is purely public, no auth logic cluttering it
-- **Reuse**: Same `ChatInterface` component, same edge function, same tools registry
+For now, we keep Autopilot unchanged — it serves as a visual overview while Magnet does the work.
 
 ## Files to change
 
 | File | Change |
 |------|--------|
-| `src/components/admin/AdminSidebar.tsx` | Add "Magnet" nav item with Bot icon |
-| `src/components/admin/MagnetChat.tsx` | NEW - Admin chat wrapper (extracts admin logic from Chat.tsx) |
-| `src/pages/Admin.tsx` | Register `magnet` tab in route map |
-| `src/pages/Chat.tsx` | Simplify to public-only (remove useAuth, admin detection) |
+| `src/components/admin/MagnetChat.tsx` | NEW — Admin chat wrapper with admin quick actions |
+| `src/components/admin/AdminSidebar.tsx` | Add "Magnet" nav item near top |
+| `src/pages/Admin.tsx` | Register `magnet` tab, mark immersive |
+| `src/pages/Chat.tsx` | Simplify to public-only (remove auth/admin logic) |
 
-No edge function changes. No new tables. No new agents.
+No edge function changes needed — admin tools already exist from previous implementation.
 
