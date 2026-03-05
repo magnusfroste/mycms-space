@@ -14,11 +14,11 @@ import {
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
 
 const adminQuickActions = [
-  { label: "📊 Show me this week's stats", message: "Show me this week's site stats — traffic, messages, and engagement." },
-  { label: "🔍 Research AI trends", message: "Research the latest AI agent trends and summarize the key findings." },
-  { label: "✍️ Draft a blog post", message: "Draft a blog post about a trending topic from recent research." },
-  { label: "📬 What's in my review queue?", message: "What tasks are pending in my review queue right now?" },
-  { label: "📰 Draft newsletter", message: "Draft a newsletter from recent research and published blog posts." },
+  { id: 'stats', label: '📊 This week\'s stats', message: 'Show me this week\'s site stats — traffic, messages, and engagement.', icon: 'BarChart', order_index: 0, enabled: true },
+  { id: 'research', label: '🔍 Research AI trends', message: 'Research the latest AI agent trends and summarize the key findings.', icon: 'Search', order_index: 1, enabled: true },
+  { id: 'draft-blog', label: '✍️ Draft blog post', message: 'Draft a blog post about a trending topic from recent research.', icon: 'PenSquare', order_index: 2, enabled: true },
+  { id: 'review', label: '📬 Review queue', message: 'What tasks are pending in my review queue right now?', icon: 'Inbox', order_index: 3, enabled: true },
+  { id: 'newsletter', label: '📰 Draft newsletter', message: 'Draft a newsletter from recent research and published blog posts.', icon: 'Mail', order_index: 4, enabled: true },
 ];
 
 const MagnetChat: React.FC = () => {
