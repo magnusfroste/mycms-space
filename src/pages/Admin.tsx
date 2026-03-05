@@ -56,6 +56,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   profile: ProfileSettings,
   settings: GeneralSettings,
   autopilot: AutopilotDashboard,
+  magnet: MagnetChat,
 };
 
 const AdminLoadingFallback = () => (
