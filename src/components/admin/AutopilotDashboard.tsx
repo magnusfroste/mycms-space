@@ -27,6 +27,66 @@ export default function AutopilotDashboard() {
   const queryClient = useQueryClient();
   const [taskFilter, setTaskFilter] = useState<'all' | 'signal' | 'research' | 'blog'>('all');
 
+  // Self-healing: detect recently auto-disabled skills
+  const { data: disabledSkills = [] } = useQuery({
+    queryKey: ['self-healed-skills'],
+    queryFn: async () => {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const { data } = await supabase
+        .from('agent_activity')
+        .select('skill_name, created_at')
+        .eq('status', 'failed')
+        .gte('created_at', threeDaysAgo.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (!data?.length) return [];
+
+      // Find skills with 3+ consecutive failures
+      const streaks: Record<string, number> = {};
+      const checked = new Set<string>();
+      for (const a of data) {
+        if (checked.has(a.skill_name)) continue;
+        streaks[a.skill_name] = (streaks[a.skill_name] || 0) + 1;
+        if (streaks[a.skill_name] >= 3) checked.add(a.skill_name);
+      }
+
+      const candidates = Object.entries(streaks).filter(([, c]) => c >= 3).map(([n]) => n);
+      if (!candidates.length) return [];
+
+      // Check which are actually disabled
+      const { data: skills } = await supabase
+        .from('agent_skills')
+        .select('id, name, description')
+        .eq('enabled', false)
+        .in('name', candidates);
+
+      return skills || [];
+    },
+    refetchInterval: 60_000,
+  });
+
+  const reEnableSkill = useMutation({
+    mutationFn: async (skillName: string) => {
+      const { error } = await supabase
+        .from('agent_skills')
+        .update({ enabled: true })
+        .eq('name', skillName);
+      if (error) throw error;
+      // Also re-enable linked automations
+      await supabase
+        .from('agent_automations')
+        .update({ enabled: true, last_error: null })
+        .eq('skill_name', skillName);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['self-healed-skills'] });
+      queryClient.invalidateQueries({ queryKey: ['agent-skills'] });
+      toast.success('Skill re-enabled');
+    },
+    onError: (e) => toast.error('Failed to re-enable', { description: e.message }),
+  });
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['agent-tasks'],
     queryFn: async () => {
