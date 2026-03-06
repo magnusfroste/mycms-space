@@ -364,6 +364,8 @@ export const toolDescriptions: Record<string, string> = {
   list_review_queue: "**list_review_queue** — Show tasks pending review in the autopilot queue.",
   approve_task: "**approve_task** — Approve and publish a pending task.",
   get_site_stats: "**get_site_stats** — Get recent site analytics and traffic summary.",
+  save_memory: "**save_memory** — Persist a fact, learning, or insight to long-term memory. Use after discovering patterns, completing research, or learning from mistakes.",
+  list_memory: "**list_memory** — Review all stored memories, learnings, and identity entries.",
 };
 
 /** Get filtered tools based on enabled tool IDs and mode */
