@@ -5,6 +5,7 @@ import {
   Navigation, 
   Bot,
   Zap,
+  Cpu,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
@@ -55,6 +56,7 @@ const mainNavItems = [
   { id: 'media-hub', label: 'Media Hub', icon: ImageIcon },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
   { id: 'autopilot', label: 'Autopilot', icon: Zap },
+  { id: 'skill-hub', label: 'Skill Hub', icon: Cpu },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
 ];

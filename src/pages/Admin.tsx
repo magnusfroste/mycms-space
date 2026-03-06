@@ -32,6 +32,7 @@ const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'))
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
 const AutopilotDashboard = lazy(() => import('@/components/admin/AutopilotDashboard'));
 const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
+const SkillHub = lazy(() => import('@/components/admin/SkillHub'));
 
 // Route map: tab key → lazy component
 const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
@@ -57,6 +58,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   settings: GeneralSettings,
   autopilot: AutopilotDashboard,
   magnet: MagnetChat,
+  'skill-hub': SkillHub,
 };
 
 const AdminLoadingFallback = () => (
