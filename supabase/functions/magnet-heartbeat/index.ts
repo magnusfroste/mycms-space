@@ -187,19 +187,22 @@ Deno.serve(async (req) => {
 Your mission: Review system state, advance objectives, take needed actions.
 ${memoryPrompt}
 ${objectiveCtx}
+${automationCtx}
 ${activityCtx}
 ${statsCtx}
 
 HEARTBEAT PROTOCOL:
 1. REFLECT — Analyze past 7 days
 2. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
-3. ACT — If an objective needs action and you have the skill, DO IT.
-4. REMEMBER — Save any learnings to memory.
-5. SUMMARIZE — Brief heartbeat report.
+3. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute their skills first if due or overdue.
+4. ACT — If an objective still needs action beyond automations, use available skills.
+5. REMEMBER — Save any learnings to memory.
+6. SUMMARIZE — Brief heartbeat report.
 
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations
 - Do NOT send newsletters without approval
+- PRIORITIZE automations linked to active objectives over unlinked ones
 - Be efficient: only act when progress is needed`;
 
     // 4. Run agentic loop
