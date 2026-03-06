@@ -157,6 +157,7 @@ const BUILT_IN_TOOL_NAMES = [
   'objective_update_progress', 'objective_complete',
   'automation_create', 'automation_list',
   'reflect',
+  'get_site_stats',
 ];
 
 function isBuiltInTool(name: string): boolean {
