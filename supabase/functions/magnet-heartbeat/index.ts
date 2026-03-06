@@ -117,6 +117,47 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
   }
 
+  // Execute automation — runs the linked skill and updates automation metadata
+  if (fnName === 'execute_automation') {
+    const { automation_id } = args;
+    const { data: auto, error: fetchErr } = await supabase.from('agent_automations')
+      .select('*').eq('id', automation_id).maybeSingle();
+    if (fetchErr || !auto) return { status: 'error', error: fetchErr?.message || 'Automation not found' };
+
+    // Delegate skill execution to agent-execute
+    let skillResult: any;
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          skill_name: auto.skill_name,
+          arguments: auto.skill_arguments || {},
+          agent_type: 'magnet',
+          objective_id: auto.objective_id || undefined,
+        }),
+      });
+      skillResult = await resp.json();
+    } catch (err: any) {
+      skillResult = { error: err.message };
+    }
+
+    // Update automation metadata
+    const updatePayload: Record<string, any> = {
+      last_triggered_at: new Date().toISOString(),
+      run_count: (auto.run_count || 0) + 1,
+      last_error: skillResult.error || null,
+    };
+    await supabase.from('agent_automations').update(updatePayload).eq('id', automation_id);
+
+    return {
+      status: skillResult.error ? 'failed' : 'success',
+      automation: auto.name,
+      skill: auto.skill_name,
+      result: skillResult,
+    };
+  }
+
   // Delegate to agent-execute for skill-based tools
   const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
     method: 'POST',
@@ -172,6 +213,7 @@ Deno.serve(async (req) => {
       .map((s: any) => s.tool_definition);
 
     const builtInTools = [
+      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked automations.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
       { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
       { type: 'function', function: { name: 'objective_update_progress', description: 'Update progress on an objective.', parameters: { type: 'object', properties: { objective_id: { type: 'string' }, progress: { type: 'object' } }, required: ['objective_id', 'progress'] } } },
       { type: 'function', function: { name: 'objective_complete', description: 'Mark objective as completed.', parameters: { type: 'object', properties: { objective_id: { type: 'string' } }, required: ['objective_id'] } } },
