@@ -371,10 +371,17 @@ export const toolDescriptions: Record<string, string> = {
 /** Get filtered tools based on enabled tool IDs and mode */
 export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
   const toolPool = mode === 'admin' ? adminTools : publicTools;
+  // In admin mode, always include memory tools regardless of enabledTools filter
   if (!enabledTools?.length) return Object.values(toolPool);
-  return enabledTools
+  const filtered = enabledTools
     .filter(id => toolPool[id])
     .map(id => toolPool[id]);
+  // Always add memory tools for admin
+  if (mode === 'admin') {
+    if (!filtered.find(t => t.function.name === 'save_memory')) filtered.push(saveMemoryTool);
+    if (!filtered.find(t => t.function.name === 'list_memory')) filtered.push(listMemoryTool);
+  }
+  return filtered;
 }
 
 /** Get tool instructions for the system prompt */
