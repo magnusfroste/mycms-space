@@ -157,6 +157,7 @@ const BUILT_IN_TOOL_NAMES = [
   'objective_update_progress', 'objective_complete',
   'automation_create', 'automation_list',
   'reflect',
+  'get_site_stats',
 ];
 
 function isBuiltInTool(name: string): boolean {
@@ -343,6 +344,31 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
         active_automations: automations?.filter((a: any) => a.enabled).length || 0,
         objectives: objectives || [],
         auto_persisted_learnings: learnings.length,
+      });
+    }
+
+    // --- Site Stats ---
+    case 'get_site_stats': {
+      const days = (toolArgs.period_days as number) || 7;
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+      const sinceISO = since.toISOString();
+
+      const [views, messages, subscribers, posts, chats] = await Promise.all([
+        supabase.from('page_views').select('id', { count: 'exact', head: true }).gte('created_at', sinceISO),
+        supabase.from('contact_messages').select('id', { count: 'exact', head: true }).gte('created_at', sinceISO),
+        supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }).gte('created_at', sinceISO),
+        supabase.from('blog_posts').select('id', { count: 'exact', head: true }).gte('created_at', sinceISO),
+        supabase.from('chat_analytics').select('id', { count: 'exact', head: true }).gte('created_at', sinceISO),
+      ]);
+
+      return JSON.stringify({
+        period_days: days,
+        page_views: views.count || 0,
+        contact_messages: messages.count || 0,
+        new_subscribers: subscribers.count || 0,
+        blog_posts_created: posts.count || 0,
+        chat_sessions: chats.count || 0,
       });
     }
 
