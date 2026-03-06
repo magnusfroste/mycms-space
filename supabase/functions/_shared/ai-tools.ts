@@ -492,6 +492,20 @@ export const publicTools: Record<string, ToolDefinition> = {
 };
 
 /** Admin CMS co-pilot tools */
+export const getSiteStatsTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "get_site_stats",
+    description: "Get site statistics: page views, messages, subscribers, blog posts, and chat sessions for a given period.",
+    parameters: {
+      type: "object",
+      properties: {
+        period_days: { type: "number", description: "Number of days to look back (default 7)" },
+      },
+    },
+  },
+};
+
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
