@@ -10,7 +10,8 @@ import { ActivityTable } from '@/components/admin/skills/ActivityTable';
 import { ObjectivesPanel } from '@/components/admin/skills/ObjectivesPanel';
 import { AutomationsPanel } from '@/components/admin/skills/AutomationsPanel';
 import { AutomationHealthPanel } from '@/components/admin/skills/AutomationHealthPanel';
-import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill } from '@/hooks/useSkillHub';
+import { ApprovalsPanel } from '@/components/admin/skills/ApprovalsPanel';
+import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity } from '@/hooks/useSkillHub';
 import type { AgentSkill } from '@/types/agent';
 
 export default function SkillHub() {
