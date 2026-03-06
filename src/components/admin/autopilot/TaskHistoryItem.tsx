@@ -270,7 +270,7 @@ const sourceIcons: Record<string, typeof Globe> = {
   web: Globe,
 };
 
-function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (topic: string) => void }) {
+function SignalPreview({ task }: { task: AgentTask }) {
   const i = task.input_data || {};
   const url = (i.url as string) || '';
   const title = (i.title as string) || '';
@@ -292,29 +292,18 @@ function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (to
         )}
       </div>
       {title && <h4 className="font-medium">{title}</h4>}
-      {note && (
-        <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>
-      )}
+      {note && <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>}
       {content && (
         <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background text-xs">
           {content.substring(0, 3000)}
           {content.length > 3000 && '…'}
         </div>
       )}
-      <div className="flex gap-2">
-        {onUseTopic && (title || url) && (
-          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onUseTopic(title || url)}>
-            <Search className="h-3 w-3 mr-1" />
-            Use as topic
-          </Button>
-        )}
-        {content && (
-          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
-            <Copy className="h-3 w-3 mr-1" />
-            Copy content
-          </Button>
-        )}
-      </div>
+      {content && (
+        <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
+          <Copy className="h-3 w-3 mr-1" /> Copy content
+        </Button>
+      )}
     </div>
   );
 }
