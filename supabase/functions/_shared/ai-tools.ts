@@ -275,6 +275,37 @@ export const approveTaskTool: ToolDefinition = {
   },
 };
 
+export const saveMemoryTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "save_memory",
+    description: "Save a fact, learning, or insight to persistent memory. Use when you discover something worth remembering, learn from a mistake, or want to update your knowledge. Categories: 'fact' (platform/world knowledge), 'lesson' (learned from experience), 'soul' (identity/personality update), 'skill_instruction' (rich knowledge for a specific skill).",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string", enum: ["fact", "lesson", "soul", "skill_instruction"], description: "Memory category" },
+        key: { type: "string", description: "Unique key for this memory (e.g. 'newsletter-best-practices', 'tone', 'lesson:blog-seo')" },
+        content: { type: "string", description: "The knowledge to persist" },
+      },
+      required: ["category", "key", "content"],
+    },
+  },
+};
+
+export const listMemoryTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "list_memory",
+    description: "List all entries in agent memory. Use to review what you know, check stored learnings, or inspect your soul/identity.",
+    parameters: {
+      type: "object",
+      properties: {
+        category_filter: { type: "string", enum: ["all", "fact", "lesson", "soul", "skill_instruction"], description: "Filter by category" },
+      },
+    },
+  },
+};
+
 export const getSiteStatsTool: ToolDefinition = {
   type: "function",
   function: {
@@ -310,6 +341,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   approve_task: approveTaskTool,
   get_site_stats: getSiteStatsTool,
   research_topic: researchTopicTool,
+  save_memory: saveMemoryTool,
+  list_memory: listMemoryTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
@@ -331,15 +364,24 @@ export const toolDescriptions: Record<string, string> = {
   list_review_queue: "**list_review_queue** — Show tasks pending review in the autopilot queue.",
   approve_task: "**approve_task** — Approve and publish a pending task.",
   get_site_stats: "**get_site_stats** — Get recent site analytics and traffic summary.",
+  save_memory: "**save_memory** — Persist a fact, learning, or insight to long-term memory. Use after discovering patterns, completing research, or learning from mistakes.",
+  list_memory: "**list_memory** — Review all stored memories, learnings, and identity entries.",
 };
 
 /** Get filtered tools based on enabled tool IDs and mode */
 export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
   const toolPool = mode === 'admin' ? adminTools : publicTools;
+  // In admin mode, always include memory tools regardless of enabledTools filter
   if (!enabledTools?.length) return Object.values(toolPool);
-  return enabledTools
+  const filtered = enabledTools
     .filter(id => toolPool[id])
     .map(id => toolPool[id]);
+  // Always add memory tools for admin
+  if (mode === 'admin') {
+    if (!filtered.find(t => t.function.name === 'save_memory')) filtered.push(saveMemoryTool);
+    if (!filtered.find(t => t.function.name === 'list_memory')) filtered.push(listMemoryTool);
+  }
+  return filtered;
 }
 
 /** Get tool instructions for the system prompt */

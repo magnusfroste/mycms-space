@@ -319,6 +319,8 @@ export const defaultAdminMagnetTools: MagnetToolConfig[] = [
   { id: 'list_review_queue', name: 'Review Queue', description: 'Show pending tasks awaiting review', icon: 'ClipboardList', enabled: true },
   { id: 'approve_task', name: 'Approve Task', description: 'Approve and publish a pending task', icon: 'CheckCircle', enabled: true },
   { id: 'get_site_stats', name: 'Site Stats', description: 'Get recent analytics summary', icon: 'BarChart', enabled: true },
+  { id: 'save_memory', name: 'Save Memory', description: 'Persist facts, learnings, and identity updates', icon: 'Brain', enabled: true },
+  { id: 'list_memory', name: 'List Memory', description: 'Review stored memories and learnings', icon: 'Database', enabled: true },
 ];
 
 // AI Module Config - Updated to use integration system
