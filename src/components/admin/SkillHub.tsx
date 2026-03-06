@@ -19,6 +19,8 @@ export default function SkillHub() {
   const toggle = useToggleSkill();
   const upsert = useUpsertSkill();
   const remove = useDeleteSkill();
+  const { data: pendingActivities = [] } = useActivity({ status: 'pending_approval' });
+  const pendingCount = pendingActivities.length;
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<AgentSkill | null>(null);
