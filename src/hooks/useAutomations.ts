@@ -29,6 +29,7 @@ export function useUpsertAutomation() {
         skill_id: auto.skill_id ?? null,
         skill_name: auto.skill_name ?? '',
         skill_arguments: auto.skill_arguments ?? {},
+        objective_id: auto.objective_id ?? null,
         enabled: auto.enabled ?? true,
       };
       if (auto.id) {
