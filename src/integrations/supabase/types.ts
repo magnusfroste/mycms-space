@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_memory: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          key: string
+          metadata: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          key: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          key?: string
+          metadata?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_tasks: {
         Row: {
           batch_id: string | null
