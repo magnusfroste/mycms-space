@@ -117,6 +117,47 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
   }
 
+  // Execute automation — runs the linked skill and updates automation metadata
+  if (fnName === 'execute_automation') {
+    const { automation_id } = args;
+    const { data: auto, error: fetchErr } = await supabase.from('agent_automations')
+      .select('*').eq('id', automation_id).maybeSingle();
+    if (fetchErr || !auto) return { status: 'error', error: fetchErr?.message || 'Automation not found' };
+
+    // Delegate skill execution to agent-execute
+    let skillResult: any;
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          skill_name: auto.skill_name,
+          arguments: auto.skill_arguments || {},
+          agent_type: 'magnet',
+          objective_id: auto.objective_id || undefined,
+        }),
+      });
+      skillResult = await resp.json();
+    } catch (err: any) {
+      skillResult = { error: err.message };
+    }
+
+    // Update automation metadata
+    const updatePayload: Record<string, any> = {
+      last_triggered_at: new Date().toISOString(),
+      run_count: (auto.run_count || 0) + 1,
+      last_error: skillResult.error || null,
+    };
+    await supabase.from('agent_automations').update(updatePayload).eq('id', automation_id);
+
+    return {
+      status: skillResult.error ? 'failed' : 'success',
+      automation: auto.name,
+      skill: auto.skill_name,
+      result: skillResult,
+    };
+  }
+
   // Delegate to agent-execute for skill-based tools
   const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
     method: 'POST',
