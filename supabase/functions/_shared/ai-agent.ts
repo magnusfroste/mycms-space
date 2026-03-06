@@ -4,7 +4,7 @@
 // Separates "agent intelligence" from "API transport"
 // ============================================
 
-import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext } from "./ai-context.ts";
+import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
 import { getActiveTools, getToolInstructions, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 
@@ -17,9 +17,9 @@ export type AgentProvider = 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
 export interface AgentConfig {
   provider: AgentProvider;
   model?: string;
-  webhookUrl?: string;   // n8n webhook
-  baseUrl?: string;      // custom self-hosted endpoint (OpenAI-compatible)
-  apiKeyEnv?: string;    // env var name for custom endpoint API key
+  webhookUrl?: string;
+  baseUrl?: string;
+  apiKeyEnv?: string;
 }
 
 export interface AgentRequest {
@@ -39,8 +39,6 @@ export interface AgentResult {
 
 // ============================================
 // Generic OpenAI-Compatible Provider
-// Works with: Lovable AI, OpenAI, Gemini (via gateway),
-//             Ollama, LM Studio, vLLM, etc.
 // ============================================
 
 export async function callOpenAICompatible(params: {
@@ -66,7 +64,6 @@ export async function callOpenAICompatible(params: {
     "Content-Type": "application/json",
   };
 
-  // Some self-hosted endpoints don't need auth
   if (params.apiKey) {
     headers.Authorization = `Bearer ${params.apiKey}`;
   }
@@ -88,7 +85,7 @@ export async function callOpenAICompatible(params: {
 }
 
 // ============================================
-// Provider: n8n Webhook (external agent, no tools)
+// Provider: n8n Webhook
 // ============================================
 
 async function callN8n(params: {
@@ -127,8 +124,6 @@ async function callN8n(params: {
 
 // ============================================
 // Provider Registry
-// Each entry: endpoint URL, env var for API key, default model
-// All use the OpenAI-compatible chat/completions format
 // ============================================
 
 export const providerEndpoints: Record<string, { url: string; envKey: string; defaultModel: string }> = {
@@ -150,26 +145,64 @@ export const providerEndpoints: Record<string, { url: string; envKey: string; de
 };
 
 // ============================================
+// Memory Tool Execution
+// ============================================
+
+async function executeMemoryTool(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
+  if (toolName === 'save_memory') {
+    const category = toolArgs.category as string;
+    const key = toolArgs.key as string;
+    const content = toolArgs.content as string;
+    const success = await upsertMemory(category, key, content);
+    return success
+      ? `✅ Memory saved: [${category}/${key}] — I'll remember this for future conversations.`
+      : `❌ Failed to save memory. Please try again.`;
+  }
+
+  if (toolName === 'list_memory') {
+    const memories = await loadAgentMemory();
+    const filter = toolArgs.category_filter as string;
+    const filtered = filter && filter !== 'all'
+      ? memories.filter(m => m.category === filter)
+      : memories;
+
+    if (!filtered.length) return 'No memories stored yet.';
+
+    const grouped: Record<string, typeof filtered> = {};
+    for (const m of filtered) {
+      if (!grouped[m.category]) grouped[m.category] = [];
+      grouped[m.category].push(m);
+    }
+
+    const sections = Object.entries(grouped).map(([cat, entries]) => {
+      const items = entries.map(e => `  - **${e.key}**: ${e.content.substring(0, 200)}${e.content.length > 200 ? '…' : ''}`).join('\n');
+      return `### ${cat} (${entries.length})\n${items}`;
+    });
+
+    return `## Agent Memory\n${sections.join('\n\n')}`;
+  }
+
+  return '';
+}
+
+// ============================================
 // Main Agent Runner
 // ============================================
 
-/** Resolve provider config: endpoint, API key, model */
 export function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
-  // Custom self-hosted endpoint
   if (config.provider === 'custom') {
     if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
     const envKey = config.apiKeyEnv || 'CUSTOM_AI_API_KEY';
     const apiKey = Deno.env.get(envKey) || '';
     return {
-      url: config.baseUrl.endsWith('/chat/completions') 
-        ? config.baseUrl 
+      url: config.baseUrl.endsWith('/chat/completions')
+        ? config.baseUrl
         : `${config.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`,
       apiKey,
       model: config.model || 'default',
     };
   }
 
-  // Known provider
   const endpoint = providerEndpoints[config.provider];
   if (!endpoint) throw new Error(`Unsupported provider: ${config.provider}`);
 
@@ -183,7 +216,7 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
   };
 }
 
-/** Run the Magnet agent: loads context, builds prompt, calls provider, handles tools */
+/** Run the Magnet agent: loads context, memory, builds prompt, calls provider, handles tools */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public' } = request;
 
@@ -206,14 +239,23 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   // --- All OpenAI-compatible providers: full tool support ---
   const { url, apiKey, model } = resolveProvider(config);
 
-  // Load resume context for tool calling
-  const resumeContext = await loadResumeContext();
+  // Load resume context and agent memory in parallel
+  const [resumeContext, agentMemory] = await Promise.all([
+    loadResumeContext(),
+    loadAgentMemory(),
+  ]);
 
   // Build full system prompt with mode-aware persona
   let fullPrompt = mode === 'admin'
     ? buildAdminPrompt(systemPrompt, siteContext)
     : buildDynamicPrompt(systemPrompt, siteContext);
-    
+
+  // Inject agent memory (SOUL, facts, learnings)
+  if (agentMemory.length) {
+    fullPrompt += formatMemoryForPrompt(agentMemory);
+    console.log(`[Agent] Injected ${agentMemory.length} memory entries into prompt`);
+  }
+
   if (resumeContext && mode === 'public') {
     fullPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
   }
@@ -240,7 +282,23 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   // Handle tool calls
   if (choice?.message?.tool_calls?.length) {
     const toolCall = choice.message.tool_calls[0];
-    console.log(`[Agent] Tool called: ${toolCall.function?.name}`);
+    const toolName = toolCall.function?.name || '';
+    console.log(`[Agent] Tool called: ${toolName}`);
+
+    // Handle memory tools server-side (execute and return result)
+    if (toolName === 'save_memory' || toolName === 'list_memory') {
+      try {
+        const toolArgs = JSON.parse(toolCall.function!.arguments || '{}');
+        const result = await executeMemoryTool(toolName, toolArgs);
+        // Return the text response + memory result combined
+        const textPart = choice.message.content || '';
+        return { output: textPart ? `${textPart}\n\n${result}` : result };
+      } catch (e) {
+        console.error(`[Agent] Memory tool error:`, e);
+        return { output: choice.message.content || 'Memory operation failed.' };
+      }
+    }
+
     return parseToolCallResponse(toolCall, choice.message.content || "");
   }
 
