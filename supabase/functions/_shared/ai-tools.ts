@@ -279,12 +279,12 @@ export const saveMemoryTool: ToolDefinition = {
   type: "function",
   function: {
     name: "save_memory",
-    description: "Save a fact, learning, or insight to persistent memory. Use when you discover something worth remembering, learn from a mistake, or want to update your knowledge. Categories: 'fact' (platform/world knowledge), 'lesson' (learned from experience), 'soul' (identity/personality update), 'skill_instruction' (rich knowledge for a specific skill).",
+    description: "Save a fact, learning, or insight to persistent memory. Categories: 'fact', 'lesson', 'soul', 'skill_instruction'.",
     parameters: {
       type: "object",
       properties: {
-        category: { type: "string", enum: ["fact", "lesson", "soul", "skill_instruction"], description: "Memory category" },
-        key: { type: "string", description: "Unique key for this memory (e.g. 'newsletter-best-practices', 'tone', 'lesson:blog-seo')" },
+        category: { type: "string", enum: ["fact", "lesson", "soul", "skill_instruction"] },
+        key: { type: "string", description: "Unique key (e.g. 'newsletter-best-practices')" },
         content: { type: "string", description: "The knowledge to persist" },
       },
       required: ["category", "key", "content"],
@@ -296,25 +296,184 @@ export const listMemoryTool: ToolDefinition = {
   type: "function",
   function: {
     name: "list_memory",
-    description: "List all entries in agent memory. Use to review what you know, check stored learnings, or inspect your soul/identity.",
+    description: "List all entries in agent memory.",
     parameters: {
       type: "object",
       properties: {
-        category_filter: { type: "string", enum: ["all", "fact", "lesson", "soul", "skill_instruction"], description: "Filter by category" },
+        category_filter: { type: "string", enum: ["all", "fact", "lesson", "soul", "skill_instruction"] },
       },
     },
   },
 };
 
-export const getSiteStatsTool: ToolDefinition = {
+export const soulUpdateTool: ToolDefinition = {
   type: "function",
   function: {
-    name: "get_site_stats",
-    description: "Get recent site analytics summary. Use when admin asks about stats, traffic, or performance.",
+    name: "soul_update",
+    description: "Update your identity/personality. Fields: 'identity', 'tone', 'values', 'philosophy'.",
     parameters: {
       type: "object",
       properties: {
-        period: { type: "string", enum: ["today", "week", "month"], description: "Time period for stats" },
+        field: { type: "string", description: "Soul field to update" },
+        value: { type: "string", description: "New value" },
+      },
+      required: ["field", "value"],
+    },
+  },
+};
+
+export const skillCreateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_create",
+    description: "Create a new skill. Specify name, handler (edge:fn-name, module:name, db:table), and tool_definition.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string" },
+        handler: { type: "string", description: "Handler route: edge:fn, module:name, db:table" },
+        category: { type: "string" },
+        scope: { type: "string", enum: ["internal", "public", "both"] },
+        requires_approval: { type: "boolean" },
+        tool_definition: { type: "object", description: "OpenAI function tool schema" },
+      },
+      required: ["name", "description", "handler"],
+    },
+  },
+};
+
+export const skillUpdateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_update",
+    description: "Update fields on an existing skill.",
+    parameters: {
+      type: "object",
+      properties: {
+        skill_name: { type: "string" },
+        updates: { type: "object", description: "Fields to update" },
+      },
+      required: ["skill_name", "updates"],
+    },
+  },
+};
+
+export const skillListTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_list",
+    description: "List registered skills.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string" },
+        include_disabled: { type: "boolean" },
+      },
+    },
+  },
+};
+
+export const skillDisableTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_disable",
+    description: "Disable a skill by name.",
+    parameters: {
+      type: "object",
+      properties: { skill_name: { type: "string" } },
+      required: ["skill_name"],
+    },
+  },
+};
+
+export const skillInstructTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_instruct",
+    description: "Add rich knowledge/instructions to a skill (like SKILL.md). The AI reads this when executing the skill.",
+    parameters: {
+      type: "object",
+      properties: {
+        skill_name: { type: "string" },
+        instructions: { type: "string", description: "Markdown instructions for the skill" },
+      },
+      required: ["skill_name", "instructions"],
+    },
+  },
+};
+
+export const objectiveUpdateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "objective_update_progress",
+    description: "Update progress on an active objective.",
+    parameters: {
+      type: "object",
+      properties: {
+        objective_id: { type: "string" },
+        progress: { type: "object" },
+      },
+      required: ["objective_id", "progress"],
+    },
+  },
+};
+
+export const objectiveCompleteTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "objective_complete",
+    description: "Mark an objective as completed.",
+    parameters: {
+      type: "object",
+      properties: { objective_id: { type: "string" } },
+      required: ["objective_id"],
+    },
+  },
+};
+
+export const automationCreateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "automation_create",
+    description: "Create an automation that triggers a skill on cron/signal/event.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string" },
+        trigger_type: { type: "string", enum: ["cron", "signal", "event"] },
+        trigger_config: { type: "object" },
+        skill_name: { type: "string" },
+        skill_arguments: { type: "object" },
+        enabled: { type: "boolean" },
+      },
+      required: ["name", "trigger_type", "skill_name"],
+    },
+  },
+};
+
+export const automationListTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "automation_list",
+    description: "List all automations.",
+    parameters: {
+      type: "object",
+      properties: { enabled_only: { type: "boolean" } },
+    },
+  },
+};
+
+export const reflectTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "reflect",
+    description: "Analyze performance over past 7 days. Returns skill usage, error rates, suggestions. Auto-persists learnings.",
+    parameters: {
+      type: "object",
+      properties: {
+        focus: { type: "string", enum: ["errors", "usage", "automations", "objectives"] },
       },
     },
   },
@@ -334,15 +493,33 @@ export const publicTools: Record<string, ToolDefinition> = {
 
 /** Admin CMS co-pilot tools */
 export const adminTools: Record<string, ToolDefinition> = {
+  // Content
   run_research: runResearchTool,
   draft_blog_post: draftBlogPostTool,
   draft_all_channels: draftAllChannelsTool,
+  research_topic: researchTopicTool,
+  // Queue
   list_review_queue: listReviewQueueTool,
   approve_task: approveTaskTool,
   get_site_stats: getSiteStatsTool,
-  research_topic: researchTopicTool,
+  // Memory
   save_memory: saveMemoryTool,
   list_memory: listMemoryTool,
+  soul_update: soulUpdateTool,
+  // Self-modification
+  skill_create: skillCreateTool,
+  skill_update: skillUpdateTool,
+  skill_list: skillListTool,
+  skill_disable: skillDisableTool,
+  skill_instruct: skillInstructTool,
+  // Objectives
+  objective_update_progress: objectiveUpdateTool,
+  objective_complete: objectiveCompleteTool,
+  // Automations
+  automation_create: automationCreateTool,
+  automation_list: automationListTool,
+  // Reflection
+  reflect: reflectTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
