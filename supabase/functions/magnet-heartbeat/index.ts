@@ -1,6 +1,6 @@
 // ============================================
 // Magnet Heartbeat — Autonomous Agent Loop
-// Scheduled: reflect → objectives → act → remember
+// Scheduled: reflect → signals → objectives → automations → act → heal → remember
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -13,6 +13,51 @@ const corsHeaders = {
 };
 
 const MAX_ITERATIONS = 8;
+const SELF_HEAL_THRESHOLD = 3; // consecutive failures before auto-disable
+
+// ─── Cron helpers ─────────────────────────────────────────────────────────────
+
+function calculateNextRun(cronExpr: string): string | null {
+  try {
+    const parts = cronExpr.trim().split(/\s+/);
+    if (parts.length < 5) return null;
+
+    const now = new Date();
+    // Simple interval estimation from cron pattern
+    const [min, hour, dayOfMonth, , ] = parts;
+
+    if (min === '*' && hour === '*') {
+      // Every minute — next run = now + 1 min
+      return new Date(now.getTime() + 60_000).toISOString();
+    }
+    if (min.startsWith('*/')) {
+      const interval = parseInt(min.slice(2), 10);
+      return new Date(now.getTime() + interval * 60_000).toISOString();
+    }
+    if (hour.startsWith('*/')) {
+      const interval = parseInt(hour.slice(2), 10);
+      return new Date(now.getTime() + interval * 3600_000).toISOString();
+    }
+    if (hour !== '*' && min !== '*') {
+      // Specific time — next occurrence
+      const targetHour = parseInt(hour, 10);
+      const targetMin = parseInt(min, 10);
+      const next = new Date(now);
+      next.setHours(targetHour, targetMin, 0, 0);
+      if (next <= now) next.setDate(next.getDate() + 1);
+      if (dayOfMonth !== '*') {
+        const targetDay = parseInt(dayOfMonth, 10);
+        next.setDate(targetDay);
+        if (next <= now) next.setMonth(next.getMonth() + 1);
+      }
+      return next.toISOString();
+    }
+    // Default: 12 hours from now
+    return new Date(now.getTime() + 12 * 3600_000).toISOString();
+  } catch {
+    return new Date(Date.now() + 12 * 3600_000).toISOString();
+  }
+}
 
 // ─── Context loaders ──────────────────────────────────────────────────────────
 
@@ -47,16 +92,19 @@ async function loadLinkedAutomations(supabase: any): Promise<string> {
     .from('agent_automations')
     .select('id, name, skill_name, trigger_type, trigger_config, skill_arguments, objective_id, enabled, last_triggered_at, next_run_at, run_count, last_error')
     .eq('enabled', true)
-    .order('objective_id', { ascending: false }); // objective-linked first
+    .order('objective_id', { ascending: false });
   if (!data?.length) return '\nNo enabled automations.';
+  const now = new Date();
   const linked = data.filter((a: any) => a.objective_id);
   const unlinked = data.filter((a: any) => !a.objective_id);
-  let out = '\n\nEnabled automations (objective-linked FIRST — prioritize these):';
+  let out = '\n\nEnabled automations (objective-linked ⭐ FIRST — prioritize these):';
   for (const a of linked) {
-    out += `\n- ⭐ [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id.slice(0, 8)} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
+    const due = a.next_run_at && new Date(a.next_run_at) <= now ? ' ⏰ DUE' : '';
+    out += `\n- ⭐${due} [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id.slice(0, 8)} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
   }
   for (const a of unlinked) {
-    out += `\n- [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
+    const due = a.next_run_at && new Date(a.next_run_at) <= now ? ' ⏰ DUE' : '';
+    out += `\n-${due} [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
   }
   return out;
 }
@@ -73,7 +121,73 @@ async function loadSiteStats(supabase: any): Promise<string> {
   return `\n\nSite stats (7 days):\n- Page views: ${views.count ?? 0}\n- Contact messages: ${messages.count ?? 0}\n- Published posts: ${posts.count ?? 0}\n- Active subscribers: ${subscribers.count ?? 0}`;
 }
 
-// ─── Built-in tool handlers for heartbeat ─────────────────────────────────────
+async function loadPendingSignals(supabase: any): Promise<string> {
+  const { data } = await supabase
+    .from('agent_tasks')
+    .select('id, task_type, input_data, created_at')
+    .eq('task_type', 'signal')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true }).limit(10);
+  if (!data?.length) return '\nNo pending signals.';
+  return '\n\n🚨 Pending signals (act on these NOW):\n' + data.map((t: any) =>
+    `- [${t.id.slice(0, 8)}] ${t.input_data?.title || t.input_data?.event || 'Unknown'} (${t.created_at})`
+  ).join('\n');
+}
+
+// ─── Self-healing: detect and disable failing skills ──────────────────────────
+
+async function runSelfHealing(supabase: any): Promise<string> {
+  // Find skills with 3+ consecutive recent failures
+  const since = new Date();
+  since.setDate(since.getDate() - 3);
+  const { data: recentActivity } = await supabase
+    .from('agent_activity')
+    .select('skill_name, status, created_at')
+    .gte('created_at', since.toISOString())
+    .order('created_at', { ascending: false }).limit(200);
+
+  if (!recentActivity?.length) return '';
+
+  // Group by skill and check for consecutive failures
+  const skillStreaks: Record<string, number> = {};
+  const checked = new Set<string>();
+
+  for (const a of recentActivity) {
+    const name = a.skill_name;
+    if (checked.has(name)) continue;
+    if (a.status === 'failed') {
+      skillStreaks[name] = (skillStreaks[name] || 0) + 1;
+    } else {
+      checked.add(name); // first non-failure breaks the streak
+    }
+  }
+
+  const toDisable = Object.entries(skillStreaks)
+    .filter(([, count]) => count >= SELF_HEAL_THRESHOLD)
+    .map(([name]) => name);
+
+  if (!toDisable.length) return '';
+
+  // Auto-disable these skills
+  for (const skillName of toDisable) {
+    await supabase.from('agent_skills')
+      .update({ enabled: false })
+      .eq('name', skillName);
+    console.log(`[self-heal] Auto-disabled skill: ${skillName} (${skillStreaks[skillName]} consecutive failures)`);
+  }
+
+  // Also disable linked automations
+  for (const skillName of toDisable) {
+    await supabase.from('agent_automations')
+      .update({ enabled: false, last_error: `Auto-disabled: ${SELF_HEAL_THRESHOLD}+ consecutive failures` })
+      .eq('skill_name', skillName)
+      .eq('enabled', true);
+  }
+
+  return `\n\n⚠️ Self-healing: Auto-disabled ${toDisable.length} skills due to repeated failures: ${toDisable.join(', ')}`;
+}
+
+// ─── Built-in tool handlers ──────────────────────────────────────────────────
 
 async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKey: string, fnName: string, args: any): Promise<any> {
   // Memory write
@@ -99,6 +213,19 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return error ? { status: 'error', error: error.message } : { status: 'completed' };
   }
 
+  // Mark signal as processed
+  if (fnName === 'signal_acknowledge') {
+    const { task_id, output } = args;
+    const { error } = await supabase.from('agent_tasks')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        output_data: output || { acknowledged: true },
+      })
+      .eq('id', task_id);
+    return error ? { status: 'error', error: error.message } : { status: 'acknowledged' };
+  }
+
   // Reflect
   if (fnName === 'reflect') {
     const since = new Date();
@@ -117,12 +244,28 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
   }
 
-  // Execute automation — runs the linked skill and updates automation metadata
+  // Execute automation with next_run_at calculation
   if (fnName === 'execute_automation') {
     const { automation_id } = args;
     const { data: auto, error: fetchErr } = await supabase.from('agent_automations')
       .select('*').eq('id', automation_id).maybeSingle();
     if (fetchErr || !auto) return { status: 'error', error: fetchErr?.message || 'Automation not found' };
+
+    // Check if the linked skill requires approval
+    if (auto.skill_name) {
+      const { data: skill } = await supabase.from('agent_skills')
+        .select('requires_approval').eq('name', auto.skill_name).maybeSingle();
+      if (skill?.requires_approval) {
+        // Log as pending_approval instead of executing
+        await supabase.from('agent_activity').insert({
+          agent: 'magnet', skill_name: auto.skill_name,
+          input: { automation_id, arguments: auto.skill_arguments },
+          output: { reason: 'Skill requires admin approval before execution' },
+          status: 'pending_approval',
+        });
+        return { status: 'pending_approval', skill: auto.skill_name, message: 'This skill requires admin approval. Logged for review.' };
+      }
+    }
 
     // Delegate skill execution to agent-execute
     let skillResult: any;
@@ -142,18 +285,27 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
       skillResult = { error: err.message };
     }
 
+    // Calculate next_run_at from cron expression
+    let nextRun: string | null = null;
+    if (auto.trigger_type === 'cron' && auto.trigger_config?.cron) {
+      nextRun = calculateNextRun(auto.trigger_config.cron);
+    }
+
     // Update automation metadata
     const updatePayload: Record<string, any> = {
       last_triggered_at: new Date().toISOString(),
       run_count: (auto.run_count || 0) + 1,
       last_error: skillResult.error || null,
     };
+    if (nextRun) updatePayload.next_run_at = nextRun;
+
     await supabase.from('agent_automations').update(updatePayload).eq('id', automation_id);
 
     return {
       status: skillResult.error ? 'failed' : 'success',
       automation: auto.name,
       skill: auto.skill_name,
+      next_run_at: nextRun,
       result: skillResult,
     };
   }
@@ -180,13 +332,15 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // 1. Gather context in parallel
-    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx] = await Promise.all([
+    // 1. Gather context + run self-healing in parallel
+    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, healingReport] = await Promise.all([
       loadAgentMemory(),
       loadObjectives(supabase),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
       loadLinkedAutomations(supabase),
+      loadPendingSignals(supabase),
+      runSelfHealing(supabase),
     ]);
 
     // 2. Resolve AI provider
@@ -213,7 +367,8 @@ Deno.serve(async (req) => {
       .map((s: any) => s.tool_definition);
 
     const builtInTools = [
-      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked automations.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
+      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval will be logged for review instead of executed.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
+      { type: 'function', function: { name: 'signal_acknowledge', description: 'Mark a pending signal task as processed after taking action.', parameters: { type: 'object', properties: { task_id: { type: 'string', description: 'The signal task UUID' }, output: { type: 'object', description: 'Optional result data' } }, required: ['task_id'] } } },
       { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
       { type: 'function', function: { name: 'objective_update_progress', description: 'Update progress on an objective.', parameters: { type: 'object', properties: { objective_id: { type: 'string' }, progress: { type: 'object' } }, required: ['objective_id', 'progress'] } } },
       { type: 'function', function: { name: 'objective_complete', description: 'Mark objective as completed.', parameters: { type: 'object', properties: { objective_id: { type: 'string' } }, required: ['objective_id'] } } },
@@ -226,31 +381,36 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are Magnet running in AUTONOMOUS HEARTBEAT mode. No human is watching.
 
-Your mission: Review system state, advance objectives, take needed actions.
+Your mission: Review system state, process signals, advance objectives, take needed actions, and self-heal.
 ${memoryPrompt}
+${signalCtx}
 ${objectiveCtx}
 ${automationCtx}
 ${activityCtx}
 ${statsCtx}
+${healingReport}
 
 HEARTBEAT PROTOCOL:
-1. REFLECT — Analyze past 7 days
-2. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
-3. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute their skills first if due or overdue.
-4. ACT — If an objective still needs action beyond automations, use available skills.
-5. REMEMBER — Save any learnings to memory.
-6. SUMMARIZE — Brief heartbeat report.
+1. SIGNALS — Process any pending signals FIRST (new messages, subscribers, published posts). Use appropriate skills to respond, then acknowledge with signal_acknowledge.
+2. REFLECT — Analyze past 7 days.
+3. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
+4. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute DUE (⏰) ones first. The system auto-calculates next_run_at after each execution.
+5. ACT — If an objective still needs action beyond automations, use available skills.
+6. REMEMBER — Save any learnings to memory.
+7. SUMMARIZE — Brief heartbeat report.
 
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations
 - Do NOT send newsletters without approval
-- PRIORITIZE automations linked to active objectives over unlinked ones
+- Skills marked requires_approval will be BLOCKED and logged for admin review
+- PRIORITIZE: signals > objective-linked DUE automations > other automations
+- Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
 - Be efficient: only act when progress is needed`;
 
     // 4. Run agentic loop
     const messages: any[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Heartbeat triggered at ${new Date().toISOString()}. Review objectives and system health.` },
+      { role: 'user', content: `Heartbeat triggered at ${new Date().toISOString()}. Process signals, review objectives, and advance system health.` },
     ];
 
     let finalResponse = '';
