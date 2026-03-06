@@ -1,7 +1,7 @@
 // ============================================
 // AI Agent Module
 // Orchestrates context, tools, and provider calls
-// Separates "agent intelligence" from "API transport"
+// Now supports multi-iteration tool loops (up to 6)
 // ============================================
 
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
@@ -37,6 +37,8 @@ export interface AgentResult {
   artifacts?: Array<{ type: string; title: string; data: unknown }>;
 }
 
+const MAX_TOOL_ITERATIONS = 6;
+
 // ============================================
 // Generic OpenAI-Compatible Provider
 // ============================================
@@ -45,10 +47,10 @@ export async function callOpenAICompatible(params: {
   url: string;
   apiKey: string;
   model: string;
-  messages: Array<{ role: string; content: string }>;
+  messages: Array<{ role: string; content: string; tool_calls?: unknown[]; tool_call_id?: string }>;
   tools?: unknown[];
   toolChoice?: unknown;
-}): Promise<{ choices: Array<{ message: { content?: string; tool_calls?: Array<{ function?: { name?: string; arguments?: string } }> } }> }> {
+}): Promise<{ choices: Array<{ message: { content?: string; tool_calls?: Array<{ id?: string; function?: { name?: string; arguments?: string } }> } }> }> {
   const body: Record<string, unknown> = {
     model: params.model,
     messages: params.messages,
@@ -145,48 +147,240 @@ export const providerEndpoints: Record<string, { url: string; envKey: string; de
 };
 
 // ============================================
-// Memory Tool Execution
+// Built-in Tool Execution (server-side)
 // ============================================
 
-async function executeMemoryTool(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
-  if (toolName === 'save_memory') {
-    const category = toolArgs.category as string;
-    const key = toolArgs.key as string;
-    const content = toolArgs.content as string;
-    const success = await upsertMemory(category, key, content);
-    return success
-      ? `✅ Memory saved: [${category}/${key}] — I'll remember this for future conversations.`
-      : `❌ Failed to save memory. Please try again.`;
-  }
+const BUILT_IN_TOOL_NAMES = [
+  'save_memory', 'list_memory',
+  'soul_update',
+  'skill_create', 'skill_update', 'skill_list', 'skill_disable', 'skill_instruct',
+  'objective_update_progress', 'objective_complete',
+  'automation_create', 'automation_list',
+  'reflect',
+];
 
-  if (toolName === 'list_memory') {
-    const memories = await loadAgentMemory();
-    const filter = toolArgs.category_filter as string;
-    const filtered = filter && filter !== 'all'
-      ? memories.filter(m => m.category === filter)
-      : memories;
+function isBuiltInTool(name: string): boolean {
+  return BUILT_IN_TOOL_NAMES.includes(name);
+}
 
-    if (!filtered.length) return 'No memories stored yet.';
+async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
+  const { createClient } = await import("npm:@supabase/supabase-js@2");
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
 
-    const grouped: Record<string, typeof filtered> = {};
-    for (const m of filtered) {
-      if (!grouped[m.category]) grouped[m.category] = [];
-      grouped[m.category].push(m);
+  switch (toolName) {
+    // --- Memory ---
+    case 'save_memory': {
+      const category = toolArgs.category as string;
+      const key = toolArgs.key as string;
+      const content = toolArgs.content as string;
+      const success = await upsertMemory(category, key, content);
+      return success
+        ? `✅ Memory saved: [${category}/${key}]`
+        : `❌ Failed to save memory.`;
+    }
+    case 'list_memory': {
+      const memories = await loadAgentMemory();
+      const filter = toolArgs.category_filter as string;
+      const filtered = filter && filter !== 'all'
+        ? memories.filter(m => m.category === filter)
+        : memories;
+      if (!filtered.length) return 'No memories stored yet.';
+      const grouped: Record<string, typeof filtered> = {};
+      for (const m of filtered) {
+        if (!grouped[m.category]) grouped[m.category] = [];
+        grouped[m.category].push(m);
+      }
+      const sections = Object.entries(grouped).map(([cat, entries]) => {
+        const items = entries.map(e => `  - **${e.key}**: ${e.content.substring(0, 200)}`).join('\n');
+        return `### ${cat} (${entries.length})\n${items}`;
+      });
+      return `## Agent Memory\n${sections.join('\n\n')}`;
     }
 
-    const sections = Object.entries(grouped).map(([cat, entries]) => {
-      const items = entries.map(e => `  - **${e.key}**: ${e.content.substring(0, 200)}${e.content.length > 200 ? '…' : ''}`).join('\n');
-      return `### ${cat} (${entries.length})\n${items}`;
-    });
+    // --- Soul Update ---
+    case 'soul_update': {
+      const field = toolArgs.field as string;
+      const value = toolArgs.value as string;
+      const success = await upsertMemory('soul', field, value);
+      return success ? `✅ Soul updated: ${field}` : `❌ Failed to update soul.`;
+    }
 
-    return `## Agent Memory\n${sections.join('\n\n')}`;
+    // --- Skill CRUD ---
+    case 'skill_create': {
+      const { data, error } = await supabase.from('agent_skills').insert({
+        name: toolArgs.name,
+        description: toolArgs.description || '',
+        handler: toolArgs.handler || 'edge:ai-chat',
+        category: toolArgs.category || 'automation',
+        scope: toolArgs.scope || 'internal',
+        requires_approval: toolArgs.requires_approval ?? true,
+        enabled: true,
+        tool_definition: toolArgs.tool_definition || {},
+      }).select('id, name').single();
+      if (error) return `❌ Skill create failed: ${error.message}`;
+      return `✅ Skill created: ${data.name} (${data.id})`;
+    }
+    case 'skill_update': {
+      const safeFields = ['description', 'handler', 'category', 'scope', 'requires_approval', 'enabled', 'tool_definition', 'instructions'];
+      const updates: Record<string, unknown> = {};
+      const rawUpdates = toolArgs.updates as Record<string, unknown>;
+      for (const [k, v] of Object.entries(rawUpdates || {})) {
+        if (safeFields.includes(k)) updates[k] = v;
+      }
+      if (!Object.keys(updates).length) return '❌ No valid fields to update';
+      const { data, error } = await supabase.from('agent_skills')
+        .update(updates).eq('name', toolArgs.skill_name).select('id, name').single();
+      if (error) return `❌ Skill update failed: ${error.message}`;
+      return `✅ Skill updated: ${data.name}`;
+    }
+    case 'skill_list': {
+      let q = supabase.from('agent_skills').select('name, description, category, scope, enabled, requires_approval');
+      if (!(toolArgs.include_disabled)) q = q.eq('enabled', true);
+      if (toolArgs.category) q = q.eq('category', toolArgs.category as string);
+      const { data } = await q.order('category').order('name');
+      return JSON.stringify({ skills: data || [], count: data?.length || 0 });
+    }
+    case 'skill_disable': {
+      const { error } = await supabase.from('agent_skills')
+        .update({ enabled: false }).eq('name', toolArgs.skill_name);
+      if (error) return `❌ Failed: ${error.message}`;
+      return `✅ Skill disabled: ${toolArgs.skill_name}`;
+    }
+    case 'skill_instruct': {
+      const { data, error } = await supabase.from('agent_skills')
+        .update({ instructions: toolArgs.instructions }).eq('name', toolArgs.skill_name as string)
+        .select('id, name').single();
+      if (error) return `❌ Failed: ${error.message}`;
+      return `✅ Instructions updated for: ${data.name}`;
+    }
+
+    // --- Objectives ---
+    case 'objective_update_progress': {
+      const { error } = await supabase.from('agent_objectives')
+        .update({ progress: toolArgs.progress }).eq('id', toolArgs.objective_id);
+      if (error) return `❌ Failed: ${error.message}`;
+      return `✅ Objective progress updated`;
+    }
+    case 'objective_complete': {
+      const { error } = await supabase.from('agent_objectives')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', toolArgs.objective_id);
+      if (error) return `❌ Failed: ${error.message}`;
+      return `✅ Objective completed`;
+    }
+
+    // --- Automations ---
+    case 'automation_create': {
+      const { data: skillRef } = await supabase.from('agent_skills')
+        .select('id').eq('name', toolArgs.skill_name).eq('enabled', true).maybeSingle();
+      const { data, error } = await supabase.from('agent_automations').insert({
+        name: toolArgs.name,
+        description: toolArgs.description || null,
+        trigger_type: toolArgs.trigger_type || 'cron',
+        trigger_config: toolArgs.trigger_config || {},
+        skill_id: skillRef?.id || null,
+        skill_name: toolArgs.skill_name,
+        skill_arguments: toolArgs.skill_arguments || {},
+        enabled: toolArgs.enabled ?? false,
+      }).select('id, name, trigger_type, enabled').single();
+      if (error) return `❌ Failed: ${error.message}`;
+      return `✅ Automation created: ${data.name} (${data.trigger_type}, enabled: ${data.enabled})`;
+    }
+    case 'automation_list': {
+      let q = supabase.from('agent_automations').select('id, name, description, trigger_type, skill_name, enabled, run_count, last_triggered_at');
+      if (toolArgs.enabled_only) q = q.eq('enabled', true);
+      const { data } = await q.order('created_at', { ascending: false });
+      return JSON.stringify({ automations: data || [], count: data?.length || 0 });
+    }
+
+    // --- Reflect ---
+    case 'reflect': {
+      const since = new Date();
+      since.setDate(since.getDate() - 7);
+      const { data: activity } = await supabase.from('agent_activity')
+        .select('skill_name, status, duration_ms, error_message, created_at')
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: false }).limit(100);
+
+      const stats: Record<string, { count: number; errors: number; last_error?: string }> = {};
+      for (const a of (activity || [])) {
+        const n = a.skill_name || 'unknown';
+        if (!stats[n]) stats[n] = { count: 0, errors: 0 };
+        stats[n].count++;
+        if (a.status === 'failed') {
+          stats[n].errors++;
+          stats[n].last_error = a.error_message;
+        }
+      }
+
+      const { data: objectives } = await supabase.from('agent_objectives')
+        .select('goal, status, progress');
+      const { data: automations } = await supabase.from('agent_automations')
+        .select('name, trigger_type, skill_name, enabled, run_count');
+      const { data: skills } = await supabase.from('agent_skills')
+        .select('name, category, enabled').order('category');
+
+      // Auto-persist learnings
+      const learnings: string[] = [];
+      for (const [name, s] of Object.entries(stats)) {
+        if (s.errors > 2 && s.last_error) {
+          learnings.push(`Skill "${name}" fails frequently: ${s.last_error}`);
+        }
+      }
+      if (learnings.length > 0) {
+        await upsertMemory('lesson', `reflect_${new Date().toISOString().slice(0, 10)}`,
+          JSON.stringify({ learnings, generated_at: new Date().toISOString() }));
+      }
+
+      return JSON.stringify({
+        period: '7 days',
+        total_actions: (activity || []).length,
+        skill_usage: stats,
+        registered_skills: skills?.length || 0,
+        active_automations: automations?.filter((a: any) => a.enabled).length || 0,
+        objectives: objectives || [],
+        auto_persisted_learnings: learnings.length,
+      });
+    }
+
+    default:
+      return `Unknown built-in tool: ${toolName}`;
   }
-
-  return '';
 }
 
 // ============================================
-// Main Agent Runner
+// Skill Execution (delegate to agent-execute)
+// ============================================
+
+async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        skill_name: toolName,
+        arguments: toolArgs,
+        agent_type: 'magnet',
+      }),
+    });
+    const result = await response.json();
+    return JSON.stringify(result);
+  } catch (e) {
+    return JSON.stringify({ error: `Skill execution failed: ${(e as Error).message}` });
+  }
+}
+
+// ============================================
+// Provider Resolution
 // ============================================
 
 export function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
@@ -216,13 +410,17 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
   };
 }
 
-/** Run the Magnet agent: loads context, memory, builds prompt, calls provider, handles tools */
+// ============================================
+// Main Agent Runner (multi-iteration)
+// ============================================
+
+/** Run the Magnet agent with multi-iteration tool loop */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public' } = request;
 
   console.log(`[Agent] Provider: ${config.provider}, Model: ${config.model || 'default'}, Mode: ${mode}`);
 
-  // --- n8n: delegate entirely to external agent ---
+  // --- n8n: delegate entirely ---
   if (config.provider === 'n8n') {
     if (!config.webhookUrl) throw new Error("n8n webhook URL is required");
     const fullPrompt = buildDynamicPrompt(systemPrompt, siteContext);
@@ -236,71 +434,138 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     return { output };
   }
 
-  // --- All OpenAI-compatible providers: full tool support ---
+  // --- All OpenAI-compatible providers ---
   const { url, apiKey, model } = resolveProvider(config);
 
-  // Load resume context and agent memory in parallel
+  // Load context in parallel
   const [resumeContext, agentMemory] = await Promise.all([
     loadResumeContext(),
     loadAgentMemory(),
   ]);
 
-  // Build full system prompt with mode-aware persona
+  // Build system prompt
   let fullPrompt = mode === 'admin'
     ? buildAdminPrompt(systemPrompt, siteContext)
     : buildDynamicPrompt(systemPrompt, siteContext);
 
-  // Inject agent memory (SOUL, facts, learnings)
   if (agentMemory.length) {
     fullPrompt += formatMemoryForPrompt(agentMemory);
-    console.log(`[Agent] Injected ${agentMemory.length} memory entries into prompt`);
+    console.log(`[Agent] Injected ${agentMemory.length} memory entries`);
   }
 
   if (resumeContext && mode === 'public') {
     fullPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
   }
+
+  // Load skill instructions from DB
+  try {
+    const { createClient } = await import("npm:@supabase/supabase-js@2");
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: skillInstructions } = await supabase
+      .from('agent_skills')
+      .select('name, instructions')
+      .eq('enabled', true)
+      .not('instructions', 'is', null);
+    if (skillInstructions?.length) {
+      fullPrompt += `\n\n## Skill Knowledge\n${skillInstructions.map((s: any) => `### ${s.name}\n${s.instructions}`).join('\n\n')}`;
+    }
+  } catch { /* skill instructions optional */ }
+
   fullPrompt += getToolInstructions(enabledTools, mode);
 
-  // Prepare tools based on mode
-  const tools = getActiveTools(enabledTools, mode);
-  console.log(`[Agent] ${tools.length} tools enabled (${mode}): ${tools.map(t => t.function.name).join(', ')}`);
-
-  // Call provider
-  const data = await callOpenAICompatible({
-    url,
-    apiKey,
-    model,
-    messages: [
-      { role: "system", content: fullPrompt },
-      ...messages,
-    ],
-    tools: tools.length > 0 ? tools : undefined,
-  });
-
-  const choice = data.choices?.[0];
-
-  // Handle tool calls
-  if (choice?.message?.tool_calls?.length) {
-    const toolCall = choice.message.tool_calls[0];
-    const toolName = toolCall.function?.name || '';
-    console.log(`[Agent] Tool called: ${toolName}`);
-
-    // Handle memory tools server-side (execute and return result)
-    if (toolName === 'save_memory' || toolName === 'list_memory') {
-      try {
-        const toolArgs = JSON.parse(toolCall.function!.arguments || '{}');
-        const result = await executeMemoryTool(toolName, toolArgs);
-        // Return the text response + memory result combined
-        const textPart = choice.message.content || '';
-        return { output: textPart ? `${textPart}\n\n${result}` : result };
-      } catch (e) {
-        console.error(`[Agent] Memory tool error:`, e);
-        return { output: choice.message.content || 'Memory operation failed.' };
+  // Load objectives for admin mode
+  if (mode === 'admin') {
+    try {
+      const { createClient } = await import("npm:@supabase/supabase-js@2");
+      const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: objectives } = await supabase
+        .from('agent_objectives')
+        .select('id, goal, status, progress, success_criteria')
+        .eq('status', 'active').limit(10);
+      if (objectives?.length) {
+        fullPrompt += `\n\n## Active Objectives\n${objectives.map((o: any) =>
+          `- [${o.id.slice(0, 8)}] "${o.goal}" | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`
+        ).join('\n')}`;
       }
-    }
-
-    return parseToolCallResponse(toolCall, choice.message.content || "");
+    } catch { /* objectives optional */ }
   }
 
-  return { output: choice?.message?.content || "No response from AI." };
+  const tools = getActiveTools(enabledTools, mode);
+  console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
+
+  // Multi-iteration tool loop
+  const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
+    { role: "system", content: fullPrompt },
+    ...messages,
+  ];
+
+  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
+
+  for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+    const data = await callOpenAICompatible({
+      url,
+      apiKey,
+      model,
+      messages: conversationMessages,
+      tools: tools.length > 0 ? tools : undefined,
+    });
+
+    const choice = data.choices?.[0];
+    if (!choice) return { output: "No response from AI." };
+
+    const msg = choice.message;
+
+    // No tool calls → final response
+    if (!msg.tool_calls?.length) {
+      return { output: msg.content || "No response from AI.", artifacts: lastArtifacts };
+    }
+
+    // Add assistant message with tool_calls to conversation
+    conversationMessages.push(msg as any);
+
+    // Execute each tool call
+    for (const toolCall of msg.tool_calls) {
+      const toolName = toolCall.function?.name || '';
+      console.log(`[Agent] Iteration ${iteration + 1}: Tool ${toolName}`);
+
+      let result: string;
+      try {
+        const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
+
+        if (isBuiltInTool(toolName)) {
+          result = await executeBuiltInTool(toolName, toolArgs);
+        } else {
+          // Check if this is an artifact-producing tool (public visitor tools)
+          const parsed = parseToolCallResponse(toolCall, msg.content || '');
+          if (parsed.artifacts?.length) {
+            lastArtifacts = parsed.artifacts;
+            result = JSON.stringify(toolArgs);
+          } else {
+            // Try executing as a registered skill
+            result = await executeSkillViaEdge(toolName, toolArgs);
+          }
+        }
+      } catch (e) {
+        result = JSON.stringify({ error: (e as Error).message });
+      }
+
+      // Add tool result to conversation
+      conversationMessages.push({
+        role: "tool",
+        content: result,
+        tool_call_id: toolCall.id || `call_${iteration}_${toolName}`,
+      });
+    }
+  }
+
+  // If we exhausted iterations, get a final response without tools
+  const finalData = await callOpenAICompatible({
+    url, apiKey, model,
+    messages: conversationMessages,
+  });
+
+  return {
+    output: finalData.choices?.[0]?.message?.content || "I completed several actions. Check the activity log for details.",
+    artifacts: lastArtifacts,
+  };
 }
