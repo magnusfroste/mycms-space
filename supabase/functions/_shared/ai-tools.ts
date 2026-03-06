@@ -530,33 +530,55 @@ export const allTools: Record<string, ToolDefinition> = {
 
 /** Tool instructions for the system prompt */
 export const toolDescriptions: Record<string, string> = {
-  generate_tailored_cv: "**generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.",
-  generate_portfolio: "**generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.",
-  project_deep_dive: "**project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says 'tell me more about X'.",
-  check_availability: "**check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.",
-  research_topic: "**research_topic** — When a user asks to research a topic, explore trends, or investigate something. Provides structured findings and blog post suggestions.",
-  draft_blog_post: "**draft_blog_post** — When a user asks to write or create a blog post on a topic. Generates a full draft with SEO metadata.",
-  run_research: "**run_research** — Research a topic using web sources and return structured findings.",
-  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X) from a single topic.",
-  list_review_queue: "**list_review_queue** — Show tasks pending review in the autopilot queue.",
+  generate_tailored_cv: "**generate_tailored_cv** — Analyze job fit, generate tailored CV and cover letter.",
+  generate_portfolio: "**generate_portfolio** — Create a curated portfolio filtered by theme/technology.",
+  project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
+  check_availability: "**check_availability** — Check availability for work/consulting.",
+  research_topic: "**research_topic** — Research a topic with structured findings.",
+  draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
+  run_research: "**run_research** — Research a topic using web sources.",
+  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X).",
+  list_review_queue: "**list_review_queue** — Show pending tasks in the review queue.",
   approve_task: "**approve_task** — Approve and publish a pending task.",
-  get_site_stats: "**get_site_stats** — Get recent site analytics and traffic summary.",
-  save_memory: "**save_memory** — Persist a fact, learning, or insight to long-term memory. Use after discovering patterns, completing research, or learning from mistakes.",
-  list_memory: "**list_memory** — Review all stored memories, learnings, and identity entries.",
+  get_site_stats: "**get_site_stats** — Get site analytics summary.",
+  save_memory: "**save_memory** — Persist a fact/learning to long-term memory.",
+  list_memory: "**list_memory** — Review stored memories and learnings.",
+  soul_update: "**soul_update** — Update your identity/personality traits.",
+  skill_create: "**skill_create** — Create a new skill with handler routing.",
+  skill_update: "**skill_update** — Update an existing skill's configuration.",
+  skill_list: "**skill_list** — List all registered skills.",
+  skill_disable: "**skill_disable** — Disable a skill by name.",
+  skill_instruct: "**skill_instruct** — Add rich knowledge/instructions to a skill.",
+  objective_update_progress: "**objective_update_progress** — Update progress on an objective.",
+  objective_complete: "**objective_complete** — Mark an objective as completed.",
+  automation_create: "**automation_create** — Create an automation (cron/signal/event trigger).",
+  automation_list: "**automation_list** — List all automations.",
+  reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
 };
+
+// Self-modification tools that should always be available in admin mode
+const ALWAYS_ON_ADMIN_TOOLS = [
+  'save_memory', 'list_memory', 'soul_update',
+  'skill_create', 'skill_update', 'skill_list', 'skill_disable', 'skill_instruct',
+  'objective_update_progress', 'objective_complete',
+  'automation_create', 'automation_list',
+  'reflect',
+];
 
 /** Get filtered tools based on enabled tool IDs and mode */
 export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
   const toolPool = mode === 'admin' ? adminTools : publicTools;
-  // In admin mode, always include memory tools regardless of enabledTools filter
   if (!enabledTools?.length) return Object.values(toolPool);
   const filtered = enabledTools
     .filter(id => toolPool[id])
     .map(id => toolPool[id]);
-  // Always add memory tools for admin
+  // Always include self-modification tools in admin mode
   if (mode === 'admin') {
-    if (!filtered.find(t => t.function.name === 'save_memory')) filtered.push(saveMemoryTool);
-    if (!filtered.find(t => t.function.name === 'list_memory')) filtered.push(listMemoryTool);
+    for (const toolName of ALWAYS_ON_ADMIN_TOOLS) {
+      if (!filtered.find(t => t.function.name === toolName) && adminTools[toolName]) {
+        filtered.push(adminTools[toolName]);
+      }
+    }
   }
   return filtered;
 }
