@@ -59,6 +59,7 @@ export interface AgentAutomation {
   skill_id: string | null;
   skill_name: string;
   skill_arguments: Record<string, unknown>;
+  objective_id: string | null;
   enabled: boolean;
   last_triggered_at: string | null;
   next_run_at: string | null;
