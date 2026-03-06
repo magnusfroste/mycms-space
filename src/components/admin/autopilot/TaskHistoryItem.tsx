@@ -195,122 +195,42 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
 
   return null;
 }
-// Scout source discovery preview
-function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
-  const queryClient = useQueryClient();
+// Scout source discovery preview (read-only)
+function ScoutPreview({ task }: { task: AgentTask }) {
   const o = task.output_data || {};
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
   const watchList = (o.watch_list as string[]) || [];
-  const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
-  const sourceUrls = sources.map(s => s.url);
-
-  const saveDefaultsMutation = useMutation({
-    mutationFn: async () => {
-      // Fetch current autopilot config
-      const { data: existing } = await supabase
-        .from('modules')
-        .select('id, module_config')
-        .eq('module_type', 'autopilot')
-        .single();
-
-      const currentConfig = (existing?.module_config as Record<string, unknown>) || {};
-      const updatedConfig = {
-        ...currentConfig,
-        default_topic: topic || currentConfig.default_topic,
-        default_sources: sourceUrls,
-      };
-
-      if (existing?.id) {
-        const { error } = await supabase.from('modules').update({ module_config: updatedConfig as any }).eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('modules').insert([{ module_type: 'autopilot', module_config: updatedConfig as any, enabled: true }]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autopilot-config'] });
-      toast.success('Saved as defaults', { description: `${sourceUrls.length} sources set as default for scheduled research` });
-    },
-    onError: (e) => toast.error('Failed to save defaults', { description: e.message }),
-  });
 
   return (
     <div className="space-y-3 text-sm">
-      {/* Sources list */}
       {sources.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
-            <div className="flex items-center gap-1.5">
-              {onRunAction && topic && (
-                <>
-                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onRunAction('research', topic, sourceUrls)}>
-                    <Search className="h-3 w-3 mr-1" />
-                    Research
-                  </Button>
-                  <Button size="sm" className="text-xs h-7" onClick={() => onRunAction('blog_draft', topic, sourceUrls)}>
-                    <PenSquare className="h-3 w-3 mr-1" />
-                    Draft Blog
-                  </Button>
-                </>
-              )}
-              {onUseSources && (
-                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => onUseSources(sourceUrls)}>
-                  <Copy className="h-3 w-3 mr-1" />
-                  Copy URLs
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-xs h-7"
-                onClick={() => saveDefaultsMutation.mutate()}
-                disabled={saveDefaultsMutation.isPending}
-              >
-                {saveDefaultsMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <BookmarkPlus className="h-3 w-3 mr-1" />}
-                Save as Defaults
-              </Button>
-            </div>
-          </div>
+          <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
           <div className="space-y-1.5">
             {sources.map((source, i) => (
               <div key={i} className="flex items-start gap-2 p-2 rounded border bg-background">
                 <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{source.score}/10</Badge>
                 <div className="min-w-0 flex-1">
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium hover:underline flex items-center gap-1"
-                  >
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium hover:underline flex items-center gap-1">
                     {source.title}
                     <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                   </a>
-                  {source.rationale && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{source.rationale}</p>
-                  )}
+                  {source.rationale && <p className="text-[11px] text-muted-foreground mt-0.5">{source.rationale}</p>}
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* Watch list */}
       {watchList.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs font-medium">Watch List</p>
           <div className="flex flex-wrap gap-1">
-            {watchList.map((domain, i) => (
-              <Badge key={i} variant="secondary" className="text-xs">{domain}</Badge>
-            ))}
+            {watchList.map((domain, i) => <Badge key={i} variant="secondary" className="text-xs">{domain}</Badge>)}
           </div>
         </div>
       )}
-
-      {/* Synthesis */}
       {synthesis && (
         <div className="border-t pt-2">
           <p className="text-xs font-medium mb-1">Synthesis</p>
