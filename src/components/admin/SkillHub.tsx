@@ -50,6 +50,14 @@ export default function SkillHub() {
       <Tabs defaultValue="skills">
         <TabsList>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="approvals" className="gap-1.5">
+            Approvals
+            {pendingCount > 0 && (
+              <span className="inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-medium min-w-[18px] h-[18px] px-1">
+                {pendingCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
