@@ -52,10 +52,10 @@ export function useUpsertSkill() {
       };
 
       if (skill.id) {
-        const { error } = await supabase.from('agent_skills').update(payload).eq('id', skill.id);
+        const { error } = await supabase.from('agent_skills').update(payload as any).eq('id', skill.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('agent_skills').insert(payload);
+        const { error } = await supabase.from('agent_skills').insert(payload as any);
         if (error) throw error;
       }
     },

@@ -28,10 +28,10 @@ export function useUpsertObjective() {
         status: obj.status ?? 'active',
       };
       if (obj.id) {
-        const { error } = await supabase.from('agent_objectives').update(payload).eq('id', obj.id);
+        const { error } = await supabase.from('agent_objectives').update(payload as any).eq('id', obj.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('agent_objectives').insert(payload);
+        const { error } = await supabase.from('agent_objectives').insert(payload as any);
         if (error) throw error;
       }
     },

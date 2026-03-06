@@ -32,10 +32,10 @@ export function useUpsertAutomation() {
         enabled: auto.enabled ?? true,
       };
       if (auto.id) {
-        const { error } = await supabase.from('agent_automations').update(payload).eq('id', auto.id);
+        const { error } = await supabase.from('agent_automations').update(payload as any).eq('id', auto.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('agent_automations').insert(payload);
+        const { error } = await supabase.from('agent_automations').insert(payload as any);
         if (error) throw error;
       }
     },
