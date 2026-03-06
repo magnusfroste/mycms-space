@@ -244,99 +244,21 @@ function ScoutPreview({ task }: { task: AgentTask }) {
   );
 }
 
-// Editable research preview
-function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSaved: () => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
+// Read-only research preview
+function ResearchPreview({ task }: { task: AgentTask }) {
   const o = task.output_data || {};
   const summary = (o.research_summary as string) || (o.analysis as string) || '';
   const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
 
-  const [editing, setEditing] = useState(false);
-  const [editTopic, setEditTopic] = useState(topic);
-  const [editSummary, setEditSummary] = useState(summary);
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const updatedOutput = {
-        ...task.output_data,
-        topic: editTopic,
-        research_summary: editSummary,
-        // Keep analysis in sync if it existed
-        ...(o.analysis ? { analysis: editSummary } : {}),
-      };
-      const { error } = await supabase
-        .from('agent_tasks')
-        .update({ output_data: updatedOutput as any })
-        .eq('id', task.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setEditing(false);
-      onSaved();
-      toast.success('Research updated');
-    },
-    onError: (e) => toast.error('Save failed', { description: e.message }),
-  });
-
-  if (editing) {
-    return (
-      <div className="space-y-3 text-sm">
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Topic</label>
-          <input
-            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm"
-            value={editTopic}
-            onChange={(e) => setEditTopic(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Research Summary</label>
-          <textarea
-            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm min-h-[200px] resize-y leading-relaxed"
-            value={editSummary}
-            onChange={(e) => setEditSummary(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-            Save
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setEditTopic(topic); setEditSummary(summary); }}>
-            <X className="h-3 w-3 mr-1" />
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-2 text-sm">
-      {(topic || editTopic) && <h4 className="font-medium">{topic}</h4>}
+      {topic && <h4 className="font-medium">{topic}</h4>}
       {summary && (
         <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
           {summary.substring(0, 1500)}
           {summary.length > 1500 && '…'}
         </p>
       )}
-      <div className="flex gap-2 mt-1">
-        <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
-          <PenSquare className="h-3 w-3 mr-1" />
-          Edit Research
-        </Button>
-        {onRunAction && topic && (
-          <>
-            <Button size="sm" variant="outline" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
-              <PenSquare className="h-3 w-3 mr-1" />
-              Draft Blog
-            </Button>
-            <Button size="sm" className="text-xs" onClick={() => onRunAction('multichannel_draft', topic, (o.raw_sources as string[]) || [])}>
-              <Layers className="h-3 w-3 mr-1" />
-              Draft All Channels
-            </Button>
-          </>
-        )}
-      </div>
     </div>
   );
 }
