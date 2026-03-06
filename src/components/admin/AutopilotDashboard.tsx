@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Bot, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { Bot, RefreshCw, ShieldAlert, RotateCcw } from 'lucide-react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
