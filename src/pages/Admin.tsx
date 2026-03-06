@@ -31,6 +31,7 @@ const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'))
 const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
 const AutopilotDashboard = lazy(() => import('@/components/admin/AutopilotDashboard'));
+const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
 
 // Route map: tab key → lazy component
 const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
@@ -55,6 +56,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   profile: ProfileSettings,
   settings: GeneralSettings,
   autopilot: AutopilotDashboard,
+  magnet: MagnetChat,
 };
 
 const AdminLoadingFallback = () => (
@@ -161,7 +163,7 @@ const Admin = () => {
     );
   };
 
-  const isImmersive = activeTab === 'landing' || activeTab === 'pages';
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'magnet';
 
   return (
     <SidebarProvider>
