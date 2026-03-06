@@ -147,6 +147,35 @@ export default function AutopilotDashboard() {
         </div>
       </div>
 
+      {/* Self-healing alerts */}
+      {disabledSkills.length > 0 && (
+        <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle className="text-sm font-semibold">Self-Healing Alert</AlertTitle>
+          <AlertDescription className="mt-1 space-y-2">
+            <p className="text-xs">
+              {disabledSkills.length} skill{disabledSkills.length > 1 ? 's were' : ' was'} auto-disabled due to repeated failures:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {disabledSkills.map((s: any) => (
+                <span key={s.id} className="inline-flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-xs border-destructive/30">{s.name.replace(/_/g, ' ')}</Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs gap-1"
+                    onClick={() => reEnableSkill.mutate(s.name)}
+                    disabled={reEnableSkill.isPending}
+                  >
+                    <RotateCcw className="h-3 w-3" /> Re-enable
+                  </Button>
+                </span>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Workflow Visualizer */}
       <WorkflowVisualizer />
 
