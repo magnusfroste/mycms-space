@@ -42,6 +42,25 @@ async function loadRecentActivity(supabase: any): Promise<string> {
   ).join('\n');
 }
 
+async function loadLinkedAutomations(supabase: any): Promise<string> {
+  const { data } = await supabase
+    .from('agent_automations')
+    .select('id, name, skill_name, trigger_type, trigger_config, skill_arguments, objective_id, enabled, last_triggered_at, next_run_at, run_count, last_error')
+    .eq('enabled', true)
+    .order('objective_id', { ascending: false }); // objective-linked first
+  if (!data?.length) return '\nNo enabled automations.';
+  const linked = data.filter((a: any) => a.objective_id);
+  const unlinked = data.filter((a: any) => !a.objective_id);
+  let out = '\n\nEnabled automations (objective-linked FIRST — prioritize these):';
+  for (const a of linked) {
+    out += `\n- ⭐ [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id.slice(0, 8)} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
+  }
+  for (const a of unlinked) {
+    out += `\n- [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
+  }
+  return out;
+}
+
 async function loadSiteStats(supabase: any): Promise<string> {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
@@ -121,11 +140,12 @@ Deno.serve(async (req) => {
 
   try {
     // 1. Gather context in parallel
-    const [agentMemory, objectiveCtx, activityCtx, statsCtx] = await Promise.all([
+    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx] = await Promise.all([
       loadAgentMemory(),
       loadObjectives(supabase),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
+      loadLinkedAutomations(supabase),
     ]);
 
     // 2. Resolve AI provider
@@ -167,19 +187,22 @@ Deno.serve(async (req) => {
 Your mission: Review system state, advance objectives, take needed actions.
 ${memoryPrompt}
 ${objectiveCtx}
+${automationCtx}
 ${activityCtx}
 ${statsCtx}
 
 HEARTBEAT PROTOCOL:
 1. REFLECT — Analyze past 7 days
 2. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
-3. ACT — If an objective needs action and you have the skill, DO IT.
-4. REMEMBER — Save any learnings to memory.
-5. SUMMARIZE — Brief heartbeat report.
+3. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute their skills first if due or overdue.
+4. ACT — If an objective still needs action beyond automations, use available skills.
+5. REMEMBER — Save any learnings to memory.
+6. SUMMARIZE — Brief heartbeat report.
 
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations
 - Do NOT send newsletters without approval
+- PRIORITIZE automations linked to active objectives over unlinked ones
 - Be efficient: only act when progress is needed`;
 
     // 4. Run agentic loop
