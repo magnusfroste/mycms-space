@@ -1,9 +1,9 @@
 // ============================================
 // AI Context Module
-// Resume loading, site context, prompt building
+// Resume loading, site context, memory, prompt building
 // ============================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 // ============================================
 // Types
@@ -37,6 +37,15 @@ export interface SiteContext {
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
+}
+
+export interface AgentMemoryEntry {
+  id: string;
+  category: string;
+  key: string;
+  content: string;
+  metadata: Record<string, unknown>;
+  updated_at: string;
 }
 
 // ============================================
@@ -105,6 +114,111 @@ const contextSections: ContextSection[] = [
 ];
 
 // ============================================
+// Agent Memory Loader
+// ============================================
+
+function getSupabaseClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+/** Load all agent memory entries */
+export async function loadAgentMemory(): Promise<AgentMemoryEntry[]> {
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('agent_memory')
+      .select('*')
+      .order('category')
+      .order('key');
+
+    if (error) {
+      console.error('[AI Context] Failed to load agent memory:', error);
+      return [];
+    }
+
+    console.log(`[AI Context] Loaded ${data?.length || 0} memory entries`);
+    return (data || []) as AgentMemoryEntry[];
+  } catch (e) {
+    console.error('[AI Context] Memory load error:', e);
+    return [];
+  }
+}
+
+/** Format memory entries into system prompt sections */
+export function formatMemoryForPrompt(memories: AgentMemoryEntry[]): string {
+  if (!memories.length) return '';
+
+  const sections: string[] = [];
+
+  // SOUL entries — identity, tone, values
+  const soulEntries = memories.filter(m => m.category === 'soul');
+  if (soulEntries.length) {
+    sections.push('\n\n## Soul & Identity');
+    for (const entry of soulEntries) {
+      sections.push(`**${entry.key}:** ${entry.content}`);
+    }
+  }
+
+  // Facts — platform knowledge, learned facts
+  const factEntries = memories.filter(m => m.category === 'fact');
+  if (factEntries.length) {
+    sections.push('\n\n## Known Facts');
+    for (const entry of factEntries) {
+      sections.push(`- **${entry.key}:** ${entry.content}`);
+    }
+  }
+
+  // Learnings — self-improvement insights
+  const lessonEntries = memories.filter(m => m.category === 'lesson');
+  if (lessonEntries.length) {
+    sections.push('\n\n## Learnings');
+    for (const entry of lessonEntries) {
+      sections.push(`- ${entry.key}: ${entry.content}`);
+    }
+  }
+
+  // Skill instructions — rich knowledge per tool
+  const skillEntries = memories.filter(m => m.category === 'skill_instruction');
+  if (skillEntries.length) {
+    sections.push('\n\n## Skill Knowledge');
+    for (const entry of skillEntries) {
+      sections.push(`### ${entry.key}\n${entry.content}`);
+    }
+  }
+
+  return sections.join('\n');
+}
+
+/** Save or update a memory entry */
+export async function upsertMemory(category: string, key: string, content: string, metadata?: Record<string, unknown>): Promise<boolean> {
+  try {
+    const supabase = getSupabaseClient();
+    if (!supabase) return false;
+
+    const { error } = await supabase
+      .from('agent_memory')
+      .upsert(
+        { category, key, content, metadata: metadata || {}, updated_at: new Date().toISOString() },
+        { onConflict: 'category,key' }
+      );
+
+    if (error) {
+      console.error('[AI Context] Failed to save memory:', error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[AI Context] Memory save error:', e);
+    return false;
+  }
+}
+
+// ============================================
 // Prompt Builder
 // ============================================
 
@@ -145,18 +259,19 @@ You are Magnet in CMS co-pilot mode — Magnus's autonomous content management a
 - Use a concise, action-oriented tone — this is a work session
 - Present review items clearly with approve/edit/reject options
 - Keep responses short and actionable
+- When you learn something new or discover an insight, use save_memory to persist it
 
 # Capabilities
 You can research topics, draft blog posts, create multichannel content (blog + LinkedIn + X), 
-check the review queue, approve pending tasks, and show site analytics.
+check the review queue, approve pending tasks, show site analytics, and save/update your own memory.
 
 # Workflow
 1. If no specific request: check the review queue first and report status
 2. After research: suggest drafting content
 3. After drafting: suggest reviewing and publishing
-4. Always confirm before publishing`;
+4. Always confirm before publishing
+5. After discovering insights or patterns, save them as learnings`;
 
-  // Add site context if available
   const contextPrompt = buildDynamicPrompt(adminPersona, siteContext);
   return contextPrompt;
 }
@@ -168,11 +283,8 @@ check the review queue, approve pending tasks, and show site analytics.
 /** Load resume/profile context from page blocks in the database */
 export async function loadResumeContext(): Promise<string | null> {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !supabaseKey) return null;
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
 
     const { data: blocks, error } = await supabase
       .from("page_blocks")
@@ -193,7 +305,6 @@ export async function loadResumeContext(): Promise<string | null> {
 
       const pageParts: string[] = [];
 
-      // Extract common text fields
       if (config.name) pageParts.push(`Name: ${config.name}`);
       if (config.tagline) pageParts.push(`Tagline: ${config.tagline}`);
       if (config.intro_text) pageParts.push(`About: ${config.intro_text}`);
@@ -201,28 +312,24 @@ export async function loadResumeContext(): Promise<string | null> {
       if (config.title && typeof config.title === 'string') pageParts.push(`${config.title}`);
       if (config.content && typeof config.content === 'string') pageParts.push(`${config.content}`);
 
-      // Extract skills
       if (Array.isArray(config.skills)) {
         const skills = config.skills as Array<{ name?: string; level?: number; category?: string }>;
         const skillTexts = skills.map(s => `${s.name || ''} (${s.level || 0}%, ${s.category || ''})`);
         if (skillTexts.length) pageParts.push(`Skills: ${skillTexts.join(', ')}`);
       }
 
-      // Extract values
       if (Array.isArray(config.values)) {
         const vals = config.values as Array<{ title?: string; description?: string }>;
         const valTexts = vals.map(v => `${v.title}: ${v.description}`);
         if (valTexts.length) pageParts.push(`Values: ${valTexts.join('; ')}`);
       }
 
-      // Extract expertise/services
       if (Array.isArray(config.items)) {
         const items = config.items as Array<{ title?: string; description?: string }>;
         const itemTexts = items.filter(i => i.title).map(i => `${i.title}: ${i.description || ''}`);
         if (itemTexts.length) pageParts.push(`${block.block_type}: ${itemTexts.join('; ')}`);
       }
 
-      // Extract projects
       if (Array.isArray(config.projects)) {
         const projects = config.projects as Array<{
           title?: string; description?: string;
@@ -237,7 +344,6 @@ export async function loadResumeContext(): Promise<string | null> {
         }
       }
 
-      // Extract features
       if (Array.isArray(config.features)) {
         const features = config.features as Array<{ text?: string }>;
         const featureTexts = features.map(f => f.text).filter(Boolean);
