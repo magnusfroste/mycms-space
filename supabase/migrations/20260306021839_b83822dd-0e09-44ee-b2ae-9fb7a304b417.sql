@@ -1,0 +1,1 @@
+ALTER TABLE public.agent_automations ADD COLUMN objective_id uuid REFERENCES public.agent_objectives(id) ON DELETE SET NULL;

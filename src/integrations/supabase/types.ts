@@ -74,6 +74,7 @@ export type Database = {
           last_triggered_at: string | null
           name: string
           next_run_at: string | null
+          objective_id: string | null
           run_count: number
           skill_arguments: Json | null
           skill_id: string | null
@@ -91,6 +92,7 @@ export type Database = {
           last_triggered_at?: string | null
           name: string
           next_run_at?: string | null
+          objective_id?: string | null
           run_count?: number
           skill_arguments?: Json | null
           skill_id?: string | null
@@ -108,6 +110,7 @@ export type Database = {
           last_triggered_at?: string | null
           name?: string
           next_run_at?: string | null
+          objective_id?: string | null
           run_count?: number
           skill_arguments?: Json | null
           skill_id?: string | null
@@ -117,6 +120,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agent_automations_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "agent_objectives"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agent_automations_skill_id_fkey"
             columns: ["skill_id"]
