@@ -140,11 +140,12 @@ Deno.serve(async (req) => {
 
   try {
     // 1. Gather context in parallel
-    const [agentMemory, objectiveCtx, activityCtx, statsCtx] = await Promise.all([
+    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx] = await Promise.all([
       loadAgentMemory(),
       loadObjectives(supabase),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
+      loadLinkedAutomations(supabase),
     ]);
 
     // 2. Resolve AI provider
