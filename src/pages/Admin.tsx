@@ -58,6 +58,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   settings: GeneralSettings,
   autopilot: AutopilotDashboard,
   magnet: MagnetChat,
+  'skill-hub': SkillHub,
 };
 
 const AdminLoadingFallback = () => (
