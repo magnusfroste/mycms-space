@@ -10,7 +10,8 @@ import { ActivityTable } from '@/components/admin/skills/ActivityTable';
 import { ObjectivesPanel } from '@/components/admin/skills/ObjectivesPanel';
 import { AutomationsPanel } from '@/components/admin/skills/AutomationsPanel';
 import { AutomationHealthPanel } from '@/components/admin/skills/AutomationHealthPanel';
-import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill } from '@/hooks/useSkillHub';
+import { ApprovalsPanel } from '@/components/admin/skills/ApprovalsPanel';
+import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity } from '@/hooks/useSkillHub';
 import type { AgentSkill } from '@/types/agent';
 
 export default function SkillHub() {
@@ -18,6 +19,8 @@ export default function SkillHub() {
   const toggle = useToggleSkill();
   const upsert = useUpsertSkill();
   const remove = useDeleteSkill();
+  const { data: pendingActivities = [] } = useActivity({ status: 'pending_approval' });
+  const pendingCount = pendingActivities.length;
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<AgentSkill | null>(null);
@@ -47,6 +50,14 @@ export default function SkillHub() {
       <Tabs defaultValue="skills">
         <TabsList>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="approvals" className="gap-1.5">
+            Approvals
+            {pendingCount > 0 && (
+              <span className="inline-flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-medium min-w-[18px] h-[18px] px-1">
+                {pendingCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
@@ -100,6 +111,7 @@ export default function SkillHub() {
           )}
         </TabsContent>
 
+        <TabsContent value="approvals"><ApprovalsPanel /></TabsContent>
         <TabsContent value="activity"><ActivityTable /></TabsContent>
         <TabsContent value="health"><AutomationHealthPanel /></TabsContent>
         <TabsContent value="objectives"><ObjectivesPanel /></TabsContent>
