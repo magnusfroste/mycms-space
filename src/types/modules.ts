@@ -313,14 +313,28 @@ export const defaultMagnetTools: MagnetToolConfig[] = [
 
 // Admin-mode Magnet tools (CMS co-pilot)
 export const defaultAdminMagnetTools: MagnetToolConfig[] = [
+  // Content
   { id: 'run_research', name: 'Research Topic', description: 'Research a topic and return structured findings', icon: 'Search', enabled: true },
-  { id: 'draft_blog_post', name: 'Draft Blog Post', description: 'Create a blog post draft from a topic or research', icon: 'PenSquare', enabled: true },
+  { id: 'draft_blog_post', name: 'Draft Blog Post', description: 'Create a blog post draft', icon: 'PenSquare', enabled: true },
   { id: 'draft_all_channels', name: 'Draft All Channels', description: 'Generate multichannel content (blog + LinkedIn + X)', icon: 'Layers', enabled: true },
-  { id: 'list_review_queue', name: 'Review Queue', description: 'Show pending tasks awaiting review', icon: 'ClipboardList', enabled: true },
+  // Queue
+  { id: 'list_review_queue', name: 'Review Queue', description: 'Show pending tasks', icon: 'ClipboardList', enabled: true },
   { id: 'approve_task', name: 'Approve Task', description: 'Approve and publish a pending task', icon: 'CheckCircle', enabled: true },
-  { id: 'get_site_stats', name: 'Site Stats', description: 'Get recent analytics summary', icon: 'BarChart', enabled: true },
-  { id: 'save_memory', name: 'Save Memory', description: 'Persist facts, learnings, and identity updates', icon: 'Brain', enabled: true },
-  { id: 'list_memory', name: 'List Memory', description: 'Review stored memories and learnings', icon: 'Database', enabled: true },
+  { id: 'get_site_stats', name: 'Site Stats', description: 'Get analytics summary', icon: 'BarChart', enabled: true },
+  // Memory & Identity
+  { id: 'save_memory', name: 'Save Memory', description: 'Persist facts and learnings', icon: 'Brain', enabled: true },
+  { id: 'list_memory', name: 'List Memory', description: 'Review stored memories', icon: 'Database', enabled: true },
+  { id: 'soul_update', name: 'Update Soul', description: 'Update identity/personality', icon: 'Sparkles', enabled: true },
+  // Self-modification
+  { id: 'skill_create', name: 'Create Skill', description: 'Create a new agent skill', icon: 'Plus', enabled: true },
+  { id: 'skill_update', name: 'Update Skill', description: 'Modify an existing skill', icon: 'Edit', enabled: true },
+  { id: 'skill_list', name: 'List Skills', description: 'List registered skills', icon: 'List', enabled: true },
+  { id: 'skill_instruct', name: 'Instruct Skill', description: 'Add knowledge to a skill', icon: 'BookOpen', enabled: true },
+  // Objectives & Automations
+  { id: 'objective_update_progress', name: 'Update Objective', description: 'Update objective progress', icon: 'Target', enabled: true },
+  { id: 'automation_create', name: 'Create Automation', description: 'Create cron/signal automation', icon: 'Zap', enabled: true },
+  { id: 'automation_list', name: 'List Automations', description: 'List all automations', icon: 'RefreshCw', enabled: true },
+  { id: 'reflect', name: 'Reflect', description: 'Analyze performance and auto-learn', icon: 'Eye', enabled: true },
 ];
 
 // AI Module Config - Updated to use integration system

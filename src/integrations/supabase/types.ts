@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_activity: {
+        Row: {
+          agent: string
+          conversation_id: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          input: Json | null
+          output: Json | null
+          skill_id: string | null
+          skill_name: string
+          status: string
+        }
+        Insert: {
+          agent?: string
+          conversation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          skill_id?: string | null
+          skill_name: string
+          status?: string
+        }
+        Update: {
+          agent?: string
+          conversation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input?: Json | null
+          output?: Json | null
+          skill_id?: string | null
+          skill_name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_activity_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "agent_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_automations: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          last_error: string | null
+          last_triggered_at: string | null
+          name: string
+          next_run_at: string | null
+          run_count: number
+          skill_arguments: Json | null
+          skill_id: string | null
+          skill_name: string
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_triggered_at?: string | null
+          name: string
+          next_run_at?: string | null
+          run_count?: number
+          skill_arguments?: Json | null
+          skill_id?: string | null
+          skill_name: string
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_triggered_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          run_count?: number
+          skill_arguments?: Json | null
+          skill_id?: string | null
+          skill_name?: string
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_automations_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "agent_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_memory: {
         Row: {
           category: string
@@ -40,6 +152,123 @@ export type Database = {
           id?: string
           key?: string
           metadata?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_objective_activities: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          objective_id: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          objective_id: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          objective_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_objective_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "agent_activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_objective_activities_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "agent_objectives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_objectives: {
+        Row: {
+          completed_at: string | null
+          constraints: Json | null
+          created_at: string
+          goal: string
+          id: string
+          progress: Json | null
+          status: string
+          success_criteria: Json | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          constraints?: Json | null
+          created_at?: string
+          goal: string
+          id?: string
+          progress?: Json | null
+          status?: string
+          success_criteria?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          constraints?: Json | null
+          created_at?: string
+          goal?: string
+          id?: string
+          progress?: Json | null
+          status?: string
+          success_criteria?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_skills: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          enabled: boolean
+          handler: string
+          id: string
+          instructions: string | null
+          name: string
+          requires_approval: boolean
+          scope: string
+          tool_definition: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          handler?: string
+          id?: string
+          instructions?: string | null
+          name: string
+          requires_approval?: boolean
+          scope?: string
+          tool_definition?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          handler?: string
+          id?: string
+          instructions?: string | null
+          name?: string
+          requires_approval?: boolean
+          scope?: string
+          tool_definition?: Json | null
           updated_at?: string
         }
         Relationships: []

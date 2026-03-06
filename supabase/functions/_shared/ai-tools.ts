@@ -279,12 +279,12 @@ export const saveMemoryTool: ToolDefinition = {
   type: "function",
   function: {
     name: "save_memory",
-    description: "Save a fact, learning, or insight to persistent memory. Use when you discover something worth remembering, learn from a mistake, or want to update your knowledge. Categories: 'fact' (platform/world knowledge), 'lesson' (learned from experience), 'soul' (identity/personality update), 'skill_instruction' (rich knowledge for a specific skill).",
+    description: "Save a fact, learning, or insight to persistent memory. Categories: 'fact', 'lesson', 'soul', 'skill_instruction'.",
     parameters: {
       type: "object",
       properties: {
-        category: { type: "string", enum: ["fact", "lesson", "soul", "skill_instruction"], description: "Memory category" },
-        key: { type: "string", description: "Unique key for this memory (e.g. 'newsletter-best-practices', 'tone', 'lesson:blog-seo')" },
+        category: { type: "string", enum: ["fact", "lesson", "soul", "skill_instruction"] },
+        key: { type: "string", description: "Unique key (e.g. 'newsletter-best-practices')" },
         content: { type: "string", description: "The knowledge to persist" },
       },
       required: ["category", "key", "content"],
@@ -296,25 +296,184 @@ export const listMemoryTool: ToolDefinition = {
   type: "function",
   function: {
     name: "list_memory",
-    description: "List all entries in agent memory. Use to review what you know, check stored learnings, or inspect your soul/identity.",
+    description: "List all entries in agent memory.",
     parameters: {
       type: "object",
       properties: {
-        category_filter: { type: "string", enum: ["all", "fact", "lesson", "soul", "skill_instruction"], description: "Filter by category" },
+        category_filter: { type: "string", enum: ["all", "fact", "lesson", "soul", "skill_instruction"] },
       },
     },
   },
 };
 
-export const getSiteStatsTool: ToolDefinition = {
+export const soulUpdateTool: ToolDefinition = {
   type: "function",
   function: {
-    name: "get_site_stats",
-    description: "Get recent site analytics summary. Use when admin asks about stats, traffic, or performance.",
+    name: "soul_update",
+    description: "Update your identity/personality. Fields: 'identity', 'tone', 'values', 'philosophy'.",
     parameters: {
       type: "object",
       properties: {
-        period: { type: "string", enum: ["today", "week", "month"], description: "Time period for stats" },
+        field: { type: "string", description: "Soul field to update" },
+        value: { type: "string", description: "New value" },
+      },
+      required: ["field", "value"],
+    },
+  },
+};
+
+export const skillCreateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_create",
+    description: "Create a new skill. Specify name, handler (edge:fn-name, module:name, db:table), and tool_definition.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string" },
+        handler: { type: "string", description: "Handler route: edge:fn, module:name, db:table" },
+        category: { type: "string" },
+        scope: { type: "string", enum: ["internal", "public", "both"] },
+        requires_approval: { type: "boolean" },
+        tool_definition: { type: "object", description: "OpenAI function tool schema" },
+      },
+      required: ["name", "description", "handler"],
+    },
+  },
+};
+
+export const skillUpdateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_update",
+    description: "Update fields on an existing skill.",
+    parameters: {
+      type: "object",
+      properties: {
+        skill_name: { type: "string" },
+        updates: { type: "object", description: "Fields to update" },
+      },
+      required: ["skill_name", "updates"],
+    },
+  },
+};
+
+export const skillListTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_list",
+    description: "List registered skills.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string" },
+        include_disabled: { type: "boolean" },
+      },
+    },
+  },
+};
+
+export const skillDisableTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_disable",
+    description: "Disable a skill by name.",
+    parameters: {
+      type: "object",
+      properties: { skill_name: { type: "string" } },
+      required: ["skill_name"],
+    },
+  },
+};
+
+export const skillInstructTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "skill_instruct",
+    description: "Add rich knowledge/instructions to a skill (like SKILL.md). The AI reads this when executing the skill.",
+    parameters: {
+      type: "object",
+      properties: {
+        skill_name: { type: "string" },
+        instructions: { type: "string", description: "Markdown instructions for the skill" },
+      },
+      required: ["skill_name", "instructions"],
+    },
+  },
+};
+
+export const objectiveUpdateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "objective_update_progress",
+    description: "Update progress on an active objective.",
+    parameters: {
+      type: "object",
+      properties: {
+        objective_id: { type: "string" },
+        progress: { type: "object" },
+      },
+      required: ["objective_id", "progress"],
+    },
+  },
+};
+
+export const objectiveCompleteTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "objective_complete",
+    description: "Mark an objective as completed.",
+    parameters: {
+      type: "object",
+      properties: { objective_id: { type: "string" } },
+      required: ["objective_id"],
+    },
+  },
+};
+
+export const automationCreateTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "automation_create",
+    description: "Create an automation that triggers a skill on cron/signal/event.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string" },
+        trigger_type: { type: "string", enum: ["cron", "signal", "event"] },
+        trigger_config: { type: "object" },
+        skill_name: { type: "string" },
+        skill_arguments: { type: "object" },
+        enabled: { type: "boolean" },
+      },
+      required: ["name", "trigger_type", "skill_name"],
+    },
+  },
+};
+
+export const automationListTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "automation_list",
+    description: "List all automations.",
+    parameters: {
+      type: "object",
+      properties: { enabled_only: { type: "boolean" } },
+    },
+  },
+};
+
+export const reflectTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "reflect",
+    description: "Analyze performance over past 7 days. Returns skill usage, error rates, suggestions. Auto-persists learnings.",
+    parameters: {
+      type: "object",
+      properties: {
+        focus: { type: "string", enum: ["errors", "usage", "automations", "objectives"] },
       },
     },
   },
@@ -334,15 +493,33 @@ export const publicTools: Record<string, ToolDefinition> = {
 
 /** Admin CMS co-pilot tools */
 export const adminTools: Record<string, ToolDefinition> = {
+  // Content
   run_research: runResearchTool,
   draft_blog_post: draftBlogPostTool,
   draft_all_channels: draftAllChannelsTool,
+  research_topic: researchTopicTool,
+  // Queue
   list_review_queue: listReviewQueueTool,
   approve_task: approveTaskTool,
   get_site_stats: getSiteStatsTool,
-  research_topic: researchTopicTool,
+  // Memory
   save_memory: saveMemoryTool,
   list_memory: listMemoryTool,
+  soul_update: soulUpdateTool,
+  // Self-modification
+  skill_create: skillCreateTool,
+  skill_update: skillUpdateTool,
+  skill_list: skillListTool,
+  skill_disable: skillDisableTool,
+  skill_instruct: skillInstructTool,
+  // Objectives
+  objective_update_progress: objectiveUpdateTool,
+  objective_complete: objectiveCompleteTool,
+  // Automations
+  automation_create: automationCreateTool,
+  automation_list: automationListTool,
+  // Reflection
+  reflect: reflectTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
@@ -353,33 +530,55 @@ export const allTools: Record<string, ToolDefinition> = {
 
 /** Tool instructions for the system prompt */
 export const toolDescriptions: Record<string, string> = {
-  generate_tailored_cv: "**generate_tailored_cv** — When a user pastes a job description or asks about job fit, use this to analyze the match, generate a tailored CV, and write a cover letter.",
-  generate_portfolio: "**generate_portfolio** — When a user asks to see relevant work, create a curated portfolio, or wants projects filtered by theme/technology/audience.",
-  project_deep_dive: "**project_deep_dive** — When a user asks for details about a specific project, wants to understand technical decisions, or says 'tell me more about X'.",
-  check_availability: "**check_availability** — When a user asks about availability, hiring, booking, consulting, or scheduling.",
-  research_topic: "**research_topic** — When a user asks to research a topic, explore trends, or investigate something. Provides structured findings and blog post suggestions.",
-  draft_blog_post: "**draft_blog_post** — When a user asks to write or create a blog post on a topic. Generates a full draft with SEO metadata.",
-  run_research: "**run_research** — Research a topic using web sources and return structured findings.",
-  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X) from a single topic.",
-  list_review_queue: "**list_review_queue** — Show tasks pending review in the autopilot queue.",
+  generate_tailored_cv: "**generate_tailored_cv** — Analyze job fit, generate tailored CV and cover letter.",
+  generate_portfolio: "**generate_portfolio** — Create a curated portfolio filtered by theme/technology.",
+  project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
+  check_availability: "**check_availability** — Check availability for work/consulting.",
+  research_topic: "**research_topic** — Research a topic with structured findings.",
+  draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
+  run_research: "**run_research** — Research a topic using web sources.",
+  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X).",
+  list_review_queue: "**list_review_queue** — Show pending tasks in the review queue.",
   approve_task: "**approve_task** — Approve and publish a pending task.",
-  get_site_stats: "**get_site_stats** — Get recent site analytics and traffic summary.",
-  save_memory: "**save_memory** — Persist a fact, learning, or insight to long-term memory. Use after discovering patterns, completing research, or learning from mistakes.",
-  list_memory: "**list_memory** — Review all stored memories, learnings, and identity entries.",
+  get_site_stats: "**get_site_stats** — Get site analytics summary.",
+  save_memory: "**save_memory** — Persist a fact/learning to long-term memory.",
+  list_memory: "**list_memory** — Review stored memories and learnings.",
+  soul_update: "**soul_update** — Update your identity/personality traits.",
+  skill_create: "**skill_create** — Create a new skill with handler routing.",
+  skill_update: "**skill_update** — Update an existing skill's configuration.",
+  skill_list: "**skill_list** — List all registered skills.",
+  skill_disable: "**skill_disable** — Disable a skill by name.",
+  skill_instruct: "**skill_instruct** — Add rich knowledge/instructions to a skill.",
+  objective_update_progress: "**objective_update_progress** — Update progress on an objective.",
+  objective_complete: "**objective_complete** — Mark an objective as completed.",
+  automation_create: "**automation_create** — Create an automation (cron/signal/event trigger).",
+  automation_list: "**automation_list** — List all automations.",
+  reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
 };
+
+// Self-modification tools that should always be available in admin mode
+const ALWAYS_ON_ADMIN_TOOLS = [
+  'save_memory', 'list_memory', 'soul_update',
+  'skill_create', 'skill_update', 'skill_list', 'skill_disable', 'skill_instruct',
+  'objective_update_progress', 'objective_complete',
+  'automation_create', 'automation_list',
+  'reflect',
+];
 
 /** Get filtered tools based on enabled tool IDs and mode */
 export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
   const toolPool = mode === 'admin' ? adminTools : publicTools;
-  // In admin mode, always include memory tools regardless of enabledTools filter
   if (!enabledTools?.length) return Object.values(toolPool);
   const filtered = enabledTools
     .filter(id => toolPool[id])
     .map(id => toolPool[id]);
-  // Always add memory tools for admin
+  // Always include self-modification tools in admin mode
   if (mode === 'admin') {
-    if (!filtered.find(t => t.function.name === 'save_memory')) filtered.push(saveMemoryTool);
-    if (!filtered.find(t => t.function.name === 'list_memory')) filtered.push(listMemoryTool);
+    for (const toolName of ALWAYS_ON_ADMIN_TOOLS) {
+      if (!filtered.find(t => t.function.name === toolName) && adminTools[toolName]) {
+        filtered.push(adminTools[toolName]);
+      }
+    }
   }
   return filtered;
 }
