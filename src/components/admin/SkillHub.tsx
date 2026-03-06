@@ -111,6 +111,7 @@ export default function SkillHub() {
           )}
         </TabsContent>
 
+        <TabsContent value="approvals"><ApprovalsPanel /></TabsContent>
         <TabsContent value="activity"><ActivityTable /></TabsContent>
         <TabsContent value="health"><AutomationHealthPanel /></TabsContent>
         <TabsContent value="objectives"><ObjectivesPanel /></TabsContent>
