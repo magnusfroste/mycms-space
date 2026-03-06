@@ -42,6 +42,25 @@ async function loadRecentActivity(supabase: any): Promise<string> {
   ).join('\n');
 }
 
+async function loadLinkedAutomations(supabase: any): Promise<string> {
+  const { data } = await supabase
+    .from('agent_automations')
+    .select('id, name, skill_name, trigger_type, trigger_config, skill_arguments, objective_id, enabled, last_triggered_at, next_run_at, run_count, last_error')
+    .eq('enabled', true)
+    .order('objective_id', { ascending: false }); // objective-linked first
+  if (!data?.length) return '\nNo enabled automations.';
+  const linked = data.filter((a: any) => a.objective_id);
+  const unlinked = data.filter((a: any) => !a.objective_id);
+  let out = '\n\nEnabled automations (objective-linked FIRST — prioritize these):';
+  for (const a of linked) {
+    out += `\n- ⭐ [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id.slice(0, 8)} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
+  }
+  for (const a of unlinked) {
+    out += `\n- [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
+  }
+  return out;
+}
+
 async function loadSiteStats(supabase: any): Promise<string> {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
