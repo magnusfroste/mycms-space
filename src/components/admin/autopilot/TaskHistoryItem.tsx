@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Save, X, Inbox, Radar, ExternalLink, Copy, BookmarkPlus, Zap, Linkedin, Globe, Twitter, Layers } from 'lucide-react';
+import { Loader2, Clock, CheckCircle, AlertCircle, Eye, Search, PenSquare, Mail, Rocket, ChevronDown, FileEdit, Inbox, Radar, ExternalLink, Copy, Zap, Linkedin, Globe, Twitter } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -195,122 +195,42 @@ function ReadOnlyPreview({ task }: { task: AgentTask }) {
 
   return null;
 }
-// Scout source discovery preview
-function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; onUseSources?: (urls: string[]) => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
-  const queryClient = useQueryClient();
+// Scout source discovery preview (read-only)
+function ScoutPreview({ task }: { task: AgentTask }) {
   const o = task.output_data || {};
   const sources = (o.sources as Array<{ url: string; title: string; score: number; rationale: string }>) || [];
   const synthesis = (o.synthesis as string) || '';
   const watchList = (o.watch_list as string[]) || [];
-  const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
-  const sourceUrls = sources.map(s => s.url);
-
-  const saveDefaultsMutation = useMutation({
-    mutationFn: async () => {
-      // Fetch current autopilot config
-      const { data: existing } = await supabase
-        .from('modules')
-        .select('id, module_config')
-        .eq('module_type', 'autopilot')
-        .single();
-
-      const currentConfig = (existing?.module_config as Record<string, unknown>) || {};
-      const updatedConfig = {
-        ...currentConfig,
-        default_topic: topic || currentConfig.default_topic,
-        default_sources: sourceUrls,
-      };
-
-      if (existing?.id) {
-        const { error } = await supabase.from('modules').update({ module_config: updatedConfig as any }).eq('id', existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('modules').insert([{ module_type: 'autopilot', module_config: updatedConfig as any, enabled: true }]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autopilot-config'] });
-      toast.success('Saved as defaults', { description: `${sourceUrls.length} sources set as default for scheduled research` });
-    },
-    onError: (e) => toast.error('Failed to save defaults', { description: e.message }),
-  });
 
   return (
     <div className="space-y-3 text-sm">
-      {/* Sources list */}
       {sources.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
-            <div className="flex items-center gap-1.5">
-              {onRunAction && topic && (
-                <>
-                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onRunAction('research', topic, sourceUrls)}>
-                    <Search className="h-3 w-3 mr-1" />
-                    Research
-                  </Button>
-                  <Button size="sm" className="text-xs h-7" onClick={() => onRunAction('blog_draft', topic, sourceUrls)}>
-                    <PenSquare className="h-3 w-3 mr-1" />
-                    Draft Blog
-                  </Button>
-                </>
-              )}
-              {onUseSources && (
-                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => onUseSources(sourceUrls)}>
-                  <Copy className="h-3 w-3 mr-1" />
-                  Copy URLs
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-xs h-7"
-                onClick={() => saveDefaultsMutation.mutate()}
-                disabled={saveDefaultsMutation.isPending}
-              >
-                {saveDefaultsMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <BookmarkPlus className="h-3 w-3 mr-1" />}
-                Save as Defaults
-              </Button>
-            </div>
-          </div>
+          <p className="text-xs font-medium">Discovered Sources ({sources.length})</p>
           <div className="space-y-1.5">
             {sources.map((source, i) => (
               <div key={i} className="flex items-start gap-2 p-2 rounded border bg-background">
                 <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{source.score}/10</Badge>
                 <div className="min-w-0 flex-1">
-                  <a
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium hover:underline flex items-center gap-1"
-                  >
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-xs font-medium hover:underline flex items-center gap-1">
                     {source.title}
                     <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                   </a>
-                  {source.rationale && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{source.rationale}</p>
-                  )}
+                  {source.rationale && <p className="text-[11px] text-muted-foreground mt-0.5">{source.rationale}</p>}
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* Watch list */}
       {watchList.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs font-medium">Watch List</p>
           <div className="flex flex-wrap gap-1">
-            {watchList.map((domain, i) => (
-              <Badge key={i} variant="secondary" className="text-xs">{domain}</Badge>
-            ))}
+            {watchList.map((domain, i) => <Badge key={i} variant="secondary" className="text-xs">{domain}</Badge>)}
           </div>
         </div>
       )}
-
-      {/* Synthesis */}
       {synthesis && (
         <div className="border-t pt-2">
           <p className="text-xs font-medium mb-1">Synthesis</p>
@@ -324,99 +244,21 @@ function ScoutPreview({ task, onUseSources, onRunAction }: { task: AgentTask; on
   );
 }
 
-// Editable research preview
-function ResearchPreview({ task, onSaved, onRunAction }: { task: AgentTask; onSaved: () => void; onRunAction?: (action: string, topic: string, sources: string[]) => void }) {
+// Read-only research preview
+function ResearchPreview({ task }: { task: AgentTask }) {
   const o = task.output_data || {};
   const summary = (o.research_summary as string) || (o.analysis as string) || '';
   const topic = (o.topic as string) || (task.input_data?.topic as string) || '';
 
-  const [editing, setEditing] = useState(false);
-  const [editTopic, setEditTopic] = useState(topic);
-  const [editSummary, setEditSummary] = useState(summary);
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const updatedOutput = {
-        ...task.output_data,
-        topic: editTopic,
-        research_summary: editSummary,
-        // Keep analysis in sync if it existed
-        ...(o.analysis ? { analysis: editSummary } : {}),
-      };
-      const { error } = await supabase
-        .from('agent_tasks')
-        .update({ output_data: updatedOutput as any })
-        .eq('id', task.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setEditing(false);
-      onSaved();
-      toast.success('Research updated');
-    },
-    onError: (e) => toast.error('Save failed', { description: e.message }),
-  });
-
-  if (editing) {
-    return (
-      <div className="space-y-3 text-sm">
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Topic</label>
-          <input
-            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm"
-            value={editTopic}
-            onChange={(e) => setEditTopic(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-1 block">Research Summary</label>
-          <textarea
-            className="w-full px-2.5 py-1.5 rounded-md border bg-background text-sm min-h-[200px] resize-y leading-relaxed"
-            value={editSummary}
-            onChange={(e) => setEditSummary(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-            Save
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setEditTopic(topic); setEditSummary(summary); }}>
-            <X className="h-3 w-3 mr-1" />
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-2 text-sm">
-      {(topic || editTopic) && <h4 className="font-medium">{topic}</h4>}
+      {topic && <h4 className="font-medium">{topic}</h4>}
       {summary && (
         <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
           {summary.substring(0, 1500)}
           {summary.length > 1500 && '…'}
         </p>
       )}
-      <div className="flex gap-2 mt-1">
-        <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditing(true)}>
-          <PenSquare className="h-3 w-3 mr-1" />
-          Edit Research
-        </Button>
-        {onRunAction && topic && (
-          <>
-            <Button size="sm" variant="outline" className="text-xs" onClick={() => onRunAction('blog_draft', topic, (o.raw_sources as string[]) || [])}>
-              <PenSquare className="h-3 w-3 mr-1" />
-              Draft Blog
-            </Button>
-            <Button size="sm" className="text-xs" onClick={() => onRunAction('multichannel_draft', topic, (o.raw_sources as string[]) || [])}>
-              <Layers className="h-3 w-3 mr-1" />
-              Draft All Channels
-            </Button>
-          </>
-        )}
-      </div>
     </div>
   );
 }
@@ -428,7 +270,7 @@ const sourceIcons: Record<string, typeof Globe> = {
   web: Globe,
 };
 
-function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (topic: string) => void }) {
+function SignalPreview({ task }: { task: AgentTask }) {
   const i = task.input_data || {};
   const url = (i.url as string) || '';
   const title = (i.title as string) || '';
@@ -450,29 +292,18 @@ function SignalPreview({ task, onUseTopic }: { task: AgentTask; onUseTopic?: (to
         )}
       </div>
       {title && <h4 className="font-medium">{title}</h4>}
-      {note && (
-        <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>
-      )}
+      {note && <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">{note}</p>}
       {content && (
         <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto border rounded p-3 bg-background text-xs">
           {content.substring(0, 3000)}
           {content.length > 3000 && '…'}
         </div>
       )}
-      <div className="flex gap-2">
-        {onUseTopic && (title || url) && (
-          <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => onUseTopic(title || url)}>
-            <Search className="h-3 w-3 mr-1" />
-            Use as topic
-          </Button>
-        )}
-        {content && (
-          <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
-            <Copy className="h-3 w-3 mr-1" />
-            Copy content
-          </Button>
-        )}
-      </div>
+      {content && (
+        <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { navigator.clipboard.writeText(content); toast.success('Content copied'); }}>
+          <Copy className="h-3 w-3 mr-1" /> Copy content
+        </Button>
+      )}
     </div>
   );
 }
@@ -481,12 +312,9 @@ interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
   isPublishing: boolean;
-  onUseSources?: (urls: string[]) => void;
-  onRunAction?: (action: string, topic: string, sources: string[]) => void;
-  onUseTopic?: (topic: string) => void;
 }
 
-export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSources, onRunAction, onUseTopic }: TaskHistoryItemProps) {
+export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskHistoryItemProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -561,11 +389,11 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing, onUseSo
         <div className="px-3 pb-3 pl-10 border-t bg-muted/30">
           <div className="pt-3">
             {task.task_type === 'signal' ? (
-              <SignalPreview task={task} onUseTopic={onUseTopic} />
+              <SignalPreview task={task} />
             ) : task.task_type === 'research' ? (
-              <ResearchPreview task={task} onSaved={() => queryClient.invalidateQueries({ queryKey: ['agent-tasks'] })} onRunAction={onRunAction} />
+              <ResearchPreview task={task} />
             ) : task.task_type === 'scout' ? (
-              <ScoutPreview task={task} onUseSources={onUseSources} onRunAction={onRunAction} />
+              <ScoutPreview task={task} />
             ) : (
               <ReadOnlyPreview task={task} />
             )}

@@ -1,14 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Bot, Search, PenSquare, Mail, Loader2, RefreshCw, Settings2, Save, Radar, Layers } from 'lucide-react';
+import { Bot, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import TaskHistoryItem from './autopilot/TaskHistoryItem';
 import WorkflowVisualizer from './autopilot/WorkflowVisualizer';
 
@@ -23,71 +23,9 @@ type AgentTask = {
   batch_id?: string | null;
 };
 
-interface AutopilotConfig {
-  default_topic: string;
-  default_sources: string[];
-}
-
 export default function AutopilotDashboard() {
   const queryClient = useQueryClient();
-  const [topic, setTopic] = useState('');
-  const [sources, setSources] = useState('');
-  const [selectedChannels, setSelectedChannels] = useState<string[]>(['blog', 'newsletter', 'linkedin', 'x_thread']);
   const [taskFilter, setTaskFilter] = useState<'all' | 'signal' | 'research' | 'blog'>('all');
-
-  // Config state
-  const [configTopic, setConfigTopic] = useState('');
-  const [configSources, setConfigSources] = useState('');
-  const [configDirty, setConfigDirty] = useState(false);
-
-  // Load autopilot config from modules table
-  const { data: configData } = useQuery({
-    queryKey: ['autopilot-config'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('modules')
-        .select('id, module_config, enabled')
-        .eq('module_type', 'autopilot')
-        .single();
-      return data;
-    },
-  });
-
-  useEffect(() => {
-    if (configData?.module_config) {
-      const cfg = configData.module_config as unknown as AutopilotConfig;
-      setConfigTopic(cfg.default_topic || '');
-      setConfigSources((cfg.default_sources || []).join('\n'));
-    }
-  }, [configData]);
-
-  const saveConfig = useMutation({
-    mutationFn: async () => {
-      const config = {
-        default_topic: configTopic.trim(),
-        default_sources: configSources.split('\n').map(s => s.trim()).filter(Boolean),
-      };
-
-      if (configData?.id) {
-        const { error } = await supabase
-          .from('modules')
-          .update({ module_config: config as any })
-          .eq('id', configData.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('modules')
-          .insert([{ module_type: 'autopilot', module_config: config as any, enabled: true }]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['autopilot-config'] });
-      setConfigDirty(false);
-      toast.success('Autopilot config saved');
-    },
-    onError: (e) => toast.error('Failed to save config', { description: e.message }),
-  });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['agent-tasks'],
@@ -126,213 +64,49 @@ export default function AutopilotDashboard() {
     onError: (e) => toast.error('Failed to publish', { description: e.message }),
   });
 
-  const runAction = useMutation({
-    mutationFn: async ({ action, topic, sources, channels }: { action: string; topic?: string; sources?: string[]; channels?: string[] }) => {
-      const { data, error } = await supabase.functions.invoke('agent-autopilot', {
-        body: { action, topic, sources, channels },
-      });
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['agent-tasks'] });
-      const labels: Record<string, string> = {
-        research: 'Research started',
-        blog_draft: 'Blog draft created',
-        newsletter_draft: 'Newsletter draft created',
-        scout: 'Source discovery complete',
-        multichannel_draft: 'Multichannel content created',
-      };
-      toast.success(labels[variables.action] || 'Task completed', {
-        description: data.title || data.subject || data.batchId || data.synthesis?.substring(0, 100) || data.analysis?.substring(0, 100),
-      });
-    },
-    onError: (error) => {
-      toast.error('Autopilot failed', { description: error.message });
-    },
-  });
+  const stats = useMemo(() => [
+    { label: 'Total Tasks', value: tasks.length },
+    { label: 'Needs Review', value: tasks.filter(t => t.status === 'needs_review').length },
+    { label: 'Blog Drafts', value: tasks.filter(t => t.task_type === 'blog_draft').length },
+    { label: 'Research', value: tasks.filter(t => t.task_type === 'research').length },
+  ], [tasks]);
 
-  const handleResearch = () => {
-    if (!topic.trim()) return toast.error('Enter a topic');
-    const sourceList = sources.split('\n').map(s => s.trim()).filter(Boolean);
-    runAction.mutate({ action: 'research', topic: topic.trim(), sources: sourceList });
-  };
-
-  const handleBlogDraft = () => {
-    if (!topic.trim()) return toast.error('Enter a topic');
-    const sourceList = sources.split('\n').map(s => s.trim()).filter(Boolean);
-    runAction.mutate({ action: 'blog_draft', topic: topic.trim(), sources: sourceList });
-  };
-
-  const handleNewsletterDraft = () => {
-    runAction.mutate({ action: 'newsletter_draft' });
-  };
-
-  const handleScout = () => {
-    if (!topic.trim()) return toast.error('Enter a topic');
-    runAction.mutate({ action: 'scout', topic: topic.trim() });
-  };
-
-  const handleMultichannel = () => {
-    if (!topic.trim()) return toast.error('Enter a topic');
-    if (selectedChannels.length === 0) return toast.error('Select at least one channel');
-    const sourceList = sources.split('\n').map(s => s.trim()).filter(Boolean);
-    runAction.mutate({ action: 'multichannel_draft', topic: topic.trim(), sources: sourceList, channels: selectedChannels });
-  };
-
-  const toggleChannel = (ch: string) => {
-    setSelectedChannels(prev => prev.includes(ch) ? prev.filter(c => c !== ch) : [...prev, ch]);
-  };
-
-  const isRunning = runAction.isPending;
+  const pendingSignals = tasks.filter(t => t.task_type === 'signal' && t.status === 'pending').length;
+  const filtered = taskFilter === 'all' ? tasks : tasks.filter(t => t.task_type === taskFilter);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Autopilot</h1>
-        <p className="text-muted-foreground">Autonomous content research and generation</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Autopilot</h1>
+          <p className="text-muted-foreground">Activity log &amp; scheduled workflows</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Bot className="h-4 w-4" />
+          <span>Use the <strong>Magnet</strong> tab to run tasks conversationally</span>
+        </div>
       </div>
 
       {/* Workflow Visualizer */}
       <WorkflowVisualizer />
 
-      {/* Scheduled Defaults Config */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Settings2 className="h-5 w-5" />
-            Scheduled Defaults
-          </CardTitle>
-          <CardDescription>Default topic and sources used by the daily cron job when no specific topic is provided</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Default Research Topic</label>
-            <Input
-              placeholder="e.g. AI agents, agentic web, digital twins trends"
-              value={configTopic}
-              onChange={(e) => { setConfigTopic(e.target.value); setConfigDirty(true); }}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Default Sources</label>
-            <textarea
-              className="w-full px-3 py-2 rounded-md border bg-background text-sm min-h-[80px] resize-y"
-              placeholder="One URL per line&#10;https://news.ycombinator.com&#10;https://arxiv.org/list/cs.AI/recent"
-              value={configSources}
-              onChange={(e) => { setConfigSources(e.target.value); setConfigDirty(true); }}
-            />
-          </div>
-          <Button
-            onClick={() => saveConfig.mutate()}
-            disabled={!configDirty || saveConfig.isPending}
-            size="sm"
-          >
-            {saveConfig.isPending ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Save className="h-4 w-4 mr-1.5" />}
-            Save Defaults
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Action Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Bot className="h-5 w-5" />
-              New Task
-            </CardTitle>
-            <CardDescription>Research a topic, draft a blog post, or curate a newsletter</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Topic, e.g. 'Agentic AI trends 2026'"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={isRunning}
-            />
-            <textarea
-              className="w-full px-3 py-2 rounded-md border bg-background text-sm min-h-[80px] resize-y"
-              placeholder="Sources (one URL per line, optional)&#10;https://news.ycombinator.com&#10;https://arxiv.org/list/cs.AI/recent"
-              value={sources}
-              onChange={(e) => setSources(e.target.value)}
-              disabled={isRunning}
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleResearch} disabled={isRunning || !topic.trim()} variant="outline" size="sm">
-                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Search className="h-4 w-4 mr-1.5" />}
-                Research
-              </Button>
-              <Button onClick={handleBlogDraft} disabled={isRunning || !topic.trim()} size="sm">
-                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <PenSquare className="h-4 w-4 mr-1.5" />}
-                Draft Blog Post
-              </Button>
-              <Button onClick={handleNewsletterDraft} disabled={isRunning} variant="outline" size="sm">
-                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Mail className="h-4 w-4 mr-1.5" />}
-                Draft Newsletter
-              </Button>
-              <Button onClick={handleScout} disabled={isRunning || !topic.trim()} variant="outline" size="sm">
-                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Radar className="h-4 w-4 mr-1.5" />}
-                Scout Sources
-              </Button>
-            </div>
-            {/* Channel Selector for Multichannel */}
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Multichannel</span>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                {[
-                  { id: 'blog', label: 'Blog' },
-                  { id: 'newsletter', label: 'Newsletter' },
-                  { id: 'linkedin', label: 'LinkedIn' },
-                  { id: 'x_thread', label: 'X/Twitter' },
-                ].map(ch => (
-                  <label key={ch.id} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={selectedChannels.includes(ch.id)}
-                      onCheckedChange={() => toggleChannel(ch.id)}
-                      disabled={isRunning}
-                    />
-                    <span className="text-sm">{ch.label}</span>
-                  </label>
-                ))}
-              </div>
-              <Button onClick={handleMultichannel} disabled={isRunning || !topic.trim() || selectedChannels.length === 0} size="sm">
-                {isRunning ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Layers className="h-4 w-4 mr-1.5" />}
-                Create for {selectedChannels.length} Channels
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: 'Total Tasks', value: tasks.length },
-              { label: 'Needs Review', value: tasks.filter(t => t.status === 'needs_review').length },
-              { label: 'Blog Drafts', value: tasks.filter(t => t.task_type === 'blog_draft').length },
-              { label: 'Research', value: tasks.filter(t => t.task_type === 'research').length },
-            ].map(stat => (
-              <div key={stat.label} className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{stat.label}</span>
-                <span className="font-semibold">{stat.value}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      {/* Stats row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {stats.map(stat => (
+          <Card key={stat.label}>
+            <CardContent className="p-4 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold">{stat.value}</span>
+              <span className="text-xs text-muted-foreground">{stat.label}</span>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Task History */}
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-lg">Task History</CardTitle>
+            <CardTitle className="text-lg">Activity Log</CardTitle>
             <CardDescription>Recent autonomous agent activity</CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -341,14 +115,11 @@ export default function AutopilotDashboard() {
                 <TabsTrigger value="all" className="text-xs px-2.5 h-6">All</TabsTrigger>
                 <TabsTrigger value="signal" className="text-xs px-2.5 h-6 gap-1">
                   Signals
-                  {(() => {
-                    const count = tasks.filter(t => t.task_type === 'signal' && t.status === 'pending').length;
-                    return count > 0 ? (
-                      <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium min-w-[18px] h-[18px] px-1">
-                        {count}
-                      </span>
-                    ) : null;
-                  })()}
+                  {pendingSignals > 0 && (
+                    <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium min-w-[18px] h-[18px] px-1">
+                      {pendingSignals}
+                    </span>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="research" className="text-xs px-2.5 h-6">Research</TabsTrigger>
                 <TabsTrigger value="blog" className="text-xs px-2.5 h-6">Blog</TabsTrigger>
@@ -360,41 +131,26 @@ export default function AutopilotDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          {(() => {
-            const filtered = taskFilter === 'all' ? tasks : tasks.filter(t => t.task_type === taskFilter);
-            return isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-              </div>
-            ) : filtered.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                {taskFilter === 'all' ? 'No tasks yet. Start by researching a topic above.' : `No ${taskFilter} tasks yet.`}
-              </p>
-            ) : (
-             <div className="space-y-2">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {taskFilter === 'all' ? 'No tasks yet. Ask Magnet to research a topic.' : `No ${taskFilter} tasks yet.`}
+            </p>
+          ) : (
+            <div className="space-y-2">
               {filtered.map(task => (
                 <TaskHistoryItem
                   key={task.id}
                   task={task}
                   onPublish={(t) => publishDraft.mutate(t)}
                   isPublishing={publishDraft.isPending}
-                  onUseSources={(urls) => {
-                    setSources(urls.join('\n'));
-                    toast.success(`${urls.length} sources loaded`, { description: 'Ready to use for research or blog drafting' });
-                  }}
-                  onRunAction={(action, actionTopic, actionSources) => {
-                    runAction.mutate({ action, topic: actionTopic, sources: actionSources });
-                  }}
-                  onUseTopic={(t) => {
-                    setTopic(t);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    toast.success('Topic set from signal');
-                  }}
                 />
               ))}
             </div>
-            );
-          })()}
+          )}
         </CardContent>
       </Card>
     </div>
