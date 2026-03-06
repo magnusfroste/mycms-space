@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Plus, Timer, Zap, Radio, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Timer, Zap, Radio, Trash2, AlertCircle, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAutomations, useUpsertAutomation, useToggleAutomation, useDeleteAutomation } from '@/hooks/useAutomations';
 import { useSkills } from '@/hooks/useSkillHub';
+import { useObjectives } from '@/hooks/useObjectives';
 import type { AgentAutomation, AutomationTriggerType } from '@/types/agent';
 
 const triggerConfig: Record<AutomationTriggerType, { label: string; icon: typeof Timer; color: string }> = {
@@ -25,9 +26,12 @@ export function AutomationsPanel() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<AgentAutomation | null>(null);
   const { data: automations = [], isLoading } = useAutomations();
+  const { data: objectives = [] } = useObjectives('active');
   const upsert = useUpsertAutomation();
   const toggle = useToggleAutomation();
   const remove = useDeleteAutomation();
+
+  const objectiveMap = new Map(objectives.map(o => [o.id, o.goal]));
 
   return (
     <div className="space-y-4">
@@ -57,6 +61,7 @@ export function AutomationsPanel() {
             const cfg = triggerConfig[auto.trigger_type];
             const TriggerIcon = cfg.icon;
             const cronExpr = auto.trigger_type === 'cron' ? (auto.trigger_config as any)?.expression : null;
+            const linkedGoal = auto.objective_id ? objectiveMap.get(auto.objective_id) : null;
 
             return (
               <Card key={auto.id} className="group cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all" onClick={() => { setEditing(auto); setEditorOpen(true); }}>
@@ -72,6 +77,12 @@ export function AutomationsPanel() {
                     <Badge variant="outline" className="text-[10px] font-mono">{auto.skill_name}</Badge>
                     {cronExpr && <Badge variant="outline" className="text-[10px] font-mono">{cronExpr}</Badge>}
                   </div>
+                  {linkedGoal && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-primary">
+                      <Target className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{linkedGoal}</span>
+                    </div>
+                  )}
                   {auto.last_error && <div className="flex items-center gap-1 text-[10px] text-destructive"><AlertCircle className="h-3 w-3" /><span className="truncate">{auto.last_error}</span></div>}
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{auto.run_count > 0 ? `${auto.run_count} runs · last ${auto.last_triggered_at ? format(new Date(auto.last_triggered_at), 'MMM d HH:mm') : '—'}` : 'Never run'}</span>
@@ -100,12 +111,14 @@ export function AutomationsPanel() {
 
 function AutomationEditorSheet({ automation, open, onClose, onSave }: { automation: AgentAutomation | null; open: boolean; onClose: () => void; onSave: (data: Partial<AgentAutomation> & { name: string }) => void }) {
   const { data: skills = [] } = useSkills();
+  const { data: objectives = [] } = useObjectives('active');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [triggerType, setTriggerType] = useState<AutomationTriggerType>('cron');
   const [cronExpression, setCronExpression] = useState('');
   const [eventName, setEventName] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState('');
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState('');
   const [argsText, setArgsText] = useState('{}');
 
   useEffect(() => {
@@ -117,6 +130,7 @@ function AutomationEditorSheet({ automation, open, onClose, onSave }: { automati
       setCronExpression((tc as any).expression ?? '');
       setEventName((tc as any).event_name ?? '');
       setSelectedSkillId(automation?.skill_id ?? '');
+      setSelectedObjectiveId(automation?.objective_id ?? '');
       setArgsText(automation?.skill_arguments ? JSON.stringify(automation.skill_arguments, null, 2) : '{}');
     }
   }, [open, automation]);
@@ -138,6 +152,7 @@ function AutomationEditorSheet({ automation, open, onClose, onSave }: { automati
       skill_id: selectedSkillId || null,
       skill_name: selectedSkill?.name ?? '',
       skill_arguments,
+      objective_id: selectedObjectiveId || null,
       enabled: automation?.enabled ?? true,
     });
     onClose();
@@ -150,6 +165,23 @@ function AutomationEditorSheet({ automation, open, onClose, onSave }: { automati
         <div className="space-y-4 py-4">
           <div className="space-y-2"><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Weekly analytics digest" /></div>
           <div className="space-y-2"><Label>Description</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional description" /></div>
+
+          <div className="space-y-2">
+            <Label>Linked Objective</Label>
+            <Select value={selectedObjectiveId} onValueChange={setSelectedObjectiveId}>
+              <SelectTrigger><SelectValue placeholder="None (standalone)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None (standalone)</SelectItem>
+                {objectives.map(o => (
+                  <SelectItem key={o.id} value={o.id}>
+                    <span className="flex items-center gap-1.5"><Target className="h-3 w-3 text-primary shrink-0" /><span className="truncate">{o.goal}</span></span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Link to an objective so Magnet tracks progress automatically.</p>
+          </div>
+
           <div className="space-y-2">
             <Label>Trigger Type</Label>
             <Select value={triggerType} onValueChange={(v) => setTriggerType(v as AutomationTriggerType)}>
