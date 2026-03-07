@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChatInterface, Message } from '@/components/chat';
 import { useAIModule } from '@/models/modules';
 import { useAIChatContext } from '@/hooks/useAIChatContext';
+import { useVisitorInsights, formatVisitorInsightsForAI } from '@/hooks/useVisitorInsights';
 import type { ChatWidgetBlockConfig } from '@/types/blockConfigs';
 
 interface ChatWidgetBlockProps {
