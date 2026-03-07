@@ -19,6 +19,10 @@ export interface VisitorInsights {
   isReturning: boolean;
   daysSinceLastVisit: number | null;
   topPages: string[];
+  referrer: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
 }
 
 interface StoredVisitorData {
