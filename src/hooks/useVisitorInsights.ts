@@ -112,6 +112,11 @@ export const useVisitorInsights = (): VisitorInsights => {
           : existing.currentSession.includes(currentPath)
             ? existing.currentSession
             : [...existing.currentSession, currentPath],
+        // Update referrer/UTM if new session brings fresh data
+        referrer: (isNewSession && referrer) ? referrer : existing.referrer,
+        utmSource: (isNewSession && utmSource) ? utmSource : existing.utmSource,
+        utmMedium: (isNewSession && utmMedium) ? utmMedium : existing.utmMedium,
+        utmCampaign: (isNewSession && utmCampaign) ? utmCampaign : existing.utmCampaign,
       };
 
       saveData(updated);
