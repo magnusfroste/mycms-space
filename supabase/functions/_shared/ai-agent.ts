@@ -545,7 +545,8 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
-  const isFirstMessage = messages.filter(m => m.role === 'user').length <= 1;
+  const userMessageCount = messages.filter(m => m.role === 'user').length;
+  const isFirstMessage = userMessageCount <= 2; // Allow up to 2 user messages (hero prefill + first real message)
   console.log(`[Agent] Visitor auto-inject check: isFirst=${isFirstMessage}, mode=${mode}, hasInsights=${!!siteContext?.visitorInsights}`);
   if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
     try {
