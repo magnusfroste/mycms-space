@@ -304,6 +304,39 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
 
     await supabase.from('agent_automations').update(updatePayload).eq('id', automation_id);
 
+    // ── Milestone tracking: auto-update linked objective progress ──
+    if (auto.objective_id && !skillResult.error) {
+      const { data: objective } = await supabase.from('agent_objectives')
+        .select('progress').eq('id', auto.objective_id).maybeSingle();
+      if (objective) {
+        const progress = (objective.progress as Record<string, any>) || {};
+        const key = auto.skill_name || auto.name;
+        const milestone = progress[key] || { runs: 0, last_success: null, streak: 0 };
+        milestone.runs = (milestone.runs || 0) + 1;
+        milestone.last_success = new Date().toISOString();
+        milestone.streak = (milestone.streak || 0) + 1;
+        progress[key] = milestone;
+        progress.total_runs = (progress.total_runs || 0) + 1;
+        progress.last_updated = new Date().toISOString();
+        await supabase.from('agent_objectives').update({ progress }).eq('id', auto.objective_id);
+        console.log(`[heartbeat] Milestone tracked: ${key} run #${milestone.runs} for objective ${auto.objective_id.slice(0, 8)}`);
+      }
+    }
+    // Reset streak on failure
+    if (auto.objective_id && skillResult.error) {
+      const { data: objective } = await supabase.from('agent_objectives')
+        .select('progress').eq('id', auto.objective_id).maybeSingle();
+      if (objective) {
+        const progress = (objective.progress as Record<string, any>) || {};
+        const key = auto.skill_name || auto.name;
+        if (progress[key]) {
+          progress[key].streak = 0;
+          progress[key].last_failure = new Date().toISOString();
+          await supabase.from('agent_objectives').update({ progress }).eq('id', auto.objective_id);
+        }
+      }
+    }
+
     return {
       status: skillResult.error ? 'failed' : 'success',
       automation: auto.name,
