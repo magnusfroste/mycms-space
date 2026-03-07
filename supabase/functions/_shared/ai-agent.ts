@@ -158,6 +158,7 @@ const BUILT_IN_TOOL_NAMES = [
   'automation_create', 'automation_list',
   'reflect',
   'get_site_stats',
+  'get_visitor_insights',
 ];
 
 function isBuiltInTool(name: string): boolean {
