@@ -550,8 +550,30 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
       const insightsResult = await executeBuiltInTool('get_visitor_insights', { include_recommendations: true }, { siteContext });
       const parsed = JSON.parse(insightsResult);
       if (parsed.status !== 'no_data') {
-        fullPrompt += `\n\n## Visitor Insights (auto-loaded)\nThis visitor's browsing data has been automatically retrieved. Use it to personalize your first response naturally — don't mention you "looked up" their data, just be contextually relevant.\n\`\`\`json\n${insightsResult}\n\`\`\``;
-        console.log(`[Agent] Auto-injected visitor insights for first message (visit #${parsed.visit_count})`);
+        // Determine engagement level and greeting strategy
+        const visitCount = parsed.visit_count || 1;
+        const topPages = parsed.top_pages || [];
+        const isReturning = parsed.is_returning || false;
+
+        let engagementLevel: string;
+        let greetingStrategy: string;
+
+        if (visitCount === 1 && !isReturning) {
+          engagementLevel = 'new_visitor';
+          greetingStrategy = `This is a FIRST-TIME visitor. Give a warm, brief introduction of who Magnus is and what he does. Keep it welcoming and offer to help them explore — don't assume any prior knowledge. Suggest 2-3 things they might want to know (e.g. "Want to hear about my projects, my background, or just chat?").`;
+        } else if (visitCount <= 3) {
+          engagementLevel = 'exploring';
+          greetingStrategy = `This visitor has been here ${visitCount} times — they're exploring. Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
+        } else if (visitCount <= 8) {
+          engagementLevel = 'engaged';
+          greetingStrategy = `This is an ENGAGED visitor (${visitCount} visits). They know the site well. Skip introductions entirely — jump straight to value. Their interests are: ${topPages.join(', ')}. Proactively suggest something new or relevant they haven't seen, or offer a deeper conversation about their interests.`;
+        } else {
+          engagementLevel = 'power_user';
+          greetingStrategy = `This is a POWER USER (${visitCount} visits!). Treat them like someone who already knows Magnus well. Be direct, personal, and skip all pleasantries. Their top interests: ${topPages.join(', ')}. Lead with something specific and valuable — a recent update, a project detail, or ask what they're working on. Be a peer, not a guide.`;
+        }
+
+        fullPrompt += `\n\n## Visitor Insights (auto-loaded)\n**Engagement Level: ${engagementLevel}** (${visitCount} visits)\n\n### Greeting Strategy\n${greetingStrategy}\n\n### Raw Data\n\`\`\`json\n${insightsResult}\n\`\`\`\n\nIMPORTANT: Never mention that you tracked or analyzed their browsing. Make personalization feel natural and intuitive.`;
+        console.log(`[Agent] Auto-injected visitor insights: ${engagementLevel} (visit #${visitCount})`);
       }
     } catch (e) {
       console.warn('[Agent] Failed to auto-load visitor insights:', e);
