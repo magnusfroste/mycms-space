@@ -69,6 +69,14 @@ export const useVisitorInsights = (): VisitorInsights => {
     // Skip admin pages
     if (location.pathname.startsWith('/admin')) return;
 
+    // Capture referrer & UTM on first page load
+    const params = new URLSearchParams(window.location.search);
+    const referrer = document.referrer && !document.referrer.includes(window.location.hostname)
+      ? document.referrer : null;
+    const utmSource = params.get('utm_source');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+
     if (!existing) {
       // First-time visitor
       const data: StoredVisitorData = {
@@ -78,6 +86,10 @@ export const useVisitorInsights = (): VisitorInsights => {
         sessionId: generateSessionId(),
         pagesVisited: { [currentPath]: 1 },
         currentSession: [currentPath],
+        referrer,
+        utmSource,
+        utmMedium,
+        utmCampaign,
       };
       saveData(data);
       setInsights(buildInsights(data));
