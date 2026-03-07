@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownContent } from "@/components/common";
-import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock, Eye, User, TrendingUp } from "lucide-react";
 import {
   RadarChart,
   PolarGrid,
