@@ -32,6 +32,10 @@ interface StoredVisitorData {
   sessionId: string;
   pagesVisited: Record<string, number>; // page → visit count
   currentSession: string[];
+  referrer: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
 }
 
 const generateSessionId = () => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
