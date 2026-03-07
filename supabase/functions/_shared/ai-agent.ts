@@ -625,7 +625,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     ...messages,
   ];
 
-  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
+  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
     const data = await callOpenAICompatible({
