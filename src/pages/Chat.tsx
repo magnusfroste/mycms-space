@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
+import { useVisitorInsights, formatVisitorInsightsForAI } from "@/hooks/useVisitorInsights";
 import {
   AlertDialog,
   AlertDialogAction,
