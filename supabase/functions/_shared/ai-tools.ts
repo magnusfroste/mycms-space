@@ -487,12 +487,29 @@ export const getVisitorInsightsTool: ToolDefinition = {
   type: "function",
   function: {
     name: "get_visitor_insights",
-    description: "Get insights about the current visitor: visit count, pages they've browsed, whether they're returning, and their interests based on browsing patterns. Use proactively on first message to personalize the greeting, or when asked about the visitor's history.",
+    description: "Get insights about the current visitor and generate a visual profile card. Use proactively on first message to personalize the greeting, or when asked about the visitor's history. Returns structured data that renders as an interactive artifact card.",
     parameters: {
       type: "object",
       properties: {
         include_recommendations: { type: "boolean", description: "Whether to include content recommendations based on browsing patterns" },
+        visitor_type: { type: "string", description: "Detected visitor type based on browsing patterns" },
+        interest_scores: {
+          type: "array",
+          description: "Interest scores (0-100) based on browsing patterns. Provide 4-8 categories.",
+          items: {
+            type: "object",
+            properties: {
+              category: { type: "string", description: "Interest category (e.g. Projects, Blog, AI, Contact)" },
+              score: { type: "number", description: "Interest score 0-100" },
+            },
+            required: ["category", "score"],
+          },
+        },
+        summary: { type: "string", description: "One-line summary of the visitor profile" },
+        engagement_level: { type: "string", enum: ["new", "curious", "engaged", "power_user"], description: "Visitor engagement level" },
+        suggested_topic: { type: "string", description: "Best conversation topic based on visitor interests" },
       },
+      required: ["visitor_type", "interest_scores", "summary", "engagement_level"],
     },
   },
 };
