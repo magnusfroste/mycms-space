@@ -546,6 +546,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
   const isFirstMessage = messages.filter(m => m.role === 'user').length <= 1;
+  console.log(`[Agent] Visitor auto-inject check: isFirst=${isFirstMessage}, mode=${mode}, hasInsights=${!!siteContext?.visitorInsights}`);
   if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
     try {
       const insightsResult = await executeBuiltInTool('get_visitor_insights', { include_recommendations: true }, { siteContext });
