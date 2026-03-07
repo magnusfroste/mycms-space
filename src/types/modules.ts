@@ -309,6 +309,7 @@ export const defaultMagnetTools: MagnetToolConfig[] = [
   { id: 'generate_portfolio', name: 'Portfolio Generator', description: 'Create curated portfolio presentations by theme or technology', icon: 'FolderOpen', enabled: true },
   { id: 'project_deep_dive', name: 'Project Deep Dive', description: 'Provide detailed breakdowns of specific projects', icon: 'Search', enabled: true },
   { id: 'check_availability', name: 'Availability Checker', description: 'Share availability status and engagement types', icon: 'Calendar', enabled: true },
+  { id: 'get_visitor_insights', name: 'Visitor Insights', description: 'Analyze visitor browsing patterns for personalized conversations', icon: 'Eye', enabled: true },
 ];
 
 // Admin-mode Magnet tools (CMS co-pilot)
