@@ -9,6 +9,17 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Types
 // ============================================
 
+export interface VisitorInsightsData {
+  visitCount: number;
+  isReturning: boolean;
+  firstVisit: string;
+  lastVisit: string;
+  pagesVisited: string[];
+  currentSession: string[];
+  topPages: string[];
+  daysSinceLastVisit: number | null;
+}
+
 export interface SiteContext {
   pages?: Array<{
     slug: string;
@@ -32,6 +43,7 @@ export interface SiteContext {
     topics?: string[];
     url: string;
   }>;
+  visitorInsights?: VisitorInsightsData;
 }
 
 export interface ChatMessage {
