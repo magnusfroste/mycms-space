@@ -158,13 +158,37 @@ const BUILT_IN_TOOL_NAMES = [
   'automation_create', 'automation_list',
   'reflect',
   'get_site_stats',
+  'get_visitor_insights',
 ];
 
 function isBuiltInTool(name: string): boolean {
   return BUILT_IN_TOOL_NAMES.includes(name);
 }
 
-async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
+async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unknown>, context?: { siteContext?: SiteContext | null }): Promise<string> {
+  // --- Visitor Insights (client-side data passed via siteContext) ---
+  if (toolName === 'get_visitor_insights') {
+    const vi = context?.siteContext?.visitorInsights;
+    if (!vi) return JSON.stringify({ status: 'no_data', message: 'No visitor tracking data available for this session.' });
+    
+    const insights: Record<string, unknown> = {
+      visit_count: vi.visitCount,
+      is_returning: vi.isReturning,
+      first_visit: vi.firstVisit,
+      last_visit: vi.lastVisit,
+      pages_visited: vi.pagesVisited,
+      current_session_pages: vi.currentSession,
+      top_pages: vi.topPages,
+      days_since_last_visit: vi.daysSinceLastVisit,
+    };
+
+    if (toolArgs.include_recommendations && vi.topPages?.length) {
+      insights.recommendations = `Based on browsing patterns, this visitor is most interested in: ${vi.topPages.join(', ')}. Tailor your conversation to these interests.`;
+    }
+
+    return JSON.stringify(insights);
+  }
+
   const { createClient } = await import("npm:@supabase/supabase-js@2");
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -559,7 +583,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
 
         if (isBuiltInTool(toolName)) {
-          result = await executeBuiltInTool(toolName, toolArgs);
+          result = await executeBuiltInTool(toolName, toolArgs, { siteContext });
         } else {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');

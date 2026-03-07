@@ -483,12 +483,27 @@ export const reflectTool: ToolDefinition = {
 // Tool Registry
 // ============================================
 
+export const getVisitorInsightsTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "get_visitor_insights",
+    description: "Get insights about the current visitor: visit count, pages they've browsed, whether they're returning, and their interests based on browsing patterns. Use proactively on first message to personalize the greeting, or when asked about the visitor's history.",
+    parameters: {
+      type: "object",
+      properties: {
+        include_recommendations: { type: "boolean", description: "Whether to include content recommendations based on browsing patterns" },
+      },
+    },
+  },
+};
+
 /** Public visitor tools */
 export const publicTools: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
   generate_portfolio: portfolioGeneratorTool,
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
+  get_visitor_insights: getVisitorInsightsTool,
 };
 
 /** Admin CMS co-pilot tools */
@@ -548,6 +563,7 @@ export const toolDescriptions: Record<string, string> = {
   generate_portfolio: "**generate_portfolio** — Create a curated portfolio filtered by theme/technology.",
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
+  get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
   run_research: "**run_research** — Research a topic using web sources.",
