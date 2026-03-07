@@ -555,19 +555,21 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         const visitCount = parsed.visit_count || 1;
         const topPages = parsed.top_pages || [];
         const isReturning = parsed.is_returning || false;
+        const uniquePagesCount = (parsed.pages_visited as string[] || []).length;
 
+        // Power user = 3+ sessions OR 3+ unique pages visited in any session
         let engagementLevel: string;
         let greetingStrategy: string;
 
-        if (visitCount === 1 && !isReturning) {
+        if (visitCount >= 3 || uniquePagesCount >= 3) {
+          engagementLevel = 'power_user';
+          greetingStrategy = `This is a POWER USER (${visitCount} sessions, ${uniquePagesCount} unique pages explored). Treat them like someone who already knows Magnus well. Be direct, personal, and skip all pleasantries. Their top interests: ${topPages.join(', ')}. Lead with something specific and valuable — a recent update, a project detail, or ask what they're working on. Be a peer, not a guide.`;
+        } else if (visitCount >= 2 || uniquePagesCount >= 2) {
+          engagementLevel = 'exploring';
+          greetingStrategy = `This visitor is exploring (${visitCount} sessions, ${uniquePagesCount} pages). Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
+        } else {
           engagementLevel = 'new_visitor';
           greetingStrategy = `This is a FIRST-TIME visitor. Give a warm, brief introduction of who Magnus is and what he does. Keep it welcoming and offer to help them explore — don't assume any prior knowledge. Suggest 2-3 things they might want to know (e.g. "Want to hear about my projects, my background, or just chat?").`;
-        } else if (visitCount === 2) {
-          engagementLevel = 'exploring';
-          greetingStrategy = `This visitor has been here ${visitCount} times — they're exploring. Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
-        } else {
-          engagementLevel = 'power_user';
-          greetingStrategy = `This is a POWER USER (${visitCount} visits!). Treat them like someone who already knows Magnus well. Be direct, personal, and skip all pleasantries. Their top interests: ${topPages.join(', ')}. Lead with something specific and valuable — a recent update, a project detail, or ask what they're working on. Be a peer, not a guide.`;
         }
 
         fullPrompt += `\n\n## Visitor Insights (auto-loaded)\n**Engagement Level: ${engagementLevel}** (${visitCount} visits)\n\n### Greeting Strategy\n${greetingStrategy}\n\n### Raw Data\n\`\`\`json\n${insightsResult}\n\`\`\`\n\nIMPORTANT: Never mention that you tracked or analyzed their browsing. Make personalization feel natural and intuitive.`;
