@@ -263,6 +263,9 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
           output: { reason: 'Skill requires admin approval before execution' },
           status: 'pending_approval',
         });
+        // Send email notification to admin
+        const { notifyPendingApproval } = await import("../_shared/notify-approval.ts");
+        await notifyPendingApproval(auto.skill_name, 'Automation-triggered skill requires admin approval.');
         return { status: 'pending_approval', skill: auto.skill_name, message: 'This skill requires admin approval. Logged for review.' };
       }
     }

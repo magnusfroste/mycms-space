@@ -71,6 +71,9 @@ Deno.serve(async (req) => {
         input: args, output: {}, status: 'pending_approval',
         conversation_id, duration_ms: Date.now() - startTime,
       });
+      // Send email notification to admin
+      const { notifyPendingApproval } = await import("../_shared/notify-approval.ts");
+      await notifyPendingApproval(skill.name, `Action '${skill.name}' requires admin approval.`);
       return new Response(JSON.stringify({
         status: 'pending_approval',
         skill: skill.name,
