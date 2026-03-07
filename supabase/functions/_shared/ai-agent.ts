@@ -584,6 +584,11 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
         if (isBuiltInTool(toolName)) {
           result = await executeBuiltInTool(toolName, toolArgs, { siteContext });
+          // Check if built-in tool also produces artifacts (e.g. visitor-profile)
+          const parsed = parseToolCallResponse(toolCall, msg.content || '');
+          if (parsed.artifacts?.length) {
+            lastArtifacts = parsed.artifacts;
+          }
         } else {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
