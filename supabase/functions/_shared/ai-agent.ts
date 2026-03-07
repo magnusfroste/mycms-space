@@ -543,6 +543,21 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   const tools = getActiveTools(enabledTools, mode);
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
+  // --- Auto-invoke visitor insights on first message (magic moment) ---
+  const isFirstMessage = messages.filter(m => m.role === 'user').length <= 1;
+  if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
+    try {
+      const insightsResult = await executeBuiltInTool('get_visitor_insights', { include_recommendations: true }, { siteContext });
+      const parsed = JSON.parse(insightsResult);
+      if (parsed.status !== 'no_data') {
+        fullPrompt += `\n\n## Visitor Insights (auto-loaded)\nThis visitor's browsing data has been automatically retrieved. Use it to personalize your first response naturally — don't mention you "looked up" their data, just be contextually relevant.\n\`\`\`json\n${insightsResult}\n\`\`\``;
+        console.log(`[Agent] Auto-injected visitor insights for first message (visit #${parsed.visit_count})`);
+      }
+    } catch (e) {
+      console.warn('[Agent] Failed to auto-load visitor insights:', e);
+    }
+  }
+
   // Multi-iteration tool loop
   const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
     { role: "system", content: fullPrompt },
