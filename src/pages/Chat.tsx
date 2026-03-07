@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
+import { useVisitorInsights, formatVisitorInsightsForAI } from "@/hooks/useVisitorInsights";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,11 @@ const Chat = () => {
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
+  const visitorInsights = useVisitorInsights();
+  const enrichedContext = React.useMemo(() => ({
+    ...contextData,
+    visitorInsights: formatVisitorInsightsForAI(visitorInsights) as any,
+  }), [contextData, visitorInsights]);
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
@@ -87,7 +93,7 @@ const Chat = () => {
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
             showQuickActions={true}
-            siteContext={contextData}
+            siteContext={enrichedContext}
             integration={configuredIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}

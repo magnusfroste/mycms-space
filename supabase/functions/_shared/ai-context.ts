@@ -9,6 +9,17 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // Types
 // ============================================
 
+export interface VisitorInsightsData {
+  visitCount: number;
+  isReturning: boolean;
+  firstVisit: string;
+  lastVisit: string;
+  pagesVisited: string[];
+  currentSession: string[];
+  topPages: string[];
+  daysSinceLastVisit: number | null;
+}
+
 export interface SiteContext {
   pages?: Array<{
     slug: string;
@@ -32,6 +43,7 @@ export interface SiteContext {
     topics?: string[];
     url: string;
   }>;
+  visitorInsights?: VisitorInsightsData;
 }
 
 export interface ChatMessage {
@@ -242,6 +254,29 @@ export function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext 
         activeSections.push(`${section.key}(${data.length})`);
       }
     }
+  }
+
+  // Visitor insights section
+  if (siteContext.visitorInsights) {
+    const vi = siteContext.visitorInsights;
+    const parts: string[] = [];
+    parts.push(`- Visit count: ${vi.visitCount}`);
+    parts.push(`- Returning visitor: ${vi.isReturning ? 'yes' : 'no (first visit)'}`);
+    if (vi.isReturning && vi.daysSinceLastVisit !== null) {
+      parts.push(`- Days since last visit: ${vi.daysSinceLastVisit}`);
+    }
+    if (vi.pagesVisited?.length) {
+      parts.push(`- Pages previously visited: ${vi.pagesVisited.join(', ')}`);
+    }
+    if (vi.currentSession?.length) {
+      parts.push(`- Pages visited this session: ${vi.currentSession.join(', ')}`);
+    }
+    if (vi.topPages?.length) {
+      parts.push(`- Most visited pages: ${vi.topPages.join(', ')}`);
+    }
+
+    sections.push(`\n\n## Visitor Insights\nYou have access to this visitor's browsing behavior. Use this to personalize your greeting and conversation. For returning visitors, acknowledge them warmly and reference their interests based on pages they've visited. For first-time visitors, give a welcoming introduction. During testing/POC, you may confirm what pages the visitor has been to when asked.\n${parts.join('\n')}`);
+    activeSections.push('visitor');
   }
 
   console.log(`[AI Context] Prompt built: ${activeSections.length} section(s): [${activeSections.join(', ')}]`);
