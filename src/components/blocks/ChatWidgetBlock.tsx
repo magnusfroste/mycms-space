@@ -79,7 +79,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
             onSessionIdChange={setCurrentSessionId}
             skipWebhook={true}
             showQuickActions={showQuickActions}
-            siteContext={contextData}
+            siteContext={{ ...contextData, visitorInsights: formatVisitorInsightsForAI(visitorInsights) as any }}
             systemPrompt={systemPrompt}
           />
         </div>

@@ -93,7 +93,7 @@ const Chat = () => {
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
             showQuickActions={true}
-            siteContext={contextData}
+            siteContext={enrichedContext}
             integration={configuredIntegration}
             integrationConfig={aiConfig?.integration}
             systemPrompt={aiConfig?.system_prompt || ''}
