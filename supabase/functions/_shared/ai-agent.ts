@@ -562,10 +562,10 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         if (visitCount === 1 && !isReturning) {
           engagementLevel = 'new_visitor';
           greetingStrategy = `This is a FIRST-TIME visitor. Give a warm, brief introduction of who Magnus is and what he does. Keep it welcoming and offer to help them explore — don't assume any prior knowledge. Suggest 2-3 things they might want to know (e.g. "Want to hear about my projects, my background, or just chat?").`;
-        } else if (visitCount <= 3) {
+        } else if (visitCount === 2) {
           engagementLevel = 'exploring';
           greetingStrategy = `This visitor has been here ${visitCount} times — they're exploring. Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
-        } else if (visitCount <= 8) {
+        } else {
           engagementLevel = 'engaged';
           greetingStrategy = `This is an ENGAGED visitor (${visitCount} visits). They know the site well. Skip introductions entirely — jump straight to value. Their interests are: ${topPages.join(', ')}. Proactively suggest something new or relevant they haven't seen, or offer a deeper conversation about their interests.`;
         } else {
