@@ -29,6 +29,11 @@ const Chat = () => {
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
+  const visitorInsights = useVisitorInsights();
+  const enrichedContext = React.useMemo(() => ({
+    ...contextData,
+    visitorInsights: formatVisitorInsightsForAI(visitorInsights) as any,
+  }), [contextData, visitorInsights]);
   const [showNewChatDialog, setShowNewChatDialog] = React.useState(false);
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
