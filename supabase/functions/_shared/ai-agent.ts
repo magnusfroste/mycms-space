@@ -543,6 +543,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   const tools = getActiveTools(enabledTools, mode);
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
+  let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
   const isFirstMessage = messages.filter(m => m.role === 'user').length <= 1;
   if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
