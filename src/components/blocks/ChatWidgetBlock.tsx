@@ -20,6 +20,7 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
   const navigate = useNavigate();
   const { config: aiConfig, isEnabled: isModuleEnabled } = useAIModule();
   const { contextData } = useAIChatContext();
+  const visitorInsights = useVisitorInsights();
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
   const didNavigateRef = React.useRef(false);
