@@ -557,7 +557,9 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         const visitCount = parsed.visit_count || 1;
         const topPages = parsed.top_pages || [];
         const isReturning = parsed.is_returning || false;
-        const uniquePagesCount = (parsed.pages_visited as string[] || []).length;
+        const pagesVisited = parsed.pages_visited || [];
+        const uniquePagesCount = Array.isArray(pagesVisited) ? pagesVisited.length : 0;
+        console.log(`[Agent] Visitor data: visits=${visitCount}, uniquePages=${uniquePagesCount}, pages=${JSON.stringify(pagesVisited)}, topPages=${JSON.stringify(topPages)}`);
 
         // Power user = 3+ sessions OR 3+ unique pages visited in any session
         let engagementLevel: string;
