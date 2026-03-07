@@ -543,6 +543,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   const tools = getActiveTools(enabledTools, mode);
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
+  let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
   const isFirstMessage = messages.filter(m => m.role === 'user').length <= 1;
   if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
@@ -574,6 +575,44 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
         fullPrompt += `\n\n## Visitor Insights (auto-loaded)\n**Engagement Level: ${engagementLevel}** (${visitCount} visits)\n\n### Greeting Strategy\n${greetingStrategy}\n\n### Raw Data\n\`\`\`json\n${insightsResult}\n\`\`\`\n\nIMPORTANT: Never mention that you tracked or analyzed their browsing. Make personalization feel natural and intuitive.`;
         console.log(`[Agent] Auto-injected visitor insights: ${engagementLevel} (visit #${visitCount})`);
+
+        // Auto-generate visitor-profile artifact for power users
+        if (engagementLevel === 'power_user') {
+          // Build interest scores from top pages
+          const interestScores: Record<string, number> = {};
+          const pageInterestMap: Record<string, string> = {
+            'projects': 'Technical Projects',
+            'blog': 'Blog & Writing',
+            'chat': 'AI & Chat',
+            'about': 'Background',
+            '/': 'General',
+          };
+          topPages.forEach((page: string, i: number) => {
+            const label = Object.entries(pageInterestMap).find(([key]) => page.includes(key))?.[1] || page;
+            interestScores[label] = Math.max(30, 100 - (i * 20));
+          });
+          // Ensure at least 3 data points for radar chart
+          if (Object.keys(interestScores).length < 3) {
+            if (!interestScores['Technical Projects']) interestScores['Technical Projects'] = 20;
+            if (!interestScores['Background']) interestScores['Background'] = 15;
+            if (!interestScores['General']) interestScores['General'] = 10;
+          }
+
+          autoArtifacts = [{
+            type: 'visitor-profile',
+            title: 'Your Visitor Profile',
+            data: {
+              interest_scores: interestScores,
+              summary: `Power user with ${visitCount} visits`,
+              visitor_type: 'Power User',
+              engagement_level: 'high',
+              visit_count: visitCount,
+              top_interests: topPages,
+            },
+          }];
+          fullPrompt += `\n\nNOTE: A visitor profile artifact card with radar chart will be automatically shown to this power user. Reference it briefly in your greeting (e.g. "I've put together a quick snapshot of your interests").`;
+          console.log(`[Agent] Auto-generated visitor-profile artifact for power user`);
+        }
       }
     } catch (e) {
       console.warn('[Agent] Failed to auto-load visitor insights:', e);
@@ -586,7 +625,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     ...messages,
   ];
 
-  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
+  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
     const data = await callOpenAICompatible({
