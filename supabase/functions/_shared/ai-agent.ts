@@ -566,9 +566,6 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           engagementLevel = 'exploring';
           greetingStrategy = `This visitor has been here ${visitCount} times — they're exploring. Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
         } else {
-          engagementLevel = 'engaged';
-          greetingStrategy = `This is an ENGAGED visitor (${visitCount} visits). They know the site well. Skip introductions entirely — jump straight to value. Their interests are: ${topPages.join(', ')}. Proactively suggest something new or relevant they haven't seen, or offer a deeper conversation about their interests.`;
-        } else {
           engagementLevel = 'power_user';
           greetingStrategy = `This is a POWER USER (${visitCount} visits!). Treat them like someone who already knows Magnus well. Be direct, personal, and skip all pleasantries. Their top interests: ${topPages.join(', ')}. Lead with something specific and valuable — a recent update, a project detail, or ask what they're working on. Be a peer, not a guide.`;
         }
