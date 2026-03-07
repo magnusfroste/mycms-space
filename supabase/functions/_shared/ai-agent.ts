@@ -583,7 +583,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
 
         if (isBuiltInTool(toolName)) {
-          result = await executeBuiltInTool(toolName, toolArgs);
+          result = await executeBuiltInTool(toolName, toolArgs, { siteContext });
         } else {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
