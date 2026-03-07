@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownContent } from "@/components/common";
-import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock, Eye, User, TrendingUp } from "lucide-react";
 import {
   RadarChart,
   PolarGrid,
@@ -341,6 +341,105 @@ const AvailabilityArtifact: React.FC<{ data: Record<string, unknown> }> = ({ dat
   );
 };
 
+// ---- Visitor Profile Artifact ----
+const VisitorProfileArtifact: React.FC<{ data: Record<string, unknown> }> = ({ data }) => {
+  const visitorType = (data.visitor_type as string) || "Visitor";
+  const summary = (data.summary as string) || "";
+  const engagementLevel = (data.engagement_level as string) || "new";
+  const suggestedTopic = (data.suggested_topic as string) || "";
+  const interestScores = (data.interest_scores as Array<{ category: string; score: number }>) || [];
+
+  const radarData = interestScores.slice(0, 8).map((item) => ({
+    category: item.category.length > 12 ? item.category.slice(0, 12) + "…" : item.category,
+    score: item.score,
+    fullMark: 100,
+  }));
+
+  const engagementConfig: Record<string, { label: string; color: string; bg: string }> = {
+    new: { label: "New Visitor", color: "text-blue-600", bg: "bg-blue-500/10" },
+    curious: { label: "Curious Explorer", color: "text-amber-600", bg: "bg-amber-500/10" },
+    engaged: { label: "Engaged Visitor", color: "text-emerald-600", bg: "bg-emerald-500/10" },
+    power_user: { label: "Power User", color: "text-purple-600", bg: "bg-purple-500/10" },
+  };
+
+  const engagement = engagementConfig[engagementLevel] || engagementConfig.new;
+
+  return (
+    <div className="mt-3 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className={`px-5 py-4 ${engagement.bg} border-b border-border`}>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-background/80 flex items-center justify-center">
+            <User className={`h-5 w-5 ${engagement.color}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">{visitorType}</p>
+              <Badge variant="secondary" className="text-[10px]">{engagement.label}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">{summary}</p>
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="interests" className="w-full">
+        <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-4 h-10">
+          <TabsTrigger value="interests" className="gap-1.5 text-xs"><Eye className="h-3.5 w-3.5" />Interests</TabsTrigger>
+          <TabsTrigger value="details" className="gap-1.5 text-xs"><TrendingUp className="h-3.5 w-3.5" />Details</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="interests" className="px-5 py-4 mt-0">
+          {radarData.length > 0 ? (
+            <div className="space-y-4">
+              <ResponsiveContainer width="100%" height={240}>
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9 }} />
+                  <Radar name="Interest" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.35} />
+                </RadarChart>
+              </ResponsiveContainer>
+              <div className="space-y-1.5">
+                {interestScores.sort((a, b) => b.score - a.score).map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xs text-foreground w-24 truncate">{item.category}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${item.score}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground w-8 text-right">{item.score}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No interest data available yet.</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="details" className="px-5 py-4 mt-0 space-y-3">
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Visitor Type</p>
+            <p className="text-sm text-foreground">{visitorType}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Engagement</p>
+            <Badge variant="outline" className={`${engagement.color}`}>{engagement.label}</Badge>
+          </div>
+          {suggestedTopic && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Suggested Topic</p>
+              <p className="text-sm text-foreground">{suggestedTopic}</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
 // ---- Main Artifact Router ----
 const ChatArtifact: React.FC<ChatArtifactProps> = ({ artifact }) => {
   switch (artifact.type) {
@@ -352,6 +451,8 @@ const ChatArtifact: React.FC<ChatArtifactProps> = ({ artifact }) => {
       return <ProjectDeepDiveArtifact data={artifact.data} />;
     case "availability":
       return <AvailabilityArtifact data={artifact.data} />;
+    case "visitor-profile":
+      return <VisitorProfileArtifact data={artifact.data} />;
     case "document":
       return (
         <div className="mt-3 rounded-xl border border-border bg-card p-4 shadow-sm">
