@@ -118,7 +118,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
                 {availableIntegrations.map((meta) => (
                   <DropdownMenuItem
                     key={meta.type}
-                    onClick={() => setSelectedIntegration(meta.type as AIIntegrationType)}
+                    onClick={() => setOverrideIntegration(meta.type as AIIntegrationType)}
                     className={effectiveIntegration === meta.type ? 'bg-accent' : ''}
                   >
                     {meta.name}
