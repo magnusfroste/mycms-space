@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { RefreshCw, ShieldAlert, RotateCcw, Clock, Zap, Radio, Calendar } from 'lucide-react';
-import { useAutomations } from '@/hooks/useAutomations';
+import { Switch } from '@/components/ui/switch';
+import { useAutomations, useToggleAutomation } from '@/hooks/useAutomations';
 import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
 
@@ -32,6 +33,7 @@ const triggerIcons: Record<string, typeof Clock> = {
 
 function AutomationsSummary() {
   const { data: automations = [], isLoading } = useAutomations();
+  const toggle = useToggleAutomation();
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;
   if (automations.length === 0) return null;
@@ -84,6 +86,12 @@ function AutomationsSummary() {
                   <Badge variant="destructive" className="text-[10px] shrink-0">Error</Badge>
                 )}
                 <span className="text-[10px] text-muted-foreground shrink-0">{auto.run_count} runs</span>
+                <Switch
+                  checked={auto.enabled}
+                  onCheckedChange={(checked) => toggle.mutate({ id: auto.id, enabled: checked })}
+                  disabled={toggle.isPending}
+                  className="scale-75 shrink-0"
+                />
               </div>
             );
           })}
