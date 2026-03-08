@@ -5,6 +5,7 @@ import {
   Layers, 
   Navigation, 
   Bot,
+  Blocks,
   Zap,
   Orbit,
   FolderOpen,
@@ -28,6 +29,8 @@ import {
   BookUser,
   X,
 } from 'lucide-react';
+import { useAllModules } from '@/models/modules';
+import { getHiddenSidebarItems } from '@/lib/constants/moduleRegistry';
 import {
   Sidebar,
   SidebarContent,
