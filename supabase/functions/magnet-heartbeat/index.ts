@@ -187,9 +187,160 @@ async function runSelfHealing(supabase: any): Promise<string> {
   return `\n\n⚠️ Self-healing: Auto-disabled ${toDisable.length} skills due to repeated failures: ${toDisable.join(', ')}`;
 }
 
+// ─── Plan Decomposition via AI ────────────────────────────────────────────────
+
+async function decomposeObjectiveIntoPlan(
+  objective: { id: string; goal: string; constraints: any; success_criteria: any },
+  supabase: any,
+): Promise<{ steps: any[]; total_steps: number }> {
+  // Load available skills to inform step generation
+  const { data: skills } = await supabase.from('agent_skills')
+    .select('name, description, category, handler')
+    .eq('enabled', true);
+
+  const skillList = (skills || []).map((s: any) => `- ${s.name}: ${s.description} (${s.handler})`).join('\n');
+
+  const { url, apiKey, model } = resolveProvider({ provider: 'lovable' as const });
+  const data = await callOpenAICompatible({
+    url, apiKey, model,
+    messages: [
+      {
+        role: 'system',
+        content: `You are a planning agent. Decompose an objective into 3-7 concrete, sequential steps. Each step should map to an available skill or automation when possible.
+
+Available skills:
+${skillList}
+
+Return ONLY a JSON array, no markdown. Each step:
+{"id":"s1","order":1,"description":"What to do","skill_name":"skill_name_or_null","skill_args":{},"status":"pending"}
+
+Rules:
+- Steps should be ordered logically (research before drafting, drafting before publishing)
+- Use actual skill names from the list above when applicable
+- Set skill_args with sensible defaults based on the objective
+- If no skill matches, set skill_name to null (manual step)
+- Keep descriptions short and actionable`,
+      },
+      {
+        role: 'user',
+        content: `Objective: "${objective.goal}"
+Constraints: ${JSON.stringify(objective.constraints || {})}
+Success criteria: ${JSON.stringify(objective.success_criteria || {})}`,
+      },
+    ],
+  });
+
+  const raw = data.choices?.[0]?.message?.content || '[]';
+  const cleaned = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+  let steps: any[];
+  try {
+    steps = JSON.parse(cleaned);
+    if (!Array.isArray(steps)) steps = [];
+  } catch {
+    steps = [{ id: 's1', order: 1, description: objective.goal, skill_name: null, skill_args: {}, status: 'pending' }];
+  }
+
+  // Ensure all steps have required fields
+  steps = steps.map((s: any, i: number) => ({
+    id: s.id || `s${i + 1}`,
+    order: s.order || i + 1,
+    description: s.description || `Step ${i + 1}`,
+    skill_name: s.skill_name || null,
+    skill_args: s.skill_args || {},
+    status: 'pending',
+  }));
+
+  return { steps, total_steps: steps.length };
+}
+
 // ─── Built-in tool handlers ──────────────────────────────────────────────────
 
 async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKey: string, fnName: string, args: any): Promise<any> {
+  // Decompose objective into multi-step plan
+  if (fnName === 'decompose_objective') {
+    const { objective_id } = args;
+    const { data: obj, error } = await supabase.from('agent_objectives')
+      .select('id, goal, constraints, success_criteria, progress')
+      .eq('id', objective_id).single();
+    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
+
+    const plan = await decomposeObjectiveIntoPlan(obj, supabase);
+    const progress = (obj.progress as Record<string, any>) || {};
+    progress.plan = { ...plan, current_step: 0, created_at: new Date().toISOString() };
+
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+    return { status: 'planned', objective_id, steps: plan.steps.length, plan: plan.steps };
+  }
+
+  // Advance plan: execute next pending step
+  if (fnName === 'advance_plan') {
+    const { objective_id } = args;
+    const { data: obj, error } = await supabase.from('agent_objectives')
+      .select('id, goal, progress')
+      .eq('id', objective_id).single();
+    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
+
+    const progress = (obj.progress as Record<string, any>) || {};
+    const plan = progress.plan;
+    if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.' };
+
+    // Find next pending step
+    const nextStep = plan.steps.find((s: any) => s.status === 'pending');
+    if (!nextStep) return { status: 'all_done', message: 'All plan steps completed.' };
+
+    // Mark step as running
+    nextStep.status = 'running';
+    plan.current_step = nextStep.order;
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+    // Execute the step's skill
+    let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
+    if (nextStep.skill_name) {
+      try {
+        const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            skill_name: nextStep.skill_name,
+            arguments: nextStep.skill_args || {},
+            agent_type: 'magnet',
+          }),
+        });
+        result = await resp.json();
+      } catch (err: any) {
+        result = { error: err.message };
+      }
+    }
+
+    // Update step status
+    const success = !result.error && result.status !== 'failed';
+    nextStep.status = success ? 'done' : 'failed';
+    nextStep.result = result;
+    nextStep.completed_at = new Date().toISOString();
+
+    // Check if all steps are done
+    const allDone = plan.steps.every((s: any) => s.status === 'done');
+    const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
+    plan.completed = allDone;
+    plan.has_failures = anyFailed;
+
+    // Update progress
+    progress.plan = plan;
+    progress.total_runs = (progress.total_runs || 0) + 1;
+    progress.last_updated = new Date().toISOString();
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+    const remaining = plan.steps.filter((s: any) => s.status === 'pending').length;
+    return {
+      status: success ? 'step_completed' : 'step_failed',
+      step: nextStep.description,
+      skill: nextStep.skill_name,
+      result,
+      remaining_steps: remaining,
+      plan_completed: allDone,
+    };
+  }
+
   // Memory write
   if (fnName === 'memory_write') {
     const { key, value, category = 'context' } = args;
