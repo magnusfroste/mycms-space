@@ -35,10 +35,12 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       ref={containerRef}
       className={
         fullPage
-          ? "flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 pb-4 flex flex-col justify-end scroll-smooth"
-          : "h-80 overflow-y-auto max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col justify-end scroll-smooth"
+          ? "flex-1 overflow-y-auto max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 pb-4 flex flex-col scroll-smooth"
+          : "h-80 overflow-y-auto max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col scroll-smooth"
       }
     >
+      {/* Spacer pushes messages to bottom when few, but allows scrolling when many */}
+      <div className="flex-1" />
       {hasMessages && (
         <div className="space-y-5 animate-fade-in">
           {messages.map((message) => (
