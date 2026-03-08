@@ -274,6 +274,9 @@ const GeneralSettings: React.FC = () => {
       {/* API Tokens */}
       <ApiTokensCard />
 
+      {/* Chrome Extension Bridge */}
+      <ExtensionBridge />
+
       {/* Admin AI Tools Provider */}
       <Card>
         <CardHeader>
