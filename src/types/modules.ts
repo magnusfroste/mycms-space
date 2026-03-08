@@ -516,7 +516,8 @@ export type ModuleConfigType =
   | GitHubModuleConfig
   | BrandingModuleConfig
   | WebhooksModuleConfig
-  | ResumeModuleConfig;
+  | ResumeModuleConfig
+  | ChromeExtensionModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
