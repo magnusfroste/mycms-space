@@ -251,19 +251,6 @@ const Admin = () => {
     </header>
   );
 
-  if (mode === 'chat') {
-    return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <HeaderBar />
-        <div className="flex-1 overflow-hidden">
-          <Suspense fallback={<AdminLoadingFallback />}>
-            <MagnetChat />
-          </Suspense>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -272,13 +259,21 @@ const Admin = () => {
           onTabChange={handleTabChange}
           onLogout={handleLogout}
         />
-        <SidebarInset>
+        <SidebarInset className="flex flex-col">
           <HeaderBar />
-          <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
-            <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
-              {renderContent()}
+          {mode === 'chat' ? (
+            <div className="flex-1 overflow-hidden">
+              <Suspense fallback={<AdminLoadingFallback />}>
+                <MagnetChat />
+              </Suspense>
             </div>
-          </div>
+          ) : (
+            <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+              <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
+                {renderContent()}
+              </div>
+            </div>
+          )}
         </SidebarInset>
       </div>
     </SidebarProvider>
