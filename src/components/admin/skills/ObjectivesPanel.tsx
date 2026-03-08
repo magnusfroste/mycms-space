@@ -122,6 +122,18 @@ export function ObjectivesPanel() {
                     {(obj.progress as any)?.reason && (obj.progress as any)?.proposed_by === 'magnet' && (
                       <p className="text-[10px] text-muted-foreground mt-1 italic">💡 {(obj.progress as any).reason}</p>
                     )}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {(obj.constraints as any)?.priority && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                          {(obj.constraints as any).priority}
+                        </Badge>
+                      )}
+                      {(obj.constraints as any)?.deadline && (
+                        <span className="text-[9px] text-muted-foreground">
+                          ⏰ {new Date((obj.constraints as any).deadline).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {pct !== null && (
