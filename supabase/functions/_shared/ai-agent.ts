@@ -409,6 +409,54 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
       });
     }
 
+    // --- File Manager ---
+    case 'file_list': {
+      const bucket = (toolArgs.bucket as string) || 'cms-files';
+      const prefix = (toolArgs.prefix as string) || '';
+      const limit = (toolArgs.limit as number) || 100;
+      const { data, error } = await supabase.storage.from(bucket).list(prefix, {
+        limit,
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
+      if (error) return `❌ Failed to list files: ${error.message}`;
+      const files = (data || []).filter(f => f.id && f.name).map(f => ({
+        name: f.name,
+        size: f.metadata?.size || 0,
+        type: f.metadata?.mimetype || 'unknown',
+        created: f.created_at,
+      }));
+      return JSON.stringify({ bucket, files, count: files.length });
+    }
+    case 'file_read': {
+      const bucket = (toolArgs.bucket as string) || 'cms-files';
+      const path = toolArgs.path as string;
+      const { data, error } = await supabase.storage.from(bucket).download(path);
+      if (error) return `❌ Failed to read file: ${error.message}`;
+      const text = await data.text();
+      return text.length > 50000 ? text.slice(0, 50000) + '\n\n... [truncated]' : text;
+    }
+    case 'file_write': {
+      const bucket = (toolArgs.bucket as string) || 'cms-files';
+      const path = toolArgs.path as string;
+      const content = toolArgs.content as string;
+      const contentType = (toolArgs.content_type as string) || 'text/plain';
+      const blob = new Blob([content], { type: contentType });
+      const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+        upsert: true,
+        contentType,
+      });
+      if (error) return `❌ Failed to write file: ${error.message}`;
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+      return `✅ File written: ${bucket}/${path}\nURL: ${urlData.publicUrl}`;
+    }
+    case 'file_delete': {
+      const bucket = (toolArgs.bucket as string) || 'cms-files';
+      const path = toolArgs.path as string;
+      const { error } = await supabase.storage.from(bucket).remove([path]);
+      if (error) return `❌ Failed to delete file: ${error.message}`;
+      return `✅ File deleted: ${bucket}/${path}`;
+    }
+
     default:
       return `Unknown built-in tool: ${toolName}`;
   }
