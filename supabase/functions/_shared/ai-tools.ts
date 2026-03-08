@@ -628,6 +628,7 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'objective_update_progress', 'objective_complete',
   'automation_create', 'automation_list',
   'reflect',
+  'resume_lookup',
 ];
 
 /** Get filtered tools based on enabled tool IDs and mode */
