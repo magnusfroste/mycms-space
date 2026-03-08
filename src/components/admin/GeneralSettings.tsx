@@ -25,9 +25,101 @@ function generateApiKey(): string {
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// ---- Reusable Token Row ----
+interface TokenRowProps {
+  label: string;
+  description: string;
+  tokenKey: string; // key in module_config
+  tokenConfig: Record<string, unknown> | null;
+  moduleId: string | undefined;
+  onUpdated: () => void;
+}
+
+const TokenRow: React.FC<TokenRowProps> = ({ label, description, tokenKey, tokenConfig, moduleId, onUpdated }) => {
+  const [showKey, setShowKey] = useState(false);
+  const value = tokenConfig?.[tokenKey] as string | undefined;
+
+  const upsert = useMutation({
+    mutationFn: async (newKey: string) => {
+      const config = { ...(tokenConfig || {}), [tokenKey]: newKey };
+      if (moduleId) {
+        await supabase.from('modules').update({ module_config: config }).eq('id', moduleId);
+      } else {
+        await supabase.from('modules').insert({ module_type: 'api_tokens', module_config: config });
+      }
+    },
+    onSuccess: () => { onUpdated(); toast.success(`${label} saved`); },
+    onError: () => toast.error(`Failed to save ${label}`),
+  });
+
+  const handleGenerate = () => upsert.mutate(generateApiKey());
+  const handleCopy = () => { if (value) { navigator.clipboard.writeText(value); toast.success('Copied'); } };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">{label}</Label>
+        <span className="text-xs text-muted-foreground">{description}</span>
+      </div>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            readOnly
+            value={value ? (showKey ? value : '••••••••••••••••••••••••') : 'No key generated'}
+            className="pr-10 font-mono text-sm bg-muted/50"
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={() => setShowKey(!showKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          )}
+        </div>
+        {value && (
+          <Button variant="outline" size="icon" onClick={handleCopy} title="Copy">
+            <Copy className="h-4 w-4" />
+          </Button>
+        )}
+        {value ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="icon" disabled={upsert.isPending} title="Rotate key">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Rotate {label}?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  The current key will be permanently invalidated. All clients using it will lose access until updated.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleGenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Rotate
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <Button onClick={handleGenerate} disabled={upsert.isPending}>
+            Generate
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ---- API Tokens Card ----
 const ApiTokensCard: React.FC = () => {
-  const [showKey, setShowKey] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: tokenConfig, isLoading } = useQuery({
@@ -42,36 +134,9 @@ const ApiTokensCard: React.FC = () => {
     },
   });
 
-  const a2aKey = (tokenConfig?.module_config as Record<string, unknown>)?.a2a_api_key as string | undefined;
-
-  const upsertKey = useMutation({
-    mutationFn: async (newKey: string) => {
-      const existing = tokenConfig?.id;
-      const config = { ...(tokenConfig?.module_config as Record<string, unknown> || {}), a2a_api_key: newKey };
-      if (existing) {
-        await supabase.from('modules').update({ module_config: config }).eq('id', existing);
-      } else {
-        await supabase.from('modules').insert({ module_type: 'api_tokens', module_config: config });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-tokens-module'] });
-      toast.success('A2A API key saved');
-    },
-    onError: () => toast.error('Failed to save key'),
-  });
-
-  const handleGenerate = () => {
-    const key = generateApiKey();
-    upsertKey.mutate(key);
-  };
-
-  const handleCopy = () => {
-    if (a2aKey) {
-      navigator.clipboard.writeText(a2aKey);
-      toast.success('Copied to clipboard');
-    }
-  };
+  const config = (tokenConfig?.module_config as Record<string, unknown>) || null;
+  const moduleId = tokenConfig?.id;
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['api-tokens-module'] });
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
 
@@ -83,70 +148,35 @@ const ApiTokensCard: React.FC = () => {
           API Tokens
         </CardTitle>
         <CardDescription>
-          Keys for external agents and integrations to access your A2A endpoint
+          Keys for external agents, Chrome extension, and integrations
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>A2A API Key</Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                readOnly
-                value={a2aKey ? (showKey ? a2aKey : '••••••••••••••••••••••••') : 'No key generated'}
-                className="pr-10 font-mono text-sm bg-muted/50"
-              />
-              {a2aKey && (
-                <button
-                  type="button"
-                  onClick={() => setShowKey(!showKey)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              )}
-            </div>
-            {a2aKey && (
-              <Button variant="outline" size="icon" onClick={handleCopy} title="Copy">
-                <Copy className="h-4 w-4" />
-              </Button>
-            )}
-            {a2aKey ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="icon" disabled={upsertKey.isPending} title="Rotate key">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                      Rotate A2A API Key?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      The current key will be permanently invalidated. All external agents using it will lose access until updated with the new key.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleGenerate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Rotate Key
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : (
-              <Button onClick={handleGenerate} disabled={upsertKey.isPending}>
-                Generate Key
-              </Button>
-            )}
-          </div>
-        </div>
+      <CardContent className="space-y-6">
+        {/* A2A Token */}
+        <TokenRow
+          label="A2A API Key"
+          description="Agent-to-agent communication"
+          tokenKey="a2a_api_key"
+          tokenConfig={config}
+          moduleId={moduleId}
+          onUpdated={invalidate}
+        />
+
+        <div className="border-t border-border" />
+
+        {/* Signal Ingest Token */}
+        <TokenRow
+          label="Signal Ingest Token"
+          description="Chrome extension & signals"
+          tokenKey="signal_ingest_token"
+          tokenConfig={config}
+          moduleId={moduleId}
+          onUpdated={invalidate}
+        />
 
         {/* Endpoint info */}
         <div className="rounded-lg bg-muted/50 p-4 space-y-3">
-          <p className="text-sm font-medium">🔗 Connection Details</p>
+          <p className="text-sm font-medium">🔗 Endpoints</p>
           
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Discovery (public)</Label>
@@ -161,7 +191,7 @@ const ApiTokensCard: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">A2A Endpoint (requires key)</Label>
+            <Label className="text-xs text-muted-foreground">A2A Negotiate</Label>
             <div className="flex gap-2 items-center">
               <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
                 {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-negotiate`}
@@ -173,9 +203,21 @@ const ApiTokensCard: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Header</Label>
+            <Label className="text-xs text-muted-foreground">Signal Ingest</Label>
+            <div className="flex gap-2 items-center">
+              <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
+                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/signal-ingest`}
+              </code>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/signal-ingest`); toast.success('Copied'); }}>
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Header format</Label>
             <code className="text-xs block bg-background rounded p-2 border overflow-x-auto">
-              Authorization: Bearer {'<your-a2a-key>'}
+              Authorization: Bearer {'<your-token>'}
             </code>
           </div>
         </div>
@@ -183,7 +225,6 @@ const ApiTokensCard: React.FC = () => {
     </Card>
   );
 };
-
 // ---- Main Component ----
 const GeneralSettings: React.FC = () => {
   const { config, isLoading } = useAIModule();
