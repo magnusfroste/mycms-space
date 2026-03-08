@@ -78,10 +78,18 @@ Deno.serve(async (req) => {
     }, null, 2), { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=60' } });
   }
 
-  // POST → handle A2A messages
+  // POST → handle A2A messages (requires API key)
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405, headers: corsHeaders,
+    });
+  }
+
+  // Validate A2A API key
+  const isAuthorized = await validateA2AToken(supabase, req);
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Provide a valid Bearer token.' }), {
+      status: 401, headers: corsHeaders,
     });
   }
 
