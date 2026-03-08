@@ -198,7 +198,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
               initialMessages={initialMessages}
               initialSessionId={activeSessionId ?? undefined}
               siteContext={contextData}
-              integration={selectedIntegration}
+              integration={effectiveIntegration}
               integrationConfig={aiConfig?.integration}
               systemPrompt={aiConfig?.system_prompt || ''}
               enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
