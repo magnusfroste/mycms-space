@@ -241,6 +241,17 @@ export default function OverviewPanel() {
         </Alert>
       )}
 
+      {/* Live Activity Feed */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Live Feed</CardTitle>
+          <CardDescription>Real-time agent executions</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 pb-2">
+          <LiveActivityFeed />
+        </CardContent>
+      </Card>
+
       {/* Active Automations */}
       <AutomationsSummary />
 
