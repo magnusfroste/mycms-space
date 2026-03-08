@@ -735,15 +735,24 @@ HEARTBEAT PROTOCOL:
    - Recurring errors → reliability objective
    Only propose if genuinely valuable. Max 1 new objective per heartbeat.
 3. PLAN — For each active objective WITHOUT a plan (no progress.plan), call decompose_objective to create a step-by-step plan.
-4. ADVANCE — For each objective WITH a plan that has pending steps, call advance_plan to execute the next step.
+4. ADVANCE — Objectives are pre-sorted by priority score. Advance them IN ORDER (highest score first). Use advance_plan with chain=true to execute multiple steps per objective.
 5. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
 6. REFLECT — Analyze if objectives need plan adjustments.
 7. REMEMBER — Save learnings to memory.
 8. SUMMARIZE — Brief heartbeat report including plan progress and any new proposals.
 
+PRIORITY SCORING (automatic, shown as [score:N]):
+- Deadline proximity: overdue +50, <1 day +40, <3 days +25, <7 days +10
+- Priority field: critical +35, high +20, medium +10
+- Momentum: in-progress plans +15, near completion (>70%) +10
+- Staleness: no update >3 days +8, >7 days +12
+- Failures: plan has failed steps +10
+- No plan yet: +5 (to get started)
+Advance the HIGHEST scored objectives first. If iteration budget is limited, skip low-priority objectives.
+
 MULTI-STEP PLANNING RULES:
 - Each objective should have a plan (3-7 steps). Use decompose_objective to create one.
-- Call advance_plan to execute one step at a time. The system handles skill routing.
+- advance_plan auto-chains up to 4 steps per call. Use it — don't call advance_plan repeatedly for the same objective.
 - If a step fails, note it but continue to the next objective — don't retry in the same heartbeat.
 - If ALL steps are done, mark the objective as completed via objective_complete.
 - Plans persist between heartbeats. Magnet picks up where it left off.
@@ -754,13 +763,14 @@ PROACTIVE REASONING RULES:
 - Include a clear "reason" explaining what data drove the proposal
 - Keep goals specific and actionable, not vague
 - Prefer improving existing objectives over creating new ones when possible
+- When proposing, set constraints.priority ('critical'|'high'|'medium'|'low') and optionally constraints.deadline
 
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations per heartbeat
 - Skills marked requires_approval will be BLOCKED and logged for admin review
-- PRIORITIZE: signals > proactive proposals > plan advancement > DUE automations
+- PRIORITIZE: signals > proactive proposals > high-score objectives > DUE automations
 - Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
-- Be efficient: advance 1-2 steps per objective per heartbeat`;
+- Be efficient: use chaining, focus on top 2-3 objectives per heartbeat`;
 
     // 4. Run agentic loop
     const messages: any[] = [
