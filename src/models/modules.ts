@@ -17,6 +17,7 @@ import type {
   GitHubModuleConfig,
   WebhooksModuleConfig,
   ResumeModuleConfig,
+  ChromeExtensionModuleConfig,
 } from '@/types/modules';
 import { defaultModuleConfigs } from '@/types/modules';
 
