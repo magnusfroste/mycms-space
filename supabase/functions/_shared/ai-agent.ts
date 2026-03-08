@@ -35,6 +35,12 @@ export interface AgentRequest {
 export interface AgentResult {
   output: string;
   artifacts?: Array<{ type: string; title: string; data: unknown }>;
+  /** When set, the frontend must execute this client-side tool and re-send */
+  client_action?: {
+    tool_name: string;
+    tool_args: Record<string, unknown>;
+    conversation_state: unknown[];
+  };
 }
 
 const MAX_TOOL_ITERATIONS = 6;
