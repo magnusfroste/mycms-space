@@ -32,6 +32,7 @@ const triggerIcons: Record<string, typeof Clock> = {
 
 function AutomationsSummary() {
   const { data: automations = [], isLoading } = useAutomations();
+  const toggle = useToggleAutomation();
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;
   if (automations.length === 0) return null;
