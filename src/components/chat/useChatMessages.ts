@@ -339,12 +339,13 @@ export const useChatMessages = ({
     [isLoading, skipWebhook, addUserMessage, sendMessageWithText]
   );
 
-  // Auto-send last user message if initializing with messages
+  // Auto-send last user message if initializing with a NEW conversation (not history)
   useEffect(() => {
     if (
       initialMessages &&
       initialMessages.length > 0 &&
-      !hasSentInitialMessageRef.current
+      !hasSentInitialMessageRef.current &&
+      !initialSessionId // Only auto-send for new conversations, not loaded history
     ) {
       const lastMessage = initialMessages[initialMessages.length - 1];
 
