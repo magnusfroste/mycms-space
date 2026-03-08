@@ -8,7 +8,7 @@ import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { Badge } from "@/components/ui/badge";
-import { Database, ChevronDown, LogOut } from "lucide-react";
+import { Database, ChevronDown, LogOut, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,7 +33,11 @@ const adminQuickActions = [
   { id: 'newsletter', label: '📰 Draft newsletter', message: 'Draft a newsletter from recent research and published blog posts.', icon: 'Mail', order_index: 4, enabled: true },
 ];
 
-const MagnetChat: React.FC = () => {
+interface MagnetChatProps {
+  onNavigateBack?: () => void;
+}
+
+const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
@@ -81,7 +85,7 @@ const MagnetChat: React.FC = () => {
     : "AD";
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen w-full">
       {/* Sidebar */}
       <ChatSidebar
         isOpen={sidebarOpen}
@@ -94,9 +98,15 @@ const MagnetChat: React.FC = () => {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Compact toolbar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border h-12">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet Co-Pilot</h2>
+            {onNavigateBack && (
+              <Button variant="ghost" size="sm" onClick={onNavigateBack} className="gap-1 h-7 text-xs text-muted-foreground shrink-0">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Dashboard
+              </Button>
+            )}
+            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet</h2>
             {hasContext && (
               <Badge variant="secondary" className="text-xs gap-1 shrink-0">
                 <Database className="h-3 w-3" />
