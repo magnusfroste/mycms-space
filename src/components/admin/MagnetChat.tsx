@@ -8,14 +8,14 @@ import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { Badge } from "@/components/ui/badge";
-import { Database, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Database } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
 import { useChromeExtensionModule } from "@/models/modules";
 import { useSessionMessages } from "@/models/chatMessages";
@@ -107,25 +107,21 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1 h-7 text-xs">
-                  {selectedMeta?.name || 'Select AI'}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background border-border">
+            <Select
+              value={effectiveIntegration}
+              onValueChange={(val) => setOverrideIntegration(val as AIIntegrationType)}
+            >
+              <SelectTrigger className="h-7 text-xs w-auto gap-1 min-w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
                 {availableIntegrations.map((meta) => (
-                  <DropdownMenuItem
-                    key={meta.type}
-                    onSelect={() => setOverrideIntegration(meta.type as AIIntegrationType)}
-                    className={effectiveIntegration === meta.type ? 'bg-accent' : ''}
-                  >
+                  <SelectItem key={meta.type} value={meta.type}>
                     {meta.name}
-                  </DropdownMenuItem>
+                  </SelectItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
