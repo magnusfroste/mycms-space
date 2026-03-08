@@ -76,6 +76,7 @@ const Admin = () => {
   const { user, loading, signOut } = useAuth();
   const { data: pages = [] } = usePages();
 
+  const tabFromUrl = searchParams.get('tab') || 'dashboard';
   // Redirect legacy autopilot tab to skill-hub
   const resolvedTab = tabFromUrl === 'autopilot' ? 'skill-hub' : tabFromUrl;
   const [activeTab, setActiveTab] = useState(resolvedTab);
