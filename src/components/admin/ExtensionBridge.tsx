@@ -61,8 +61,11 @@ const ExtensionBridge: React.FC = () => {
   useEffect(() => {
     if (!isLoading) {
       setExtensionId(safeConfig.extension_id);
+      if (safeConfig.auto_connect && safeConfig.extension_id.trim()) {
+        ping();
+      }
     }
-  }, [isLoading, safeConfig]);
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveId = (id: string) => {
     setExtensionId(id);
