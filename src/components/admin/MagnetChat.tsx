@@ -59,7 +59,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
     : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
   // Load historical session messages
-  const { data: sessionMessages } = useSessionMessages(activeSessionId);
+  const { data: sessionMessages, isLoading: sessionLoading } = useSessionMessages(activeSessionId);
 
   const initialMessages: Message[] | undefined = activeSessionId && sessionMessages
     ? sessionMessages.map((m) => ({
@@ -69,6 +69,11 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
       }))
     : undefined;
 
+  // Use a stable key that only updates when session data is ready
+  const chatKey = activeSessionId
+    ? (sessionLoading ? null : `session-${activeSessionId}`)
+    : `new-${resetTrigger}`;
+
   const handleNewChat = useCallback(() => {
     setActiveSessionId(null);
     setResetTrigger((prev) => prev + 1);
@@ -76,7 +81,6 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
 
   const handleSelectSession = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
-    setResetTrigger((prev) => prev + 1);
   }, []);
 
   // User initials for avatar
