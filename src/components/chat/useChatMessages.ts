@@ -233,7 +233,7 @@ export const useChatMessages = ({
           setMessages((prev) => [...prev, workingMessage]);
 
           // Execute client-side tool
-          const toolResult = await executeClientAction(data.client_action);
+          const toolResult = await executeClientAction(data.client_action, extensionId);
 
           // Re-send with the tool result injected into conversation
           const conversationState = data.client_action.conversation_state || [];
