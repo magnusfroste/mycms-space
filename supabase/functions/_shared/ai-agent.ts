@@ -172,6 +172,7 @@ const BUILT_IN_TOOL_NAMES = [
   'reflect',
   'get_site_stats',
   'get_visitor_insights',
+  'file_list', 'file_read', 'file_write', 'file_delete',
 ];
 
 function isBuiltInTool(name: string): boolean {
