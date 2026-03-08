@@ -326,12 +326,89 @@ check the review queue, approve pending tasks, show site analytics, and save/upd
 // Resume Context Loader (Server-side)
 // ============================================
 
-/** Load resume/profile context from page blocks in the database */
+/** Load structured resume from resume_entries + resume module config */
 export async function loadResumeContext(): Promise<string | null> {
   try {
     const supabase = getSupabaseClient();
     if (!supabase) return null;
 
+    // Try structured resume_entries first
+    const { data: entries, error: entriesError } = await supabase
+      .from('resume_entries')
+      .select('*')
+      .eq('enabled', true)
+      .order('category')
+      .order('order_index');
+
+    // Load resume module config for profile summary
+    const { data: moduleData } = await supabase
+      .from('modules')
+      .select('module_config')
+      .eq('module_type', 'resume')
+      .maybeSingle();
+
+    const config = moduleData?.module_config as Record<string, unknown> | null;
+
+    // If we have structured entries, use them
+    if (!entriesError && entries?.length) {
+      const sections: string[] = [];
+
+      // Profile header
+      if (config) {
+        const profileParts: string[] = [];
+        if (config.owner_name) profileParts.push(`# ${config.owner_name}`);
+        if (config.owner_title) profileParts.push(`**${config.owner_title}**`);
+        if (config.owner_summary) profileParts.push(config.owner_summary as string);
+        if (config.owner_location) profileParts.push(`Location: ${config.owner_location}`);
+        if (config.owner_availability) profileParts.push(`Availability: ${config.owner_availability}${config.availability_note ? ` — ${config.availability_note}` : ''}`);
+        if (profileParts.length) sections.push(profileParts.join('\n'));
+      }
+
+      // Group by category
+      const grouped: Record<string, typeof entries> = {};
+      for (const entry of entries) {
+        const cat = entry.category as string;
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(entry);
+      }
+
+      const categoryLabels: Record<string, string> = {
+        summary: 'Professional Summary',
+        experience: 'Experience',
+        education: 'Education',
+        certification: 'Certifications',
+        skill: 'Skills',
+        language: 'Languages',
+      };
+
+      for (const [cat, items] of Object.entries(grouped)) {
+        const label = categoryLabels[cat] || cat;
+        const lines: string[] = [`\n## ${label}`];
+
+        for (const item of items) {
+          const meta = item.metadata as Record<string, unknown> || {};
+          if (cat === 'experience' || cat === 'education') {
+            lines.push(`### ${item.title}${item.subtitle ? ` — ${item.subtitle}` : ''}`);
+            if (item.start_date) lines.push(`${item.start_date} — ${item.is_current ? 'Present' : item.end_date || ''}`);
+            if (item.description) lines.push(item.description as string);
+          } else if (cat === 'skill' || cat === 'language') {
+            const level = meta.level ? ` (${meta.level}%)` : '';
+            lines.push(`- ${item.title}${level}${item.subtitle ? ` — ${item.subtitle}` : ''}`);
+          } else {
+            lines.push(`- **${item.title}**${item.description ? `: ${item.description}` : ''}`);
+          }
+          if ((item.tags as string[])?.length) {
+            lines.push(`  Tags: ${(item.tags as string[]).join(', ')}`);
+          }
+        }
+        sections.push(lines.join('\n'));
+      }
+
+      console.log(`[AI Context] Loaded structured resume: ${entries.length} entries`);
+      return sections.join('\n\n');
+    }
+
+    // Fallback: scrape page blocks (legacy)
     const { data: blocks, error } = await supabase
       .from("page_blocks")
       .select("block_type, block_config, page_slug")
@@ -339,45 +416,45 @@ export async function loadResumeContext(): Promise<string | null> {
       .order("order_index");
 
     if (error || !blocks?.length) {
-      console.log("[AI Context] No page blocks found for resume context");
+      console.log("[AI Context] No resume data found");
       return null;
     }
 
     const sections: string[] = [];
 
     for (const block of blocks) {
-      const config = block.block_config as Record<string, unknown>;
-      if (!config) continue;
+      const blockConfig = block.block_config as Record<string, unknown>;
+      if (!blockConfig) continue;
 
       const pageParts: string[] = [];
 
-      if (config.name) pageParts.push(`Name: ${config.name}`);
-      if (config.tagline) pageParts.push(`Tagline: ${config.tagline}`);
-      if (config.intro_text) pageParts.push(`About: ${config.intro_text}`);
-      if (config.additional_text) pageParts.push(`${config.additional_text}`);
-      if (config.title && typeof config.title === 'string') pageParts.push(`${config.title}`);
-      if (config.content && typeof config.content === 'string') pageParts.push(`${config.content}`);
+      if (blockConfig.name) pageParts.push(`Name: ${blockConfig.name}`);
+      if (blockConfig.tagline) pageParts.push(`Tagline: ${blockConfig.tagline}`);
+      if (blockConfig.intro_text) pageParts.push(`About: ${blockConfig.intro_text}`);
+      if (blockConfig.additional_text) pageParts.push(`${blockConfig.additional_text}`);
+      if (blockConfig.title && typeof blockConfig.title === 'string') pageParts.push(`${blockConfig.title}`);
+      if (blockConfig.content && typeof blockConfig.content === 'string') pageParts.push(`${blockConfig.content}`);
 
-      if (Array.isArray(config.skills)) {
-        const skills = config.skills as Array<{ name?: string; level?: number; category?: string }>;
+      if (Array.isArray(blockConfig.skills)) {
+        const skills = blockConfig.skills as Array<{ name?: string; level?: number; category?: string }>;
         const skillTexts = skills.map(s => `${s.name || ''} (${s.level || 0}%, ${s.category || ''})`);
         if (skillTexts.length) pageParts.push(`Skills: ${skillTexts.join(', ')}`);
       }
 
-      if (Array.isArray(config.values)) {
-        const vals = config.values as Array<{ title?: string; description?: string }>;
+      if (Array.isArray(blockConfig.values)) {
+        const vals = blockConfig.values as Array<{ title?: string; description?: string }>;
         const valTexts = vals.map(v => `${v.title}: ${v.description}`);
         if (valTexts.length) pageParts.push(`Values: ${valTexts.join('; ')}`);
       }
 
-      if (Array.isArray(config.items)) {
-        const items = config.items as Array<{ title?: string; description?: string }>;
+      if (Array.isArray(blockConfig.items)) {
+        const items = blockConfig.items as Array<{ title?: string; description?: string }>;
         const itemTexts = items.filter(i => i.title).map(i => `${i.title}: ${i.description || ''}`);
         if (itemTexts.length) pageParts.push(`${block.block_type}: ${itemTexts.join('; ')}`);
       }
 
-      if (Array.isArray(config.projects)) {
-        const projects = config.projects as Array<{
+      if (Array.isArray(blockConfig.projects)) {
+        const projects = blockConfig.projects as Array<{
           title?: string; description?: string;
           problem_statement?: string; why_built?: string;
         }>;
@@ -390,8 +467,8 @@ export async function loadResumeContext(): Promise<string | null> {
         }
       }
 
-      if (Array.isArray(config.features)) {
-        const features = config.features as Array<{ text?: string }>;
+      if (Array.isArray(blockConfig.features)) {
+        const features = blockConfig.features as Array<{ text?: string }>;
         const featureTexts = features.map(f => f.text).filter(Boolean);
         if (featureTexts.length) pageParts.push(`Features: ${featureTexts.join(', ')}`);
       }
@@ -403,7 +480,7 @@ export async function loadResumeContext(): Promise<string | null> {
 
     if (!sections.length) return null;
 
-    console.log(`[AI Context] Loaded resume: ${sections.length} block sections`);
+    console.log(`[AI Context] Loaded resume (legacy): ${sections.length} block sections`);
     return sections.join('\n\n');
   } catch (e) {
     console.error("[AI Context] Failed to load resume context:", e);

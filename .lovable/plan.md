@@ -1,114 +1,52 @@
 
+# Magnet Dual-Mode: Public Agent vs Private Agent
 
-## Resume Module — Knowledge Base + Agency Integration
+## Status: ✅ Implemented
 
-### Current State
+The `/chat` route now detects authentication state and switches Magnet between two modes:
 
-- **CV Agent Block** (`CvAgentBlock.tsx`): Public-facing CTA that funnels JDs into `/chat` with `source: 'cv-agent'`
-- **Resume Context** (`ai-context.ts`): `loadResumeContext()` scrapes *all* `page_blocks` for skills, values, projects — unstructured, flat
-- **CV Agent Tool** (`ai-tools.ts`): `generate_tailored_cv` tool that Magnet uses to analyze JDs
-- **No dedicated resume data model** — everything lives in page blocks as JSONB
+### Public Mode (visitors)
+- Tools: CV Agent, Portfolio, Project Deep Dive, Availability
+- Persona: "Magnet, Magnus's digital twin"
 
-### Problem
+### Admin Mode (logged-in)
+- Tools: Research, Draft Blog, Draft All Channels, Review Queue, Approve Task, Site Stats
+- Persona: "Magnet CMS co-pilot"
+- Admin badge shown in header
 
-Resume data is scattered across page blocks (skills-bar, about-split, values, etc.) with no structured schema. The CV Agent reads whatever blocks exist but has no first-class knowledge base for experience, certifications, education, or role history.
+---
 
-### Plan: Resume Module
+# Resume Module — Knowledge Base + Agency Integration
 
-#### 1. New Database Table: `resume_entries`
+## Status: ✅ Implemented
 
-A single structured table that serves as the canonical knowledge base:
+### What was built
 
-```sql
-CREATE TABLE public.resume_entries (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  category text NOT NULL, -- 'experience' | 'education' | 'certification' | 'skill' | 'language' | 'summary'
-  title text NOT NULL,
-  subtitle text, -- company, institution, issuer
-  description text,
-  start_date date,
-  end_date date,
-  is_current boolean DEFAULT false,
-  tags text[] DEFAULT '{}',
-  metadata jsonb DEFAULT '{}', -- level (for skills), url, etc.
-  order_index integer DEFAULT 0,
-  enabled boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+1. **Database**: `resume_entries` table with categories (experience, education, certification, skill, language, summary), RLS policies for public read + admin manage
+2. **Resume Module Config**: Added `'resume'` to `ModuleType` with `ResumeModuleConfig` (owner_name, title, summary, location, availability)
+3. **Data/Model layers**: `src/data/resume.ts` + `src/models/resume.ts` (React Query hooks)
+4. **Admin UI**: `ResumeManager.tsx` with profile card + tabbed entry editor (add/edit/delete per category)
+5. **AI Context**: `loadResumeContext()` upgraded to load structured `resume_entries` first, falls back to legacy block-scraping
+6. **Agency Integration**: `resume_lookup` tool added so Magnet can query resume by category/tags
+7. **Admin Sidebar**: Resume tab (BookUser icon) between Newsletter and Agency
 
-ALTER TABLE public.resume_entries ENABLE ROW LEVEL SECURITY;
+### Files Changed
 
--- Public read for visitor-facing features
-CREATE POLICY "Public can view enabled resume entries"
-  ON public.resume_entries FOR SELECT USING (enabled = true);
+| File | Change |
+|------|--------|
+| `src/types/modules.ts` | Added `'resume'` to ModuleType, ResumeModuleConfig, defaults |
+| `src/models/modules.ts` | Added `useResumeModule()` + `useUpdateResumeModule()` |
+| `src/data/resume.ts` | New data layer |
+| `src/models/resume.ts` | New React Query hooks |
+| `src/components/admin/ResumeManager.tsx` | New admin UI |
+| `src/components/admin/AdminSidebar.tsx` | Added Resume tab |
+| `src/pages/Admin.tsx` | Wired ResumeManager |
+| `supabase/functions/_shared/ai-context.ts` | Structured resume loader |
+| `supabase/functions/_shared/ai-tools.ts` | `resume_lookup` tool + descriptions |
 
--- Admin full access
-CREATE POLICY "Authenticated can manage resume entries"
-  ON public.resume_entries FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
-```
+### Next Steps
 
-#### 2. Resume Module in `modules` table
-
-Add `'resume'` to `ModuleType`. Config:
-
-```typescript
-interface ResumeModuleConfig {
-  owner_name: string;
-  owner_title: string;
-  owner_summary: string;
-  owner_location?: string;
-  owner_availability?: 'available' | 'limited' | 'unavailable';
-  availability_note?: string;
-}
-```
-
-#### 3. Admin UI: Resume Manager (`src/components/admin/ResumeManager.tsx`)
-
-New sidebar tab **Resume** (icon: `BookUser`) between Blog and Agency. Sections:
-
-- **Profile** card — name, title, summary, availability toggle
-- **Experience** — timeline entries with company, role, dates, description
-- **Skills** — name + level + category (replaces scattered skills-bar data)
-- **Education & Certifications** — grouped list
-- Each section uses inline add/edit with the same minimal style as existing editors
-
-#### 4. Upgrade `loadResumeContext()` in `ai-context.ts`
-
-Replace the current block-scraping logic with a structured query:
-
-```typescript
-async function loadResumeContext(): Promise<string | null> {
-  // 1. Load resume module config (profile summary)
-  // 2. Load resume_entries ordered by category + order_index
-  // 3. Format as structured markdown sections
-  // Falls back to existing block-scraping if no resume_entries exist
-}
-```
-
-This gives Magnet a clean, structured profile instead of parsing random block configs.
-
-#### 5. Agency Integration
-
-- **New agent skill**: `resume_lookup` — lets Magnet query `resume_entries` by category/tags during autonomous operations (e.g., when drafting proposals or responding to signals)
-- **CV Agent Block unchanged** — still funnels to `/chat`, but now `generate_tailored_cv` uses the structured resume data instead of scraped blocks
-- **Signal integration**: When resume entries change, optionally create an `agent_task` signal so Magnet can proactively update related content
-
-#### 6. Files to Create/Edit
-
-| Action | File |
-|--------|------|
-| Create | `supabase/migrations/..._resume_entries.sql` |
-| Create | `src/components/admin/ResumeManager.tsx` |
-| Create | `src/data/resume.ts` (data layer) |
-| Create | `src/models/resume.ts` (React Query hooks) |
-| Edit | `src/types/modules.ts` — add `'resume'` to ModuleType + ResumeModuleConfig |
-| Edit | `src/models/modules.ts` — add `useResumeModule()` |
-| Edit | `src/components/admin/AdminSidebar.tsx` — add Resume tab |
-| Edit | `src/pages/Admin.tsx` — wire ResumeManager |
-| Edit | `supabase/functions/_shared/ai-context.ts` — upgrade `loadResumeContext()` |
-| Edit | `supabase/functions/_shared/ai-tools.ts` — add `resume_lookup` tool definition |
-
-This keeps the CV Agent Block as the public interface while making Resume the structured knowledge backbone that powers both the agent's tools and the admin's content management.
-
+- [ ] Add inline editor for Resume Block on landing page
+- [ ] Implement `resume_lookup` handler in `agent-execute`
+- [ ] Add signal trigger when resume entries change
+- [ ] Import existing skills-bar data into resume_entries

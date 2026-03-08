@@ -885,6 +885,57 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_entries: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          end_date: string | null
+          id: string
+          is_current: boolean | null
+          metadata: Json | null
+          order_index: number | null
+          start_date: string | null
+          subtitle: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          metadata?: Json | null
+          order_index?: number | null
+          start_date?: string | null
+          subtitle?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          metadata?: Json | null
+          order_index?: number | null
+          start_date?: string | null
+          subtitle?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       settings_history: {
         Row: {
           changed_at: string
