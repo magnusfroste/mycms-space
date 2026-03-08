@@ -738,6 +738,11 @@ export const adminTools: Record<string, ToolDefinition> = {
   enrich_resume_entry: enrichResumeEntryTool,
   // Browser
   browser_scrape: browserScrapeTool,
+  // File Manager
+  file_list: fileListTool,
+  file_read: fileReadTool,
+  file_write: fileWriteTool,
+  file_delete: fileDeleteTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
