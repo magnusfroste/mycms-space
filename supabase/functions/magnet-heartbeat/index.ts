@@ -138,6 +138,33 @@ async function loadPendingSignals(supabase: any): Promise<string> {
   ).join('\n');
 }
 
+async function loadRecentSignalPatterns(supabase: any): Promise<string> {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const { data } = await supabase
+    .from('agent_tasks')
+    .select('input_data, status, created_at')
+    .eq('task_type', 'signal')
+    .gte('created_at', weekAgo.toISOString())
+    .order('created_at', { ascending: false }).limit(30);
+  if (!data?.length) return '\nNo recent signals for pattern analysis.';
+
+  // Summarize patterns by event type and source
+  const byEvent: Record<string, number> = {};
+  const bySource: Record<string, number> = {};
+  for (const t of data) {
+    const event = t.input_data?.event || t.input_data?.source_type || 'unknown';
+    const source = t.input_data?.source_type || 'unknown';
+    byEvent[event] = (byEvent[event] || 0) + 1;
+    bySource[source] = (bySource[source] || 0) + 1;
+  }
+
+  return `\n\n📊 Signal patterns (7 days, ${data.length} signals):\n` +
+    `Events: ${Object.entries(byEvent).map(([k, v]) => `${k}(${v})`).join(', ')}\n` +
+    `Sources: ${Object.entries(bySource).map(([k, v]) => `${k}(${v})`).join(', ')}\n` +
+    `Recent topics: ${data.slice(0, 5).map((t: any) => t.input_data?.title || '').filter(Boolean).join('; ')}`;
+}
+
 // ─── Self-healing: detect and disable failing skills ──────────────────────────
 
 async function runSelfHealing(supabase: any): Promise<string> {
