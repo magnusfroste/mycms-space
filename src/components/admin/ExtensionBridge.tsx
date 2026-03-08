@@ -61,8 +61,11 @@ const ExtensionBridge: React.FC = () => {
   useEffect(() => {
     if (!isLoading) {
       setExtensionId(safeConfig.extension_id);
+      if (safeConfig.auto_connect && safeConfig.extension_id.trim()) {
+        ping();
+      }
     }
-  }, [isLoading, safeConfig]);
+  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveId = (id: string) => {
     setExtensionId(id);
@@ -167,9 +170,9 @@ const ExtensionBridge: React.FC = () => {
               variant="outline"
               onClick={ping}
               disabled={loading || !extensionId.trim()}
-              className="shrink-0"
+              className="shrink-0 gap-1.5"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Ping'}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test Connection'}
             </Button>
           </div>
           {connected !== null && (
