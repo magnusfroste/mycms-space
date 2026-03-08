@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
+import { useChromeExtensionModule } from "@/models/modules";
 
 const adminQuickActions = [
   { id: 'stats', label: '📊 This week\'s stats', message: 'Show me this week\'s site stats — traffic, messages, and engagement.', icon: 'BarChart', order_index: 0, enabled: true },
