@@ -426,6 +426,42 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
   }
 
+  // Propose a new objective based on proactive analysis
+  if (fnName === 'propose_objective') {
+    const { goal, constraints, success_criteria, reason } = args;
+    // Check for duplicate active objectives with similar goals
+    const { data: existing } = await supabase.from('agent_objectives')
+      .select('id, goal').eq('status', 'active');
+    const isDuplicate = (existing || []).some((o: any) =>
+      o.goal.toLowerCase().includes(goal.toLowerCase().slice(0, 20)) ||
+      goal.toLowerCase().includes(o.goal.toLowerCase().slice(0, 20))
+    );
+    if (isDuplicate) {
+      return { status: 'skipped', reason: 'Similar objective already active' };
+    }
+
+    const { data: newObj, error } = await supabase.from('agent_objectives')
+      .insert({
+        goal,
+        constraints: constraints || {},
+        success_criteria: success_criteria || {},
+        progress: { proposed_by: 'magnet', reason: reason || 'proactive', proposed_at: new Date().toISOString() },
+        status: 'active',
+      })
+      .select('id').single();
+    if (error) return { status: 'error', error: error.message };
+
+    // Log the proposal
+    await supabase.from('agent_activity').insert({
+      agent: 'magnet', skill_name: 'propose_objective',
+      input: { goal, reason },
+      output: { objective_id: newObj.id },
+      status: 'success',
+    });
+
+    return { status: 'proposed', objective_id: newObj.id, goal };
+  }
+
   // Execute automation with next_run_at calculation
   if (fnName === 'execute_automation') {
     const { automation_id } = args;
