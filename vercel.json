@@ -1,5 +1,6 @@
 {
-  "rewrites": [
+"rewrites": [
+    { "source": "/.well-known/agent.json", "destination": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/agent-card" },
     { "source": "/sitemap.xml", "destination": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/sitemap-dynamic" },
     { "source": "/blog/:slug", "destination": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/og-blog?slug=:slug" },
     { "source": "/(.*)", "destination": "/index.html" }
