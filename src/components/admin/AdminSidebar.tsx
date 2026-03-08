@@ -24,6 +24,7 @@ import {
   Webhook,
   MessageSquare,
   Settings2,
+  BookUser,
 } from 'lucide-react';
 import {
   Sidebar,
