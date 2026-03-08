@@ -101,6 +101,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
         return <ValuesBlock config={block_config} />;
       case 'cv-agent':
         return <CvAgentBlock config={block_config} />;
+      case 'agent-status':
+        return <AgentStatusBlock config={block_config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">

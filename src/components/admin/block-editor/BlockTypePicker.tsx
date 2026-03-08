@@ -397,6 +397,14 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     preview: <GitHubPreview />,
     category: '2026',
   },
+  {
+    type: 'agent-status',
+    label: 'Agent Status ✨',
+    icon: <Sparkles className="h-4 w-4" />,
+    description: 'Show recent AI agent activity — promotes ClawCMS',
+    preview: <AgentStatusPreview />,
+    category: '2026',
+  },
 ];
 
 interface BlockTypePickerProps {

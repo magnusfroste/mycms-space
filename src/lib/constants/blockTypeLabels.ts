@@ -24,4 +24,5 @@ export const blockTypeLabels: Record<string, string> = {
   'newsletter-subscribe': 'Newsletter',
   'github': 'GitHub Repos',
   'cv-agent': 'CV Agent ✨',
+  'agent-status': 'Agent Status ✨',
 };

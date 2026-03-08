@@ -243,7 +243,8 @@ export type BlockType =
   | 'github'
   | 'skills-bar'
   | 'values'
-  | 'cv-agent';
+  | 'cv-agent'
+  | 'agent-status';
 
 export interface PageBlock {
   id: string;
