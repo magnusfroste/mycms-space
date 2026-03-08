@@ -44,7 +44,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   branding: BrandingSettings,
   integrations: IntegrationsManager,
   webhooks: WebhooksManager,
-  'ai-module': AIModuleSettings,
+  'chat-settings': AIModuleSettings,
   'projects-module': ProjectsModuleSettings,
   'blog-module': BlogModuleSettings,
   'seo-module': SEOModuleSettings,
@@ -55,7 +55,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   'chat-history': ChatHistoryManager,
   profile: ProfileSettings,
   settings: GeneralSettings,
-  magnet: MagnetChat,
+  chat: MagnetChat,
   agency: Agency,
 };
 
@@ -77,14 +77,14 @@ const Admin = () => {
   const { data: pages = [] } = usePages();
 
   const tabFromUrl = searchParams.get('tab') || 'dashboard';
-  // Redirect legacy tabs to agency
-  const resolvedTab = tabFromUrl === 'autopilot' || tabFromUrl === 'skill-hub' ? 'agency' : tabFromUrl;
+  // Redirect legacy tabs
+  const resolvedTab = tabFromUrl === 'autopilot' || tabFromUrl === 'skill-hub' ? 'agency' : tabFromUrl === 'magnet' ? 'chat' : tabFromUrl === 'ai-module' ? 'chat-settings' : tabFromUrl;
   const [activeTab, setActiveTab] = useState(resolvedTab);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam) {
-      const resolved = tabParam === 'autopilot' || tabParam === 'skill-hub' ? 'agency' : tabParam;
+      const resolved = tabParam === 'autopilot' || tabParam === 'skill-hub' ? 'agency' : tabParam === 'magnet' ? 'chat' : tabParam === 'ai-module' ? 'chat-settings' : tabParam;
       if (resolved !== activeTab) setActiveTab(resolved);
     }
   }, [searchParams]);
@@ -166,7 +166,7 @@ const Admin = () => {
     );
   };
 
-  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'magnet';
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'chat';
 
   return (
     <SidebarProvider>
