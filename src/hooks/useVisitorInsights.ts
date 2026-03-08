@@ -166,6 +166,10 @@ function buildInsights(data: StoredVisitorData | null): VisitorInsights {
     isReturning: data.visitCount > 1,
     daysSinceLastVisit,
     topPages,
+    referrer: data.referrer || null,
+    utmSource: data.utmSource || null,
+    utmMedium: data.utmMedium || null,
+    utmCampaign: data.utmCampaign || null,
   };
 }
 
