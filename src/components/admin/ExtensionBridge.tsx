@@ -4,7 +4,7 @@
 // from the admin panel via externally_connectable
 // ============================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Chrome, Wifi, WifiOff, Globe, Loader2, Copy, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useChromeExtensionModule, useUpdateChromeExtensionModule } from '@/models/modules';
+import { defaultModuleConfigs } from '@/types/modules';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const chromeRuntime = (window as any).chrome?.runtime;
