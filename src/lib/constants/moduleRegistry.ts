@@ -8,10 +8,17 @@ import type { ModuleType } from '@/types/modules';
 
 export type ModuleStatus = 'installed' | 'coming_soon';
 
+export interface ModuleChangelogEntry {
+  version: string;
+  date: string;
+  changes: string[];
+}
+
 export interface ModuleRegistryEntry {
-  type: ModuleType | string; // string for coming_soon modules not yet in ModuleType
+  type: ModuleType | string;
   name: string;
   description: string;
+  longDescription?: string;
   icon: string;
   category: 'core' | 'content' | 'integrations' | 'tools';
   sidebarItems: string[];
@@ -21,6 +28,9 @@ export interface ModuleRegistryEntry {
   version: string;
   author?: string;
   tags?: string[];
+  dependencies?: string[]; // other module types this depends on
+  configTab?: string; // admin tab to link to for configuration
+  changelog?: ModuleChangelogEntry[];
 }
 
 export const moduleRegistry: ModuleRegistryEntry[] = [
