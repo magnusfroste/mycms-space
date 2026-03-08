@@ -5,7 +5,7 @@ import {
   Navigation, 
   Bot,
   Zap,
-  Cpu,
+  Orbit,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
