@@ -674,6 +674,20 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
       try {
         const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
 
+        // Client-side tools: pause and return to frontend
+        if (isClientSideTool(toolName)) {
+          console.log(`[Agent] Client-side tool detected: ${toolName}, pausing for frontend execution`);
+          return {
+            output: toolArgs.reason || `I need to fetch content from ${toolArgs.url || 'your active tab'}. One moment…`,
+            artifacts: lastArtifacts,
+            client_action: {
+              tool_name: toolName,
+              tool_args: toolArgs,
+              conversation_state: conversationMessages,
+            },
+          };
+        }
+
         if (isBuiltInTool(toolName)) {
           result = await executeBuiltInTool(toolName, toolArgs, { siteContext });
           // Check if built-in tool also produces artifacts (e.g. visitor-profile)
