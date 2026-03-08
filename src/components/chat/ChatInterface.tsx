@@ -73,7 +73,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const placeholder = messages.length > 0 ? activePlaceholder : initialPlaceholder;
 
   return (
-    <div className={fullPage ? "flex flex-col h-full relative" : "max-w-3xl mx-auto"}>
+    <div className={fullPage ? "flex flex-col h-full overflow-hidden" : "max-w-3xl mx-auto"}>
       <ChatMessageList
         messages={messages}
         isLoading={isLoading}
