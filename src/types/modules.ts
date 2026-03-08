@@ -637,6 +637,12 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
   branding: {
     theme: 'elegant',
   },
+  resume: {
+    owner_name: '',
+    owner_title: '',
+    owner_summary: '',
+    owner_availability: 'available',
+  },
   webhooks: {
     endpoints: [
       {
