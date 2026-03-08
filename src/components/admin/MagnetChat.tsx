@@ -85,7 +85,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
     : "AD";
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen w-full">
       {/* Sidebar */}
       <ChatSidebar
         isOpen={sidebarOpen}
