@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import type { AdminAIProvider } from '@/types/modules';
 import { toast } from 'sonner';
+import ExtensionBridge from './ExtensionBridge';
 
 // Generate a cryptographically random hex key
 function generateApiKey(): string {
