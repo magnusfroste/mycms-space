@@ -29,15 +29,15 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       data-user-message={message.isUser ? "true" : "false"}
     >
       {message.source === 'cv-agent' && (
-        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1 mr-1">
+        <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground mb-1.5 mr-1">
           Job Description
         </span>
       )}
       <div
-        className={`max-w-[95%] px-4 py-3 rounded-2xl ${
+        className={`max-w-[85%] px-4 py-3 ${
           message.isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-muted/20 text-foreground rounded-bl-md"
+            ? "bg-foreground text-background rounded-2xl rounded-br-sm"
+            : "bg-muted/30 text-foreground rounded-2xl rounded-bl-sm border border-border/50"
         }`}
       >
         {message.isUser ? (
@@ -46,10 +46,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             {isLongUserMsg && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 mt-1.5 text-xs opacity-70 hover:opacity-100 transition-opacity"
+                className="flex items-center gap-1 mt-1.5 text-xs opacity-60 hover:opacity-100 transition-opacity"
               >
                 {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                {expanded ? 'Show less' : 'Show full message'}
+                {expanded ? 'Less' : 'More'}
               </button>
             )}
           </div>
@@ -58,7 +58,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         )}
       </div>
       {message.artifacts?.map((artifact, index) => (
-        <div key={index} className="w-full max-w-[95%]">
+        <div key={index} className="w-full max-w-[85%]">
           <ChatArtifactComponent artifact={artifact} />
         </div>
       ))}
