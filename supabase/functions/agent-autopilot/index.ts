@@ -568,6 +568,8 @@ const CHANNEL_FORMATS: Record<string, { taskType: string; systemPrompt: string; 
     taskType: 'blog_draft',
     systemPrompt: `You are formatting a content brief into a blog post (800-1200 words, markdown).
 
+CRITICAL: Choose a UNIQUE angle and title. Never reuse similar headlines or framings from existing posts.
+
 Output format:
 # [Blog Title]
 
