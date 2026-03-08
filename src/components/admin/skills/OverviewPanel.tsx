@@ -85,6 +85,12 @@ function AutomationsSummary() {
                   <Badge variant="destructive" className="text-[10px] shrink-0">Error</Badge>
                 )}
                 <span className="text-[10px] text-muted-foreground shrink-0">{auto.run_count} runs</span>
+                <Switch
+                  checked={auto.enabled}
+                  onCheckedChange={(checked) => toggle.mutate({ id: auto.id, enabled: checked })}
+                  disabled={toggle.isPending}
+                  className="scale-75 shrink-0"
+                />
               </div>
             );
           })}
