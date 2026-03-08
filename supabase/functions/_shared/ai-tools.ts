@@ -553,6 +553,71 @@ export const resumeLookupTool: ToolDefinition = {
   },
 };
 
+export const addResumeEntryTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "add_resume_entry",
+    description: "Add a new entry to the resume knowledge base. Use when admin asks to add experience, skills, education, certifications, or languages.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary"], description: "Entry category" },
+        title: { type: "string", description: "Title/role/skill name" },
+        subtitle: { type: "string", description: "Company, institution, or issuer" },
+        description: { type: "string", description: "Detailed description in markdown" },
+        start_date: { type: "string", description: "Start date (YYYY-MM-DD)" },
+        end_date: { type: "string", description: "End date (YYYY-MM-DD), omit if current" },
+        is_current: { type: "boolean", description: "Whether this is a current/ongoing entry" },
+        tags: { type: "array", items: { type: "string" }, description: "Relevant tags" },
+        metadata: { type: "object", description: "Extra data (e.g. { level: 85 } for skills)" },
+      },
+      required: ["category", "title"],
+    },
+  },
+};
+
+export const updateResumeEntryTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "update_resume_entry",
+    description: "Update an existing resume entry. Use when admin asks to edit, correct, or modify experience/skills/education details.",
+    parameters: {
+      type: "object",
+      properties: {
+        entry_id: { type: "string", description: "ID of the entry to update (use resume_lookup first to find it)" },
+        title: { type: "string" },
+        subtitle: { type: "string" },
+        description: { type: "string", description: "Updated description in markdown" },
+        start_date: { type: "string" },
+        end_date: { type: "string" },
+        is_current: { type: "boolean" },
+        tags: { type: "array", items: { type: "string" } },
+        metadata: { type: "object" },
+        enabled: { type: "boolean" },
+      },
+      required: ["entry_id"],
+    },
+  },
+};
+
+export const enrichResumeEntryTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "enrich_resume_entry",
+    description: "Enrich/expand a resume entry's description with more detail, better wording, or additional context. Use when admin asks to make an entry more detailed, professional, or comprehensive. Fetches the current entry, rewrites the description, and saves it.",
+    parameters: {
+      type: "object",
+      properties: {
+        entry_id: { type: "string", description: "ID of the entry to enrich (use resume_lookup first)" },
+        instructions: { type: "string", description: "How to improve: 'more technical detail', 'add metrics', 'make more concise', etc." },
+        new_description: { type: "string", description: "The enriched/rewritten description in markdown" },
+        new_tags: { type: "array", items: { type: "string" }, description: "Updated tags if relevant" },
+      },
+      required: ["entry_id", "new_description"],
+    },
+  },
+};
+
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
