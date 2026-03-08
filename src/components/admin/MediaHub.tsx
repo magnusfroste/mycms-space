@@ -3,7 +3,7 @@
 // Centralized media library for browsing and managing all uploaded files
 // ============================================
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,8 @@ import {
   Grid,
   List,
   Check,
+  Upload,
+  Download,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -52,6 +54,7 @@ import {
   type StorageBucket,
   type MediaFile,
 } from '@/models/mediaHub';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
