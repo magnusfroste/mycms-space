@@ -25,20 +25,19 @@ const ChatQuickActions: React.FC<ChatQuickActionsProps> = ({
 
   return (
     <div className="mt-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 max-w-3xl mx-auto">
         {actions.map((action) => {
           const IconComponent = iconMap[action.icon];
           return (
-            <Button
+            <button
               key={action.label}
               onClick={() => onSelect(action.message)}
               disabled={isLoading}
-              variant="ghost"
-              className="h-auto py-2 px-3 text-xs font-normal justify-start rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+              className="h-auto py-2.5 px-3 text-[11px] font-medium uppercase tracking-[0.1em] text-left rounded-lg border border-border/60 bg-transparent text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {IconComponent && <span className="mr-1.5">{IconComponent}</span>}
+              {IconComponent && <span className="shrink-0 opacity-60">{IconComponent}</span>}
               {action.label}
-            </Button>
+            </button>
           );
         })}
       </div>
