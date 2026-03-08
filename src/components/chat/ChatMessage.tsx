@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, Loader2 } from "lucide-react";
 import { MarkdownContent } from "@/components/common";
 import ChatArtifactComponent from "./ChatArtifact";
 import type { Message } from "./types";
