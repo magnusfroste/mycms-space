@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks' | 'resume';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks' | 'resume' | 'chrome_extension';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -495,6 +495,14 @@ export interface ResumeModuleConfig {
   availability_note?: string;
 }
 
+// Chrome Extension Module Config
+export interface ChromeExtensionModuleConfig {
+  extension_id: string;
+  auto_connect: boolean;
+  allowed_domains: string[];
+  setup_instructions: string;
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -508,7 +516,8 @@ export type ModuleConfigType =
   | GitHubModuleConfig
   | BrandingModuleConfig
   | WebhooksModuleConfig
-  | ResumeModuleConfig;
+  | ResumeModuleConfig
+  | ChromeExtensionModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -524,6 +533,7 @@ export interface ModuleTypeConfigMap {
   branding: BrandingModuleConfig;
   webhooks: WebhooksModuleConfig;
   resume: ResumeModuleConfig;
+  chrome_extension: ChromeExtensionModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -642,6 +652,12 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     owner_title: '',
     owner_summary: '',
     owner_availability: 'available',
+  },
+  chrome_extension: {
+    extension_id: '',
+    auto_connect: true,
+    allowed_domains: ['linkedin.com', 'github.com', 'x.com', 'twitter.com'],
+    setup_instructions: '',
   },
   webhooks: {
     endpoints: [
