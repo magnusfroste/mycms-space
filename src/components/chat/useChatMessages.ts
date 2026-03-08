@@ -220,16 +220,68 @@ export const useChatMessages = ({
           throw new Error(error.message || "Failed to get AI response");
         }
 
-        const botResponse = cleanWebhookResponse(
-          data?.output || data?.message || "No response"
-        );
-        const artifacts = data?.artifacts as ChatArtifact[] | undefined;
-        addBotMessage(botResponse, artifacts);
-        messageCountRef.current += 1;
-        
-        // Save assistant response to database for history
-        saveChatMessage(sessionId, 'assistant', botResponse);
-        
+        // Handle client-side tool execution (e.g. Chrome extension)
+        if (data?.client_action) {
+          const statusMsg = cleanWebhookResponse(data.output || 'Working on it…');
+          addBotMessage(statusMsg);
+
+          // Execute client-side tool
+          const toolResult = await executeClientAction(data.client_action);
+
+          // Re-send with the tool result injected into conversation
+          const conversationState = data.client_action.conversation_state || [];
+          // Add tool result to conversation
+          conversationState.push({
+            role: 'tool',
+            content: toolResult,
+            tool_call_id: `client_${data.client_action.tool_name}`,
+          });
+
+          const { data: followUpData, error: followUpError } = await supabase.functions.invoke("ai-chat", {
+            body: {
+              messages: conversationState.filter((m: Record<string, unknown>) => m.role !== 'system'),
+              sessionId: sessionId,
+              systemPrompt: systemPrompt,
+              integration: {
+                type: integration,
+                ...(integrationConfig || {}),
+                webhook_url: integration === 'n8n' ? webhookUrl : undefined,
+              },
+              siteContext: siteContext,
+              enabledTools: enabledTools,
+              mode: mode,
+              _resumeConversation: true,
+            },
+          });
+
+          if (followUpError) throw new Error(followUpError.message);
+
+          const followUpResponse = cleanWebhookResponse(followUpData?.output || "Done.");
+          const followUpArtifacts = followUpData?.artifacts as ChatArtifact[] | undefined;
+          
+          // Replace the status message with the real response
+          setMessages(prev => {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              id: (Date.now() + 2).toString(),
+              text: followUpResponse,
+              isUser: false,
+              artifacts: followUpArtifacts,
+            };
+            return updated;
+          });
+          messageCountRef.current += 1;
+          saveChatMessage(sessionId, 'assistant', followUpResponse);
+        } else {
+          const botResponse = cleanWebhookResponse(
+            data?.output || data?.message || "No response"
+          );
+          const artifacts = data?.artifacts as ChatArtifact[] | undefined;
+          addBotMessage(botResponse, artifacts);
+          messageCountRef.current += 1;
+          saveChatMessage(sessionId, 'assistant', botResponse);
+        }
+
         // Update analytics with message count
         await updateSessionMessageCount(messageCountRef.current);
       } catch (error) {
