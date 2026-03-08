@@ -25,8 +25,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { useAllModules, useUpdateModule } from '@/models/modules';
+import { useAllModules } from '@/models/modules';
+import { useQueryClient } from '@tanstack/react-query';
+import { updateModule } from '@/data/modules';
 import {
   moduleRegistry,
   moduleCategoryLabels,
@@ -35,7 +36,6 @@ import {
 import type { ModuleType } from '@/types/modules';
 import { toast } from 'sonner';
 
-// Icon map for registry entries
 const iconMap: Record<string, React.ElementType> = {
   PanelTop,
   PanelBottom,
@@ -93,6 +93,7 @@ const ModuleCard: React.FC<{
 
 const ModulesManager: React.FC = () => {
   const { data: modules = [], isLoading } = useAllModules();
+  const queryClient = useQueryClient();
   const [pendingType, setPendingType] = React.useState<ModuleType | null>(null);
 
   const getModuleEnabled = (type: ModuleType): boolean => {
@@ -105,12 +106,10 @@ const ModulesManager: React.FC = () => {
   const handleToggle = async (type: ModuleType, enabled: boolean) => {
     setPendingType(type);
     try {
-      const { updateModule } = await import('@/data/modules');
       await updateModule(type, { enabled });
-      toast.success(`${moduleRegistry.find((e) => e.type === type)?.name} ${enabled ? 'enabled' : 'disabled'}`);
-      // Invalidate react-query
-      const { QueryClient } = await import('@tanstack/react-query');
-      // We need to use the existing queryClient, so we'll trigger refetch via the hook
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      const name = moduleRegistry.find((e) => e.type === type)?.name;
+      toast.success(`${name} ${enabled ? 'enabled' : 'disabled'}`);
     } catch {
       toast.error('Failed to update module');
     } finally {
@@ -118,7 +117,6 @@ const ModulesManager: React.FC = () => {
     }
   };
 
-  // Group by category
   const categories = ['core', 'content', 'integrations', 'tools'];
 
   if (isLoading) {
