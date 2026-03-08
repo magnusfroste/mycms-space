@@ -783,6 +783,10 @@ export const toolDescriptions: Record<string, string> = {
   update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
   enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
   browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
+  file_list: "**file_list** — List files in a storage bucket. Use to browse uploaded documents, images, and CMS files.",
+  file_read: "**file_read** — Read the text content of a file from storage (.md, .txt, .json, .csv).",
+  file_write: "**file_write** — Write or overwrite a text file in storage. Great for generating documents, configs, or notes.",
+  file_delete: "**file_delete** — Delete a file from storage.",
 };
 
 // Self-modification tools that should always be available in admin mode
