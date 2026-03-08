@@ -14,23 +14,39 @@ The `/chat` route now detects authentication state and switches Magnet between t
 - Persona: "Magnet CMS co-pilot"
 - Admin badge shown in header
 
-## Files Changed
+---
+
+# Resume Module — Knowledge Base + Agency Integration
+
+## Status: ✅ Implemented
+
+### What was built
+
+1. **Database**: `resume_entries` table with categories (experience, education, certification, skill, language, summary), RLS policies for public read + admin manage
+2. **Resume Module Config**: Added `'resume'` to `ModuleType` with `ResumeModuleConfig` (owner_name, title, summary, location, availability)
+3. **Data/Model layers**: `src/data/resume.ts` + `src/models/resume.ts` (React Query hooks)
+4. **Admin UI**: `ResumeManager.tsx` with profile card + tabbed entry editor (add/edit/delete per category)
+5. **AI Context**: `loadResumeContext()` upgraded to load structured `resume_entries` first, falls back to legacy block-scraping
+6. **Agency Integration**: `resume_lookup` tool added so Magnet can query resume by category/tags
+7. **Admin Sidebar**: Resume tab (BookUser icon) between Newsletter and Agency
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/chat/types.ts` | Added `ChatMode` type and `mode` prop |
-| `src/components/chat/ChatInterface.tsx` | Accepts and passes `mode` prop |
-| `src/components/chat/useChatMessages.ts` | Sends `mode` to edge function |
-| `src/pages/Chat.tsx` | Auth detection, admin placeholders, admin tools |
-| `src/types/modules.ts` | Added `defaultAdminMagnetTools` |
-| `supabase/functions/_shared/ai-tools.ts` | Admin tool definitions + mode-aware registry |
-| `supabase/functions/_shared/ai-context.ts` | `buildAdminPrompt()` function |
-| `supabase/functions/_shared/ai-agent.ts` | Mode-aware agent runner |
-| `supabase/functions/ai-chat/index.ts` | Passes mode to agent |
+| `src/types/modules.ts` | Added `'resume'` to ModuleType, ResumeModuleConfig, defaults |
+| `src/models/modules.ts` | Added `useResumeModule()` + `useUpdateResumeModule()` |
+| `src/data/resume.ts` | New data layer |
+| `src/models/resume.ts` | New React Query hooks |
+| `src/components/admin/ResumeManager.tsx` | New admin UI |
+| `src/components/admin/AdminSidebar.tsx` | Added Resume tab |
+| `src/pages/Admin.tsx` | Wired ResumeManager |
+| `supabase/functions/_shared/ai-context.ts` | Structured resume loader |
+| `supabase/functions/_shared/ai-tools.ts` | `resume_lookup` tool + descriptions |
 
-## Next Steps
+### Next Steps
 
-- [ ] Add admin quick actions (review queue, research, stats)
-- [ ] Implement actual tool execution (call autopilot handlers from admin tools)
-- [ ] Add daily_pipeline cron for autonomous content generation
-- [ ] Build review queue UI in Autopilot dashboard
+- [ ] Add inline editor for Resume Block on landing page
+- [ ] Implement `resume_lookup` handler in `agent-execute`
+- [ ] Add signal trigger when resume entries change
+- [ ] Import existing skills-bar data into resume_entries
