@@ -65,16 +65,64 @@ function calculateNextRun(cronExpr: string): string | null {
 async function loadObjectives(supabase: any): Promise<string> {
   const { data } = await supabase
     .from('agent_objectives')
-    .select('id, goal, status, constraints, success_criteria, progress')
+    .select('id, goal, status, constraints, success_criteria, progress, created_at, updated_at')
     .eq('status', 'active')
     .order('created_at', { ascending: false }).limit(10);
   if (!data?.length) return '\nNo active objectives.';
-  return '\n\nActive objectives:\n' + data.map((o: any) => {
+
+  // Score each objective for priority ranking
+  const scored = data.map((o: any) => {
+    let score = 0;
+    const plan = o.progress?.plan;
+    const constraints = o.constraints || {};
+    const now = Date.now();
+
+    // Urgency: deadline proximity
+    if (constraints.deadline) {
+      const daysLeft = (new Date(constraints.deadline).getTime() - now) / 86_400_000;
+      if (daysLeft < 0) score += 50; // overdue
+      else if (daysLeft < 1) score += 40;
+      else if (daysLeft < 3) score += 25;
+      else if (daysLeft < 7) score += 10;
+    }
+
+    // Urgency: priority field
+    if (constraints.priority === 'critical') score += 35;
+    else if (constraints.priority === 'high') score += 20;
+    else if (constraints.priority === 'medium') score += 10;
+
+    // Impact: has plan and partially done (momentum)
+    if (plan?.steps?.length) {
+      const done = plan.steps.filter((s: any) => s.status === 'done').length;
+      const pct = done / plan.steps.length;
+      if (pct > 0 && pct < 1) score += 15; // in-progress momentum bonus
+      if (pct >= 0.7) score += 10; // near completion bonus
+    } else {
+      score += 5; // needs plan — slight boost to get started
+    }
+
+    // Staleness: hasn't been updated recently
+    const daysSinceUpdate = (now - new Date(o.updated_at).getTime()) / 86_400_000;
+    if (daysSinceUpdate > 3) score += 8;
+    if (daysSinceUpdate > 7) score += 12;
+
+    // Has failures — needs attention
+    if (plan?.has_failures) score += 10;
+
+    return { ...o, _priority_score: score };
+  });
+
+  // Sort by priority score descending
+  scored.sort((a: any, b: any) => b._priority_score - a._priority_score);
+
+  return '\n\nActive objectives (sorted by priority ⬆️):\n' + scored.map((o: any, i: number) => {
     const plan = o.progress?.plan;
     const planInfo = plan
       ? ` | plan: ${plan.steps?.filter((s: any) => s.status === 'done').length}/${plan.total_steps} steps done`
       : ' | NO PLAN (needs decompose_objective)';
-    return `- [${o.id.slice(0, 8)}] "${o.goal}"${planInfo} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+    const deadline = o.constraints?.deadline ? ` | ⏰ deadline: ${o.constraints.deadline}` : '';
+    const priority = o.constraints?.priority ? ` | priority: ${o.constraints.priority}` : '';
+    return `- #${i + 1} [score:${o._priority_score}] [${o.id.slice(0, 8)}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
   }).join('\n');
 }
 
