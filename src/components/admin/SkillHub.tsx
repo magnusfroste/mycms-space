@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
-import { Plus, Globe } from 'lucide-react';
+import { Plus, Globe, FileText } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import type { AgentSkill } from '@/types/agent';
 
 const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
 const FederationPanel = lazy(() => import('@/components/admin/skills/FederationPanel'));
+const DocumentsPanel = lazy(() => import('@/components/admin/skills/DocumentsPanel'));
 
 const TabFallback = () => (
   <div className="space-y-3 py-4">
