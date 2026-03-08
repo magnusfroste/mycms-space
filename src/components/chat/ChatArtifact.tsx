@@ -347,7 +347,12 @@ const VisitorProfileArtifact: React.FC<{ data: Record<string, unknown> }> = ({ d
   const summary = (data.summary as string) || "";
   const engagementLevel = (data.engagement_level as string) || "new";
   const suggestedTopic = (data.suggested_topic as string) || "";
-  const interestScores = (data.interest_scores as Array<{ category: string; score: number }>) || [];
+  const rawScores = data.interest_scores;
+  const interestScores: Array<{ category: string; score: number }> = Array.isArray(rawScores)
+    ? rawScores
+    : rawScores && typeof rawScores === 'object'
+      ? Object.entries(rawScores).map(([category, score]) => ({ category, score: Number(score) || 0 }))
+      : [];
 
   const radarData = interestScores.slice(0, 8).map((item) => ({
     category: item.category.length > 12 ? item.category.slice(0, 12) + "…" : item.category,
