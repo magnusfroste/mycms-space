@@ -40,9 +40,9 @@ export async function notifyPendingApproval(skillName: string, reason?: string):
               The skill <strong>${displayName}</strong> requires your approval before it can execute.
             </p>
             ${reason ? `<p style="margin: 0 0 16px; color: #777; font-size: 14px;">${reason}</p>` : ''}
-            <a href="${appUrl}/admin?tab=skills&subtab=approvals"
+            <a href="${appUrl}/admin?tab=agency"
                style="display: inline-block; padding: 10px 20px; background: #111; color: #fff; border-radius: 6px; text-decoration: none; font-size: 14px;">
-              Review in Skill Hub
+              Review in Agency
             </a>
             <p style="margin: 16px 0 0; font-size: 12px; color: #999;">
               Sent by Magnet Agent
