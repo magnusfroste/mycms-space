@@ -107,6 +107,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
         onToggle={() => setSidebarOpen((v) => !v)}
         onNewChat={handleNewChat}
         onSelectSession={handleSelectSession}
+        onDeleteSession={handleNewChat}
         activeSessionId={activeSessionId}
       />
 
