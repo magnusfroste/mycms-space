@@ -687,8 +687,21 @@ Be comprehensive but concise — this is the single source of truth.`
       });
 
       try {
+        // For blog channel, add existing titles to avoid duplicates
+        let dedup = '';
+        if (channel === 'blog') {
+          const { data: existing } = await supabase
+            .from('blog_posts')
+            .select('title, status')
+            .order('created_at', { ascending: false })
+            .limit(30);
+          if (existing?.length) {
+            dedup = `\n\nExisting posts (choose a DIFFERENT angle and title):\n${existing.map(p => `- "${p.title}" (${p.status})`).join('\n')}`;
+          }
+        }
+
         const formatted = await generateContent(
-          `Content brief:\n${brief}\n\nFormat this for the ${channel} channel about: "${topic}"`,
+          `Content brief:\n${brief}\n\nFormat this for the ${channel} channel about: "${topic}"${dedup}`,
           format.systemPrompt
         );
 
