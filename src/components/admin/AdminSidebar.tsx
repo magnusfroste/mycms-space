@@ -235,7 +235,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarP
               <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {mainNavItems.map((item) => (
+                  {visibleMainNav.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => onTabChange(item.id)}
