@@ -139,6 +139,10 @@ function buildInsights(data: StoredVisitorData | null): VisitorInsights {
       isReturning: false,
       daysSinceLastVisit: null,
       topPages: [],
+      referrer: null,
+      utmSource: null,
+      utmMedium: null,
+      utmCampaign: null,
     };
   }
 
