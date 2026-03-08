@@ -66,10 +66,10 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
       }))
     : undefined;
 
-  // Use a stable key that only updates when session data is ready
+  // Use a stable key that only updates when session data is ready or integration changes
   const chatKey = activeSessionId
-    ? (sessionLoading ? null : `session-${activeSessionId}`)
-    : `new-${resetTrigger}`;
+    ? (sessionLoading ? null : `session-${activeSessionId}-${effectiveIntegration}`)
+    : `new-${resetTrigger}-${effectiveIntegration}`;
 
   const handleNewChat = useCallback(() => {
     setActiveSessionId(null);
