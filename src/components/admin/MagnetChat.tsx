@@ -47,16 +47,18 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   const configuredIntegration = aiConfig?.active_integration || 'openai';
-  const [selectedIntegration, setSelectedIntegration] = useState<AIIntegrationType>(configuredIntegration);
+  const [selectedIntegration, setSelectedIntegration] = useState<AIIntegrationType | null>(null);
 
-  // Sync state when config loads
-  const configuredRef = React.useRef(configuredIntegration);
+  // Only sync once when config first loads
+  const hasSynced = React.useRef(false);
   React.useEffect(() => {
-    if (configuredIntegration !== configuredRef.current) {
-      configuredRef.current = configuredIntegration;
-      setSelectedIntegration(configuredIntegration);
+    if (!hasSynced.current && aiConfig?.active_integration) {
+      hasSynced.current = true;
+      setSelectedIntegration(aiConfig.active_integration);
     }
-  }, [configuredIntegration]);
+  }, [aiConfig?.active_integration]);
+
+  const effectiveIntegration = selectedIntegration || configuredIntegration;
 
   const availableIntegrations = integrationsMeta.filter(
     (meta) => meta.category === 'ai' && meta.available
