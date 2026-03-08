@@ -164,6 +164,8 @@ const VisualBlockItem = ({
         return <ContactFormBlock config={config} />;
       case 'blog':
         return <BlogBlock config={config} />;
+      case 'agent-status':
+        return <AgentStatusBlock config={config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">
