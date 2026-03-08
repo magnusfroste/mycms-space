@@ -113,7 +113,7 @@ export function ObjectivesPanel() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-1.5">
                         {(obj.progress as any)?.proposed_by === 'magnet' && (
-                          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" title="AI-proposed objective" />
+                          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
                         )}
                         <CardTitle className="text-sm font-medium leading-snug line-clamp-2">{obj.goal}</CardTitle>
                       </div>
