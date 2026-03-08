@@ -41,11 +41,11 @@ const TokenRow: React.FC<TokenRowProps> = ({ label, description, tokenKey, token
 
   const upsert = useMutation({
     mutationFn: async (newKey: string) => {
-      const config = { ...(tokenConfig || {}), [tokenKey]: newKey };
+      const config = { ...(tokenConfig || {}), [tokenKey]: newKey } as Record<string, string>;
       if (moduleId) {
-        await supabase.from('modules').update({ module_config: config }).eq('id', moduleId);
+        await supabase.from('modules').update({ module_config: config as unknown as import('@/integrations/supabase/types').Json }).eq('id', moduleId);
       } else {
-        await supabase.from('modules').insert({ module_type: 'api_tokens', module_config: config });
+        await supabase.from('modules').insert({ module_type: 'api_tokens', module_config: config as unknown as import('@/integrations/supabase/types').Json });
       }
     },
     onSuccess: () => { onUpdated(); toast.success(`${label} saved`); },
