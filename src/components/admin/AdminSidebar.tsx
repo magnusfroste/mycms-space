@@ -3,6 +3,7 @@ import {
   FileText, 
   Layers, 
   Navigation, 
+  Bot,
   Zap,
   Cpu,
   FolderOpen,
