@@ -144,14 +144,40 @@ const ApiTokensCard: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-          <p className="text-sm font-medium">🔗 How to use</p>
-          <p className="text-xs text-muted-foreground">
-            External agents send this key as a Bearer token when calling your A2A endpoint.
-          </p>
-          <code className="text-xs block bg-background rounded p-2 border overflow-x-auto">
-            Authorization: Bearer {'<your-a2a-key>'}
-          </code>
+        {/* Endpoint info */}
+        <div className="rounded-lg bg-muted/50 p-4 space-y-3">
+          <p className="text-sm font-medium">🔗 Connection Details</p>
+          
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Discovery (public)</Label>
+            <div className="flex gap-2 items-center">
+              <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
+                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-card`}
+              </code>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-card`); toast.success('Copied'); }}>
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">A2A Endpoint (requires key)</Label>
+            <div className="flex gap-2 items-center">
+              <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
+                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-negotiate`}
+              </code>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-negotiate`); toast.success('Copied'); }}>
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Header</Label>
+            <code className="text-xs block bg-background rounded p-2 border overflow-x-auto">
+              Authorization: Bearer {'<your-a2a-key>'}
+            </code>
+          </div>
         </div>
       </CardContent>
     </Card>
