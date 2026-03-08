@@ -5,6 +5,7 @@ import {
   Layers, 
   Navigation, 
   Bot,
+  Blocks,
   Zap,
   Orbit,
   FolderOpen,
@@ -28,6 +29,8 @@ import {
   BookUser,
   X,
 } from 'lucide-react';
+import { useAllModules } from '@/models/modules';
+import { getHiddenSidebarItems } from '@/lib/constants/moduleRegistry';
 import {
   Sidebar,
   SidebarContent,
@@ -66,6 +69,7 @@ const mainNavItems = [
 ];
 
 const settingsNavItems = [
+  { id: 'modules', label: 'Modules', icon: Blocks },
   { id: 'settings', label: 'Settings', icon: Settings2 },
   { id: 'branding', label: 'Branding', icon: Palette },
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
@@ -93,6 +97,22 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarP
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { data: allModules = [] } = useAllModules();
+
+  // Compute which sidebar items to hide based on disabled modules
+  const hiddenItems = useMemo(
+    () => getHiddenSidebarItems(allModules as Array<{ module_type: string; enabled: boolean | null }>),
+    [allModules]
+  );
+
+  const visibleMainNav = useMemo(
+    () => mainNavItems.filter((item) => !hiddenItems.has(item.id)),
+    [hiddenItems]
+  );
+  const visibleSettingsNav = useMemo(
+    () => settingsNavItems.filter((item) => !hiddenItems.has(item.id)),
+    [hiddenItems]
+  );
 
   // Keyboard shortcut: Cmd/Ctrl+K
   useEffect(() => {
@@ -215,7 +235,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarP
               <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {mainNavItems.map((item) => (
+                  {visibleMainNav.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => onTabChange(item.id)}
@@ -235,7 +255,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarP
               <SidebarGroupLabel>Settings</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {settingsNavItems.map((item) => (
+                  {visibleSettingsNav.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => onTabChange(item.id)}
