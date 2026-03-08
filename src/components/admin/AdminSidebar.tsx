@@ -67,7 +67,7 @@ const baseSettingsNavItems = [
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
   { id: 'integrations', label: 'Integrations', icon: Plug },
   { id: 'webhooks', label: 'Webhooks', icon: Webhook },
-  { id: 'ai-module', label: 'AI Chat', icon: Bot },
+  { id: 'chat-settings', label: 'Chat Settings', icon: Bot },
   { id: 'chat-history', label: 'Chat History', icon: MessageSquare },
 ];
 

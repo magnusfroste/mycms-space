@@ -166,7 +166,7 @@ const Admin = () => {
     );
   };
 
-  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'magnet';
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'chat';
 
   return (
     <SidebarProvider>
