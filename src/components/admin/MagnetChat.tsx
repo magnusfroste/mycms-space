@@ -59,7 +59,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
     : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
   // Load historical session messages
-  const { data: sessionMessages } = useSessionMessages(activeSessionId);
+  const { data: sessionMessages, isLoading: sessionLoading } = useSessionMessages(activeSessionId);
 
   const initialMessages: Message[] | undefined = activeSessionId && sessionMessages
     ? sessionMessages.map((m) => ({
@@ -69,6 +69,11 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
       }))
     : undefined;
 
+  // Use a stable key that only updates when session data is ready
+  const chatKey = activeSessionId
+    ? (sessionLoading ? null : `session-${activeSessionId}`)
+    : `new-${resetTrigger}`;
+
   const handleNewChat = useCallback(() => {
     setActiveSessionId(null);
     setResetTrigger((prev) => prev + 1);
@@ -76,7 +81,6 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
 
   const handleSelectSession = useCallback((sessionId: string) => {
     setActiveSessionId(sessionId);
-    setResetTrigger((prev) => prev + 1);
   }, []);
 
   // User initials for avatar
@@ -163,24 +167,34 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
 
         {/* Chat interface */}
         <div className="flex-1 overflow-hidden">
-          <ChatInterface
-            webhookUrl={webhookUrl}
-            fullPage={true}
-            initialPlaceholder="Hey Magnus, what should we work on today?"
-            activePlaceholder="What's next?"
-            quickActions={adminQuickActions}
-            showQuickActions={true}
-            resetTrigger={resetTrigger}
-            initialMessages={initialMessages}
-            initialSessionId={activeSessionId ?? undefined}
-            siteContext={contextData}
-            integration={selectedIntegration}
-            integrationConfig={aiConfig?.integration}
-            systemPrompt={aiConfig?.system_prompt || ''}
-            enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
-            mode="admin"
-            extensionId={extConfig?.extension_id}
-          />
+          {chatKey === null ? (
+            <div className="flex-1 flex items-center justify-center h-full">
+              <div className="flex items-center gap-3 text-muted-foreground">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                <span className="text-xs uppercase tracking-wider">Loading conversation</span>
+              </div>
+            </div>
+          ) : (
+            <ChatInterface
+              key={chatKey}
+              webhookUrl={webhookUrl}
+              fullPage={true}
+              initialPlaceholder="Hey Magnus, what should we work on today?"
+              activePlaceholder="What's next?"
+              quickActions={adminQuickActions}
+              showQuickActions={!activeSessionId}
+              resetTrigger={resetTrigger}
+              initialMessages={initialMessages}
+              initialSessionId={activeSessionId ?? undefined}
+              siteContext={contextData}
+              integration={selectedIntegration}
+              integrationConfig={aiConfig?.integration}
+              systemPrompt={aiConfig?.system_prompt || ''}
+              enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
+              mode="admin"
+              extensionId={extConfig?.extension_id}
+            />
+          )}
         </div>
       </div>
     </div>
