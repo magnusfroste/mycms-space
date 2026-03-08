@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { Plus } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SkillCard } from '@/components/admin/skills/SkillCard';
 import { SkillEditorSheet } from '@/components/admin/skills/SkillEditorSheet';
 import { ActivityTable } from '@/components/admin/skills/ActivityTable';
@@ -13,6 +14,16 @@ import { AutomationHealthPanel } from '@/components/admin/skills/AutomationHealt
 import { ApprovalsPanel } from '@/components/admin/skills/ApprovalsPanel';
 import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity } from '@/hooks/useSkillHub';
 import type { AgentSkill } from '@/types/agent';
+
+const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
+
+const TabFallback = () => (
+  <div className="space-y-3 py-4">
+    <Skeleton className="h-8 w-full" />
+    <Skeleton className="h-32 w-full" />
+    <Skeleton className="h-32 w-full" />
+  </div>
+);
 
 export default function SkillHub() {
   const { data: skills = [], isLoading } = useSkills();
