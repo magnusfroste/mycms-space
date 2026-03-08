@@ -687,6 +687,9 @@ export const toolDescriptions: Record<string, string> = {
   automation_list: "**automation_list** — List all automations.",
   reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
   resume_lookup: "**resume_lookup** — Query the structured resume knowledge base by category or tags.",
+  add_resume_entry: "**add_resume_entry** — Add a new entry (experience, skill, education, etc.) to the resume knowledge base.",
+  update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
+  enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
 };
 
 // Self-modification tools that should always be available in admin mode
