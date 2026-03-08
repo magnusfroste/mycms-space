@@ -46,4 +46,16 @@ export const useDeleteOldMessages = () => {
   });
 };
 
+// Delete a specific session
+export const useDeleteSession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sessionId: string) => deleteSession(sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_KEY });
+    },
+  });
+};
+
 export type { ChatSession, ChatMessageRecord };
