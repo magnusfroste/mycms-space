@@ -55,7 +55,7 @@ const mainNavItems = [
   { id: 'blog', label: 'Blog', icon: PenSquare },
   { id: 'media-hub', label: 'Media Hub', icon: ImageIcon },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
-  { id: 'skill-hub', label: 'Skill Hub', icon: Cpu },
+  { id: 'agency', label: 'Agency', icon: Cpu },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
 ];

@@ -50,9 +50,9 @@ export default function SkillHub() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Skill Hub</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Agency</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage agent skills, monitor activity, define objectives, and configure automations.
+            Manage agent skills, automations, objectives, and monitor activity.
           </p>
         </div>
         <Badge variant="secondary" className="text-xs">{skills.length} skills</Badge>
