@@ -616,6 +616,7 @@ interface MediaFileCardProps {
   onRename: (file: MediaFile) => void;
   onMove: (file: MediaFile) => void;
   onDelete: (file: MediaFile) => void;
+  onDownload: (file: MediaFile) => void;
 }
 
 const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
