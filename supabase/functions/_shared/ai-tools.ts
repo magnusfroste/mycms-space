@@ -798,6 +798,7 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'reflect',
   'resume_lookup', 'add_resume_entry', 'update_resume_entry', 'enrich_resume_entry',
   'browser_scrape',
+  'file_list', 'file_read', 'file_write', 'file_delete',
 ];
 
 /** Get filtered tools based on enabled tool IDs and mode */
