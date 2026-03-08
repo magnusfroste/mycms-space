@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
     })),
     endpoints: {
       chat: "https://mycms.chat/chat",
+      negotiate: "https://mycms.chat/a2a",
       api: `${Deno.env.get('SUPABASE_URL')}/functions/v1/ai-chat`,
     },
   };
