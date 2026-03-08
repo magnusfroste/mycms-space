@@ -19,6 +19,7 @@ interface ChatSidebarProps {
   onToggle: () => void;
   onNewChat: () => void;
   onSelectSession: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
   activeSessionId?: string | null;
 }
 
@@ -27,10 +28,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onToggle,
   onNewChat,
   onSelectSession,
+  onDeleteSession,
   activeSessionId,
 }) => {
   const [search, setSearch] = useState("");
   const { data, isLoading } = useChatSessions(100, 0);
+  const deleteSession = useDeleteSession();
 
   const sessions = useMemo(() => {
     const all = data?.sessions || [];
