@@ -728,6 +728,7 @@ interface MediaFileRowProps {
   onRename: (file: MediaFile) => void;
   onMove: (file: MediaFile) => void;
   onDelete: (file: MediaFile) => void;
+  onDownload: (file: MediaFile) => void;
 }
 
 const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
@@ -737,6 +738,7 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
   onRename,
   onMove,
   onDelete,
+  onDownload,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
