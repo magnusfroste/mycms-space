@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { Settings2, Bot, Key, Copy, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Settings2, Bot, Key, Copy, RefreshCw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
