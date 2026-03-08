@@ -33,7 +33,11 @@ const adminQuickActions = [
   { id: 'newsletter', label: '📰 Draft newsletter', message: 'Draft a newsletter from recent research and published blog posts.', icon: 'Mail', order_index: 4, enabled: true },
 ];
 
-const MagnetChat: React.FC = () => {
+interface MagnetChatProps {
+  onNavigateBack?: () => void;
+}
+
+const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
