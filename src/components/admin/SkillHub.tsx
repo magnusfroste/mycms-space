@@ -76,6 +76,10 @@ export default function SkillHub() {
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
           <TabsTrigger value="automations">Automations</TabsTrigger>
+          <TabsTrigger value="documents" className="gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Documents
+          </TabsTrigger>
           <TabsTrigger value="federation" className="gap-1.5">
             <Globe className="h-3.5 w-3.5" />
             Federation
