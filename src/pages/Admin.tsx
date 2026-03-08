@@ -55,7 +55,6 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   'chat-history': ChatHistoryManager,
   profile: ProfileSettings,
   settings: GeneralSettings,
-  autopilot: AutopilotDashboard,
   magnet: MagnetChat,
   'skill-hub': SkillHub,
 };

@@ -76,6 +76,12 @@ export default function SkillHub() {
           <TabsTrigger value="automations">Automations</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="overview">
+          <Suspense fallback={<TabFallback />}>
+            <OverviewPanel />
+          </Suspense>
+        </TabsContent>
+
         <TabsContent value="skills" className="space-y-4">
           <div className="flex items-center gap-3">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
