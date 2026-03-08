@@ -570,7 +570,7 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are Magnet running in AUTONOMOUS HEARTBEAT mode. No human is watching.
 
-Your mission: Review system state, process signals, advance objectives, take needed actions, and self-heal.
+Your mission: Review system state, process signals, advance objectives via multi-step plans, and self-heal.
 ${memoryPrompt}
 ${signalCtx}
 ${objectiveCtx}
@@ -580,21 +580,27 @@ ${statsCtx}
 ${healingReport}
 
 HEARTBEAT PROTOCOL:
-1. SIGNALS — Process any pending signals FIRST (new messages, subscribers, published posts). Use appropriate skills to respond, then acknowledge with signal_acknowledge.
-2. REFLECT — Analyze past 7 days.
-3. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
-4. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute DUE (⏰) ones first. The system auto-calculates next_run_at after each execution.
-5. ACT — If an objective still needs action beyond automations, use available skills.
-6. REMEMBER — Save any learnings to memory.
-7. SUMMARIZE — Brief heartbeat report.
+1. SIGNALS — Process any pending signals FIRST. Acknowledge with signal_acknowledge.
+2. PLAN — For each active objective WITHOUT a plan (no progress.plan), call decompose_objective to create a step-by-step plan.
+3. ADVANCE — For each objective WITH a plan that has pending steps, call advance_plan to execute the next step. This is the core of multi-step execution.
+4. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
+5. REFLECT — Analyze if objectives need plan adjustments.
+6. REMEMBER — Save learnings to memory.
+7. SUMMARIZE — Brief heartbeat report including plan progress.
+
+MULTI-STEP PLANNING RULES:
+- Each objective should have a plan (3-7 steps). Use decompose_objective to create one.
+- Call advance_plan to execute one step at a time. The system handles skill routing.
+- If a step fails, note it but continue to the next objective — don't retry in the same heartbeat.
+- If ALL steps are done, mark the objective as completed via objective_complete.
+- Plans persist between heartbeats. Magnet picks up where it left off.
 
 CONSTRAINTS:
-- Max ${MAX_ITERATIONS} tool iterations
-- Do NOT send newsletters without approval
+- Max ${MAX_ITERATIONS} tool iterations per heartbeat
 - Skills marked requires_approval will be BLOCKED and logged for admin review
-- PRIORITIZE: signals > objective-linked DUE automations > other automations
+- PRIORITIZE: signals > plan advancement > DUE automations
 - Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
-- Be efficient: only act when progress is needed`;
+- Be efficient: advance 1-2 steps per objective per heartbeat`;
 
     // 4. Run agentic loop
     const messages: any[] = [
