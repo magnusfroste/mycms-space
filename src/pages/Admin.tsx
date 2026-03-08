@@ -253,7 +253,7 @@ const Admin = () => {
 
   if (mode === 'chat') {
     return (
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-screen w-full bg-background overflow-hidden">
         <Suspense fallback={<AdminLoadingFallback />}>
           <MagnetChat headerSlot={<HeaderBar />} />
         </Suspense>
