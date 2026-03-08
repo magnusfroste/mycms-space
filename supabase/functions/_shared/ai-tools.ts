@@ -648,6 +648,9 @@ export const adminTools: Record<string, ToolDefinition> = {
   reflect: reflectTool,
   // Resume
   resume_lookup: resumeLookupTool,
+  add_resume_entry: addResumeEntryTool,
+  update_resume_entry: updateResumeEntryTool,
+  enrich_resume_entry: enrichResumeEntryTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
