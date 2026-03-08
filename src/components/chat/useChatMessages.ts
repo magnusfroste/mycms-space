@@ -317,6 +317,7 @@ export const useChatMessages = ({
       siteContext,
       enabledTools,
       mode,
+      extensionId,
       addUserMessage,
       addBotMessage,
       ensureChatSessionTracked,

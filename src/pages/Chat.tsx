@@ -112,6 +112,7 @@ const Chat = () => {
             systemPrompt={aiConfig?.system_prompt || ''}
             enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
             mode="public"
+            extensionId={extConfig?.extension_id}
           />
         )}
       </main>
