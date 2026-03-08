@@ -618,6 +618,7 @@ export const toolDescriptions: Record<string, string> = {
   automation_create: "**automation_create** — Create an automation (cron/signal/event trigger).",
   automation_list: "**automation_list** — List all automations.",
   reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
+  resume_lookup: "**resume_lookup** — Query the structured resume knowledge base by category or tags.",
 };
 
 // Self-modification tools that should always be available in admin mode
