@@ -79,6 +79,75 @@ const MediaHub: React.FC = () => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [targetBucket, setTargetBucket] = useState<StorageBucket | ''>('');
+  const [uploadBucket, setUploadBucket] = useState<StorageBucket>('cms-files');
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Upload handler
+  const handleUpload = useCallback(async (fileList: FileList | File[]) => {
+    const filesToUpload = Array.from(fileList);
+    if (!filesToUpload.length) return;
+
+    setUploading(true);
+    let success = 0;
+    let failed = 0;
+
+    for (const file of filesToUpload) {
+      const path = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from(uploadBucket)
+        .upload(path, file, { upsert: true });
+      if (error) {
+        console.error('Upload failed:', error);
+        failed++;
+      } else {
+        success++;
+      }
+    }
+
+    setUploading(false);
+    if (success) {
+      toast.success(`${success} file${success > 1 ? 's' : ''} uploaded`);
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+    }
+    if (failed) toast.error(`${failed} file${failed > 1 ? 's' : ''} failed to upload`);
+  }, [uploadBucket, queryClient]);
+
+  // Download handler
+  const handleDownload = useCallback(async (file: MediaFile) => {
+    try {
+      const { data, error } = await supabase.storage.from(file.bucket).download(file.path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to download file');
+    }
+  }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length) {
+      handleUpload(e.dataTransfer.files);
+    }
+  }, [handleUpload]);
 
   // Filter and sort files
   const filteredFiles = useMemo(() => {
