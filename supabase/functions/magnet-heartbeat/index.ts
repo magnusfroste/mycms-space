@@ -14,6 +14,7 @@ const corsHeaders = {
 
 const MAX_ITERATIONS = 8;
 const SELF_HEAL_THRESHOLD = 3; // consecutive failures before auto-disable
+const MAX_CHAIN_DEPTH = 4; // max steps to chain in a single advance_plan call
 
 // ─── Cron helpers ─────────────────────────────────────────────────────────────
 
