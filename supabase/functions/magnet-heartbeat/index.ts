@@ -587,13 +587,14 @@ Deno.serve(async (req) => {
 
   try {
     // 1. Gather context + run self-healing in parallel
-    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, healingReport] = await Promise.all([
+    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, signalPatternCtx, healingReport] = await Promise.all([
       loadAgentMemory(),
       loadObjectives(supabase),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
       loadLinkedAutomations(supabase),
       loadPendingSignals(supabase),
+      loadRecentSignalPatterns(supabase),
       runSelfHealing(supabase),
     ]);
 
