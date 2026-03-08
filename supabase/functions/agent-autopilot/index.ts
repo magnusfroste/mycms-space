@@ -314,13 +314,15 @@ async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>) {
     // Gather recent content
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [blogsRes, tasksRes] = await Promise.all([
+    const [blogsRes, tasksRes, campaignsRes] = await Promise.all([
       supabase.from('blog_posts').select('title, excerpt, slug').gte('created_at', oneWeekAgo).order('created_at', { ascending: false }).limit(10),
       supabase.from('agent_tasks').select('task_type, output_data').eq('status', 'completed').gte('created_at', oneWeekAgo).limit(10),
+      supabase.from('newsletter_campaigns').select('subject, status').order('created_at', { ascending: false }).limit(30),
     ]);
 
     const recentBlogs = blogsRes.data || [];
     const recentTasks = tasksRes.data || [];
+    const existingCampaigns = campaignsRes.data || [];
 
     const context = [
       '## Recent Blog Posts',
@@ -333,12 +335,18 @@ async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>) {
       }),
     ].join('\n');
 
+    // Deduplication context for newsletters
+    const existingSubjects = existingCampaigns.map(c => `- "${c.subject}" (${c.status})`).join('\n');
+    const deduplicationContext = existingSubjects 
+      ? `\n\nIMPORTANT — These newsletter subjects already exist. You MUST choose a COMPLETELY DIFFERENT angle and subject line:\n${existingSubjects}\n\nCreate something fresh and unique that stands out from previous newsletters.` 
+      : '';
+
     const newsletter = await generateContent(
-      `Create a weekly newsletter digest based on this activity:\n\n${context}`,
+      `Create a weekly newsletter digest based on this activity:\n\n${context}${deduplicationContext}`,
       `You are writing a professional weekly newsletter for a tech professional's personal brand.
 
 Format:
-Subject: [Compelling subject line]
+Subject: [Compelling subject line - MUST be completely unique and different from previous newsletters]
 
 [Newsletter content in markdown. Include:
 - A warm greeting
@@ -347,7 +355,9 @@ Subject: [Compelling subject line]
 - A personal note or industry observation
 - Call to action]
 
-Keep it concise (300-500 words), engaging, and valuable.`
+Keep it concise (300-500 words), engaging, and valuable.
+
+CRITICAL: Every newsletter must have a UNIQUE subject line and angle. Never repeat themes or subject lines from previous newsletters.`
     );
 
     // Extract subject line
