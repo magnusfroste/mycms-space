@@ -625,6 +625,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
   onRename,
   onMove,
   onDelete,
+  onDownload,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
