@@ -618,6 +618,21 @@ export const enrichResumeEntryTool: ToolDefinition = {
   },
 };
 
+export const browserScrapeTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_scrape",
+    description: "Scrape a web page using the admin's Chrome extension. Use when the admin asks to fetch, read, or extract content from a URL — especially for pages behind login walls (LinkedIn profiles, etc.) that server-side scraping can't reach. The browser extension runs in the admin's authenticated browser session.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "URL to scrape (optional — omit to scrape the admin's currently active browser tab)" },
+        reason: { type: "string", description: "Brief explanation of why you need this data" },
+      },
+    },
+  },
+};
+
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
@@ -651,6 +666,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   add_resume_entry: addResumeEntryTool,
   update_resume_entry: updateResumeEntryTool,
   enrich_resume_entry: enrichResumeEntryTool,
+  // Browser
+  browser_scrape: browserScrapeTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
@@ -690,6 +707,7 @@ export const toolDescriptions: Record<string, string> = {
   add_resume_entry: "**add_resume_entry** — Add a new entry (experience, skill, education, etc.) to the resume knowledge base.",
   update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
   enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
+  browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
 };
 
 // Self-modification tools that should always be available in admin mode
@@ -700,6 +718,7 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'automation_create', 'automation_list',
   'reflect',
   'resume_lookup', 'add_resume_entry', 'update_resume_entry', 'enrich_resume_entry',
+  'browser_scrape',
 ];
 
 /** Get filtered tools based on enabled tool IDs and mode */
