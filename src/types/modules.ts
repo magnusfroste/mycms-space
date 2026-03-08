@@ -495,6 +495,14 @@ export interface ResumeModuleConfig {
   availability_note?: string;
 }
 
+// Chrome Extension Module Config
+export interface ChromeExtensionModuleConfig {
+  extension_id: string;
+  auto_connect: boolean;
+  allowed_domains: string[];
+  setup_instructions: string;
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
