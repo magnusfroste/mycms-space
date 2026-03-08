@@ -49,7 +49,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={fullPage ? "shrink-0 border-t border-border p-4 sm:p-6" : "mt-4"}>
+    <div className={fullPage ? "shrink-0 border-t border-border bg-background/80 backdrop-blur-sm shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] p-4 sm:p-6" : "mt-4"}>
       <div className="relative max-w-4xl mx-auto">
         <textarea
           ref={textareaRef}
