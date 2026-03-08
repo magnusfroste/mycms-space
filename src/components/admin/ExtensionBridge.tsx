@@ -175,7 +175,7 @@ const ExtensionBridge: React.FC = () => {
             />
             <Button
               variant="outline"
-              onClick={ping}
+              onClick={() => ping()}
               disabled={loading || !extensionId.trim()}
               className="shrink-0 gap-1.5"
             >
