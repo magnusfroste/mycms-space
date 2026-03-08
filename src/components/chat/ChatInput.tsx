@@ -30,7 +30,6 @@ async function readFileAsText(file: File): Promise<string> {
 }
 
 async function extractPdfText(file: File): Promise<string> {
-  // Send PDF to edge function for extraction
   const { supabase } = await import("@/integrations/supabase/client");
   const arrayBuffer = await file.arrayBuffer();
   const base64 = btoa(
@@ -43,6 +42,49 @@ async function extractPdfText(file: File): Promise<string> {
 
   if (error) throw new Error(error.message || "Failed to parse PDF");
   return (data?.text as string) || "Could not extract text from PDF.";
+}
+
+/** Upload file to agent-documents bucket and save reference in agent_memory */
+async function persistFile(file: File, textContent: string): Promise<void> {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storagePath = `uploads/${timestamp}-${safeName}`;
+
+    // Upload original file to storage
+    const { error: uploadError } = await supabase.storage
+      .from("agent-documents")
+      .upload(storagePath, file, { contentType: file.type || "application/octet-stream" });
+
+    if (uploadError) {
+      console.warn("[ChatInput] Storage upload failed:", uploadError.message);
+      return; // Non-blocking — chat still works
+    }
+
+    // Save reference + extracted text in agent_memory
+    const { error: memoryError } = await supabase.from("agent_memory").insert({
+      category: "document",
+      key: `upload:${safeName}`,
+      content: textContent.slice(0, 50000), // Cap at 50k chars
+      metadata: {
+        filename: file.name,
+        storage_path: storagePath,
+        bucket: "agent-documents",
+        size_bytes: file.size,
+        mime_type: file.type,
+        uploaded_at: new Date().toISOString(),
+      },
+    });
+
+    if (memoryError) {
+      console.warn("[ChatInput] agent_memory insert failed:", memoryError.message);
+    } else {
+      console.log("[ChatInput] File persisted:", storagePath);
+    }
+  } catch (err) {
+    console.warn("[ChatInput] persistFile error:", err);
+  }
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -104,6 +146,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         text = await readFileAsText(file);
       }
       setAttachedFile({ name: file.name, content: text });
+      // Persist to storage + agent_memory in background
+      persistFile(file, text);
     } catch (err) {
       toast({
         title: "Could not read file",
