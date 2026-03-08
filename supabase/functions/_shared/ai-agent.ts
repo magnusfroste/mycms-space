@@ -750,6 +750,36 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
+
+            // Auto-save generated CVs and cover letters to file manager
+            if (toolName === 'generate_tailored_cv' && (toolArgs.tailored_cv || toolArgs.cover_letter)) {
+              try {
+                const { createClient } = await import("npm:@supabase/supabase-js@2");
+                const storageClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+                const score = toolArgs.overall_score || 0;
+                const folder = `cv-generated/${timestamp}_score-${score}`;
+
+                const saves: Promise<unknown>[] = [];
+                if (toolArgs.tailored_cv) {
+                  const cvBlob = new Blob([toolArgs.tailored_cv as string], { type: 'text/markdown' });
+                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
+                }
+                if (toolArgs.cover_letter) {
+                  const clBlob = new Blob([toolArgs.cover_letter as string], { type: 'text/markdown' });
+                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
+                }
+                // Save match summary as JSON
+                const summaryData = { overall_score: score, summary: toolArgs.summary, match_analysis: toolArgs.match_analysis, generated_at: new Date().toISOString() };
+                const summaryBlob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
+                saves.push(storageClient.storage.from('cms-files').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
+
+                await Promise.all(saves);
+                console.log(`[Agent] Auto-saved CV artifacts to cms-files/${folder}`);
+              } catch (saveErr) {
+                console.warn('[Agent] Failed to auto-save CV:', saveErr);
+              }
+            }
           } else {
             // Try executing as a registered skill
             result = await executeSkillViaEdge(toolName, toolArgs);
