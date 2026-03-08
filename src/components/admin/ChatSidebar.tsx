@@ -81,7 +81,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-64 shrink-0 border-r border-border bg-muted/30">
+    <div className="flex flex-col w-64 shrink-0 border-r border-border bg-muted/30 h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <Button
