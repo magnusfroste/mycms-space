@@ -478,6 +478,7 @@ const MediaHub: React.FC = () => {
               onRename={openRenameDialog}
               onMove={openMoveDialog}
               onDelete={openDeleteDialog}
+              onDownload={handleDownload}
             />
           ))}
         </div>
