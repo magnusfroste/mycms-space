@@ -61,6 +61,7 @@ interface UseChatMessagesOptions {
   integrationConfig?: AIIntegration;
   enabledTools?: string[];
   mode?: ChatMode;
+  extensionId?: string;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
