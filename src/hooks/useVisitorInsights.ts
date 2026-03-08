@@ -184,5 +184,9 @@ export function formatVisitorInsightsForAI(insights: VisitorInsights): Record<st
     currentSession: insights.currentSession,
     topPages: insights.topPages,
     daysSinceLastVisit: insights.daysSinceLastVisit,
+    referrer: insights.referrer,
+    utmSource: insights.utmSource,
+    utmMedium: insights.utmMedium,
+    utmCampaign: insights.utmCampaign,
   };
 }
