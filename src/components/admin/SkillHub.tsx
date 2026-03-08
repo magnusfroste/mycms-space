@@ -58,8 +58,9 @@ export default function SkillHub() {
         <Badge variant="secondary" className="text-xs">{skills.length} skills</Badge>
       </div>
 
-      <Tabs defaultValue="skills">
-        <TabsList>
+      <Tabs defaultValue="overview">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="approvals" className="gap-1.5">
             Approvals
