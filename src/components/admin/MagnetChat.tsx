@@ -100,6 +100,7 @@ const MagnetChat: React.FC = () => {
           systemPrompt={aiConfig?.system_prompt || ''}
           enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
           mode="admin"
+          extensionId={extConfig?.extension_id}
         />
       </div>
     </div>
