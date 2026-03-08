@@ -20,8 +20,7 @@ const chromeRuntime = (window as any).chrome?.runtime;
 async function executeClientAction(action: {
   tool_name: string;
   tool_args: Record<string, unknown>;
-}): Promise<string> {
-  const extensionId = localStorage.getItem('mycms_extension_id');
+}, extensionId?: string): Promise<string> {
   if (!extensionId || !chromeRuntime?.sendMessage) {
     return JSON.stringify({ error: 'Chrome extension not configured. Set the Extension ID in Settings → Chrome Extension Bridge.' });
   }
