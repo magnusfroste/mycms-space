@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       }), { status: 404, headers: corsHeaders });
     }
 
-    // Create task in agent_tasks for processing
+    // Create task record
     const { data: task, error } = await supabase
       .from('agent_tasks')
       .insert({
@@ -164,23 +164,75 @@ Deno.serve(async (req) => {
       }), { status: 500, headers: corsHeaders });
     }
 
-    // Log activity
+    // If no approval needed, execute immediately via agent-execute
+    if (!match.requires_approval) {
+      try {
+        const execResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/agent-execute`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({
+              skill_id: match.id,
+              arguments: input,
+              agent_type: 'magnet',
+              conversation_id: `a2a:${from || 'unknown'}`,
+            }),
+          },
+        );
+
+        const execResult = await execResponse.json();
+
+        // Update task with result
+        const succeeded = execResult.status === 'success';
+        await supabase.from('agent_tasks').update({
+          status: succeeded ? 'completed' : 'failed',
+          output_data: execResult,
+          completed_at: succeeded ? new Date().toISOString() : null,
+        }).eq('id', task.id);
+
+        return new Response(JSON.stringify({
+          type: 'task_response',
+          status: succeeded ? 'completed' : 'failed',
+          task_id: task.id,
+          result: execResult.result ?? execResult,
+        }), {
+          status: succeeded ? 200 : 500,
+          headers: corsHeaders,
+        });
+      } catch (execErr) {
+        await supabase.from('agent_tasks').update({
+          status: 'failed',
+          output_data: { error: (execErr as Error).message },
+        }).eq('id', task.id);
+
+        return new Response(JSON.stringify({
+          type: 'task_response',
+          status: 'error',
+          task_id: task.id,
+          reason: 'Execution failed',
+        }), { status: 500, headers: corsHeaders });
+      }
+    }
+
+    // Requires approval — queue only
     await supabase.from('agent_activity').insert({
       skill_name: 'a2a_negotiate',
       skill_id: match.id,
       status: 'success',
       agent: 'magnet',
       input: { type: 'task', from, skill_id },
-      output: { task_id: task.id, task_status: task.status },
+      output: { task_id: task.id, task_status: 'pending_approval' },
     });
 
     return new Response(JSON.stringify({
       type: 'task_response',
-      status: task.status === 'pending_approval' ? 'accepted_pending_approval' : 'accepted',
+      status: 'accepted_pending_approval',
       task_id: task.id,
-      message: task.status === 'pending_approval'
-        ? 'Task queued for human approval before execution'
-        : 'Task accepted and queued for execution',
+      message: 'Task queued for human approval before execution',
     }), { status: 202, headers: corsHeaders });
   }
 
