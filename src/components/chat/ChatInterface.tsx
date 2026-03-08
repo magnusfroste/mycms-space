@@ -50,9 +50,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onSessionIdChange,
   });
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
-    const message = inputValue;
+  const handleSend = async (attachedFileContent?: string, attachedFileName?: string) => {
+    const hasFile = !!attachedFileContent;
+    if (!inputValue.trim() && !hasFile) return;
+    const message = hasFile
+      ? `${inputValue ? inputValue + "\n\n" : ""}📎 **${attachedFileName}**\n\`\`\`\n${attachedFileContent}\n\`\`\``
+      : inputValue;
     setInputValue("");
     await sendMessage(message);
   };
