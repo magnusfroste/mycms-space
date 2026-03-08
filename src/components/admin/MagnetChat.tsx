@@ -98,9 +98,15 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Compact toolbar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border h-12">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet Co-Pilot</h2>
+            {onNavigateBack && (
+              <Button variant="ghost" size="sm" onClick={onNavigateBack} className="gap-1 h-7 text-xs text-muted-foreground shrink-0">
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Dashboard
+              </Button>
+            )}
+            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet</h2>
             {hasContext && (
               <Badge variant="secondary" className="text-xs gap-1 shrink-0">
                 <Database className="h-3 w-3" />
