@@ -16,6 +16,7 @@ import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity 
 import type { AgentSkill } from '@/types/agent';
 
 const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
+const FederationPanel = lazy(() => import('@/components/admin/skills/FederationPanel'));
 
 const TabFallback = () => (
   <div className="space-y-3 py-4">
