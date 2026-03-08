@@ -799,6 +799,10 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
               </button>
+              <button onClick={() => handleMenuAction(() => onDownload(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </button>
               <div className="-mx-1 my-1 h-px bg-muted" />
               <button onClick={() => handleMenuAction(() => onRename(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <Edit3 className="h-4 w-4 mr-2" />
