@@ -155,11 +155,11 @@ const ExtensionBridge: React.FC = () => {
           {connected !== null && (
             <div className="flex items-center gap-2">
               {connected ? (
-                <Badge variant="outline" className="text-green-500 border-green-500/30 gap-1">
+              <Badge variant="outline" className="text-primary border-primary/30 gap-1">
                   <Wifi className="h-3 w-3" /> Connected v{version}
                 </Badge>
               ) : (
-                <Badge variant="outline" className="text-red-500 border-red-500/30 gap-1">
+                <Badge variant="outline" className="text-destructive border-destructive/30 gap-1">
                   <WifiOff className="h-3 w-3" /> Not reachable
                 </Badge>
               )}
