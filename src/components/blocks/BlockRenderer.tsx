@@ -31,6 +31,7 @@ import GitHubBlock from './GitHubBlock';
 import SkillsBarBlock from './SkillsBarBlock';
 import ValuesBlock from './ValuesBlock';
 import CvAgentBlock from './CvAgentBlock';
+import AgentStatusBlock from './AgentStatusBlock';
 
 // Block types that should have dividers after them
 const BLOCKS_WITH_DIVIDER = ['hero', 'chat-hero', 'about-split', 'expertise-grid', 'project-showcase', 'text-section', 'github', 'skills-bar', 'values', 'cv-agent'];
@@ -100,6 +101,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
         return <ValuesBlock config={block_config} />;
       case 'cv-agent':
         return <CvAgentBlock config={block_config} />;
+      case 'agent-status':
+        return <AgentStatusBlock config={block_config} />;
       default:
         return (
           <div className="py-8 text-center text-muted-foreground">

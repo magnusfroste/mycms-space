@@ -242,6 +242,20 @@ const GitHubPreview = () => (
   </div>
 );
 
+const AgentStatusPreview = () => (
+  <div className="w-full h-full bg-muted/20 rounded flex flex-col items-center justify-center gap-1 p-2">
+    <div className="relative">
+      <Sparkles className="w-3 h-3 text-primary/50" />
+      <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-primary/60 rounded-full" />
+    </div>
+    <div className="w-8 h-0.5 bg-muted-foreground/20 rounded" />
+    <div className="w-6 h-0.5 bg-muted-foreground/15 rounded" />
+    <div className="w-4 h-0.5 bg-muted-foreground/10 rounded" />
+  </div>
+);
+
+
+
 export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
   // Basic blocks
   {
@@ -395,6 +409,14 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     icon: <Github className="h-4 w-4" />,
     description: 'Display your GitHub profile and repos',
     preview: <GitHubPreview />,
+    category: '2026',
+  },
+  {
+    type: 'agent-status',
+    label: 'Agent Status ✨',
+    icon: <Sparkles className="h-4 w-4" />,
+    description: 'Show recent AI agent activity — promotes ClawCMS',
+    preview: <AgentStatusPreview />,
     category: '2026',
   },
 ];

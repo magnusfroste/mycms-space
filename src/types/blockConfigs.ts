@@ -335,7 +335,18 @@ export type BlockConfigType =
   | NewsletterSubscribeBlockConfig
   | GitHubBlockConfig
   | ChatHeroBlockConfig
-  | CvAgentBlockConfig;
+  | CvAgentBlockConfig
+  | AgentStatusBlockConfig;
+
+// Agent Status Block Config
+export interface AgentStatusBlockConfig {
+  agent_name?: string;
+  tagline?: string;
+  show_cta?: boolean;
+  cta_text?: string;
+  cta_url?: string;
+  max_items?: number;
+}
 
 // Block type to config mapping for type safety
 export interface BlockTypeConfigMap {
@@ -363,6 +374,7 @@ export interface BlockTypeConfigMap {
   'newsletter-subscribe': NewsletterSubscribeBlockConfig;
   'github': GitHubBlockConfig;
   'cv-agent': CvAgentBlockConfig;
+  'agent-status': AgentStatusBlockConfig;
 }
 
 // Helper type to get config type from block type
