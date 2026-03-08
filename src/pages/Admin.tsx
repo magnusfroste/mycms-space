@@ -34,6 +34,7 @@ const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
 const Agency = lazy(() => import('@/components/admin/SkillHub'));
 const ResumeManager = lazy(() => import('@/components/admin/ResumeManager'));
 const ChromeExtensionModuleSettings = lazy(() => import('@/components/admin/ChromeExtensionModuleSettings'));
+const ModulesManager = lazy(() => import('@/components/admin/ModulesManager'));
 
 // Route map: tab key → lazy component
 const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
