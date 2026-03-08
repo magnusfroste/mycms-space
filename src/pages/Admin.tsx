@@ -254,15 +254,9 @@ const Admin = () => {
   if (mode === 'chat') {
     return (
       <div className="min-h-screen flex w-full bg-background">
-        {/* Chat sidebar (history) goes full height */}
-        <div className="flex-1 flex flex-col">
-          <HeaderBar />
-          <div className="flex-1 overflow-hidden">
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <MagnetChat />
-            </Suspense>
-          </div>
-        </div>
+        <Suspense fallback={<AdminLoadingFallback />}>
+          <MagnetChat headerSlot={<HeaderBar />} />
+        </Suspense>
       </div>
     );
   }
