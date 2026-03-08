@@ -144,6 +144,11 @@ export default function SkillHub() {
         <TabsContent value="health"><AutomationHealthPanel /></TabsContent>
         <TabsContent value="objectives"><ObjectivesPanel /></TabsContent>
         <TabsContent value="automations"><AutomationsPanel /></TabsContent>
+        <TabsContent value="documents">
+          <Suspense fallback={<TabFallback />}>
+            <DocumentsPanel />
+          </Suspense>
+        </TabsContent>
         <TabsContent value="federation">
           <Suspense fallback={<TabFallback />}>
             <FederationPanel />
