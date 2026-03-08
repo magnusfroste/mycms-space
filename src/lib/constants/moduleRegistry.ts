@@ -6,18 +6,21 @@
 
 import type { ModuleType } from '@/types/modules';
 
+export type ModuleStatus = 'installed' | 'coming_soon';
+
 export interface ModuleRegistryEntry {
-  type: ModuleType;
+  type: ModuleType | string; // string for coming_soon modules not yet in ModuleType
   name: string;
   description: string;
-  icon: string; // lucide icon name
+  icon: string;
   category: 'core' | 'content' | 'integrations' | 'tools';
-  // Which sidebar tab IDs this module controls visibility for
   sidebarItems: string[];
-  // If true, module cannot be disabled (always on)
   locked?: boolean;
-  // Default enabled state for new installs
   defaultEnabled: boolean;
+  status: ModuleStatus;
+  version: string;
+  author?: string;
+  tags?: string[];
 }
 
 export const moduleRegistry: ModuleRegistryEntry[] = [
@@ -31,6 +34,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     sidebarItems: ['navigation'],
     locked: true,
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['layout', 'navigation'],
   },
   {
     type: 'footer',
@@ -41,6 +48,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     sidebarItems: [],
     locked: true,
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['layout', 'social'],
   },
   {
     type: 'branding',
@@ -51,6 +62,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     sidebarItems: ['branding'],
     locked: true,
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['theme', 'design'],
   },
   {
     type: 'seo',
@@ -61,6 +76,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     sidebarItems: ['seo-module'],
     locked: true,
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.1.0',
+    author: 'ClawCMS',
+    tags: ['seo', 'ai', 'search'],
   },
   {
     type: 'analytics',
@@ -71,6 +90,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     sidebarItems: ['dashboard'],
     locked: true,
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['analytics', 'tracking'],
   },
 
   // Content
@@ -82,6 +105,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'content',
     sidebarItems: ['projects-module'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.2.0',
+    author: 'ClawCMS',
+    tags: ['portfolio', 'showcase'],
   },
   {
     type: 'blog',
@@ -91,6 +118,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'content',
     sidebarItems: ['blog', 'blog-module'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.3.0',
+    author: 'ClawCMS',
+    tags: ['content', 'publishing'],
   },
   {
     type: 'newsletter',
@@ -100,6 +131,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'content',
     sidebarItems: ['newsletter'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['email', 'marketing'],
   },
   {
     type: 'resume',
@@ -109,17 +144,25 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'content',
     sidebarItems: ['resume'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['cv', 'career'],
   },
 
   // Integrations
   {
     type: 'ai',
     name: 'AI Chat',
-    description: 'AI-powered chat with multiple provider support',
+    description: 'AI-powered chat with multiple provider support and tool calling',
     icon: 'Bot',
     category: 'integrations',
     sidebarItems: ['chat', 'chat-settings', 'chat-history'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '2.0.0',
+    author: 'ClawCMS',
+    tags: ['ai', 'chat', 'agent'],
   },
   {
     type: 'github',
@@ -129,6 +172,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'integrations',
     sidebarItems: ['github-repos'],
     defaultEnabled: true,
+    status: 'installed',
+    version: '1.1.0',
+    author: 'ClawCMS',
+    tags: ['github', 'repos', 'code'],
   },
   {
     type: 'webhooks',
@@ -138,6 +185,10 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'integrations',
     sidebarItems: ['webhooks'],
     defaultEnabled: false,
+    status: 'installed',
+    version: '1.0.0',
+    author: 'ClawCMS',
+    tags: ['automation', 'events'],
   },
 
   // Tools
@@ -149,8 +200,82 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     category: 'tools',
     sidebarItems: ['chrome-extension'],
     defaultEnabled: false,
+    status: 'installed',
+    version: '0.9.0',
+    author: 'ClawCMS',
+    tags: ['browser', 'capture'],
+  },
+
+  // Coming Soon
+  {
+    type: 'forms',
+    name: 'Forms Builder',
+    description: 'Drag-and-drop form builder with conditional logic and submissions',
+    icon: 'ClipboardList',
+    category: 'content',
+    sidebarItems: [],
+    defaultEnabled: false,
+    status: 'coming_soon',
+    version: '—',
+    author: 'ClawCMS',
+    tags: ['forms', 'input'],
+  },
+  {
+    type: 'e_commerce',
+    name: 'E-Commerce',
+    description: 'Product catalog, cart and checkout with Stripe integration',
+    icon: 'ShoppingCart',
+    category: 'content',
+    sidebarItems: [],
+    defaultEnabled: false,
+    status: 'coming_soon',
+    version: '—',
+    author: 'ClawCMS',
+    tags: ['shop', 'payments'],
+  },
+  {
+    type: 'multi_language',
+    name: 'Multi-Language',
+    description: 'i18n support with automatic AI translation and locale routing',
+    icon: 'Languages',
+    category: 'tools',
+    sidebarItems: [],
+    defaultEnabled: false,
+    status: 'coming_soon',
+    version: '—',
+    author: 'ClawCMS',
+    tags: ['i18n', 'translation'],
+  },
+  {
+    type: 'a2a_federation',
+    name: 'A2A Federation',
+    description: 'Agent-to-agent communication and federated agent discovery',
+    icon: 'Network',
+    category: 'integrations',
+    sidebarItems: [],
+    defaultEnabled: false,
+    status: 'coming_soon',
+    version: '—',
+    author: 'ClawCMS',
+    tags: ['agents', 'federation'],
+  },
+  {
+    type: 'crm',
+    name: 'CRM',
+    description: 'Contact management, pipelines and lead tracking',
+    icon: 'Users',
+    category: 'tools',
+    sidebarItems: [],
+    defaultEnabled: false,
+    status: 'coming_soon',
+    version: '—',
+    author: 'ClawCMS',
+    tags: ['sales', 'contacts'],
   },
 ];
+
+// Only installed modules (for sidebar filtering etc.)
+export const installedModules = moduleRegistry.filter((m) => m.status === 'installed');
 
 // Quick lookup by module type
 export const moduleRegistryMap = new Map(
@@ -163,11 +288,10 @@ export const getHiddenSidebarItems = (
 ): Set<string> => {
   const hidden = new Set<string>();
 
-  for (const entry of moduleRegistry) {
-    if (entry.locked) continue; // core modules are always visible
+  for (const entry of installedModules) {
+    if (entry.locked) continue;
 
     const dbModule = modules.find((m) => m.module_type === entry.type);
-    // If module doesn't exist in DB yet, use defaultEnabled
     const isEnabled = dbModule ? (dbModule.enabled ?? true) : entry.defaultEnabled;
 
     if (!isEnabled) {
