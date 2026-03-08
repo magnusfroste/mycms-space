@@ -13,6 +13,43 @@ import type { Message, SiteContext, ChatMessage, ChatArtifact, ChatMode } from "
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
 
+// ---- Chrome Extension Bridge ----
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const chromeRuntime = (window as any).chrome?.runtime;
+
+async function executeClientAction(action: {
+  tool_name: string;
+  tool_args: Record<string, unknown>;
+}): Promise<string> {
+  const extensionId = localStorage.getItem('mycms_extension_id');
+  if (!extensionId || !chromeRuntime?.sendMessage) {
+    return JSON.stringify({ error: 'Chrome extension not configured. Set the Extension ID in Settings → Chrome Extension Bridge.' });
+  }
+
+  return new Promise((resolve) => {
+    const messageType = action.tool_args.url ? 'navigate_and_scrape' : 'scrape_active_tab';
+    const payload: Record<string, unknown> = { type: messageType };
+    if (action.tool_args.url) payload.url = action.tool_args.url;
+
+    try {
+      chromeRuntime.sendMessage(extensionId, payload, (response: unknown) => {
+        if (chromeRuntime.lastError) {
+          resolve(JSON.stringify({ error: chromeRuntime.lastError.message || 'Extension not reachable' }));
+          return;
+        }
+        const res = response as { success?: boolean; data?: unknown; error?: string };
+        if (res?.success) {
+          resolve(JSON.stringify(res.data));
+        } else {
+          resolve(JSON.stringify({ error: res?.error || 'Scrape failed' }));
+        }
+      });
+    } catch {
+      resolve(JSON.stringify({ error: 'Failed to communicate with Chrome extension' }));
+    }
+  });
+}
+
 interface UseChatMessagesOptions {
   webhookUrl: string;
   initialMessages?: Message[];
