@@ -1,18 +1,29 @@
-import React from "react";
+// ============================================
+// Magnet Chat - Admin AI Co-Pilot
+// OpenRouter-inspired layout with sidebar
+// ============================================
+
+import React, { useState, useCallback } from "react";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { Badge } from "@/components/ui/badge";
-import { Database, ChevronDown } from "lucide-react";
+import { Database, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
 import { useChromeExtensionModule } from "@/models/modules";
+import { useAuth } from "@/hooks/useAuth";
+import { useSessionMessages } from "@/models/chatMessages";
+import ChatSidebar from "./ChatSidebar";
+import type { Message } from "@/components/chat/types";
 
 const adminQuickActions = [
   { id: 'stats', label: '📊 This week\'s stats', message: 'Show me this week\'s site stats — traffic, messages, and engagement.', icon: 'BarChart', order_index: 0, enabled: true },
@@ -26,10 +37,13 @@ const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
-  const [resetTrigger, setResetTrigger] = React.useState(0);
+  const { user, signOut } = useAuth();
+  const [resetTrigger, setResetTrigger] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   const configuredIntegration = aiConfig?.active_integration || 'openai';
-  const [selectedIntegration, setSelectedIntegration] = React.useState<AIIntegrationType>(configuredIntegration);
+  const [selectedIntegration, setSelectedIntegration] = useState<AIIntegrationType>(configuredIntegration);
 
   const availableIntegrations = integrationsMeta.filter(
     (meta) => meta.category === 'ai' && meta.available
@@ -40,68 +54,124 @@ const MagnetChat: React.FC = () => {
     ? (aiConfig?.webhook_url || "https://agent.froste.eu/webhook/magnet")
     : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {/* Compact toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground">Magnet Co-Pilot</h2>
-          {hasContext && (
-            <Badge variant="secondary" className="text-xs gap-1">
-              <Database className="h-3 w-3" />
-              {contextSummary}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1 h-7 text-xs">
-                {selectedMeta?.name || 'Select AI'}
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background border-border">
-              {availableIntegrations.map((meta) => (
-                <DropdownMenuItem
-                  key={meta.type}
-                  onClick={() => setSelectedIntegration(meta.type as AIIntegrationType)}
-                  className={selectedIntegration === meta.type ? 'bg-accent' : ''}
-                >
-                  {meta.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setResetTrigger(prev => prev + 1)}
-          >
-            New chat
-          </Button>
-        </div>
-      </div>
+  // Load historical session messages
+  const { data: sessionMessages } = useSessionMessages(activeSessionId);
 
-      {/* Chat interface */}
-      <div className="flex-1 overflow-hidden">
-        <ChatInterface
-          webhookUrl={webhookUrl}
-          fullPage={true}
-          initialPlaceholder="Hey Magnus, what should we work on today?"
-          activePlaceholder="What's next?"
-          quickActions={adminQuickActions}
-          showQuickActions={true}
-          resetTrigger={resetTrigger}
-          siteContext={contextData}
-          integration={selectedIntegration}
-          integrationConfig={aiConfig?.integration}
-          systemPrompt={aiConfig?.system_prompt || ''}
-          enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
-          mode="admin"
-          extensionId={extConfig?.extension_id}
-        />
+  const initialMessages: Message[] | undefined = activeSessionId && sessionMessages
+    ? sessionMessages.map((m) => ({
+        id: m.id,
+        text: m.content,
+        isUser: m.role === "user",
+      }))
+    : undefined;
+
+  const handleNewChat = useCallback(() => {
+    setActiveSessionId(null);
+    setResetTrigger((prev) => prev + 1);
+  }, []);
+
+  const handleSelectSession = useCallback((sessionId: string) => {
+    setActiveSessionId(sessionId);
+    setResetTrigger((prev) => prev + 1);
+  }, []);
+
+  // User initials for avatar
+  const initials = user?.email
+    ? user.email.slice(0, 2).toUpperCase()
+    : "AD";
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)]">
+      {/* Sidebar */}
+      <ChatSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen((v) => !v)}
+        onNewChat={handleNewChat}
+        onSelectSession={handleSelectSession}
+        activeSessionId={activeSessionId}
+      />
+
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Compact toolbar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet Co-Pilot</h2>
+            {hasContext && (
+              <Badge variant="secondary" className="text-xs gap-1 shrink-0">
+                <Database className="h-3 w-3" />
+                {contextSummary}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-7 text-xs">
+                  {selectedMeta?.name || 'Select AI'}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background border-border">
+                {availableIntegrations.map((meta) => (
+                  <DropdownMenuItem
+                    key={meta.type}
+                    onClick={() => setSelectedIntegration(meta.type as AIIntegrationType)}
+                    className={selectedIntegration === meta.type ? 'bg-accent' : ''}
+                  >
+                    {meta.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Profile avatar */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full p-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback className="text-[10px] font-semibold bg-primary text-primary-foreground">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background border-border w-48">
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium truncate">{user?.email}</p>
+                  <p className="text-[10px] text-muted-foreground">Admin</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()} className="text-xs gap-2">
+                  <LogOut className="h-3 w-3" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Chat interface */}
+        <div className="flex-1 overflow-hidden">
+          <ChatInterface
+            webhookUrl={webhookUrl}
+            fullPage={true}
+            initialPlaceholder="Hey Magnus, what should we work on today?"
+            activePlaceholder="What's next?"
+            quickActions={adminQuickActions}
+            showQuickActions={true}
+            resetTrigger={resetTrigger}
+            initialMessages={initialMessages}
+            initialSessionId={activeSessionId ?? undefined}
+            siteContext={contextData}
+            integration={selectedIntegration}
+            integrationConfig={aiConfig?.integration}
+            systemPrompt={aiConfig?.system_prompt || ''}
+            enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
+            mode="admin"
+            extensionId={extConfig?.extension_id}
+          />
+        </div>
       </div>
     </div>
   );
