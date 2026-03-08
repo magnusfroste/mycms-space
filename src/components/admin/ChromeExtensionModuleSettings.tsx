@@ -72,10 +72,6 @@ const ChromeExtensionModuleSettings: React.FC = () => {
       },
       {
         onSuccess: () => {
-          // Also persist to localStorage for the chat bridge
-          if (extensionId.trim()) {
-            localStorage.setItem('mycms_extension_id', extensionId.trim());
-          }
           toast.success('Chrome Extension settings saved');
         },
         onError: () => toast.error('Failed to save settings'),

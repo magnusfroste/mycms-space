@@ -20,8 +20,7 @@ const chromeRuntime = (window as any).chrome?.runtime;
 async function executeClientAction(action: {
   tool_name: string;
   tool_args: Record<string, unknown>;
-}): Promise<string> {
-  const extensionId = localStorage.getItem('mycms_extension_id');
+}, extensionId?: string): Promise<string> {
   if (!extensionId || !chromeRuntime?.sendMessage) {
     return JSON.stringify({ error: 'Chrome extension not configured. Set the Extension ID in Settings → Chrome Extension Bridge.' });
   }
@@ -62,6 +61,7 @@ interface UseChatMessagesOptions {
   integrationConfig?: AIIntegration;
   enabledTools?: string[];
   mode?: ChatMode;
+  extensionId?: string;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
@@ -86,6 +86,7 @@ export const useChatMessages = ({
   integrationConfig,
   enabledTools,
   mode = 'public',
+  extensionId,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
@@ -232,7 +233,7 @@ export const useChatMessages = ({
           setMessages((prev) => [...prev, workingMessage]);
 
           // Execute client-side tool
-          const toolResult = await executeClientAction(data.client_action);
+          const toolResult = await executeClientAction(data.client_action, extensionId);
 
           // Re-send with the tool result injected into conversation
           const conversationState = data.client_action.conversation_state || [];
@@ -316,6 +317,7 @@ export const useChatMessages = ({
       siteContext,
       enabledTools,
       mode,
+      extensionId,
       addUserMessage,
       addBotMessage,
       ensureChatSessionTracked,

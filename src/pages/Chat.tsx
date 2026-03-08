@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
+import { useChromeExtensionModule } from "@/models/modules";
 
 interface Message {
   id: string;
@@ -28,6 +29,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
+  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
   const visitorInsights = useVisitorInsights();
   const enrichedContext = React.useMemo(() => ({
@@ -110,6 +112,7 @@ const Chat = () => {
             systemPrompt={aiConfig?.system_prompt || ''}
             enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
             mode="public"
+            extensionId={extConfig?.extension_id}
           />
         )}
       </main>

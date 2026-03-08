@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
+import { useChromeExtensionModule } from "@/models/modules";
 
 const adminQuickActions = [
   { id: 'stats', label: '📊 This week\'s stats', message: 'Show me this week\'s site stats — traffic, messages, and engagement.', icon: 'BarChart', order_index: 0, enabled: true },
@@ -23,6 +24,7 @@ const adminQuickActions = [
 
 const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
+  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
@@ -98,6 +100,7 @@ const MagnetChat: React.FC = () => {
           systemPrompt={aiConfig?.system_prompt || ''}
           enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
           mode="admin"
+          extensionId={extConfig?.extension_id}
         />
       </div>
     </div>
