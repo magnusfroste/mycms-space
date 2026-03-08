@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAutomations, useToggleAutomation } from '@/hooks/useAutomations';
 import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
+import LiveActivityFeed from './LiveActivityFeed';
 
 type AgentTask = {
   id: string;
