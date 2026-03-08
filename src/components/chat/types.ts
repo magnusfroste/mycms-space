@@ -38,6 +38,10 @@ export interface VisitorInsightsData {
   currentSession: string[];
   topPages: string[];
   daysSinceLastVisit: number | null;
+  referrer?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
 }
 
 export interface SiteContext {
