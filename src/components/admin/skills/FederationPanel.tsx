@@ -1,9 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Clock, CheckCircle, XCircle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Globe, Clock, CheckCircle, XCircle, ShieldCheck, ArrowRight, Play, Ban, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface A2ATask {
   id: string;
@@ -24,9 +26,12 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   pending_approval: { label: 'Awaiting Approval', variant: 'outline', icon: ShieldCheck },
   completed: { label: 'Completed', variant: 'default', icon: CheckCircle },
   failed: { label: 'Failed', variant: 'destructive', icon: XCircle },
+  rejected: { label: 'Rejected', variant: 'destructive', icon: Ban },
 };
 
 export default function FederationPanel() {
+  const queryClient = useQueryClient();
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['a2a-tasks'],
     queryFn: async () => {
@@ -42,12 +47,70 @@ export default function FederationPanel() {
     refetchInterval: 15000,
   });
 
+  const approve = useMutation({
+    mutationFn: async (task: A2ATask) => {
+      // Execute via agent-execute
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await supabase.functions.invoke('agent-execute', {
+        body: {
+          skill_name: task.input_data.skill_name,
+          arguments: task.input_data.input || {},
+          agent_type: 'magnet',
+          conversation_id: `a2a:${task.input_data.from_agent || 'unknown'}`,
+        },
+      });
+
+      const result = res.data;
+      const succeeded = result?.status === 'success';
+
+      await supabase
+        .from('agent_tasks')
+        .update({
+          status: succeeded ? 'completed' : 'failed',
+          output_data: result,
+          completed_at: succeeded ? new Date().toISOString() : null,
+        })
+        .eq('id', task.id);
+
+      if (!succeeded) throw new Error(result?.error || 'Execution failed');
+      return result;
+    },
+    onSuccess: () => {
+      toast.success('Task approved and executed');
+      queryClient.invalidateQueries({ queryKey: ['a2a-tasks'] });
+    },
+    onError: (err) => {
+      toast.error(`Execution failed: ${(err as Error).message}`);
+      queryClient.invalidateQueries({ queryKey: ['a2a-tasks'] });
+    },
+  });
+
+  const reject = useMutation({
+    mutationFn: async (taskId: string) => {
+      const { error } = await supabase
+        .from('agent_tasks')
+        .update({
+          status: 'rejected' as string,
+          output_data: { reason: 'Manually rejected by admin' },
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', taskId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Task rejected');
+      queryClient.invalidateQueries({ queryKey: ['a2a-tasks'] });
+    },
+  });
+
   const stats = {
     total: tasks.length,
     completed: tasks.filter(t => t.status === 'completed').length,
     pending: tasks.filter(t => t.status === 'pending' || t.status === 'pending_approval').length,
-    failed: tasks.filter(t => t.status === 'failed').length,
+    failed: tasks.filter(t => t.status === 'failed' || t.status === 'rejected').length,
   };
+
+  const isPending = (status: string) => status === 'pending_approval' || status === 'pending';
 
   return (
     <div className="space-y-6">
@@ -70,7 +133,7 @@ export default function FederationPanel() {
 
       {/* Endpoint info */}
       <Card>
-        <CardContent className="py-3 px-4 flex items-center gap-3 text-sm">
+        <CardContent className="py-3 px-4 flex items-center gap-3 text-sm flex-wrap">
           <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
           <span className="text-muted-foreground">Discovery:</span>
           <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono">/.well-known/agent.json</code>
@@ -98,8 +161,9 @@ export default function FederationPanel() {
           {tasks.map(task => {
             const cfg = statusConfig[task.status] || statusConfig.pending;
             const StatusIcon = cfg.icon;
+            const actionable = isPending(task.status);
             return (
-              <Card key={task.id} className="overflow-hidden">
+              <Card key={task.id} className={actionable ? 'border-yellow-500/30' : ''}>
                 <CardContent className="py-3 px-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0 space-y-1">
@@ -117,6 +181,32 @@ export default function FederationPanel() {
                         <span>{formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}</span>
                       </div>
                     </div>
+
+                    {/* Approve / Reject buttons */}
+                    {actionable && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs gap-1"
+                          disabled={approve.isPending}
+                          onClick={() => approve.mutate(task)}
+                        >
+                          {approve.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs gap-1"
+                          disabled={reject.isPending}
+                          onClick={() => reject.mutate(task.id)}
+                        >
+                          <Ban className="h-3 w-3" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Input preview */}
