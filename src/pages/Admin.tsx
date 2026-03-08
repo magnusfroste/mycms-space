@@ -44,7 +44,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   branding: BrandingSettings,
   integrations: IntegrationsManager,
   webhooks: WebhooksManager,
-  'ai-module': AIModuleSettings,
+  'chat-settings': AIModuleSettings,
   'projects-module': ProjectsModuleSettings,
   'blog-module': BlogModuleSettings,
   'seo-module': SEOModuleSettings,
