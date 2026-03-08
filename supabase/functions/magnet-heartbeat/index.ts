@@ -14,6 +14,7 @@ const corsHeaders = {
 
 const MAX_ITERATIONS = 8;
 const SELF_HEAL_THRESHOLD = 3; // consecutive failures before auto-disable
+const MAX_CHAIN_DEPTH = 4; // max steps to chain in a single advance_plan call
 
 // ─── Cron helpers ─────────────────────────────────────────────────────────────
 
@@ -303,72 +304,100 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { status: 'planned', objective_id, steps: plan.steps.length, plan: plan.steps };
   }
 
-  // Advance plan: execute next pending step
+  // Advance plan: execute next pending step(s) with optional chaining
   if (fnName === 'advance_plan') {
-    const { objective_id } = args;
-    const { data: obj, error } = await supabase.from('agent_objectives')
-      .select('id, goal, progress')
-      .eq('id', objective_id).single();
-    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
+    const { objective_id, chain = true } = args;
+    const maxSteps = chain ? MAX_CHAIN_DEPTH : 1;
+    const chainResults: any[] = [];
 
-    const progress = (obj.progress as Record<string, any>) || {};
-    const plan = progress.plan;
-    if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.' };
+    for (let depth = 0; depth < maxSteps; depth++) {
+      // Re-read objective each iteration to get latest state
+      const { data: obj, error } = await supabase.from('agent_objectives')
+        .select('id, goal, progress')
+        .eq('id', objective_id).single();
+      if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
 
-    // Find next pending step
-    const nextStep = plan.steps.find((s: any) => s.status === 'pending');
-    if (!nextStep) return { status: 'all_done', message: 'All plan steps completed.' };
+      const progress = (obj.progress as Record<string, any>) || {};
+      const plan = progress.plan;
+      if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.', chain_results: chainResults };
 
-    // Mark step as running
-    nextStep.status = 'running';
-    plan.current_step = nextStep.order;
-    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-
-    // Execute the step's skill
-    let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
-    if (nextStep.skill_name) {
-      try {
-        const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-          body: JSON.stringify({
-            skill_name: nextStep.skill_name,
-            arguments: nextStep.skill_args || {},
-            agent_type: 'magnet',
-          }),
-        });
-        result = await resp.json();
-      } catch (err: any) {
-        result = { error: err.message };
+      // Find next pending step
+      const nextStep = plan.steps.find((s: any) => s.status === 'pending');
+      if (!nextStep) {
+        // All done — mark objective completed if not already
+        if (!plan.completed) {
+          plan.completed = true;
+          progress.plan = plan;
+          progress.last_updated = new Date().toISOString();
+          await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+        }
+        return { status: 'all_done', message: 'All plan steps completed.', chain_results: chainResults };
       }
+
+      // Mark step as running
+      nextStep.status = 'running';
+      plan.current_step = nextStep.order;
+      await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+      // Execute the step's skill
+      let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
+      if (nextStep.skill_name) {
+        try {
+          const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+            body: JSON.stringify({
+              skill_name: nextStep.skill_name,
+              arguments: nextStep.skill_args || {},
+              agent_type: 'magnet',
+            }),
+          });
+          result = await resp.json();
+        } catch (err: any) {
+          result = { error: err.message };
+        }
+      }
+
+      // Update step status
+      const success = !result.error && result.status !== 'failed';
+      nextStep.status = success ? 'done' : 'failed';
+      nextStep.result = result;
+      nextStep.completed_at = new Date().toISOString();
+
+      // Check if all steps are done
+      const allDone = plan.steps.every((s: any) => s.status === 'done');
+      const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
+      plan.completed = allDone;
+      plan.has_failures = anyFailed;
+
+      // Update progress
+      progress.plan = plan;
+      progress.total_runs = (progress.total_runs || 0) + 1;
+      progress.last_updated = new Date().toISOString();
+      await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+      const remaining = plan.steps.filter((s: any) => s.status === 'pending').length;
+      const stepResult = {
+        step: nextStep.description,
+        skill: nextStep.skill_name,
+        status: success ? 'done' : 'failed',
+        remaining_steps: remaining,
+      };
+      chainResults.push(stepResult);
+
+      console.log(`[heartbeat] Chain step ${depth + 1}: ${nextStep.skill_name || 'manual'} → ${success ? 'done' : 'failed'} (${remaining} remaining)`);
+
+      // Stop chaining on failure, manual steps, or completion
+      if (!success || !nextStep.skill_name || allDone) break;
     }
 
-    // Update step status
-    const success = !result.error && result.status !== 'failed';
-    nextStep.status = success ? 'done' : 'failed';
-    nextStep.result = result;
-    nextStep.completed_at = new Date().toISOString();
-
-    // Check if all steps are done
-    const allDone = plan.steps.every((s: any) => s.status === 'done');
-    const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
-    plan.completed = allDone;
-    plan.has_failures = anyFailed;
-
-    // Update progress
-    progress.plan = plan;
-    progress.total_runs = (progress.total_runs || 0) + 1;
-    progress.last_updated = new Date().toISOString();
-    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-
-    const remaining = plan.steps.filter((s: any) => s.status === 'pending').length;
+    const lastResult = chainResults[chainResults.length - 1];
     return {
-      status: success ? 'step_completed' : 'step_failed',
-      step: nextStep.description,
-      skill: nextStep.skill_name,
-      result,
-      remaining_steps: remaining,
-      plan_completed: allDone,
+      status: chainResults.some(r => r.status === 'failed') ? 'chain_partial' : 'chain_completed',
+      steps_executed: chainResults.length,
+      remaining_steps: lastResult?.remaining_steps ?? 0,
+      plan_completed: chainResults.length > 0 && lastResult?.remaining_steps === 0,
+      chain_results: chainResults,
     };
   }
 
@@ -623,7 +652,7 @@ Deno.serve(async (req) => {
 
     const builtInTools = [
       { type: 'function', function: { name: 'decompose_objective', description: 'Break an objective into 3-7 ordered steps using AI planning. Each step maps to an available skill. Use this when an objective has no plan yet.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID to decompose' } }, required: ['objective_id'] } } },
-      { type: 'function', function: { name: 'advance_plan', description: 'Execute the next pending step in an objective\'s plan. Runs the mapped skill and updates step status. Use after decompose_objective has created a plan.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID whose plan to advance' } }, required: ['objective_id'] } } },
+      { type: 'function', function: { name: 'advance_plan', description: 'Execute the next pending step(s) in an objective\'s plan with automatic chaining. By default (chain=true), up to 4 consecutive steps are executed in one call — stopping on failure, manual steps, or completion. Set chain=false to execute only one step. This is the PRIMARY tool for plan execution — prefer it over calling advance_plan multiple times.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID whose plan to advance' }, chain: { type: 'boolean', description: 'Auto-chain consecutive steps (default: true). Set false to execute only one step.' } }, required: ['objective_id'] } } },
       { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval will be logged for review instead of executed.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
       { type: 'function', function: { name: 'signal_acknowledge', description: 'Mark a pending signal task as processed after taking action.', parameters: { type: 'object', properties: { task_id: { type: 'string', description: 'The signal task UUID' }, output: { type: 'object', description: 'Optional result data' } }, required: ['task_id'] } } },
       { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
