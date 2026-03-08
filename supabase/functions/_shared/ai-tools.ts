@@ -538,6 +538,21 @@ export const getSiteStatsTool: ToolDefinition = {
   },
 };
 
+export const resumeLookupTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "resume_lookup",
+    description: "Query the structured resume knowledge base. Use to find specific experience, skills, education, or certifications. Useful when answering questions about qualifications or preparing proposals.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary", "all"], description: "Category to query (or 'all')" },
+        search_tags: { type: "array", items: { type: "string" }, description: "Optional tags to filter by" },
+      },
+    },
+  },
+};
+
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
@@ -566,6 +581,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   automation_list: automationListTool,
   // Reflection
   reflect: reflectTool,
+  // Resume
+  resume_lookup: resumeLookupTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
