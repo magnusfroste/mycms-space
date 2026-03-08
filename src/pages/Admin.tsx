@@ -2,11 +2,22 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Login } from '@/components/admin/Login';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { usePages } from '@/models/pages';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LayoutDashboard, MessageSquare, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 // Lazy-loaded admin tabs
 const AnalyticsDashboard = lazy(() => import('@/components/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
@@ -76,6 +87,9 @@ const AdminLoadingFallback = () => (
   </div>
 );
 
+// Top-level mode: "dashboard" (sidebar + content) or "chat" (full-screen chat)
+type AdminMode = 'dashboard' | 'chat';
+
 const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -83,9 +97,10 @@ const Admin = () => {
   const { data: pages = [] } = usePages();
 
   const tabFromUrl = searchParams.get('tab') || 'dashboard';
-  // Redirect legacy tabs
   const resolvedTab = tabFromUrl === 'autopilot' || tabFromUrl === 'skill-hub' ? 'agency' : tabFromUrl === 'magnet' ? 'chat' : tabFromUrl === 'ai-module' ? 'chat-settings' : tabFromUrl;
   const [activeTab, setActiveTab] = useState(resolvedTab);
+
+  const mode: AdminMode = activeTab === 'chat' ? 'chat' : 'dashboard';
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -135,8 +150,9 @@ const Admin = () => {
     return <Login />;
   }
 
+  const initials = user.email ? user.email.slice(0, 2).toUpperCase() : 'AD';
+
   const renderContent = () => {
-    // Landing page gets special layout with page selector
     if (activeTab === 'landing') {
       return (
         <div className="h-[calc(100vh-2rem)]">
@@ -163,7 +179,6 @@ const Admin = () => {
       );
     }
 
-    // Standard tabs via route map
     const TabComponent = TAB_COMPONENTS[activeTab] || AnalyticsDashboard;
     return (
       <Suspense fallback={<AdminLoadingFallback />}>
@@ -174,32 +189,102 @@ const Admin = () => {
 
   const isImmersive = activeTab === 'landing' || activeTab === 'pages';
 
-  // Chat takes over the full screen — no admin sidebar
-  if (activeTab === 'chat') {
+  // ── Global header bar ──
+  const HeaderBar = () => (
+    <header className="sticky top-0 z-50 h-11 border-b border-border bg-background flex items-center justify-between px-3">
+      <div className="flex items-center gap-2">
+        {mode === 'dashboard' && <SidebarTrigger className="h-7 w-7" />}
+        {/* Mode toggle pills */}
+        <div className="flex items-center bg-muted/50 rounded-lg p-0.5 gap-0.5">
+          <button
+            onClick={() => handleTabChange('dashboard')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors",
+              mode === 'dashboard'
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            Dashboard
+          </button>
+          <button
+            onClick={() => handleTabChange('chat')}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors",
+              mode === 'chat'
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Chat
+          </button>
+        </div>
+      </div>
+
+      {/* Profile avatar */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full p-0">
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="text-[10px] font-semibold bg-primary text-primary-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-background border-border w-48">
+          <div className="px-2 py-1.5">
+            <p className="text-xs font-medium truncate">{user.email}</p>
+            <p className="text-[10px] text-muted-foreground">Admin</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => handleTabChange('profile')} className="text-xs">
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout} className="text-xs gap-2">
+            <LogOut className="h-3 w-3" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </header>
+  );
+
+  // ── Chat mode: full-screen, no admin sidebar ──
+  if (mode === 'chat') {
     return (
-      <div className="min-h-screen flex w-full bg-background">
-        <Suspense fallback={<AdminLoadingFallback />}>
-          <MagnetChat onNavigateBack={() => handleTabChange('dashboard')} />
-        </Suspense>
+      <div className="min-h-screen flex flex-col w-full bg-background">
+        <HeaderBar />
+        <div className="flex-1 overflow-hidden">
+          <Suspense fallback={<AdminLoadingFallback />}>
+            <MagnetChat />
+          </Suspense>
+        </div>
       </div>
     );
   }
 
+  // ── Dashboard mode: sidebar + content ──
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onLogout={handleLogout}
-        />
-        <SidebarInset>
-          <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
-            <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
-              {renderContent()}
+      <div className="min-h-screen flex flex-col w-full bg-background">
+        <HeaderBar />
+        <div className="flex flex-1 overflow-hidden">
+          <AdminSidebar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            onLogout={handleLogout}
+          />
+          <SidebarInset>
+            <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+              <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
+                {renderContent()}
+              </div>
             </div>
-          </div>
-        </SidebarInset>
+          </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );

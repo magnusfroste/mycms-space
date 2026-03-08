@@ -8,19 +8,16 @@ import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { Badge } from "@/components/ui/badge";
-import { Database, ChevronDown, LogOut, ArrowLeft } from "lucide-react";
+import { Database, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
 import { useChromeExtensionModule } from "@/models/modules";
-import { useAuth } from "@/hooks/useAuth";
 import { useSessionMessages } from "@/models/chatMessages";
 import ChatSidebar from "./ChatSidebar";
 import type { Message } from "@/components/chat/types";
@@ -33,15 +30,10 @@ const adminQuickActions = [
   { id: 'newsletter', label: '📰 Draft newsletter', message: 'Draft a newsletter from recent research and published blog posts.', icon: 'Mail', order_index: 4, enabled: true },
 ];
 
-interface MagnetChatProps {
-  onNavigateBack?: () => void;
-}
-
-const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
+const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
-  const { user, signOut } = useAuth();
   const [resetTrigger, setResetTrigger] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -94,13 +86,8 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
     setActiveSessionId(sessionId);
   }, []);
 
-  // User initials for avatar
-  const initials = user?.email
-    ? user.email.slice(0, 2).toUpperCase()
-    : "AD";
-
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-full w-full">
       {/* Sidebar */}
       <ChatSidebar
         isOpen={sidebarOpen}
@@ -114,14 +101,8 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Compact toolbar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border h-12">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border h-10">
           <div className="flex items-center gap-2 min-w-0">
-            {onNavigateBack && (
-              <Button variant="ghost" size="sm" onClick={onNavigateBack} className="gap-1 h-7 text-xs text-muted-foreground shrink-0">
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Dashboard
-              </Button>
-            )}
             <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet</h2>
             {hasContext && (
               <Badge variant="secondary" className="text-xs gap-1 shrink-0">
@@ -148,30 +129,6 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
                     {meta.name}
                   </DropdownMenuItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Profile avatar */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full p-0">
-                  <Avatar className="h-7 w-7">
-                    <AvatarFallback className="text-[10px] font-semibold bg-primary text-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background border-border w-48">
-                <div className="px-2 py-1.5">
-                  <p className="text-xs font-medium truncate">{user?.email}</p>
-                  <p className="text-[10px] text-muted-foreground">Admin</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()} className="text-xs gap-2">
-                  <LogOut className="h-3 w-3" />
-                  Sign out
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
