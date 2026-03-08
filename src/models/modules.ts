@@ -16,11 +16,12 @@ import type {
   FooterModuleConfig,
   GitHubModuleConfig,
   WebhooksModuleConfig,
+  ResumeModuleConfig,
 } from '@/types/modules';
 import { defaultModuleConfigs } from '@/types/modules';
 
 // Re-export types
-export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig };
+export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig, ResumeModuleConfig };
 
 // Query keys
 export const modulesKeys = {
