@@ -3,7 +3,8 @@
 // Renders rich structured content (CV match, portfolio, project, availability)
 // ============================================
 
-import React, { useState } from "react";
+import React, { Component, useState } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
