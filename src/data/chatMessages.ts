@@ -55,26 +55,40 @@ export const fetchSessionMessages = async (
 };
 
 // Fetch all sessions with summary info
+// Uses a paginated approach to avoid Supabase's 1000-row default limit
 export const fetchChatSessions = async (
   limit = 50,
   offset = 0
 ): Promise<{ sessions: ChatSession[]; total: number }> => {
-  // Get unique sessions with first message and counts
-  const { data, error } = await supabase
-    .from("chat_messages")
-    .select("session_id, role, content, created_at")
-    .order("created_at", { ascending: false });
+  // Fetch messages in batches to avoid the 1000-row limit
+  const allMessages: ChatMessageRecord[] = [];
+  const batchSize = 1000;
+  let batchOffset = 0;
+  let hasMore = true;
 
-  if (error) {
-    console.error("Error fetching chat sessions:", error);
-    return { sessions: [], total: 0 };
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("session_id, role, content, created_at")
+      .order("created_at", { ascending: false })
+      .range(batchOffset, batchOffset + batchSize - 1);
+
+    if (error) {
+      console.error("Error fetching chat sessions:", error);
+      break;
+    }
+
+    const batch = (data || []) as ChatMessageRecord[];
+    allMessages.push(...batch);
+    hasMore = batch.length === batchSize;
+    batchOffset += batchSize;
   }
 
   // Group by session_id
   const sessionMap = new Map<string, ChatMessageRecord[]>();
-  for (const msg of data || []) {
+  for (const msg of allMessages) {
     const existing = sessionMap.get(msg.session_id) || [];
-    existing.push(msg as ChatMessageRecord);
+    existing.push(msg);
     sessionMap.set(msg.session_id, existing);
   }
 
