@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
-import { Plus, Globe } from 'lucide-react';
+import { Plus, Globe, FileText } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import type { AgentSkill } from '@/types/agent';
 
 const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
 const FederationPanel = lazy(() => import('@/components/admin/skills/FederationPanel'));
+const DocumentsPanel = lazy(() => import('@/components/admin/skills/DocumentsPanel'));
 
 const TabFallback = () => (
   <div className="space-y-3 py-4">
@@ -75,6 +76,10 @@ export default function SkillHub() {
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
           <TabsTrigger value="automations">Automations</TabsTrigger>
+          <TabsTrigger value="documents" className="gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Documents
+          </TabsTrigger>
           <TabsTrigger value="federation" className="gap-1.5">
             <Globe className="h-3.5 w-3.5" />
             Federation
@@ -139,6 +144,11 @@ export default function SkillHub() {
         <TabsContent value="health"><AutomationHealthPanel /></TabsContent>
         <TabsContent value="objectives"><ObjectivesPanel /></TabsContent>
         <TabsContent value="automations"><AutomationsPanel /></TabsContent>
+        <TabsContent value="documents">
+          <Suspense fallback={<TabFallback />}>
+            <DocumentsPanel />
+          </Suspense>
+        </TabsContent>
         <TabsContent value="federation">
           <Suspense fallback={<TabFallback />}>
             <FederationPanel />
