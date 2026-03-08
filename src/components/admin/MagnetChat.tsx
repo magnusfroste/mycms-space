@@ -63,9 +63,9 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
   const availableIntegrations = integrationsMeta.filter(
     (meta) => meta.category === 'ai' && meta.available
   );
-  const selectedMeta = availableIntegrations.find(m => m.type === selectedIntegration);
+  const selectedMeta = availableIntegrations.find(m => m.type === effectiveIntegration);
 
-  const webhookUrl = selectedIntegration === 'n8n'
+  const webhookUrl = effectiveIntegration === 'n8n'
     ? (aiConfig?.webhook_url || "https://agent.froste.eu/webhook/magnet")
     : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
