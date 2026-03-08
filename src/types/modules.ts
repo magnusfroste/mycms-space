@@ -533,6 +533,7 @@ export interface ModuleTypeConfigMap {
   branding: BrandingModuleConfig;
   webhooks: WebhooksModuleConfig;
   resume: ResumeModuleConfig;
+  chrome_extension: ChromeExtensionModuleConfig;
 }
 
 // Helper type to get config from module type
