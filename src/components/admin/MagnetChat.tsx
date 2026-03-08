@@ -142,7 +142,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ onNavigateBack }) => {
                   <DropdownMenuItem
                     key={meta.type}
                     onClick={() => setSelectedIntegration(meta.type as AIIntegrationType)}
-                    className={selectedIntegration === meta.type ? 'bg-accent' : ''}
+                    className={effectiveIntegration === meta.type ? 'bg-accent' : ''}
                   >
                     {meta.name}
                   </DropdownMenuItem>
