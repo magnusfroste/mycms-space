@@ -1,0 +1,128 @@
+{
+  "name": "Magnet",
+  "description": "Magnus Froste's digital twin — an AI agent specializing in product strategy, AI/ML, business development, and 20+ years of tech leadership. Powered by ClawCMS.",
+  "url": "https://mycms.chat",
+  "version": "1.0.0",
+  "protocol": "a2a/1.0",
+  "provider": {
+    "name": "Magnus Froste",
+    "url": "https://mycms.chat",
+    "description": "Product & Business Development Leader | AI & Digital Transformation"
+  },
+  "capabilities": {
+    "streaming": true,
+    "tool_calling": true,
+    "artifacts": true,
+    "conversation_memory": true
+  },
+  "authentication": {
+    "schemes": ["bearer"]
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text", "artifact"],
+  "skills": [
+    {
+      "id": "generate_tailored_cv",
+      "name": "CV Agent",
+      "description": "Analyze a job description against Magnus's profile and generate a match analysis, tailored CV, and cover letter.",
+      "scope": "public",
+      "category": "portfolio",
+      "inputModes": ["text"],
+      "outputModes": ["text", "artifact"]
+    },
+    {
+      "id": "generate_portfolio",
+      "name": "Portfolio Generator",
+      "description": "Generate a curated portfolio summary filtered by theme, technology, or audience.",
+      "scope": "public",
+      "category": "portfolio",
+      "inputModes": ["text"],
+      "outputModes": ["text", "artifact"]
+    },
+    {
+      "id": "check_availability",
+      "name": "Availability Checker",
+      "description": "Check availability for projects, consulting, or collaboration.",
+      "scope": "public",
+      "category": "portfolio",
+      "inputModes": ["text"],
+      "outputModes": ["text", "artifact"]
+    },
+    {
+      "id": "resume_lookup",
+      "name": "Resume Lookup",
+      "description": "Query the structured resume knowledge base by category (experience, education, certification, skill, language, summary) or tags.",
+      "scope": "public",
+      "category": "knowledge",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "get_visitor_insights",
+      "name": "Visitor Insights",
+      "description": "Analyze visitor browsing patterns to personalize conversations and provide relevant recommendations.",
+      "scope": "public",
+      "category": "engagement",
+      "inputModes": ["text"],
+      "outputModes": ["text", "artifact"]
+    },
+    {
+      "id": "research_topic",
+      "name": "Research",
+      "description": "Research a topic using web sources with structured findings.",
+      "scope": "internal",
+      "category": "content",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "draft_blog_post",
+      "name": "Blog Drafter",
+      "description": "Draft a blog post with SEO metadata.",
+      "scope": "internal",
+      "category": "content",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "draft_all_channels",
+      "name": "Multichannel Drafter",
+      "description": "Generate multichannel content (blog + LinkedIn + X) from a topic.",
+      "scope": "internal",
+      "category": "content",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "add_resume_entry",
+      "name": "Add Resume Entry",
+      "description": "Add experience, skills, education, or certifications to the knowledge base.",
+      "scope": "internal",
+      "category": "knowledge",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "enrich_resume_entry",
+      "name": "Enrich Resume Entry",
+      "description": "Enrich/rewrite a resume entry with better detail or wording.",
+      "scope": "internal",
+      "category": "knowledge",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    },
+    {
+      "id": "analyze_analytics",
+      "name": "Site Analytics",
+      "description": "Get site analytics summary for a given period.",
+      "scope": "internal",
+      "category": "analytics",
+      "inputModes": ["text"],
+      "outputModes": ["text"]
+    }
+  ],
+  "endpoints": {
+    "chat": "https://mycms.chat/chat",
+    "api": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/ai-chat"
+  }
+}
