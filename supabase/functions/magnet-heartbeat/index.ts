@@ -68,9 +68,13 @@ async function loadObjectives(supabase: any): Promise<string> {
     .eq('status', 'active')
     .order('created_at', { ascending: false }).limit(10);
   if (!data?.length) return '\nNo active objectives.';
-  return '\n\nActive objectives:\n' + data.map((o: any) =>
-    `- [${o.id.slice(0, 8)}] "${o.goal}" | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`
-  ).join('\n');
+  return '\n\nActive objectives:\n' + data.map((o: any) => {
+    const plan = o.progress?.plan;
+    const planInfo = plan
+      ? ` | plan: ${plan.steps?.filter((s: any) => s.status === 'done').length}/${plan.total_steps} steps done`
+      : ' | NO PLAN (needs decompose_objective)';
+    return `- [${o.id.slice(0, 8)}] "${o.goal}"${planInfo} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+  }).join('\n');
 }
 
 async function loadRecentActivity(supabase: any): Promise<string> {
@@ -187,9 +191,160 @@ async function runSelfHealing(supabase: any): Promise<string> {
   return `\n\n⚠️ Self-healing: Auto-disabled ${toDisable.length} skills due to repeated failures: ${toDisable.join(', ')}`;
 }
 
+// ─── Plan Decomposition via AI ────────────────────────────────────────────────
+
+async function decomposeObjectiveIntoPlan(
+  objective: { id: string; goal: string; constraints: any; success_criteria: any },
+  supabase: any,
+): Promise<{ steps: any[]; total_steps: number }> {
+  // Load available skills to inform step generation
+  const { data: skills } = await supabase.from('agent_skills')
+    .select('name, description, category, handler')
+    .eq('enabled', true);
+
+  const skillList = (skills || []).map((s: any) => `- ${s.name}: ${s.description} (${s.handler})`).join('\n');
+
+  const { url, apiKey, model } = resolveProvider({ provider: 'lovable' as const });
+  const data = await callOpenAICompatible({
+    url, apiKey, model,
+    messages: [
+      {
+        role: 'system',
+        content: `You are a planning agent. Decompose an objective into 3-7 concrete, sequential steps. Each step should map to an available skill or automation when possible.
+
+Available skills:
+${skillList}
+
+Return ONLY a JSON array, no markdown. Each step:
+{"id":"s1","order":1,"description":"What to do","skill_name":"skill_name_or_null","skill_args":{},"status":"pending"}
+
+Rules:
+- Steps should be ordered logically (research before drafting, drafting before publishing)
+- Use actual skill names from the list above when applicable
+- Set skill_args with sensible defaults based on the objective
+- If no skill matches, set skill_name to null (manual step)
+- Keep descriptions short and actionable`,
+      },
+      {
+        role: 'user',
+        content: `Objective: "${objective.goal}"
+Constraints: ${JSON.stringify(objective.constraints || {})}
+Success criteria: ${JSON.stringify(objective.success_criteria || {})}`,
+      },
+    ],
+  });
+
+  const raw = data.choices?.[0]?.message?.content || '[]';
+  const cleaned = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+  let steps: any[];
+  try {
+    steps = JSON.parse(cleaned);
+    if (!Array.isArray(steps)) steps = [];
+  } catch {
+    steps = [{ id: 's1', order: 1, description: objective.goal, skill_name: null, skill_args: {}, status: 'pending' }];
+  }
+
+  // Ensure all steps have required fields
+  steps = steps.map((s: any, i: number) => ({
+    id: s.id || `s${i + 1}`,
+    order: s.order || i + 1,
+    description: s.description || `Step ${i + 1}`,
+    skill_name: s.skill_name || null,
+    skill_args: s.skill_args || {},
+    status: 'pending',
+  }));
+
+  return { steps, total_steps: steps.length };
+}
+
 // ─── Built-in tool handlers ──────────────────────────────────────────────────
 
 async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKey: string, fnName: string, args: any): Promise<any> {
+  // Decompose objective into multi-step plan
+  if (fnName === 'decompose_objective') {
+    const { objective_id } = args;
+    const { data: obj, error } = await supabase.from('agent_objectives')
+      .select('id, goal, constraints, success_criteria, progress')
+      .eq('id', objective_id).single();
+    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
+
+    const plan = await decomposeObjectiveIntoPlan(obj, supabase);
+    const progress = (obj.progress as Record<string, any>) || {};
+    progress.plan = { ...plan, current_step: 0, created_at: new Date().toISOString() };
+
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+    return { status: 'planned', objective_id, steps: plan.steps.length, plan: plan.steps };
+  }
+
+  // Advance plan: execute next pending step
+  if (fnName === 'advance_plan') {
+    const { objective_id } = args;
+    const { data: obj, error } = await supabase.from('agent_objectives')
+      .select('id, goal, progress')
+      .eq('id', objective_id).single();
+    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
+
+    const progress = (obj.progress as Record<string, any>) || {};
+    const plan = progress.plan;
+    if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.' };
+
+    // Find next pending step
+    const nextStep = plan.steps.find((s: any) => s.status === 'pending');
+    if (!nextStep) return { status: 'all_done', message: 'All plan steps completed.' };
+
+    // Mark step as running
+    nextStep.status = 'running';
+    plan.current_step = nextStep.order;
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+    // Execute the step's skill
+    let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
+    if (nextStep.skill_name) {
+      try {
+        const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            skill_name: nextStep.skill_name,
+            arguments: nextStep.skill_args || {},
+            agent_type: 'magnet',
+          }),
+        });
+        result = await resp.json();
+      } catch (err: any) {
+        result = { error: err.message };
+      }
+    }
+
+    // Update step status
+    const success = !result.error && result.status !== 'failed';
+    nextStep.status = success ? 'done' : 'failed';
+    nextStep.result = result;
+    nextStep.completed_at = new Date().toISOString();
+
+    // Check if all steps are done
+    const allDone = plan.steps.every((s: any) => s.status === 'done');
+    const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
+    plan.completed = allDone;
+    plan.has_failures = anyFailed;
+
+    // Update progress
+    progress.plan = plan;
+    progress.total_runs = (progress.total_runs || 0) + 1;
+    progress.last_updated = new Date().toISOString();
+    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+
+    const remaining = plan.steps.filter((s: any) => s.status === 'pending').length;
+    return {
+      status: success ? 'step_completed' : 'step_failed',
+      step: nextStep.description,
+      skill: nextStep.skill_name,
+      result,
+      remaining_steps: remaining,
+      plan_completed: allDone,
+    };
+  }
+
   // Memory write
   if (fnName === 'memory_write') {
     const { key, value, category = 'context' } = args;
@@ -403,6 +558,8 @@ Deno.serve(async (req) => {
       .map((s: any) => s.tool_definition);
 
     const builtInTools = [
+      { type: 'function', function: { name: 'decompose_objective', description: 'Break an objective into 3-7 ordered steps using AI planning. Each step maps to an available skill. Use this when an objective has no plan yet.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID to decompose' } }, required: ['objective_id'] } } },
+      { type: 'function', function: { name: 'advance_plan', description: 'Execute the next pending step in an objective\'s plan. Runs the mapped skill and updates step status. Use after decompose_objective has created a plan.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID whose plan to advance' } }, required: ['objective_id'] } } },
       { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval will be logged for review instead of executed.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
       { type: 'function', function: { name: 'signal_acknowledge', description: 'Mark a pending signal task as processed after taking action.', parameters: { type: 'object', properties: { task_id: { type: 'string', description: 'The signal task UUID' }, output: { type: 'object', description: 'Optional result data' } }, required: ['task_id'] } } },
       { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
@@ -417,7 +574,7 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are Magnet running in AUTONOMOUS HEARTBEAT mode. No human is watching.
 
-Your mission: Review system state, process signals, advance objectives, take needed actions, and self-heal.
+Your mission: Review system state, process signals, advance objectives via multi-step plans, and self-heal.
 ${memoryPrompt}
 ${signalCtx}
 ${objectiveCtx}
@@ -427,21 +584,27 @@ ${statsCtx}
 ${healingReport}
 
 HEARTBEAT PROTOCOL:
-1. SIGNALS — Process any pending signals FIRST (new messages, subscribers, published posts). Use appropriate skills to respond, then acknowledge with signal_acknowledge.
-2. REFLECT — Analyze past 7 days.
-3. OBJECTIVES — Review each active objective. Update progress. Mark complete if criteria met.
-4. AUTOMATIONS — Check objective-linked automations (marked ⭐). Execute DUE (⏰) ones first. The system auto-calculates next_run_at after each execution.
-5. ACT — If an objective still needs action beyond automations, use available skills.
-6. REMEMBER — Save any learnings to memory.
-7. SUMMARIZE — Brief heartbeat report.
+1. SIGNALS — Process any pending signals FIRST. Acknowledge with signal_acknowledge.
+2. PLAN — For each active objective WITHOUT a plan (no progress.plan), call decompose_objective to create a step-by-step plan.
+3. ADVANCE — For each objective WITH a plan that has pending steps, call advance_plan to execute the next step. This is the core of multi-step execution.
+4. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
+5. REFLECT — Analyze if objectives need plan adjustments.
+6. REMEMBER — Save learnings to memory.
+7. SUMMARIZE — Brief heartbeat report including plan progress.
+
+MULTI-STEP PLANNING RULES:
+- Each objective should have a plan (3-7 steps). Use decompose_objective to create one.
+- Call advance_plan to execute one step at a time. The system handles skill routing.
+- If a step fails, note it but continue to the next objective — don't retry in the same heartbeat.
+- If ALL steps are done, mark the objective as completed via objective_complete.
+- Plans persist between heartbeats. Magnet picks up where it left off.
 
 CONSTRAINTS:
-- Max ${MAX_ITERATIONS} tool iterations
-- Do NOT send newsletters without approval
+- Max ${MAX_ITERATIONS} tool iterations per heartbeat
 - Skills marked requires_approval will be BLOCKED and logged for admin review
-- PRIORITIZE: signals > objective-linked DUE automations > other automations
+- PRIORITIZE: signals > plan advancement > DUE automations
 - Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
-- Be efficient: only act when progress is needed`;
+- Be efficient: advance 1-2 steps per objective per heartbeat`;
 
     // 4. Run agentic loop
     const messages: any[] = [
