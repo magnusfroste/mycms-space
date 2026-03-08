@@ -6,9 +6,49 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// Simple in-memory rate limiter (per-IP, resets on cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 60; // requests per window
+const RATE_WINDOW_MS = 60_000; // 1 minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT;
+}
+
+async function validateA2AToken(supabase: ReturnType<typeof createClient>, req: Request): Promise<boolean> {
+  const auth = req.headers.get('Authorization');
+  if (!auth?.startsWith('Bearer ')) return false;
+  const token = auth.replace('Bearer ', '').trim();
+  if (!token) return false;
+
+  const { data } = await supabase
+    .from('modules')
+    .select('module_config')
+    .eq('module_type', 'api_tokens')
+    .maybeSingle();
+
+  const key = (data?.module_config as Record<string, unknown>)?.a2a_api_key;
+  return typeof key === 'string' && key.length > 0 && key === token;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limit
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!checkRateLimit(clientIp)) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+      status: 429, headers: { ...corsHeaders, 'Retry-After': '60' },
+    });
   }
 
   const supabase = createClient(
@@ -16,9 +56,7 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  const url = new URL(req.url);
-
-  // GET /a2a-negotiate → discovery (lightweight agent card)
+  // GET is public discovery — no auth needed
   if (req.method === 'GET') {
     const { data: skills } = await supabase
       .from('agent_skills')
@@ -40,10 +78,18 @@ Deno.serve(async (req) => {
     }, null, 2), { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=60' } });
   }
 
-  // POST → handle A2A messages
+  // POST → handle A2A messages (requires API key)
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405, headers: corsHeaders,
+    });
+  }
+
+  // Validate A2A API key
+  const isAuthorized = await validateA2AToken(supabase, req);
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Provide a valid Bearer token.' }), {
+      status: 401, headers: corsHeaders,
     });
   }
 
