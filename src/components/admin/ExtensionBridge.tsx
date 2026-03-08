@@ -47,17 +47,35 @@ interface ScrapeResult {
 }
 
 const ExtensionBridge: React.FC = () => {
-  const [extensionId, setExtensionId] = useState(() => localStorage.getItem('mycms_extension_id') || '');
+  const { config, isEnabled, isLoading } = useChromeExtensionModule();
+  const updateModule = useUpdateChromeExtensionModule();
+  
+  const safeConfig = config ?? defaultModuleConfigs.chrome_extension;
+  const [extensionId, setExtensionId] = useState(safeConfig.extension_id);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [version, setVersion] = useState('');
   const [loading, setLoading] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState('');
   const [result, setResult] = useState<ScrapeResult | null>(null);
 
+  useEffect(() => {
+    if (!isLoading) {
+      setExtensionId(safeConfig.extension_id);
+    }
+  }, [isLoading, safeConfig]);
+
   const saveId = (id: string) => {
     setExtensionId(id);
-    localStorage.setItem('mycms_extension_id', id);
     setConnected(null);
+    updateModule.mutate({
+      enabled: isEnabled,
+      module_config: {
+        extension_id: id.trim(),
+        auto_connect: safeConfig.auto_connect,
+        allowed_domains: safeConfig.allowed_domains,
+        setup_instructions: '',
+      },
+    });
   };
 
   const ping = useCallback(async () => {
