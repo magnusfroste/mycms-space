@@ -523,6 +523,7 @@ export interface ModuleTypeConfigMap {
   github: GitHubModuleConfig;
   branding: BrandingModuleConfig;
   webhooks: WebhooksModuleConfig;
+  resume: ResumeModuleConfig;
 }
 
 // Helper type to get config from module type
