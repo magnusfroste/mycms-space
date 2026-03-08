@@ -13,17 +13,20 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const chromeRuntime = (window as any).chrome?.runtime;
+
 // Send message to Chrome extension
 function sendToExtension(extensionId: string, message: Record<string, unknown>): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    if (!chrome?.runtime?.sendMessage) {
+    if (!chromeRuntime?.sendMessage) {
       reject(new Error('Chrome extension API not available. Use Chrome browser.'));
       return;
     }
     try {
-      chrome.runtime.sendMessage(extensionId, message, (response: unknown) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message || 'Extension not reachable'));
+      chromeRuntime.sendMessage(extensionId, message, (response: unknown) => {
+        if (chromeRuntime.lastError) {
+          reject(new Error(chromeRuntime.lastError.message || 'Extension not reachable'));
           return;
         }
         resolve(response);
