@@ -81,7 +81,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
   }, []);
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Sidebar */}
       <ChatSidebar
         isOpen={sidebarOpen}
