@@ -145,7 +145,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="w-full pl-11 pr-14 resize-none text-sm min-h-[48px] max-h-[200px] overflow-y-auto bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+            className="w-full pl-10 pr-14 resize-none text-sm min-h-[48px] max-h-[200px] overflow-y-auto bg-muted/30 border border-border rounded-xl py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
             rows={1}
             disabled={isLoading || isReadingFile}
             autoFocus
