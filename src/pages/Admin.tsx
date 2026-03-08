@@ -172,7 +172,18 @@ const Admin = () => {
     );
   };
 
-  const isImmersive = activeTab === 'landing' || activeTab === 'pages' || activeTab === 'chat';
+  const isImmersive = activeTab === 'landing' || activeTab === 'pages';
+
+  // Chat takes over the full screen — no admin sidebar
+  if (activeTab === 'chat') {
+    return (
+      <div className="min-h-screen flex w-full bg-background">
+        <Suspense fallback={<AdminLoadingFallback />}>
+          <MagnetChat onNavigateBack={() => handleTabChange('dashboard')} />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
