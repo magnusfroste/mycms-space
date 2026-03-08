@@ -446,8 +446,38 @@ const VisitorProfileArtifact: React.FC<{ data: Record<string, unknown> }> = ({ d
   );
 };
 
+// ---- Error Boundary ----
+class ArtifactErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.warn("[ChatArtifact] Render error caught:", error.message, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="mt-3 rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          Could not display this content.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ---- Main Artifact Router ----
-const ChatArtifact: React.FC<ChatArtifactProps> = ({ artifact }) => {
+const ChatArtifactInner: React.FC<ChatArtifactProps> = ({ artifact }) => {
   switch (artifact.type) {
     case "cv-match":
       return <CvMatchArtifact data={artifact.data} />;
@@ -473,5 +503,11 @@ const ChatArtifact: React.FC<ChatArtifactProps> = ({ artifact }) => {
       return null;
   }
 };
+
+const ChatArtifact: React.FC<ChatArtifactProps> = (props) => (
+  <ArtifactErrorBoundary>
+    <ChatArtifactInner {...props} />
+  </ArtifactErrorBoundary>
+);
 
 export default ChatArtifact;
