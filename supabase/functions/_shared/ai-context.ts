@@ -18,6 +18,10 @@ export interface VisitorInsightsData {
   currentSession: string[];
   topPages: string[];
   daysSinceLastVisit: number | null;
+  referrer?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
 }
 
 export interface SiteContext {
@@ -265,6 +269,13 @@ export function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext 
     if (vi.isReturning && vi.daysSinceLastVisit !== null) {
       parts.push(`- Days since last visit: ${vi.daysSinceLastVisit}`);
     }
+    if (vi.referrer) {
+      parts.push(`- Referrer: ${vi.referrer}`);
+    }
+    if (vi.utmSource || vi.utmMedium || vi.utmCampaign) {
+      const utmParts = [vi.utmSource, vi.utmMedium, vi.utmCampaign].filter(Boolean);
+      parts.push(`- Traffic source (UTM): ${utmParts.join(' / ')}`);
+    }
     if (vi.pagesVisited?.length) {
       parts.push(`- Pages previously visited: ${vi.pagesVisited.join(', ')}`);
     }
@@ -275,7 +286,7 @@ export function buildDynamicPrompt(basePrompt: string, siteContext: SiteContext 
       parts.push(`- Most visited pages: ${vi.topPages.join(', ')}`);
     }
 
-    sections.push(`\n\n## Visitor Insights\nYou have access to this visitor's browsing behavior. Use this to personalize your greeting and conversation. For returning visitors, acknowledge them warmly and reference their interests based on pages they've visited. For first-time visitors, give a welcoming introduction. During testing/POC, you may confirm what pages the visitor has been to when asked.\n${parts.join('\n')}`);
+    sections.push(`\n\n## Visitor Insights\nYou have access to this visitor's browsing behavior. Use this to personalize your greeting and conversation. For returning visitors, acknowledge them warmly and reference their interests based on pages they've visited. If there's referrer or UTM data, use it to understand how they found the site (e.g. from LinkedIn, Google, a blog post). For first-time visitors, give a welcoming introduction. During testing/POC, you may confirm what pages the visitor has been to when asked.\n${parts.join('\n')}`);
     activeSections.push('visitor');
   }
 

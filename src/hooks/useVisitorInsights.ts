@@ -19,6 +19,10 @@ export interface VisitorInsights {
   isReturning: boolean;
   daysSinceLastVisit: number | null;
   topPages: string[];
+  referrer: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
 }
 
 interface StoredVisitorData {
@@ -28,6 +32,10 @@ interface StoredVisitorData {
   sessionId: string;
   pagesVisited: Record<string, number>; // page → visit count
   currentSession: string[];
+  referrer: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
 }
 
 const generateSessionId = () => `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -61,6 +69,14 @@ export const useVisitorInsights = (): VisitorInsights => {
     // Skip admin pages
     if (location.pathname.startsWith('/admin')) return;
 
+    // Capture referrer & UTM on first page load
+    const params = new URLSearchParams(window.location.search);
+    const referrer = document.referrer && !document.referrer.includes(window.location.hostname)
+      ? document.referrer : null;
+    const utmSource = params.get('utm_source');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+
     if (!existing) {
       // First-time visitor
       const data: StoredVisitorData = {
@@ -70,6 +86,10 @@ export const useVisitorInsights = (): VisitorInsights => {
         sessionId: generateSessionId(),
         pagesVisited: { [currentPath]: 1 },
         currentSession: [currentPath],
+        referrer,
+        utmSource,
+        utmMedium,
+        utmCampaign,
       };
       saveData(data);
       setInsights(buildInsights(data));
@@ -92,6 +112,11 @@ export const useVisitorInsights = (): VisitorInsights => {
           : existing.currentSession.includes(currentPath)
             ? existing.currentSession
             : [...existing.currentSession, currentPath],
+        // Update referrer/UTM if new session brings fresh data
+        referrer: (isNewSession && referrer) ? referrer : existing.referrer,
+        utmSource: (isNewSession && utmSource) ? utmSource : existing.utmSource,
+        utmMedium: (isNewSession && utmMedium) ? utmMedium : existing.utmMedium,
+        utmCampaign: (isNewSession && utmCampaign) ? utmCampaign : existing.utmCampaign,
       };
 
       saveData(updated);
@@ -114,6 +139,10 @@ function buildInsights(data: StoredVisitorData | null): VisitorInsights {
       isReturning: false,
       daysSinceLastVisit: null,
       topPages: [],
+      referrer: null,
+      utmSource: null,
+      utmMedium: null,
+      utmCampaign: null,
     };
   }
 
@@ -137,6 +166,10 @@ function buildInsights(data: StoredVisitorData | null): VisitorInsights {
     isReturning: data.visitCount > 1,
     daysSinceLastVisit,
     topPages,
+    referrer: data.referrer || null,
+    utmSource: data.utmSource || null,
+    utmMedium: data.utmMedium || null,
+    utmCampaign: data.utmCampaign || null,
   };
 }
 
@@ -151,5 +184,9 @@ export function formatVisitorInsightsForAI(insights: VisitorInsights): Record<st
     currentSession: insights.currentSession,
     topPages: insights.topPages,
     daysSinceLastVisit: insights.daysSinceLastVisit,
+    referrer: insights.referrer,
+    utmSource: insights.utmSource,
+    utmMedium: insights.utmMedium,
+    utmCampaign: insights.utmCampaign,
   };
 }
