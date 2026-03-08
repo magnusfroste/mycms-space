@@ -77,8 +77,8 @@ const Admin = () => {
   const { data: pages = [] } = usePages();
 
   const tabFromUrl = searchParams.get('tab') || 'dashboard';
-  // Redirect legacy tabs to agency
-  const resolvedTab = tabFromUrl === 'autopilot' || tabFromUrl === 'skill-hub' ? 'agency' : tabFromUrl;
+  // Redirect legacy tabs
+  const resolvedTab = tabFromUrl === 'autopilot' || tabFromUrl === 'skill-hub' ? 'agency' : tabFromUrl === 'magnet' ? 'chat' : tabFromUrl === 'ai-module' ? 'chat-settings' : tabFromUrl;
   const [activeTab, setActiveTab] = useState(resolvedTab);
 
   useEffect(() => {
