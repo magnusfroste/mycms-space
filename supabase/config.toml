@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.agent-daily-report]
 verify_jwt = false
+
+[functions.a2a-negotiate]
+verify_jwt = false
+
+[functions.agent-card]
+verify_jwt = false
