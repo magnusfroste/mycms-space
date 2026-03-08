@@ -242,6 +242,28 @@ const GitHubPreview = () => (
   </div>
 );
 
+const AgentStatusPreview = () => (
+  <div className="w-full h-full bg-muted/20 rounded flex flex-col items-center justify-center gap-1 p-2">
+    <div className="relative">
+      <Sparkles className="w-3 h-3 text-primary/50" />
+      <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-primary/60 rounded-full" />
+    </div>
+    <div className="w-8 h-0.5 bg-muted-foreground/20 rounded" />
+    <div className="w-6 h-0.5 bg-muted-foreground/15 rounded" />
+    <div className="w-4 h-0.5 bg-muted-foreground/10 rounded" />
+  </div>
+);
+  <div className="w-full h-full bg-muted/30 rounded flex flex-col items-center justify-center gap-1 p-2">
+    <Github className="w-4 h-4 text-foreground/60" />
+    <div className="grid grid-cols-2 gap-0.5 w-full mt-1">
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+      <div className="h-3 bg-muted rounded" />
+    </div>
+  </div>
+);
+
 export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
   // Basic blocks
   {

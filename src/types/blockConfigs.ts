@@ -363,6 +363,7 @@ export interface BlockTypeConfigMap {
   'newsletter-subscribe': NewsletterSubscribeBlockConfig;
   'github': GitHubBlockConfig;
   'cv-agent': CvAgentBlockConfig;
+  'agent-status': AgentStatusBlockConfig;
 }
 
 // Helper type to get config type from block type
