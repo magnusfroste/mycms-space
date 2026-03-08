@@ -138,6 +138,33 @@ async function loadPendingSignals(supabase: any): Promise<string> {
   ).join('\n');
 }
 
+async function loadRecentSignalPatterns(supabase: any): Promise<string> {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const { data } = await supabase
+    .from('agent_tasks')
+    .select('input_data, status, created_at')
+    .eq('task_type', 'signal')
+    .gte('created_at', weekAgo.toISOString())
+    .order('created_at', { ascending: false }).limit(30);
+  if (!data?.length) return '\nNo recent signals for pattern analysis.';
+
+  // Summarize patterns by event type and source
+  const byEvent: Record<string, number> = {};
+  const bySource: Record<string, number> = {};
+  for (const t of data) {
+    const event = t.input_data?.event || t.input_data?.source_type || 'unknown';
+    const source = t.input_data?.source_type || 'unknown';
+    byEvent[event] = (byEvent[event] || 0) + 1;
+    bySource[source] = (bySource[source] || 0) + 1;
+  }
+
+  return `\n\n📊 Signal patterns (7 days, ${data.length} signals):\n` +
+    `Events: ${Object.entries(byEvent).map(([k, v]) => `${k}(${v})`).join(', ')}\n` +
+    `Sources: ${Object.entries(bySource).map(([k, v]) => `${k}(${v})`).join(', ')}\n` +
+    `Recent topics: ${data.slice(0, 5).map((t: any) => t.input_data?.title || '').filter(Boolean).join('; ')}`;
+}
+
 // ─── Self-healing: detect and disable failing skills ──────────────────────────
 
 async function runSelfHealing(supabase: any): Promise<string> {
@@ -399,6 +426,42 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
     return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
   }
 
+  // Propose a new objective based on proactive analysis
+  if (fnName === 'propose_objective') {
+    const { goal, constraints, success_criteria, reason } = args;
+    // Check for duplicate active objectives with similar goals
+    const { data: existing } = await supabase.from('agent_objectives')
+      .select('id, goal').eq('status', 'active');
+    const isDuplicate = (existing || []).some((o: any) =>
+      o.goal.toLowerCase().includes(goal.toLowerCase().slice(0, 20)) ||
+      goal.toLowerCase().includes(o.goal.toLowerCase().slice(0, 20))
+    );
+    if (isDuplicate) {
+      return { status: 'skipped', reason: 'Similar objective already active' };
+    }
+
+    const { data: newObj, error } = await supabase.from('agent_objectives')
+      .insert({
+        goal,
+        constraints: constraints || {},
+        success_criteria: success_criteria || {},
+        progress: { proposed_by: 'magnet', reason: reason || 'proactive', proposed_at: new Date().toISOString() },
+        status: 'active',
+      })
+      .select('id').single();
+    if (error) return { status: 'error', error: error.message };
+
+    // Log the proposal
+    await supabase.from('agent_activity').insert({
+      agent: 'magnet', skill_name: 'propose_objective',
+      input: { goal, reason },
+      output: { objective_id: newObj.id },
+      status: 'success',
+    });
+
+    return { status: 'proposed', objective_id: newObj.id, goal };
+  }
+
   // Execute automation with next_run_at calculation
   if (fnName === 'execute_automation') {
     const { automation_id } = args;
@@ -524,13 +587,14 @@ Deno.serve(async (req) => {
 
   try {
     // 1. Gather context + run self-healing in parallel
-    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, healingReport] = await Promise.all([
+    const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, signalPatternCtx, healingReport] = await Promise.all([
       loadAgentMemory(),
       loadObjectives(supabase),
       loadRecentActivity(supabase),
       loadSiteStats(supabase),
       loadLinkedAutomations(supabase),
       loadPendingSignals(supabase),
+      loadRecentSignalPatterns(supabase),
       runSelfHealing(supabase),
     ]);
 
@@ -566,6 +630,7 @@ Deno.serve(async (req) => {
       { type: 'function', function: { name: 'objective_update_progress', description: 'Update progress on an objective.', parameters: { type: 'object', properties: { objective_id: { type: 'string' }, progress: { type: 'object' } }, required: ['objective_id', 'progress'] } } },
       { type: 'function', function: { name: 'objective_complete', description: 'Mark objective as completed.', parameters: { type: 'object', properties: { objective_id: { type: 'string' } }, required: ['objective_id'] } } },
       { type: 'function', function: { name: 'reflect', description: 'Analyze performance over past 7 days.', parameters: { type: 'object', properties: { focus: { type: 'string', enum: ['errors', 'usage', 'automations', 'objectives'] } } } } },
+      { type: 'function', function: { name: 'propose_objective', description: 'Proactively create a new objective based on signal patterns, site stats, or strategic gaps. Only propose when there is a clear need not covered by existing objectives. Avoids duplicates automatically.', parameters: { type: 'object', properties: { goal: { type: 'string', description: 'The objective goal' }, reason: { type: 'string', description: 'Why this objective is being proposed (e.g. signal pattern, stat trend)' }, constraints: { type: 'object', description: 'Optional constraints' }, success_criteria: { type: 'object', description: 'How to measure success' } }, required: ['goal', 'reason'] } } },
     ];
 
     const allTools = [...builtInTools, ...skillTools];
@@ -574,9 +639,10 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You are Magnet running in AUTONOMOUS HEARTBEAT mode. No human is watching.
 
-Your mission: Review system state, process signals, advance objectives via multi-step plans, and self-heal.
+Your mission: Review system state, process signals, advance objectives via multi-step plans, proactively identify opportunities, and self-heal.
 ${memoryPrompt}
 ${signalCtx}
+${signalPatternCtx}
 ${objectiveCtx}
 ${automationCtx}
 ${activityCtx}
@@ -585,12 +651,18 @@ ${healingReport}
 
 HEARTBEAT PROTOCOL:
 1. SIGNALS — Process any pending signals FIRST. Acknowledge with signal_acknowledge.
-2. PLAN — For each active objective WITHOUT a plan (no progress.plan), call decompose_objective to create a step-by-step plan.
-3. ADVANCE — For each objective WITH a plan that has pending steps, call advance_plan to execute the next step. This is the core of multi-step execution.
-4. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
-5. REFLECT — Analyze if objectives need plan adjustments.
-6. REMEMBER — Save learnings to memory.
-7. SUMMARIZE — Brief heartbeat report including plan progress.
+2. PROACTIVE REASONING — Analyze signal patterns + site stats. If you spot a trend, gap, or opportunity NOT covered by existing objectives, use propose_objective to create one. Examples:
+   - Multiple signals about similar topics → content objective
+   - Drop in page views → engagement objective
+   - Surge in subscribers → nurture/welcome objective
+   - Recurring errors → reliability objective
+   Only propose if genuinely valuable. Max 1 new objective per heartbeat.
+3. PLAN — For each active objective WITHOUT a plan (no progress.plan), call decompose_objective to create a step-by-step plan.
+4. ADVANCE — For each objective WITH a plan that has pending steps, call advance_plan to execute the next step.
+5. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
+6. REFLECT — Analyze if objectives need plan adjustments.
+7. REMEMBER — Save learnings to memory.
+8. SUMMARIZE — Brief heartbeat report including plan progress and any new proposals.
 
 MULTI-STEP PLANNING RULES:
 - Each objective should have a plan (3-7 steps). Use decompose_objective to create one.
@@ -599,10 +671,17 @@ MULTI-STEP PLANNING RULES:
 - If ALL steps are done, mark the objective as completed via objective_complete.
 - Plans persist between heartbeats. Magnet picks up where it left off.
 
+PROACTIVE REASONING RULES:
+- Only propose objectives when signal patterns or stats clearly warrant action
+- Never duplicate existing active objectives (the system checks automatically)
+- Include a clear "reason" explaining what data drove the proposal
+- Keep goals specific and actionable, not vague
+- Prefer improving existing objectives over creating new ones when possible
+
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations per heartbeat
 - Skills marked requires_approval will be BLOCKED and logged for admin review
-- PRIORITIZE: signals > plan advancement > DUE automations
+- PRIORITIZE: signals > proactive proposals > plan advancement > DUE automations
 - Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
 - Be efficient: advance 1-2 steps per objective per heartbeat`;
 

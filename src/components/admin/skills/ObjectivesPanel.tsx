@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, Trash2, CheckCircle2, PauseCircle, XCircle, Play, ListChecks, Circle, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Target, Trash2, CheckCircle2, PauseCircle, XCircle, Play, ListChecks, Circle, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,10 +110,18 @@ export function ObjectivesPanel() {
             return (
               <Card key={obj.id} className="group cursor-pointer hover:ring-1 hover:ring-primary/20 transition-all" onClick={() => { setEditing(obj); setEditorOpen(true); }}>
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-sm font-medium leading-snug line-clamp-2">{obj.goal}</CardTitle>
-                    <Badge variant="secondary" className={`shrink-0 text-[10px] ${cfg.color}`}><StatusIcon className="h-3 w-3 mr-1" />{cfg.label}</Badge>
-                  </div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-1.5">
+                        {(obj.progress as any)?.proposed_by === 'magnet' && (
+                          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                        )}
+                        <CardTitle className="text-sm font-medium leading-snug line-clamp-2">{obj.goal}</CardTitle>
+                      </div>
+                      <Badge variant="secondary" className={`shrink-0 text-[10px] ${cfg.color}`}><StatusIcon className="h-3 w-3 mr-1" />{cfg.label}</Badge>
+                    </div>
+                    {(obj.progress as any)?.reason && (obj.progress as any)?.proposed_by === 'magnet' && (
+                      <p className="text-[10px] text-muted-foreground mt-1 italic">💡 {(obj.progress as any).reason}</p>
+                    )}
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {pct !== null && (
