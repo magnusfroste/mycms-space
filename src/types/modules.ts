@@ -485,6 +485,16 @@ export interface WebhooksModuleConfig {
   endpoints: WebhookEndpoint[];
 }
 
+// Resume Module Config
+export interface ResumeModuleConfig {
+  owner_name: string;
+  owner_title: string;
+  owner_summary: string;
+  owner_location?: string;
+  owner_availability?: 'available' | 'limited' | 'unavailable';
+  availability_note?: string;
+}
+
 // Union type for all configs
 export type ModuleConfigType =
   | AIModuleConfig
@@ -497,7 +507,8 @@ export type ModuleConfigType =
   | SEOModuleConfig
   | GitHubModuleConfig
   | BrandingModuleConfig
-  | WebhooksModuleConfig;
+  | WebhooksModuleConfig
+  | ResumeModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
