@@ -3,7 +3,7 @@
 // Centralized media library for browsing and managing all uploaded files
 // ============================================
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,8 @@ import {
   Grid,
   List,
   Check,
+  Upload,
+  Download,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -52,6 +54,7 @@ import {
   type StorageBucket,
   type MediaFile,
 } from '@/models/mediaHub';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -76,6 +79,75 @@ const MediaHub: React.FC = () => {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [targetBucket, setTargetBucket] = useState<StorageBucket | ''>('');
+  const [uploadBucket, setUploadBucket] = useState<StorageBucket>('cms-files');
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Upload handler
+  const handleUpload = useCallback(async (fileList: FileList | File[]) => {
+    const filesToUpload = Array.from(fileList);
+    if (!filesToUpload.length) return;
+
+    setUploading(true);
+    let success = 0;
+    let failed = 0;
+
+    for (const file of filesToUpload) {
+      const path = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage
+        .from(uploadBucket)
+        .upload(path, file, { upsert: true });
+      if (error) {
+        console.error('Upload failed:', error);
+        failed++;
+      } else {
+        success++;
+      }
+    }
+
+    setUploading(false);
+    if (success) {
+      toast.success(`${success} file${success > 1 ? 's' : ''} uploaded`);
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+    }
+    if (failed) toast.error(`${failed} file${failed > 1 ? 's' : ''} failed to upload`);
+  }, [uploadBucket, queryClient]);
+
+  // Download handler
+  const handleDownload = useCallback(async (file: MediaFile) => {
+    try {
+      const { data, error } = await supabase.storage.from(file.bucket).download(file.path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to download file');
+    }
+  }, []);
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length) {
+      handleUpload(e.dataTransfer.files);
+    }
+  }, [handleUpload]);
 
   // Filter and sort files
   const filteredFiles = useMemo(() => {
@@ -206,25 +278,67 @@ const MediaHub: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div
+      className={cn("space-y-6", dragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-lg")}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => e.target.files && handleUpload(e.target.files)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Media Hub</h2>
           <p className="text-muted-foreground">
-            Manage all uploaded images across your site
+            Manage all uploaded files across your site
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={uploadBucket} onValueChange={(v) => setUploadBucket(v as StorageBucket)}>
+            <SelectTrigger className="w-36 h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STORAGE_BUCKETS.map(b => (
+                <SelectItem key={b} value={b}>{BUCKET_LABELS[b]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Upload className={cn("h-4 w-4 mr-2", uploading && "animate-pulse")} />
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Drag overlay */}
+      {dragOver && (
+        <div className="border-2 border-dashed border-primary rounded-lg p-8 text-center bg-primary/5">
+          <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
+          <p className="text-sm font-medium text-primary">Drop files to upload to {BUCKET_LABELS[uploadBucket]}</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -364,6 +478,7 @@ const MediaHub: React.FC = () => {
               onRename={openRenameDialog}
               onMove={openMoveDialog}
               onDelete={openDeleteDialog}
+              onDownload={handleDownload}
             />
           ))}
         </div>
@@ -380,6 +495,7 @@ const MediaHub: React.FC = () => {
                   onRename={openRenameDialog}
                   onMove={openMoveDialog}
                   onDelete={openDeleteDialog}
+                  onDownload={handleDownload}
                 />
               ))}
             </div>
@@ -502,6 +618,7 @@ interface MediaFileCardProps {
   onRename: (file: MediaFile) => void;
   onMove: (file: MediaFile) => void;
   onDelete: (file: MediaFile) => void;
+  onDownload: (file: MediaFile) => void;
 }
 
 const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
@@ -510,6 +627,7 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
   onRename,
   onMove,
   onDelete,
+  onDownload,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -576,6 +694,10 @@ const MediaFileCard: React.FC<MediaFileCardProps> = React.memo(({
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
               </button>
+              <button onClick={() => handleMenuAction(() => onDownload(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </button>
               <div className="-mx-1 my-1 h-px bg-muted" />
               <button onClick={() => handleMenuAction(() => onRename(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <Edit3 className="h-4 w-4 mr-2" />
@@ -606,6 +728,7 @@ interface MediaFileRowProps {
   onRename: (file: MediaFile) => void;
   onMove: (file: MediaFile) => void;
   onDelete: (file: MediaFile) => void;
+  onDownload: (file: MediaFile) => void;
 }
 
 const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
@@ -615,6 +738,7 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
   onRename,
   onMove,
   onDelete,
+  onDownload,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -674,6 +798,10 @@ const MediaFileRow: React.FC<MediaFileRowProps> = React.memo(({
               <button onClick={() => handleMenuAction(() => window.open(file.publicUrl, '_blank'))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in new tab
+              </button>
+              <button onClick={() => handleMenuAction(() => onDownload(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+                <Download className="h-4 w-4 mr-2" />
+                Download
               </button>
               <div className="-mx-1 my-1 h-px bg-muted" />
               <button onClick={() => handleMenuAction(() => onRename(file))} className="flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
