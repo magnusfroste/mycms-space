@@ -324,6 +324,9 @@ const SKILL_OBJECTIVE_MAP: Record<string, string[]> = {
   draft_newsletter: ['newsletter', 'email', 'subscriber'],
   research_topic: ['research', 'content'],
   analyze_analytics: ['analytics', 'traffic', 'growth'],
+  add_resume_entry: ['resume', 'knowledge', 'profile', 'skill'],
+  update_resume_entry: ['resume', 'knowledge', 'profile'],
+  enrich_resume_entry: ['resume', 'knowledge', 'content'],
 };
 
 async function trackObjectiveProgress(
