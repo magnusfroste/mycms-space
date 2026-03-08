@@ -8,6 +8,7 @@ import {
   fetchChatSessions,
   fetchSessionMessages,
   deleteOldMessages,
+  deleteSession,
   type ChatSession,
   type ChatMessageRecord,
 } from "@/data/chatMessages";
@@ -39,6 +40,18 @@ export const useDeleteOldMessages = () => {
 
   return useMutation({
     mutationFn: (daysOld: number) => deleteOldMessages(daysOld),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_KEY });
+    },
+  });
+};
+
+// Delete a specific session
+export const useDeleteSession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (sessionId: string) => deleteSession(sessionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CHAT_SESSIONS_KEY });
     },

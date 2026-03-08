@@ -124,3 +124,17 @@ export const deleteOldMessages = async (daysOld = 90): Promise<number> => {
 
   return data?.length || 0;
 };
+
+// Delete all messages for a specific session
+export const deleteSession = async (sessionId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from("chat_messages")
+    .delete()
+    .eq("session_id", sessionId);
+
+  if (error) {
+    console.error("Error deleting session:", error);
+    return false;
+  }
+  return true;
+};

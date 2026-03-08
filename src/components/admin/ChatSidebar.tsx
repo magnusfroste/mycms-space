@@ -5,19 +5,21 @@
 // ============================================
 
 import React, { useState, useMemo } from "react";
-import { Search, Plus, MessageSquare, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Search, Plus, PanelLeftClose, PanelLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useChatSessions } from "@/models/chatMessages";
+import { useChatSessions, useDeleteSession } from "@/models/chatMessages";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface ChatSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   onNewChat: () => void;
   onSelectSession: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
   activeSessionId?: string | null;
 }
 
@@ -26,10 +28,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onToggle,
   onNewChat,
   onSelectSession,
+  onDeleteSession,
   activeSessionId,
 }) => {
   const [search, setSearch] = useState("");
   const { data, isLoading } = useChatSessions(100, 0);
+  const deleteSession = useDeleteSession();
 
   const sessions = useMemo(() => {
     const all = data?.sessions || [];
@@ -127,22 +131,48 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   {group.label}
                 </p>
                 {group.items.map((session) => (
-                  <button
+                  <div
                     key={session.session_id}
-                    onClick={() => onSelectSession(session.session_id)}
                     className={cn(
-                      "w-full text-left px-2 py-1.5 rounded-md text-xs truncate transition-colors",
+                      "group relative flex items-center rounded-md transition-colors",
                       "hover:bg-accent/50",
                       activeSessionId === session.session_id
                         ? "bg-accent text-accent-foreground"
                         : "text-foreground/80"
                     )}
                   >
-                    <span className="truncate block">{session.first_message}</span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {formatDistanceToNow(new Date(session.last_message_at), { addSuffix: true })}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => onSelectSession(session.session_id)}
+                      className="flex-1 text-left px-2 py-1.5 text-xs min-w-0"
+                    >
+                      <span className="truncate block">{session.first_message}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(session.last_message_at), { addSuffix: true })}
+                      </span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteSession.mutate(session.session_id, {
+                          onSuccess: (ok) => {
+                            if (ok) {
+                              toast.success("Chat deleted");
+                              if (activeSessionId === session.session_id) {
+                                onDeleteSession?.(session.session_id);
+                              }
+                            } else {
+                              toast.error("Failed to delete chat");
+                            }
+                          },
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             ))
