@@ -31,7 +31,7 @@ const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'))
 const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
 const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
-const SkillHub = lazy(() => import('@/components/admin/SkillHub'));
+const Agency = lazy(() => import('@/components/admin/SkillHub'));
 
 // Route map: tab key → lazy component
 const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
