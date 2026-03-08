@@ -81,21 +81,28 @@ const ExtensionBridge: React.FC = () => {
     });
   };
 
-  const ping = useCallback(async () => {
-    if (!extensionId.trim()) { toast.error('Enter extension ID first'); return; }
+  const ping = useCallback(async (silent = false) => {
+    if (!extensionId.trim()) { if (!silent) toast.error('Enter extension ID first'); return; }
     setLoading(true);
     try {
       const res = await sendToExtension(extensionId, { type: 'ping' }) as { ok: boolean; version: string };
       setConnected(true);
       setVersion(res.version || '?');
-      toast.success(`Connected — v${res.version}`);
+      if (!silent) toast.success(`Connected — v${res.version}`);
     } catch (err: unknown) {
       setConnected(false);
-      toast.error((err as Error).message);
+      if (!silent) toast.error((err as Error).message);
     } finally {
       setLoading(false);
     }
   }, [extensionId]);
+
+  // Auto-reconnect: ping every 30s when disconnected
+  useEffect(() => {
+    if (!extensionId.trim() || connected !== false) return;
+    const interval = setInterval(() => { ping(true); }, 30000);
+    return () => clearInterval(interval);
+  }, [extensionId, connected, ping]);
 
   const scrapeActiveTab = useCallback(async () => {
     setLoading(true);
@@ -168,7 +175,7 @@ const ExtensionBridge: React.FC = () => {
             />
             <Button
               variant="outline"
-              onClick={ping}
+              onClick={() => ping()}
               disabled={loading || !extensionId.trim()}
               className="shrink-0 gap-1.5"
             >
