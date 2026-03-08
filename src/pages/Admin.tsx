@@ -30,7 +30,6 @@ const ChatHistoryManager = lazy(() => import('@/components/admin/ChatHistoryMana
 const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'));
 const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
-const AutopilotDashboard = lazy(() => import('@/components/admin/AutopilotDashboard'));
 const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
 const SkillHub = lazy(() => import('@/components/admin/SkillHub'));
 
