@@ -24,6 +24,7 @@ const adminQuickActions = [
 
 const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
+  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
