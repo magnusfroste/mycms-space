@@ -252,39 +252,30 @@ const Admin = () => {
     </header>
   );
 
-  // ── Chat mode: full-screen, no admin sidebar ──
-  if (mode === 'chat') {
-    return (
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <HeaderBar />
-        <div className="flex-1 overflow-hidden">
-          <Suspense fallback={<AdminLoadingFallback />}>
-            <MagnetChat />
-          </Suspense>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Dashboard mode: sidebar + content ──
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full bg-background">
-        <HeaderBar />
-        <div className="flex flex-1 overflow-hidden">
-          <AdminSidebar
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            onLogout={handleLogout}
-          />
-          <SidebarInset>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+        />
+        <SidebarInset>
+          <HeaderBar />
+          {mode === 'chat' ? (
+            <div className="flex-1 overflow-hidden">
+              <Suspense fallback={<AdminLoadingFallback />}>
+                <MagnetChat />
+              </Suspense>
+            </div>
+          ) : (
             <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
               <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
                 {renderContent()}
               </div>
             </div>
-          </SidebarInset>
-        </div>
+          )}
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );
