@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { RefreshCw, ShieldAlert, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { RefreshCw, ShieldAlert, RotateCcw, Clock, Zap, Radio, Calendar } from 'lucide-react';
+import { useAutomations } from '@/hooks/useAutomations';
+import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
-import WorkflowVisualizer from '../autopilot/WorkflowVisualizer';
 
 type AgentTask = {
   id: string;
@@ -23,6 +23,75 @@ type AgentTask = {
   completed_at: string | null;
   batch_id?: string | null;
 };
+
+const triggerIcons: Record<string, typeof Clock> = {
+  cron: Clock,
+  event: Zap,
+  signal: Radio,
+};
+
+function AutomationsSummary() {
+  const { data: automations = [], isLoading } = useAutomations();
+
+  if (isLoading) return <Skeleton className="h-24 w-full" />;
+  if (automations.length === 0) return null;
+
+  const active = automations.filter(a => a.enabled);
+  const inactive = automations.length - active.length;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">Automations</CardTitle>
+            <CardDescription>{active.length} active{inactive > 0 ? ` · ${inactive} paused` : ''}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {automations.map(auto => {
+            const TriggerIcon = triggerIcons[auto.trigger_type] || Zap;
+            const cronSchedule = auto.trigger_type === 'cron' 
+              ? (auto.trigger_config as Record<string, unknown>)?.schedule as string 
+              : null;
+
+            return (
+              <div
+                key={auto.id}
+                className="flex items-center gap-3 rounded-lg border bg-card p-3"
+              >
+                <div className={`h-2 w-2 rounded-full shrink-0 ${auto.enabled ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                <TriggerIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{auto.name.replace(/_/g, ' ')}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="text-[10px] capitalize">{auto.trigger_type}</Badge>
+                    {cronSchedule && <span className="font-mono text-[10px]">{cronSchedule}</span>}
+                    {auto.last_triggered_at && (
+                      <span>Last: {formatDistanceToNow(new Date(auto.last_triggered_at), { addSuffix: true })}</span>
+                    )}
+                    {auto.next_run_at && (
+                      <span className="flex items-center gap-0.5">
+                        <Calendar className="h-3 w-3" />
+                        Next: {formatDistanceToNow(new Date(auto.next_run_at), { addSuffix: true })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {auto.last_error && (
+                  <Badge variant="destructive" className="text-[10px] shrink-0">Error</Badge>
+                )}
+                <span className="text-[10px] text-muted-foreground shrink-0">{auto.run_count} runs</span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function OverviewPanel() {
   const queryClient = useQueryClient();
@@ -163,8 +232,8 @@ export default function OverviewPanel() {
         </Alert>
       )}
 
-      {/* Workflow Visualizer */}
-      <WorkflowVisualizer />
+      {/* Active Automations */}
+      <AutomationsSummary />
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
