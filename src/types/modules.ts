@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks' | 'resume';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
