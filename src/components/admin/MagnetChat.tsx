@@ -104,6 +104,7 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
+        {headerSlot}
         {/* Compact toolbar */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-border h-10">
           <div className="flex items-center gap-2 min-w-0">
