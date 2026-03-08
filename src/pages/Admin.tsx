@@ -82,8 +82,9 @@ const Admin = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
+    if (tabParam) {
+      const resolved = tabParam === 'autopilot' ? 'skill-hub' : tabParam;
+      if (resolved !== activeTab) setActiveTab(resolved);
     }
   }, [searchParams]);
 
