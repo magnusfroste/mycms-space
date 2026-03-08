@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAutomations, useToggleAutomation } from '@/hooks/useAutomations';
 import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
+import LiveActivityFeed from './LiveActivityFeed';
 
 type AgentTask = {
   id: string;
@@ -239,6 +240,17 @@ export default function OverviewPanel() {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Live Activity Feed */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Live Feed</CardTitle>
+          <CardDescription>Real-time agent executions</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 pb-2">
+          <LiveActivityFeed />
+        </CardContent>
+      </Card>
 
       {/* Active Automations */}
       <AutomationsSummary />
