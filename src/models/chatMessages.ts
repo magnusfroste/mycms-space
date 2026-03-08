@@ -8,6 +8,7 @@ import {
   fetchChatSessions,
   fetchSessionMessages,
   deleteOldMessages,
+  deleteSession,
   type ChatSession,
   type ChatMessageRecord,
 } from "@/data/chatMessages";
