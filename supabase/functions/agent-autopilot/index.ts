@@ -205,13 +205,27 @@ async function handleBlogDraft(topic: string, sources: string[], supabase: Retur
   });
 
   try {
+    // Step 0: Check existing posts to avoid duplicates
+    const { data: existingPosts } = await supabase
+      .from('blog_posts')
+      .select('title, slug, excerpt, status')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    const existingTitles = (existingPosts || []).map(p => `- "${p.title}" (${p.status})`).join('\n');
+    const deduplicationContext = existingTitles
+      ? `\n\nIMPORTANT — These blog posts already exist on the site. You MUST choose a DIFFERENT angle, framing, and title. Do NOT repeat similar headlines or perspectives:\n${existingTitles}`
+      : '';
+
     // Step 1: Research
     const research = await researchTopic(topic, sources);
 
     // Step 2: Generate blog post
     const blogContent = await generateContent(
-      `Write a blog post about: "${topic}"\n\nResearch:\n${research}`,
+      `Write a blog post about: "${topic}"\n\nResearch:\n${research}${deduplicationContext}`,
       `You are a professional tech blogger writing for a personal brand site. Write an engaging, SEO-optimized blog post.
+
+CRITICAL: Every post must have a UNIQUE angle. If similar topics exist, find a fresh perspective — a different thesis, audience, format (tutorial, opinion, deep-dive, comparison, prediction), or sub-topic. Never reuse titles or framings.
 
 Output format (use these exact headers):
 # [Blog Title]
