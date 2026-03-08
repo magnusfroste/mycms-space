@@ -193,7 +193,6 @@ const Admin = () => {
   const HeaderBar = () => (
     <header className="sticky top-0 z-50 h-11 border-b border-border bg-background flex items-center justify-between px-3">
       <div className="flex items-center gap-2">
-        {mode === 'dashboard' && <SidebarTrigger className="h-7 w-7" />}
         {/* Mode toggle pills */}
         <div className="flex items-center bg-muted/50 rounded-lg p-0.5 gap-0.5">
           <button
