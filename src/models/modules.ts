@@ -156,6 +156,20 @@ export const useWebhooksModule = () => {
 
 export const useUpdateWebhooksModule = () => useUpdateModule('webhooks');
 
+// Resume Module
+export const useResumeModule = () => {
+  const query = useModule('resume');
+  const defaultConfig = defaultModuleConfigs.resume;
+  
+  return {
+    ...query,
+    config: (query.data?.module_config as ResumeModuleConfig) ?? defaultConfig,
+    isEnabled: query.data?.enabled ?? true,
+  };
+};
+
+export const useUpdateResumeModule = () => useUpdateModule('resume');
+
 // Realtime subscription hook
 export const useModuleSubscription = (moduleType: ModuleType) => {
   const queryClient = useQueryClient();

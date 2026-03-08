@@ -58,6 +58,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   settings: GeneralSettings,
   chat: MagnetChat,
   agency: Agency,
+  resume: ResumeManager,
 };
 
 const AdminLoadingFallback = () => (

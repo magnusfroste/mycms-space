@@ -56,6 +56,7 @@ const mainNavItems = [
   { id: 'blog', label: 'Blog', icon: PenSquare },
   { id: 'media-hub', label: 'Media Hub', icon: ImageIcon },
   { id: 'newsletter', label: 'Newsletter', icon: Mail },
+  { id: 'resume', label: 'Resume', icon: BookUser },
   { id: 'agency', label: 'Agency', icon: Orbit },
   { id: 'navigation', label: 'Navigation', icon: Navigation },
   { id: 'messages', label: 'Messages', icon: Mail },
