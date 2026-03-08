@@ -618,6 +618,21 @@ export const enrichResumeEntryTool: ToolDefinition = {
   },
 };
 
+export const browserScrapeTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "browser_scrape",
+    description: "Scrape a web page using the admin's Chrome extension. Use when the admin asks to fetch, read, or extract content from a URL — especially for pages behind login walls (LinkedIn profiles, etc.) that server-side scraping can't reach. The browser extension runs in the admin's authenticated browser session.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: { type: "string", description: "URL to scrape (optional — omit to scrape the admin's currently active browser tab)" },
+        reason: { type: "string", description: "Brief explanation of why you need this data" },
+      },
+    },
+  },
+};
+
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
@@ -651,6 +666,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   add_resume_entry: addResumeEntryTool,
   update_resume_entry: updateResumeEntryTool,
   enrich_resume_entry: enrichResumeEntryTool,
+  // Browser
+  browser_scrape: browserScrapeTool,
 };
 
 /** All available tools indexed by function name (backwards compat) */
