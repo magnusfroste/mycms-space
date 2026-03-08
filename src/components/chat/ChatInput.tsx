@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
@@ -49,7 +49,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={fullPage ? "shrink-0 border-t border-border/30 p-6" : "mt-4"}>
+    <div className={fullPage ? "shrink-0 border-t border-border p-4 sm:p-6" : "mt-4"}>
       <div className="relative max-w-4xl mx-auto">
         <textarea
           ref={textareaRef}
@@ -60,7 +60,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           }}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
-          className="input-field w-full pr-16 resize-none text-base min-h-[52px] max-h-[200px] overflow-y-auto"
+          className="w-full pr-14 resize-none text-sm min-h-[48px] max-h-[200px] overflow-y-auto bg-muted/30 border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
           rows={1}
           disabled={isLoading}
           autoFocus
@@ -69,10 +69,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onClick={onSend}
           disabled={!value.trim() || isLoading}
           size="icon"
-          className="absolute bottom-3 right-3 h-9 w-9 shadow-sm transition-opacity hover:opacity-90"
-          style={{ borderRadius: 'var(--radius)' }}
+          className="absolute bottom-2.5 right-2.5 h-8 w-8 rounded-lg"
         >
-          <Send className="h-4 w-4" />
+          <ArrowUp className="h-4 w-4" />
         </Button>
       </div>
     </div>

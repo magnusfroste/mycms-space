@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, MessageSquarePlus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
@@ -57,20 +57,31 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate("/")} className="flex items-center gap-2 hover:bg-muted">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+      {/* Grok-inspired minimal header */}
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
+        <div className="container mx-auto px-4 h-12 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
           </Button>
 
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-apple-purple to-apple-blue bg-clip-text text-transparent">
-            Chat with Magnet
-          </h1>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground">
+            Magnet
+          </span>
 
-          <Button variant="outline" onClick={() => setShowNewChatDialog(true)} className="flex items-center gap-2">
-            <MessageSquarePlus className="h-4 w-4" />
-            <span>New Chat</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowNewChatDialog(true)}
+            className="gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            New
           </Button>
         </div>
       </header>
@@ -78,17 +89,17 @@ const Chat = () => {
       <main className="flex-1 flex flex-col overflow-hidden">
         {hasInitialMessages && !contextReady ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <span>Loading context...</span>
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+              <span className="text-xs uppercase tracking-wider">Loading</span>
             </div>
           </div>
         ) : (
           <ChatInterface
             webhookUrl={webhookUrl}
             fullPage={true}
-            initialPlaceholder={passedPlaceholder || "Hi, I'm Magnet, Magnus agentic twin. How can I help you today?"}
-            activePlaceholder={passedPlaceholder || "How can Magnet help?"}
+            initialPlaceholder={passedPlaceholder || "Ask me anything…"}
+            activePlaceholder={passedPlaceholder || "Continue…"}
             initialMessages={initialMessages}
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
@@ -108,7 +119,7 @@ const Chat = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Start a new chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will clear your current conversation. This action cannot be undone.
+              This will clear your current conversation.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
