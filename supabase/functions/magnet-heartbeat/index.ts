@@ -68,9 +68,13 @@ async function loadObjectives(supabase: any): Promise<string> {
     .eq('status', 'active')
     .order('created_at', { ascending: false }).limit(10);
   if (!data?.length) return '\nNo active objectives.';
-  return '\n\nActive objectives:\n' + data.map((o: any) =>
-    `- [${o.id.slice(0, 8)}] "${o.goal}" | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`
-  ).join('\n');
+  return '\n\nActive objectives:\n' + data.map((o: any) => {
+    const plan = o.progress?.plan;
+    const planInfo = plan
+      ? ` | plan: ${plan.steps?.filter((s: any) => s.status === 'done').length}/${plan.total_steps} steps done`
+      : ' | NO PLAN (needs decompose_objective)';
+    return `- [${o.id.slice(0, 8)}] "${o.goal}"${planInfo} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+  }).join('\n');
 }
 
 async function loadRecentActivity(supabase: any): Promise<string> {
