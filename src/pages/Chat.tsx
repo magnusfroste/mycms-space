@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
+import { useChromeExtensionModule } from "@/models/modules";
 
 interface Message {
   id: string;
