@@ -22,7 +22,7 @@ import type {
 import { defaultModuleConfigs } from '@/types/modules';
 
 // Re-export types
-export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig, ResumeModuleConfig };
+export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig, ResumeModuleConfig, ChromeExtensionModuleConfig };
 
 // Query keys
 export const modulesKeys = {
