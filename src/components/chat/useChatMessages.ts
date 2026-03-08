@@ -86,6 +86,7 @@ export const useChatMessages = ({
   integrationConfig,
   enabledTools,
   mode = 'public',
+  extensionId,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
