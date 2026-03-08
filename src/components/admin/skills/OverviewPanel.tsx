@@ -93,7 +93,7 @@ function AutomationsSummary() {
   );
 }
 
-
+export default function OverviewPanel() {
   const queryClient = useQueryClient();
   const [taskFilter, setTaskFilter] = useState<'all' | 'signal' | 'research' | 'blog'>('all');
 
