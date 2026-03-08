@@ -618,6 +618,76 @@ export const enrichResumeEntryTool: ToolDefinition = {
   },
 };
 
+// ============================================
+// File Manager Tools
+// ============================================
+
+export const fileListTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "file_list",
+    description: "List files in a storage bucket. Available buckets: 'cms-files' (general), 'about-me-images', 'featured-images', 'project-images', 'blog-images', 'agent-documents'.",
+    parameters: {
+      type: "object",
+      properties: {
+        bucket: { type: "string", description: "Bucket name (default: cms-files)" },
+        prefix: { type: "string", description: "Optional folder prefix to filter" },
+        limit: { type: "number", description: "Max files to return (default: 100)" },
+      },
+    },
+  },
+};
+
+export const fileReadTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "file_read",
+    description: "Read the text content of a file from storage. Works with .md, .txt, .json, .csv, and similar text files.",
+    parameters: {
+      type: "object",
+      properties: {
+        bucket: { type: "string", description: "Bucket name" },
+        path: { type: "string", description: "File path within the bucket" },
+      },
+      required: ["bucket", "path"],
+    },
+  },
+};
+
+export const fileWriteTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "file_write",
+    description: "Write or overwrite a text file in storage. Creates the file if it doesn't exist.",
+    parameters: {
+      type: "object",
+      properties: {
+        bucket: { type: "string", description: "Bucket name (default: cms-files)" },
+        path: { type: "string", description: "File path (e.g. 'docs/notes.md')" },
+        content: { type: "string", description: "File content to write" },
+        content_type: { type: "string", description: "MIME type (default: text/plain)" },
+      },
+      required: ["path", "content"],
+    },
+  },
+};
+
+export const fileDeleteTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "file_delete",
+    description: "Delete a file from storage.",
+    parameters: {
+      type: "object",
+      properties: {
+        bucket: { type: "string", description: "Bucket name" },
+        path: { type: "string", description: "File path to delete" },
+      },
+      required: ["bucket", "path"],
+    },
+  },
+};
+
 export const browserScrapeTool: ToolDefinition = {
   type: "function",
   function: {

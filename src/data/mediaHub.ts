@@ -5,13 +5,15 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export type StorageBucket = 'about-me-images' | 'featured-images' | 'project-images' | 'blog-images';
+export type StorageBucket = 'about-me-images' | 'featured-images' | 'project-images' | 'blog-images' | 'cms-files' | 'agent-documents';
 
 export const STORAGE_BUCKETS: StorageBucket[] = [
   'about-me-images',
   'featured-images', 
   'project-images',
   'blog-images',
+  'cms-files',
+  'agent-documents',
 ];
 
 export const BUCKET_LABELS: Record<StorageBucket, string> = {
@@ -19,6 +21,8 @@ export const BUCKET_LABELS: Record<StorageBucket, string> = {
   'featured-images': 'Featured',
   'project-images': 'Projects',
   'blog-images': 'Blog',
+  'cms-files': 'Files',
+  'agent-documents': 'Agent Docs',
 };
 
 export interface MediaFile {
