@@ -278,25 +278,67 @@ const MediaHub: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div
+      className={cn("space-y-6", dragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background rounded-lg")}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => e.target.files && handleUpload(e.target.files)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Media Hub</h2>
           <p className="text-muted-foreground">
-            Manage all uploaded images across your site
+            Manage all uploaded files across your site
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={uploadBucket} onValueChange={(v) => setUploadBucket(v as StorageBucket)}>
+            <SelectTrigger className="w-36 h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STORAGE_BUCKETS.map(b => (
+                <SelectItem key={b} value={b}>{BUCKET_LABELS[b]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Upload className={cn("h-4 w-4 mr-2", uploading && "animate-pulse")} />
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Drag overlay */}
+      {dragOver && (
+        <div className="border-2 border-dashed border-primary rounded-lg p-8 text-center bg-primary/5">
+          <Upload className="h-8 w-8 mx-auto mb-2 text-primary" />
+          <p className="text-sm font-medium text-primary">Drop files to upload to {BUCKET_LABELS[uploadBucket]}</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
