@@ -30,7 +30,6 @@ const ChatHistoryManager = lazy(() => import('@/components/admin/ChatHistoryMana
 const ProfileSettings = lazy(() => import('@/components/admin/ProfileSettings'));
 const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'));
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
-const AutopilotDashboard = lazy(() => import('@/components/admin/AutopilotDashboard'));
 const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
 const SkillHub = lazy(() => import('@/components/admin/SkillHub'));
 
@@ -56,7 +55,6 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   'chat-history': ChatHistoryManager,
   profile: ProfileSettings,
   settings: GeneralSettings,
-  autopilot: AutopilotDashboard,
   magnet: MagnetChat,
   'skill-hub': SkillHub,
 };
@@ -79,12 +77,15 @@ const Admin = () => {
   const { data: pages = [] } = usePages();
 
   const tabFromUrl = searchParams.get('tab') || 'dashboard';
-  const [activeTab, setActiveTab] = useState(tabFromUrl);
+  // Redirect legacy autopilot tab to skill-hub
+  const resolvedTab = tabFromUrl === 'autopilot' ? 'skill-hub' : tabFromUrl;
+  const [activeTab, setActiveTab] = useState(resolvedTab);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
+    if (tabParam) {
+      const resolved = tabParam === 'autopilot' ? 'skill-hub' : tabParam;
+      if (resolved !== activeTab) setActiveTab(resolved);
     }
   }, [searchParams]);
 
