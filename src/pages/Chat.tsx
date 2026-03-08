@@ -29,6 +29,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
+  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
   const visitorInsights = useVisitorInsights();
   const enrichedContext = React.useMemo(() => ({
