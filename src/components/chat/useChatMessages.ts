@@ -265,7 +265,6 @@ export const useChatMessages = ({
           const followUpResponse = cleanWebhookResponse(followUpData?.output || "Done.");
           const followUpArtifacts = followUpData?.artifacts as ChatArtifact[] | undefined;
           
-          // Replace the status message with the real response
           setMessages(prev => {
             const updated = [...prev];
             updated[updated.length - 1] = {
@@ -273,6 +272,7 @@ export const useChatMessages = ({
               text: followUpResponse,
               isUser: false,
               artifacts: followUpArtifacts,
+              status: 'done',
             };
             return updated;
           });

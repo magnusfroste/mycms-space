@@ -54,7 +54,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             )}
           </div>
         ) : (
-          <MarkdownContent content={message.text} compact className="text-left" />
+          <>
+            {message.status === 'working' && (
+              <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                <Globe className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium">Scraping via extension</span>
+                <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              </div>
+            )}
+            <MarkdownContent content={message.text} compact className="text-left" />
+          </>
         )}
       </div>
       {message.artifacts?.map((artifact, index) => (
