@@ -69,6 +69,7 @@ const mainNavItems = [
 ];
 
 const settingsNavItems = [
+  { id: 'modules', label: 'Modules', icon: Blocks },
   { id: 'settings', label: 'Settings', icon: Settings2 },
   { id: 'branding', label: 'Branding', icon: Palette },
   { id: 'global-blocks', label: 'Global Blocks', icon: Globe },
