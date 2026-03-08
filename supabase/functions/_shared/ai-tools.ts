@@ -707,6 +707,7 @@ export const toolDescriptions: Record<string, string> = {
   add_resume_entry: "**add_resume_entry** — Add a new entry (experience, skill, education, etc.) to the resume knowledge base.",
   update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
   enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
+  browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
 };
 
 // Self-modification tools that should always be available in admin mode
