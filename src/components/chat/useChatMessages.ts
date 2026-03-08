@@ -223,7 +223,13 @@ export const useChatMessages = ({
         // Handle client-side tool execution (e.g. Chrome extension)
         if (data?.client_action) {
           const statusMsg = cleanWebhookResponse(data.output || 'Working on it…');
-          addBotMessage(statusMsg);
+          const workingMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: statusMsg,
+            isUser: false,
+            status: 'working',
+          };
+          setMessages((prev) => [...prev, workingMessage]);
 
           // Execute client-side tool
           const toolResult = await executeClientAction(data.client_action);
@@ -259,7 +265,6 @@ export const useChatMessages = ({
           const followUpResponse = cleanWebhookResponse(followUpData?.output || "Done.");
           const followUpArtifacts = followUpData?.artifacts as ChatArtifact[] | undefined;
           
-          // Replace the status message with the real response
           setMessages(prev => {
             const updated = [...prev];
             updated[updated.length - 1] = {
@@ -267,6 +272,7 @@ export const useChatMessages = ({
               text: followUpResponse,
               isUser: false,
               artifacts: followUpArtifacts,
+              status: 'done',
             };
             return updated;
           });
