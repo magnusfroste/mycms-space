@@ -98,7 +98,7 @@ const ModuleCard: React.FC<{
               </Badge>
             )}
             {!isComingSoon && !entry.locked && isEnabled && (
-              <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-1 bg-emerald-500/15 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 border-primary/30 text-primary">
                 <Check className="h-2.5 w-2.5" />
                 Active
               </Badge>
