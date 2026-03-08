@@ -164,8 +164,87 @@ async function executeModuleAction(
       if (error) throw new Error(`Newsletter insert failed: ${error.message}`);
       return { campaign_id: data.id, subject: data.subject, status: 'draft' };
     }
+    case 'resume': {
+      return await executeResumeAction(supabase, _skillName, args);
+    }
     default:
       return { error: `Unknown module: ${moduleName}` };
+  }
+}
+
+// ============================================
+// Resume Knowledge Base Actions
+// ============================================
+
+async function executeResumeAction(
+  supabase: ReturnType<typeof createClient>,
+  skillName: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  switch (skillName) {
+    case 'resume_lookup': {
+      const { category, search_tags } = args as { category?: string; search_tags?: string[] };
+      let query = supabase.from('resume_entries').select('*').eq('enabled', true).order('order_index');
+      if (category && category !== 'all') query = query.eq('category', category);
+      if (search_tags?.length) query = query.overlaps('tags', search_tags);
+      const { data, error } = await query;
+      if (error) throw new Error(`Resume lookup failed: ${error.message}`);
+      return { entries: data || [], count: data?.length || 0, category: category || 'all' };
+    }
+
+    case 'add_resume_entry': {
+      const { category, title, subtitle, description, start_date, end_date, is_current, tags, metadata } = args as any;
+      // Get next order_index
+      const { data: existing } = await supabase.from('resume_entries')
+        .select('order_index').eq('category', category).order('order_index', { ascending: false }).limit(1);
+      const nextOrder = (existing?.[0]?.order_index ?? -1) + 1;
+
+      const { data, error } = await supabase.from('resume_entries').insert({
+        category, title,
+        subtitle: subtitle || null,
+        description: description || null,
+        start_date: start_date || null,
+        end_date: end_date || null,
+        is_current: is_current || false,
+        tags: tags || [],
+        metadata: metadata || {},
+        order_index: nextOrder,
+        enabled: true,
+      }).select('id, category, title').single();
+      if (error) throw new Error(`Resume insert failed: ${error.message}`);
+      return { status: 'created', entry: data };
+    }
+
+    case 'update_resume_entry': {
+      const { entry_id, ...updates } = args as any;
+      if (!entry_id) throw new Error('entry_id is required');
+      // Remove undefined fields
+      const cleanUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      for (const [k, v] of Object.entries(updates)) {
+        if (v !== undefined) cleanUpdates[k] = v;
+      }
+      const { data, error } = await supabase.from('resume_entries')
+        .update(cleanUpdates).eq('id', entry_id).select('id, category, title').single();
+      if (error) throw new Error(`Resume update failed: ${error.message}`);
+      return { status: 'updated', entry: data };
+    }
+
+    case 'enrich_resume_entry': {
+      const { entry_id, new_description, new_tags } = args as any;
+      if (!entry_id) throw new Error('entry_id is required');
+      const updates: Record<string, unknown> = {
+        description: new_description,
+        updated_at: new Date().toISOString(),
+      };
+      if (new_tags) updates.tags = new_tags;
+      const { data, error } = await supabase.from('resume_entries')
+        .update(updates).eq('id', entry_id).select('id, category, title, description').single();
+      if (error) throw new Error(`Resume enrich failed: ${error.message}`);
+      return { status: 'enriched', entry: data };
+    }
+
+    default:
+      return { error: `Unknown resume action: ${skillName}` };
   }
 }
 
@@ -245,6 +324,9 @@ const SKILL_OBJECTIVE_MAP: Record<string, string[]> = {
   draft_newsletter: ['newsletter', 'email', 'subscriber'],
   research_topic: ['research', 'content'],
   analyze_analytics: ['analytics', 'traffic', 'growth'],
+  add_resume_entry: ['resume', 'knowledge', 'profile', 'skill'],
+  update_resume_entry: ['resume', 'knowledge', 'profile'],
+  enrich_resume_entry: ['resume', 'knowledge', 'content'],
 };
 
 async function trackObjectiveProgress(
