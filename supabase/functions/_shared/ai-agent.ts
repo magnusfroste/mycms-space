@@ -150,6 +150,13 @@ export const providerEndpoints: Record<string, { url: string; envKey: string; de
 // Built-in Tool Execution (server-side)
 // ============================================
 
+// Tools that must be executed client-side (browser extension, etc.)
+const CLIENT_SIDE_TOOLS = ['browser_scrape'];
+
+function isClientSideTool(name: string): boolean {
+  return CLIENT_SIDE_TOOLS.includes(name);
+}
+
 const BUILT_IN_TOOL_NAMES = [
   'save_memory', 'list_memory',
   'soul_update',
