@@ -251,6 +251,22 @@ const Admin = () => {
     </header>
   );
 
+  if (mode === 'chat') {
+    return (
+      <div className="min-h-screen flex w-full bg-background">
+        {/* Chat sidebar (history) goes full height */}
+        <div className="flex-1 flex flex-col">
+          <HeaderBar />
+          <div className="flex-1 overflow-hidden">
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <MagnetChat />
+            </Suspense>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -261,19 +277,11 @@ const Admin = () => {
         />
         <SidebarInset className="flex flex-col">
           <HeaderBar />
-          {mode === 'chat' ? (
-            <div className="flex-1 overflow-hidden">
-              <Suspense fallback={<AdminLoadingFallback />}>
-                <MagnetChat />
-              </Suspense>
+          <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
+            <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
+              {renderContent()}
             </div>
-          ) : (
-            <div className={isImmersive ? 'flex-1 p-4' : 'flex-1 p-6 lg:p-8'}>
-              <div className={isImmersive ? '' : 'max-w-6xl mx-auto'}>
-                {renderContent()}
-              </div>
-            </div>
-          )}
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>
