@@ -62,6 +62,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   agency: Agency,
   resume: ResumeManager,
   'chrome-extension': ChromeExtensionModuleSettings,
+  modules: ModulesManager,
 };
 
 const AdminLoadingFallback = () => (

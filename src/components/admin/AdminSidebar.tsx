@@ -255,7 +255,7 @@ export function AdminSidebar({ activeTab, onTabChange, onLogout }: AdminSidebarP
               <SidebarGroupLabel>Settings</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {settingsNavItems.map((item) => (
+                  {visibleSettingsNav.map((item) => (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => onTabChange(item.id)}
