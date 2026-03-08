@@ -171,6 +171,20 @@ export const useResumeModule = () => {
 
 export const useUpdateResumeModule = () => useUpdateModule('resume');
 
+// Chrome Extension Module
+export const useChromeExtensionModule = () => {
+  const query = useModule('chrome_extension');
+  const defaultConfig = defaultModuleConfigs.chrome_extension;
+  
+  return {
+    ...query,
+    config: (query.data?.module_config as ChromeExtensionModuleConfig) ?? defaultConfig,
+    isEnabled: query.data?.enabled ?? false,
+  };
+};
+
+export const useUpdateChromeExtensionModule = () => useUpdateModule('chrome_extension');
+
 // Realtime subscription hook
 export const useModuleSubscription = (moduleType: ModuleType) => {
   const queryClient = useQueryClient();

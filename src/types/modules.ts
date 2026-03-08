@@ -653,6 +653,12 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     owner_summary: '',
     owner_availability: 'available',
   },
+  chrome_extension: {
+    extension_id: '',
+    auto_connect: true,
+    allowed_domains: ['linkedin.com', 'github.com', 'x.com', 'twitter.com'],
+    setup_instructions: '',
+  },
   webhooks: {
     endpoints: [
       {

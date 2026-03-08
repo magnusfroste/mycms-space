@@ -60,6 +60,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   chat: MagnetChat,
   agency: Agency,
   resume: ResumeManager,
+  'chrome-extension': ChromeExtensionModuleSettings,
 };
 
 const AdminLoadingFallback = () => (

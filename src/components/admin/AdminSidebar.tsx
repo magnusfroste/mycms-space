@@ -77,6 +77,7 @@ const settingsNavItems = [
   { id: 'github-repos', label: 'GitHub Repos', icon: Github },
   { id: 'blog-module', label: 'Blog Settings', icon: BookOpen },
   { id: 'seo-module', label: 'SEO & AIEO', icon: Search },
+  { id: 'chrome-extension', label: 'Chrome Extension', icon: Globe },
   { id: 'history', label: 'History', icon: History },
 ];
 
