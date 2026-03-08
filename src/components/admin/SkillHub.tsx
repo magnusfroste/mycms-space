@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Globe } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity 
 import type { AgentSkill } from '@/types/agent';
 
 const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
+const FederationPanel = lazy(() => import('@/components/admin/skills/FederationPanel'));
 
 const TabFallback = () => (
   <div className="space-y-3 py-4">
@@ -74,6 +75,10 @@ export default function SkillHub() {
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
           <TabsTrigger value="automations">Automations</TabsTrigger>
+          <TabsTrigger value="federation" className="gap-1.5">
+            <Globe className="h-3.5 w-3.5" />
+            Federation
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -134,6 +139,11 @@ export default function SkillHub() {
         <TabsContent value="health"><AutomationHealthPanel /></TabsContent>
         <TabsContent value="objectives"><ObjectivesPanel /></TabsContent>
         <TabsContent value="automations"><AutomationsPanel /></TabsContent>
+        <TabsContent value="federation">
+          <Suspense fallback={<TabFallback />}>
+            <FederationPanel />
+          </Suspense>
+        </TabsContent>
       </Tabs>
 
       <SkillEditorSheet
