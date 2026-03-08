@@ -146,6 +146,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
         text = await readFileAsText(file);
       }
       setAttachedFile({ name: file.name, content: text });
+      // Persist to storage + agent_memory in background
+      persistFile(file, text);
     } catch (err) {
       toast({
         title: "Could not read file",
