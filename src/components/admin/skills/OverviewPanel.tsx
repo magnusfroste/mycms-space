@@ -163,8 +163,8 @@ export default function OverviewPanel() {
         </Alert>
       )}
 
-      {/* Workflow Visualizer */}
-      <WorkflowVisualizer />
+      {/* Active Automations */}
+      <AutomationsSummary />
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
