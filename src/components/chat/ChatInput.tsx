@@ -160,26 +160,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className={fullPage ? "shrink-0 border-t border-border bg-background/80 backdrop-blur-sm shadow-[0_-4px_16px_-4px_hsl(var(--foreground)/0.06)] p-4 sm:p-6" : "mt-4"}>
-      <div className="relative max-w-4xl mx-auto">
-        {/* Attached file pill */}
-        {attachedFile && (
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="flex items-center gap-1.5 text-xs bg-muted/50 border border-border rounded-lg px-2.5 py-1.5 text-muted-foreground">
-              <FileText className="h-3 w-3 shrink-0" />
-              <span className="truncate max-w-[200px]">{attachedFile.name}</span>
-              <button
-                onClick={() => setAttachedFile(null)}
-                className="ml-1 hover:text-foreground transition-colors"
-                aria-label="Remove file"
-              >
-                <X className="h-3 w-3" />
-              </button>
+    <div className={fullPage ? "shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4" : "mt-4"}>
+      <div className="relative max-w-3xl mx-auto">
+        <div className="relative bg-muted/30 border border-border/60 rounded-2xl transition-colors focus-within:border-border focus-within:bg-muted/40">
+          {/* Attached file pill — inside the input area */}
+          {attachedFile && (
+            <div className="px-3 pt-3 pb-0">
+              <div className="inline-flex items-center gap-2 text-xs bg-background/80 border border-border/50 rounded-lg px-2.5 py-1.5 text-muted-foreground">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+                <span className="truncate max-w-[180px] font-medium">{attachedFile.name}</span>
+                <button
+                  onClick={() => setAttachedFile(null)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted hover:text-foreground transition-colors"
+                  aria-label="Remove file"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="relative">
           <textarea
             ref={textareaRef}
             value={value}
@@ -189,39 +189,41 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="w-full pl-10 pr-14 resize-none text-sm min-h-[48px] max-h-[200px] overflow-y-auto bg-muted/30 border border-border rounded-xl py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+            className="w-full px-4 resize-none text-sm min-h-[44px] max-h-[200px] overflow-y-auto bg-transparent py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
             rows={1}
             disabled={isLoading || isReadingFile}
             autoFocus
           />
 
-          {/* File upload button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading || isReadingFile}
-            className="absolute bottom-3 left-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
-            aria-label="Attach file"
-            type="button"
-          >
-            <Paperclip className="h-4 w-4" />
-          </button>
+          {/* Bottom toolbar */}
+          <div className="flex items-center justify-between px-2 pb-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isReadingFile}
+              className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
+              aria-label="Attach file"
+              type="button"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={ACCEPTED_TYPES.join(",")}
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_TYPES.join(",")}
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
-          <Button
-            onClick={handleSend}
-            disabled={(!value.trim() && !attachedFile) || isLoading || isReadingFile}
-            size="icon"
-            className="absolute bottom-2.5 right-2.5 h-8 w-8 rounded-lg"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
+            <Button
+              onClick={handleSend}
+              disabled={(!value.trim() && !attachedFile) || isLoading || isReadingFile}
+              size="icon"
+              className="h-7 w-7 rounded-lg"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
