@@ -203,6 +203,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className={fullPage ? "shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4" : "mt-4"}>
       <div className="relative max-w-3xl mx-auto">
+        {/* @ command menu */}
+        <ChatCommandMenu
+          query={commandQuery}
+          commands={commands}
+          onSelect={handleCommandSelect}
+          onDismiss={() => setCommandMenuOpen(false)}
+          visible={commandMenuOpen}
+        />
         <div className="relative bg-muted/30 border border-border/60 rounded-2xl transition-colors focus-within:border-border focus-within:bg-muted/40">
           {/* Attached file pill — inside the input area */}
           {attachedFile && (
