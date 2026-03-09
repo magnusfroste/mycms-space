@@ -406,6 +406,9 @@ export const defaultBlockConfigs: Partial<BlockTypeConfigMap> = {
     placeholder: 'Ask me anything...',
     show_quick_actions: true,
     quick_actions: [],
+    greeting_messages: ['Hi there! How can I help you today?'],
+    typewriter_speed: 40,
+    enable_sound: false,
   },
   'about-split': {
     name: 'Your Name',
