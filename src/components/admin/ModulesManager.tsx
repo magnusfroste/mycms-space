@@ -37,6 +37,17 @@ const ModulesManager: React.FC = () => {
   }, [modules]);
 
   const handleToggle = async (type: ModuleType, enabled: boolean) => {
+    // Dependency check: warn if disabling a module that others depend on
+    if (!enabled) {
+      const dependents = moduleRegistry.filter(
+        (e) => e.status === 'installed' && e.dependencies?.includes(type) && getModuleEnabled(e.type as ModuleType)
+      );
+      if (dependents.length > 0) {
+        const names = dependents.map((d) => d.name).join(', ');
+        toast.warning(`${names} depends on this module and may not work correctly`);
+      }
+    }
+
     setPendingType(type);
     try {
       await updateModule(type, { enabled });
@@ -173,7 +184,7 @@ const ModulesManager: React.FC = () => {
         entry={selectedModule}
         open={!!selectedModule}
         onClose={() => setSelectedModule(null)}
-        isEnabled={selectedModule?.status === 'installed' ? getModuleEnabled(selectedModule.type as ModuleType) : false}
+        isEnabled={selectedModule ? getModuleEnabled(selectedModule.type as ModuleType) : false}
         onToggle={handleToggle}
         isPending={pendingType === selectedModule?.type}
       />
