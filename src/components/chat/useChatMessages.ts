@@ -88,6 +88,7 @@ export const useChatMessages = ({
   enabledTools,
   mode = 'public',
   extensionId,
+  visitorConfig,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
