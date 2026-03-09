@@ -638,7 +638,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     } catch { /* objectives optional */ }
   }
 
-  const tools = getActiveTools(enabledTools, mode);
+  const tools = await getActiveToolsAsync(enabledTools, mode);
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
