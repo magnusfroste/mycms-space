@@ -37,7 +37,7 @@ const ModuleDetailSheet: React.FC<{
   if (!entry) {
     return (
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-        <SheetContent className="overflow-y-auto sm:max-w-md" />
+        <SheetContent className="overflow-y-auto sm:max-w-md z-[100]" />
       </Sheet>
     );
   }
