@@ -776,7 +776,7 @@ export const toolDescriptions: Record<string, string> = {
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
-  request_music: "**request_music** — Delegate music creation to the SoundSpace AI agent via A2A. Returns a playable audio track.",
+  request_music: "**request_music** — Generate music by delegating to the SoundSpace AI agent via A2A. **ALWAYS call this tool immediately** when a user asks for music, a track, a song, or audio generation. Do NOT describe or explain SoundSpace — just call the tool with a descriptive prompt.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
   run_research: "**run_research** — Research a topic using web sources.",
