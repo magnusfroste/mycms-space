@@ -101,6 +101,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isLoading,
   fullPage,
   voiceEnabled = false,
+  commands = [],
+  onCommandSelect,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
