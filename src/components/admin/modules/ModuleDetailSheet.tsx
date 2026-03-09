@@ -65,19 +65,19 @@ const ModuleDetailSheet: React.FC<{
     .filter(Boolean) as ModuleRegistryEntry[];
 
   return createPortal(
-    <div className="fixed inset-0 z-[120]">
+    <>
       <button
         type="button"
         aria-label="Close module details"
         onClick={onClose}
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[120]"
       />
 
       <section
         role="dialog"
         aria-modal="true"
         aria-label={`${entry.name} module details`}
-        className="absolute right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-xl animate-slide-in-right"
+        className="fixed right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-xl animate-slide-in-right z-[121]"
       >
         <div className="h-full overflow-y-auto p-6">
           <header className="pb-4">
