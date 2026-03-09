@@ -54,70 +54,30 @@ export const fetchSessionMessages = async (
   return (data || []) as ChatMessageRecord[];
 };
 
-// Fetch all sessions with summary info
-// Uses a paginated approach to avoid Supabase's 1000-row default limit
+// Fetch all sessions with summary info via server-side SQL function
 export const fetchChatSessions = async (
   limit = 50,
   offset = 0
 ): Promise<{ sessions: ChatSession[]; total: number }> => {
-  // Fetch messages in batches to avoid the 1000-row limit
-  const allMessages: ChatMessageRecord[] = [];
-  const batchSize = 1000;
-  let batchOffset = 0;
-  let hasMore = true;
+  const { data, error } = await supabase.rpc("get_chat_sessions", {
+    p_limit: limit,
+    p_offset: offset,
+  });
 
-  while (hasMore) {
-    const { data, error } = await supabase
-      .from("chat_messages")
-      .select("session_id, role, content, created_at")
-      .order("created_at", { ascending: false })
-      .range(batchOffset, batchOffset + batchSize - 1);
-
-    if (error) {
-      console.error("Error fetching chat sessions:", error);
-      break;
-    }
-
-    const batch = (data || []) as ChatMessageRecord[];
-    allMessages.push(...batch);
-    hasMore = batch.length === batchSize;
-    batchOffset += batchSize;
+  if (error) {
+    console.error("Error fetching chat sessions:", error);
+    return { sessions: [], total: 0 };
   }
 
-  // Group by session_id
-  const sessionMap = new Map<string, ChatMessageRecord[]>();
-  for (const msg of allMessages) {
-    const existing = sessionMap.get(msg.session_id) || [];
-    existing.push(msg);
-    sessionMap.set(msg.session_id, existing);
-  }
+  const sessions: ChatSession[] = (data || []).map((row: any) => ({
+    session_id: row.session_id,
+    first_message: (row.first_message || "No message").slice(0, 100),
+    message_count: Number(row.message_count),
+    started_at: row.started_at,
+    last_message_at: row.last_message_at,
+  }));
 
-  // Build session summaries
-  const sessions: ChatSession[] = [];
-  for (const [sessionId, messages] of sessionMap) {
-    const sorted = messages.sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    const firstUserMsg = sorted.find((m) => m.role === "user");
-    
-    sessions.push({
-      session_id: sessionId,
-      first_message: firstUserMsg?.content.slice(0, 100) || "No message",
-      message_count: messages.length,
-      started_at: sorted[0].created_at,
-      last_message_at: sorted[sorted.length - 1].created_at,
-    });
-  }
-
-  // Sort by most recent
-  sessions.sort(
-    (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
-  );
-
-  const total = sessions.length;
-  const paginated = sessions.slice(offset, offset + limit);
-
-  return { sessions: paginated, total };
+  return { sessions, total: sessions.length };
 };
 
 // Delete messages older than specified days
