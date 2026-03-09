@@ -853,7 +853,7 @@ export function getToolInstructions(enabledTools?: string[], mode?: string): str
     return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
   }
   
-  return `\n\n## Tool Instructions\nYou have several tools available. Use them appropriately:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
 // ============================================
