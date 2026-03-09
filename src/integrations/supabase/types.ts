@@ -972,6 +972,16 @@ export type Database = {
         Args: { job_name: string; new_active?: boolean; new_schedule?: string }
         Returns: undefined
       }
+      get_chat_sessions: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          first_message: string
+          last_message_at: string
+          message_count: number
+          session_id: string
+          started_at: string
+        }[]
+      }
       get_cron_jobs: {
         Args: never
         Returns: {
