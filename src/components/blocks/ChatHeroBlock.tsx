@@ -1,6 +1,6 @@
 // ============================================
 // Chat Hero Block - Conversational Hero
-// Immersive hero with typewriter greeting + AI chat
+// Agentic greeting via AI + typewriter effect
 // ============================================
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -11,6 +11,8 @@ import ParticleField from '@/components/animations/ParticleField';
 import GradientShift from '@/components/animations/GradientShift';
 import TypewriterText from '@/components/animations/TypewriterText';
 import ChatInput from '@/components/chat/ChatInput';
+import { supabase } from '@/integrations/supabase/client';
+import { useVisitorInsights, formatVisitorInsightsForAI } from '@/hooks/useVisitorInsights';
 import type { ChatHeroBlockConfig } from '@/types/blockConfigs';
 import type { QuickActionConfig, Message } from '@/components/chat/types';
 
@@ -21,13 +23,17 @@ interface ChatHeroBlockProps {
 const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const navigate = useNavigate();
   const typedConfig = config as ChatHeroBlockConfig;
+  const visitorInsights = useVisitorInsights();
 
   const [scrollY, setScrollY] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [typingDone, setTypingDone] = useState(false);
-  const [greetingIndex, setGreetingIndex] = useState(0);
+
+  // Agentic greeting state
+  const [greetingText, setGreetingText] = useState<string | null>(null);
+  const [greetingLoading, setGreetingLoading] = useState(true);
 
   // Config with defaults
   const agentName = typedConfig.agent_name || 'AI Assistant';
@@ -36,20 +42,55 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const animationStyle = typedConfig.animation_style || 'falling-stars';
   const placeholder = typedConfig.placeholder || 'Ask me anything...';
   const showQuickActions = typedConfig.show_quick_actions ?? true;
-  const greetingMessages = typedConfig.greeting_messages || [];
   const typewriterSpeed = typedConfig.typewriter_speed || 40;
   const enableSound = typedConfig.enable_sound ?? false;
-
-  // All messages to cycle through
-  const allGreetings = greetingMessages.length > 0
-    ? greetingMessages
-    : [typedConfig.agent_tagline || 'How can I help you today?'];
-  const greetingText = allGreetings[greetingIndex % allGreetings.length];
+  const fallbackGreeting = typedConfig.agent_tagline || 'How can I help you today?';
 
   // Quick actions
   const quickActions: QuickActionConfig[] = (typedConfig.quick_actions || [])
     .filter((a: QuickActionConfig) => a.enabled !== false)
     .sort((a: QuickActionConfig, b: QuickActionConfig) => (a.order_index || 0) - (b.order_index || 0));
+
+  // Fetch dynamic greeting from agent
+  useEffect(() => {
+    let cancelled = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('hero-greeting', {
+          body: {
+            visitorContext: formatVisitorInsightsForAI(visitorInsights),
+            agentName,
+          },
+        });
+
+        if (!cancelled && data?.greeting) {
+          setGreetingText(data.greeting);
+        } else if (!cancelled) {
+          console.log('Greeting fallback:', error || 'no greeting returned');
+          setGreetingText(fallbackGreeting);
+        }
+      } catch (e) {
+        console.log('Greeting fetch failed, using fallback:', e);
+        if (!cancelled) setGreetingText(fallbackGreeting);
+      } finally {
+        if (!cancelled) setGreetingLoading(false);
+      }
+    }, 300); // Small delay to let visitor insights settle
+
+    // Fallback timeout — if API takes >3s, show fallback
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled && greetingLoading) {
+        setGreetingText(fallbackGreeting);
+        setGreetingLoading(false);
+      }
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      clearTimeout(fallbackTimer);
+    };
+  }, []); // Run once on mount
 
   // Parallax
   useEffect(() => {
@@ -69,17 +110,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
   const parallaxOffset = scrollY * 0.3;
 
-  const handleTypingComplete = useCallback(() => {
-    setTypingDone(true);
-    // If multiple greetings, cycle to next after a pause
-    if (allGreetings.length > 1) {
-      const timer = setTimeout(() => {
-        setTypingDone(false);
-        setGreetingIndex((prev) => prev + 1);
-      }, 4000); // 4s pause between messages
-      return () => clearTimeout(timer);
-    }
-  }, [allGreetings.length]);
+  const handleTypingComplete = useCallback(() => setTypingDone(true), []);
 
   // Navigate to /chat with message
   const handleSend = () => {
@@ -174,22 +205,24 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               className="min-h-[3rem] mb-12 animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
-              {/* Typing indicator dots — shown briefly before text starts */}
-              <div className="flex items-center justify-center gap-1 mb-3">
+              {/* Typing dots — shown while loading or before typewriter starts */}
+              <div className={`flex items-center justify-center gap-1 mb-3 transition-opacity duration-300 ${greetingText && !greetingLoading ? 'opacity-0 h-0' : 'opacity-100'}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0s' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.15s' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.3s' }} />
               </div>
 
-              <p className="text-xl md:text-2xl text-muted-foreground font-light">
-                <TypewriterText
-                  text={greetingText}
-                  speed={typewriterSpeed}
-                  delay={800}
-                  enableSound={enableSound}
-                  onComplete={handleTypingComplete}
-                />
-              </p>
+              {greetingText && (
+                <p className="text-xl md:text-2xl text-muted-foreground font-light">
+                  <TypewriterText
+                    text={greetingText}
+                    speed={typewriterSpeed}
+                    delay={200}
+                    enableSound={enableSound}
+                    onComplete={handleTypingComplete}
+                  />
+                </p>
+              )}
             </div>
 
             {/* Chat Input — fades in after typing completes */}
@@ -206,7 +239,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               />
             </div>
 
-            {/* Quick Actions — fade in after input */}
+            {/* Quick Actions */}
             {showQuickActions && quickActions.length > 0 && (
               <div
                 className={`mt-6 transition-all duration-500 delay-200 ${typingDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
