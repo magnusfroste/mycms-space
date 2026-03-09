@@ -726,12 +726,14 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   }
 
-  // Pre-route: detect music intent in last user message and inject strong hint
+  // Pre-route: detect music intent in last user message and force tool_choice
   const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
   const musicKeywords = /\b(musik|music|låt|song|track|beat|melody|audio|spela|skapa.*(låt|musik|song)|generera.*(låt|musik|song|audio))\b/i;
+  let forceMusicTool = false;
   if (lastUserMsg && musicKeywords.test(lastUserMsg.content || '')) {
     fullPrompt += `\n\n⚠️ CRITICAL OVERRIDE: The user is asking for MUSIC GENERATION. You MUST call the request_music tool NOW with a detailed prompt. Do NOT use any other tool. Do NOT explain or ask follow-up questions. Just call request_music immediately.`;
-    console.log('[Agent] Music intent detected — injecting routing override');
+    forceMusicTool = tools.some(t => (t as { function?: { name?: string } })?.function?.name === 'request_music');
+    console.log(`[Agent] Music intent detected — forceMusicTool=${forceMusicTool}`);
   }
 
   // Multi-iteration tool loop
@@ -743,12 +745,18 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+    // Force request_music tool on first iteration when music intent is detected
+    const toolChoice = (forceMusicTool && iteration === 0)
+      ? { type: "function", function: { name: "request_music" } }
+      : "auto";
+
     const data = await callOpenAICompatible({
       url,
       apiKey,
       model,
       messages: conversationMessages,
       tools: tools.length > 0 ? tools : undefined,
+      toolChoice: tools.length > 0 ? toolChoice : undefined,
     });
 
     const choice = data.choices?.[0];
@@ -801,7 +809,9 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           // A2A delegation tools: call the delegate function AND produce artifacts
           if (toolName === 'request_music') {
             const delegateResult = await executeA2ADelegate(toolArgs);
-            const mergedData = { ...toolArgs, ...delegateResult };
+            // Flatten nested result (a2a-delegate returns { status, result: { audio_url, ... } })
+            const innerResult = (delegateResult.result as Record<string, unknown>) || {};
+            const mergedData = { ...toolArgs, ...delegateResult, ...innerResult };
             if (parsed.artifacts?.length) {
               lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
             } else {
