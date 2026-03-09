@@ -867,6 +867,7 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     project_deep_dive: (args) => ({ type: "project-deep-dive", title: (args.project_name as string) || "Project Deep Dive" }),
     check_availability: () => ({ type: "availability", title: "Availability" }),
     get_visitor_insights: (args) => ({ type: "visitor-profile", title: (args.summary as string) || "Visitor Profile" }),
+    request_music: (args) => ({ type: "music-player", title: (args.prompt as string)?.slice(0, 50) || "Generated Music" }),
     research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
     draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
     run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
