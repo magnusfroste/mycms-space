@@ -20,7 +20,11 @@ const ModuleCard: React.FC<{
   return (
     <Card
       className={`transition-all cursor-pointer hover:ring-1 hover:ring-primary/20 ${isComingSoon ? 'opacity-50 border-dashed' : !isEnabled && !entry.locked ? 'opacity-60' : ''}`}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        // Delay to prevent Radix Dialog from detecting the click as "outside"
+        setTimeout(() => onClick(), 0);
+      }}
     >
       <CardContent className="flex items-start gap-4 p-4">
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isComingSoon ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
