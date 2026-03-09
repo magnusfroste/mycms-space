@@ -362,6 +362,14 @@ export interface AIModuleConfig {
   voice_enabled?: boolean;
   tts_voice?: string; // OpenAI TTS voice id
 
+  // Visitor Insights
+  visitor_insights_enabled?: boolean;
+  visitor_power_user_visits?: number;   // sessions threshold for power_user (default 3)
+  visitor_power_user_pages?: number;    // unique pages threshold for power_user (default 3)
+  visitor_exploring_visits?: number;    // sessions threshold for exploring (default 2)
+  visitor_exploring_pages?: number;     // unique pages threshold for exploring (default 2)
+  visitor_show_artifact?: boolean;      // show radar chart artifact for power users (default true)
+
   // Context sources
   include_page_context: boolean;
   selected_page_slugs: string[];

@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cleanWebhookResponse, generateSessionId, normalizeText } from "./utils";
 import { optimizeMessagesForApi } from "./messageOptimizer";
 import { saveChatMessage } from "@/data/chatMessages";
-import type { Message, SiteContext, ChatMessage, ChatArtifact, ChatMode } from "./types";
+import type { Message, SiteContext, ChatMessage, ChatArtifact, ChatMode, VisitorConfig } from "./types";
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
 
@@ -62,6 +62,7 @@ interface UseChatMessagesOptions {
   enabledTools?: string[];
   mode?: ChatMode;
   extensionId?: string;
+  visitorConfig?: VisitorConfig;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
@@ -87,6 +88,7 @@ export const useChatMessages = ({
   enabledTools,
   mode = 'public',
   extensionId,
+  visitorConfig,
   onMessagesChange,
   onSessionIdChange,
 }: UseChatMessagesOptions) => {
@@ -214,6 +216,7 @@ export const useChatMessages = ({
             siteContext: siteContext,
             enabledTools: enabledTools,
             mode: mode,
+            visitorConfig: visitorConfig,
           },
         });
 

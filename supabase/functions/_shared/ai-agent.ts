@@ -30,6 +30,14 @@ export interface AgentRequest {
   enabledTools?: string[];
   config: AgentConfig;
   mode?: 'public' | 'admin';
+  visitorConfig?: {
+    enabled?: boolean;
+    power_user_visits?: number;
+    power_user_pages?: number;
+    exploring_visits?: number;
+    exploring_pages?: number;
+    show_artifact?: boolean;
+  };
 }
 
 export interface AgentResult {
@@ -556,7 +564,7 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
 
 /** Run the Magnet agent with multi-iteration tool loop */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
-  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public' } = request;
+  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public', visitorConfig } = request;
 
   console.log(`[Agent] Provider: ${config.provider}, Model: ${config.model || 'default'}, Mode: ${mode}`);
 
@@ -635,30 +643,36 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
+  const visitorEnabled = visitorConfig?.enabled !== false; // default true
   const userMessageCount = messages.filter(m => m.role === 'user').length;
-  const isFirstMessage = userMessageCount <= 2; // Allow up to 2 user messages (hero prefill + first real message)
-  console.log(`[Agent] Visitor auto-inject check: isFirst=${isFirstMessage}, mode=${mode}, hasInsights=${!!siteContext?.visitorInsights}`);
-  if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights) {
+  const isFirstMessage = userMessageCount <= 2;
+  console.log(`[Agent] Visitor auto-inject check: isFirst=${isFirstMessage}, mode=${mode}, hasInsights=${!!siteContext?.visitorInsights}, enabled=${visitorEnabled}`);
+  if (isFirstMessage && mode === 'public' && siteContext?.visitorInsights && visitorEnabled) {
     try {
       const insightsResult = await executeBuiltInTool('get_visitor_insights', { include_recommendations: true }, { siteContext });
       const parsed = JSON.parse(insightsResult);
       if (parsed.status !== 'no_data') {
-        // Determine engagement level and greeting strategy
+        // Configurable thresholds (with defaults)
+        const puVisits = visitorConfig?.power_user_visits ?? 3;
+        const puPages = visitorConfig?.power_user_pages ?? 3;
+        const exVisits = visitorConfig?.exploring_visits ?? 2;
+        const exPages = visitorConfig?.exploring_pages ?? 2;
+        const showArtifact = visitorConfig?.show_artifact !== false; // default true
+
         const visitCount = parsed.visit_count || 1;
         const topPages = parsed.top_pages || [];
         const isReturning = parsed.is_returning || false;
         const pagesVisited = parsed.pages_visited || [];
         const uniquePagesCount = Array.isArray(pagesVisited) ? pagesVisited.length : 0;
-        console.log(`[Agent] Visitor data: visits=${visitCount}, uniquePages=${uniquePagesCount}, pages=${JSON.stringify(pagesVisited)}, topPages=${JSON.stringify(topPages)}`);
+        console.log(`[Agent] Visitor data: visits=${visitCount}, uniquePages=${uniquePagesCount}, thresholds: pu=${puVisits}/${puPages}, ex=${exVisits}/${exPages}`);
 
-        // Power user = 3+ sessions OR 3+ unique pages visited in any session
         let engagementLevel: string;
         let greetingStrategy: string;
 
-        if (visitCount >= 3 || uniquePagesCount >= 3) {
+        if (visitCount >= puVisits || uniquePagesCount >= puPages) {
           engagementLevel = 'power_user';
           greetingStrategy = `This is a POWER USER (${visitCount} sessions, ${uniquePagesCount} unique pages explored). Treat them like someone who already knows Magnus well. Be direct, personal, and skip all pleasantries. Their top interests: ${topPages.join(', ')}. Lead with something specific and valuable — a recent update, a project detail, or ask what they're working on. Be a peer, not a guide.`;
-        } else if (visitCount >= 2 || uniquePagesCount >= 2) {
+        } else if (visitCount >= exVisits || uniquePagesCount >= exPages) {
           engagementLevel = 'exploring';
           greetingStrategy = `This visitor is exploring (${visitCount} sessions, ${uniquePagesCount} pages). Acknowledge them subtly (e.g. "Good to see you again!") and reference what they've been looking at: ${topPages.join(', ')}. Offer to go deeper on those topics.`;
         } else {
@@ -670,7 +684,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         console.log(`[Agent] Auto-injected visitor insights: ${engagementLevel} (visit #${visitCount})`);
 
         // Auto-generate visitor-profile artifact for power users
-        if (engagementLevel === 'power_user') {
+        if (engagementLevel === 'power_user' && showArtifact) {
           // Build interest scores from top pages
           const interestScores: Record<string, number> = {};
           const pageInterestMap: Record<string, string> = {

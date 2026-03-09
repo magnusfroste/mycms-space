@@ -115,6 +115,14 @@ const Chat = () => {
             extensionId={extConfig?.extension_id}
             voiceEnabled={aiConfig?.voice_enabled ?? false}
             ttsVoice={aiConfig?.tts_voice}
+            visitorConfig={{
+              enabled: aiConfig?.visitor_insights_enabled,
+              power_user_visits: aiConfig?.visitor_power_user_visits,
+              power_user_pages: aiConfig?.visitor_power_user_pages,
+              exploring_visits: aiConfig?.visitor_exploring_visits,
+              exploring_pages: aiConfig?.visitor_exploring_pages,
+              show_artifact: aiConfig?.visitor_show_artifact,
+            }}
           />
         )}
       </main>

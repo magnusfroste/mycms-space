@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       integration,
       enabledTools,
       mode,
+      visitorConfig,
     } = await req.json();
 
     console.log("[AI Chat] Request:", {
@@ -44,6 +45,7 @@ Deno.serve(async (req) => {
       siteContext: siteContext || null,
       enabledTools,
       mode: mode || 'public',
+      visitorConfig: visitorConfig || undefined,
       config: {
         provider: integration.type,
         model: integration.model,

@@ -79,6 +79,15 @@ export interface ChatMessage {
 
 export type ChatMode = 'public' | 'admin';
 
+export interface VisitorConfig {
+  enabled?: boolean;
+  power_user_visits?: number;
+  power_user_pages?: number;
+  exploring_visits?: number;
+  exploring_pages?: number;
+  show_artifact?: boolean;
+}
+
 export interface ChatInterfaceProps {
   webhookUrl: string;
   initialPlaceholder?: string;
@@ -101,4 +110,5 @@ export interface ChatInterfaceProps {
   extensionId?: string;
   voiceEnabled?: boolean;
   ttsVoice?: string;
+  visitorConfig?: VisitorConfig;
 }
