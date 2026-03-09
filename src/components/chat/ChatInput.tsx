@@ -108,6 +108,31 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+
+  // Detect @ trigger
+  const handleInputChange = (newValue: string) => {
+    onChange(newValue);
+
+    if (commands.length > 0) {
+      const atMatch = newValue.match(/@(\S*)$/);
+      if (atMatch) {
+        setCommandMenuOpen(true);
+        setCommandQuery(atMatch[1]);
+      } else {
+        setCommandMenuOpen(false);
+        setCommandQuery("");
+      }
+    }
+  };
+
+  const handleCommandSelect = (cmd: { message: string }) => {
+    setCommandMenuOpen(false);
+    setCommandQuery("");
+    onChange("");
+    onCommandSelect?.(cmd.message);
+  };
 
   const handleTranscript = React.useCallback((text: string) => {
     onChange(value ? value + ' ' + text : text);
