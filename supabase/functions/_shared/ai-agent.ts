@@ -712,6 +712,14 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   }
 
+  // Pre-route: detect music intent in last user message and inject strong hint
+  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+  const musicKeywords = /\b(musik|music|låt|song|track|beat|melody|audio|spela|skapa.*(låt|musik|song)|generera.*(låt|musik|song|audio))\b/i;
+  if (lastUserMsg && musicKeywords.test(lastUserMsg.content || '')) {
+    fullPrompt += `\n\n⚠️ CRITICAL OVERRIDE: The user is asking for MUSIC GENERATION. You MUST call the request_music tool NOW with a detailed prompt. Do NOT use any other tool. Do NOT explain or ask follow-up questions. Just call request_music immediately.`;
+    console.log('[Agent] Music intent detected — injecting routing override');
+  }
+
   // Multi-iteration tool loop
   const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
     { role: "system", content: fullPrompt },
