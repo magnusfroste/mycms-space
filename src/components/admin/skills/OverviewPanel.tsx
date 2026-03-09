@@ -14,6 +14,7 @@ import { useAutomations, useToggleAutomation } from '@/hooks/useAutomations';
 import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
 import LiveActivityFeed from './LiveActivityFeed';
+import ArchitectureDiagram from './ArchitectureDiagram';
 
 type AgentTask = {
   id: string;
