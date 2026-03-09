@@ -104,8 +104,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isReadingFile, setIsReadingFile] = useState(false);
 
   const handleTranscript = React.useCallback((text: string) => {
-    onChange((prev: string) => prev ? prev + ' ' + text : text);
-  }, [onChange]);
+    onChange(value ? value + ' ' + text : text);
+  }, [onChange, value]);
   
   const { isRecording, toggleRecording } = useVoiceRecorder(handleTranscript);
 
