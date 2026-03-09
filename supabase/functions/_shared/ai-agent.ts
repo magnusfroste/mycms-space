@@ -619,7 +619,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   } catch { /* skill instructions optional */ }
 
-  fullPrompt += getToolInstructions(enabledTools, mode);
+  fullPrompt += await getToolInstructionsAsync(enabledTools, mode);
 
   // Load objectives for admin mode
   if (mode === 'admin') {
