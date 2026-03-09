@@ -41,7 +41,6 @@ const ChatWidgetBlock: React.FC<ChatWidgetBlockProps> = ({ config }) => {
         state: {
           fromHero: true,
           messages: currentMessages,
-          sessionId: currentSessionId,
         },
       });
     }
