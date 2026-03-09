@@ -518,7 +518,7 @@ export const requestMusicTool: ToolDefinition = {
   type: "function",
   function: {
     name: "request_music",
-    description: "Request music creation from SoundSpace agent via A2A protocol. Use when a visitor asks for music, background tracks, or audio content. Delegates to the SoundSpace music AI agent which generates custom tracks.",
+    description: "Generate a music track by delegating to the SoundSpace AI agent. Call this tool IMMEDIATELY when a user wants music, a song, a track, background audio, or any audio generation. Provide a detailed prompt describing genre, mood, tempo, and instruments. The result includes a playable audio URL.",
     parameters: {
       type: "object",
       properties: {
@@ -776,7 +776,7 @@ export const toolDescriptions: Record<string, string> = {
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
-  request_music: "**request_music** — Delegate music creation to the SoundSpace AI agent via A2A. Returns a playable audio track.",
+  request_music: "**request_music** — Generate music by delegating to the SoundSpace AI agent via A2A. **ALWAYS call this tool immediately** when a user asks for music, a track, a song, or audio generation. Do NOT describe or explain SoundSpace — just call the tool with a descriptive prompt.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
   run_research: "**run_research** — Research a topic using web sources.",
@@ -853,7 +853,7 @@ export function getToolInstructions(enabledTools?: string[], mode?: string): str
     return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
   }
   
-  return `\n\n## Tool Instructions\nYou have several tools available. Use them appropriately:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
 // ============================================
