@@ -116,12 +116,12 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const handleSend = () => {
     if (!inputValue.trim()) return;
     const userMessage: Message = { id: crypto.randomUUID(), text: inputValue.trim(), isUser: true };
-    navigate('/chat', { state: { fromHero: true, messages: [userMessage], sessionId: crypto.randomUUID(), placeholder } });
+    navigate('/chat', { state: { fromHero: true, messages: [userMessage], placeholder } });
   };
 
   const handleQuickAction = (message: string) => {
     const userMessage: Message = { id: crypto.randomUUID(), text: message, isUser: true };
-    navigate('/chat', { state: { fromHero: true, messages: [userMessage], sessionId: crypto.randomUUID(), placeholder } });
+    navigate('/chat', { state: { fromHero: true, messages: [userMessage], placeholder } });
   };
 
   return (
