@@ -466,6 +466,34 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 // ============================================
 // Skill Execution (delegate to agent-execute)
 // ============================================
+// A2A Delegation
+// ============================================
+
+async function executeA2ADelegate(toolArgs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/a2a-delegate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        agent: 'soundspace',
+        prompt: toolArgs.prompt,
+        duration: toolArgs.duration || 120,
+        context: toolArgs.context || '',
+      }),
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', error: (e as Error).message };
+  }
+}
+
+// ============================================
 
 async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
