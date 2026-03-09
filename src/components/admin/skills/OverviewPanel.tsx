@@ -14,6 +14,7 @@ import { useAutomations, useToggleAutomation } from '@/hooks/useAutomations';
 import { formatDistanceToNow } from 'date-fns';
 import TaskHistoryItem from '../autopilot/TaskHistoryItem';
 import LiveActivityFeed from './LiveActivityFeed';
+import ArchitectureDiagram from './ArchitectureDiagram';
 
 type AgentTask = {
   id: string;
@@ -212,6 +213,9 @@ export default function OverviewPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Architecture Diagram */}
+      <ArchitectureDiagram />
+
       {/* Self-healing alerts */}
       {disabledSkills.length > 0 && (
         <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
