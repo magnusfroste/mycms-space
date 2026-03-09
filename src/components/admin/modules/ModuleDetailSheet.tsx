@@ -43,12 +43,8 @@ const ModuleDetailSheet: React.FC<{
     };
 
     window.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     return () => {
       window.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
     };
   }, [open, onClose]);
 
