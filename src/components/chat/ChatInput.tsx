@@ -221,15 +221,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 <button
                   onClick={toggleRecording}
                   disabled={isLoading}
-                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
+                  className={`relative p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
                     isRecording
-                      ? "text-destructive bg-destructive/10 hover:bg-destructive/20"
+                      ? "text-destructive"
                       : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60"
                   }`}
                   aria-label={isRecording ? "Stop recording" : "Voice input"}
                   type="button"
                 >
-                  {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                  {isRecording && (
+                    <>
+                      <span className="absolute inset-0 rounded-lg bg-destructive/10 animate-pulse" />
+                      <span className="absolute -inset-1 rounded-xl border border-destructive/30 animate-[ping_1.5s_ease-in-out_infinite] opacity-40" />
+                    </>
+                  )}
+                  <span className="relative">
+                    {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                  </span>
                 </button>
               )}
             </div>
