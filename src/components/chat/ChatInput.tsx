@@ -4,9 +4,10 @@
 // ============================================
 
 import React, { useRef, useEffect, useState } from "react";
-import { ArrowUp, Paperclip, X, FileText } from "lucide-react";
+import { ArrowUp, Paperclip, X, FileText, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useVoiceRecorder } from "@/hooks/useVoice";
 
 interface ChatInputProps {
   value: string;
@@ -15,6 +16,7 @@ interface ChatInputProps {
   placeholder: string;
   isLoading: boolean;
   fullPage: boolean;
+  voiceEnabled?: boolean;
 }
 
 const ACCEPTED_TYPES = [".md", ".txt", ".pdf"];
