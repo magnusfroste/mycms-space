@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Sparkles } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import IconPicker from './IconPicker';
 import type { ChatHeroBlockConfig } from '@/types/blockConfigs';
@@ -29,9 +29,7 @@ const ChatHeroEditor: React.FC<ChatHeroEditorProps> = ({ config, onChange }) => 
   };
 
   const quickActions = typedConfig.quick_actions || [];
-  const greetingMessages = typedConfig.greeting_messages || [];
 
-  // --- Quick Actions ---
   const addQuickAction = () => {
     const newAction: QuickActionConfig = {
       id: crypto.randomUUID(),
@@ -54,21 +52,6 @@ const ChatHeroEditor: React.FC<ChatHeroEditorProps> = ({ config, onChange }) => 
     updateConfig('quick_actions', quickActions.filter((_, i) => i !== index));
   };
 
-  // --- Greeting Messages ---
-  const addGreeting = () => {
-    updateConfig('greeting_messages', [...greetingMessages, 'Hello! How can I help you?']);
-  };
-
-  const updateGreeting = (index: number, value: string) => {
-    const updated = [...greetingMessages];
-    updated[index] = value;
-    updateConfig('greeting_messages', updated);
-  };
-
-  const removeGreeting = (index: number) => {
-    updateConfig('greeting_messages', greetingMessages.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="space-y-6">
       {/* Agent Identity */}
@@ -82,9 +65,9 @@ const ChatHeroEditor: React.FC<ChatHeroEditorProps> = ({ config, onChange }) => 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="agent_tagline">Tagline (fallback)</Label>
-          <Input id="agent_tagline" value={typedConfig.agent_tagline || ''} onChange={(e) => updateConfig('agent_tagline', e.target.value)} placeholder="Magnus digital twin" />
-          <p className="text-xs text-muted-foreground">Used if no greeting messages are set</p>
+          <Label htmlFor="agent_tagline">Fallback Tagline</Label>
+          <Input id="agent_tagline" value={typedConfig.agent_tagline || ''} onChange={(e) => updateConfig('agent_tagline', e.target.value)} placeholder="How can I help you today?" />
+          <p className="text-xs text-muted-foreground">Shown if the AI greeting can't be loaded</p>
         </div>
 
         <div className="space-y-2">
@@ -93,32 +76,19 @@ const ChatHeroEditor: React.FC<ChatHeroEditorProps> = ({ config, onChange }) => 
         </div>
       </div>
 
-      {/* Typewriter Greeting */}
+      {/* Agentic Greeting Info */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground border-b pb-2">Typewriter Greeting</h3>
-          <Button variant="outline" size="sm" onClick={addGreeting}>
-            <Plus className="h-4 w-4 mr-1" /> Add
-          </Button>
-        </div>
+        <h3 className="text-sm font-semibold text-foreground border-b pb-2">Greeting</h3>
 
-        {greetingMessages.map((msg, index) => (
-          <div key={index} className="flex items-start gap-2">
-            <Textarea
-              value={msg}
-              onChange={(e) => updateGreeting(index, e.target.value)}
-              placeholder="Hi! I'm your AI assistant..."
-              className="min-h-[60px] text-sm flex-1"
-            />
-            <Button variant="ghost" size="icon" onClick={() => removeGreeting(index)} className="h-8 w-8 text-destructive hover:text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-primary">
+            <Sparkles className="h-4 w-4" />
+            <span className="text-sm font-medium">Agentic Greeting</span>
           </div>
-        ))}
-
-        {greetingMessages.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-2">No greeting messages. The tagline will be used instead.</p>
-        )}
+          <p className="text-xs text-muted-foreground">
+            The agent generates a unique, personalized greeting for each visitor based on time of day, visit history, and traffic source. The fallback tagline above is used if the AI is unavailable.
+          </p>
+        </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
