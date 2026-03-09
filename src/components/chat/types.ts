@@ -99,4 +99,6 @@ export interface ChatInterfaceProps {
   enabledTools?: string[];
   mode?: ChatMode;
   extensionId?: string;
+  voiceEnabled?: boolean;
+  ttsVoice?: string;
 }
