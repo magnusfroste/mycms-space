@@ -95,6 +95,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         isLoading={isLoading}
         fullPage={fullPage}
         voiceEnabled={voiceEnabled}
+        commands={quickActions}
+        onCommandSelect={handleQuickAction}
       />
 
       {showQuickActions && messages.length === 0 && (

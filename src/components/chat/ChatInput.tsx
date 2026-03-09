@@ -8,6 +8,8 @@ import { ArrowUp, Paperclip, X, FileText, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceRecorder } from "@/hooks/useVoice";
+import ChatCommandMenu from "./ChatCommandMenu";
+import type { QuickActionConfig } from "./types";
 
 interface ChatInputProps {
   value: string;
@@ -17,6 +19,8 @@ interface ChatInputProps {
   isLoading: boolean;
   fullPage: boolean;
   voiceEnabled?: boolean;
+  commands?: QuickActionConfig[];
+  onCommandSelect?: (message: string) => void;
 }
 
 const ACCEPTED_TYPES = [".md", ".txt", ".pdf"];
@@ -97,11 +101,38 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isLoading,
   fullPage,
   voiceEnabled = false,
+  commands = [],
+  onCommandSelect,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [commandMenuOpen, setCommandMenuOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+
+  // Detect @ trigger
+  const handleInputChange = (newValue: string) => {
+    onChange(newValue);
+
+    if (commands.length > 0) {
+      const atMatch = newValue.match(/@(\S*)$/);
+      if (atMatch) {
+        setCommandMenuOpen(true);
+        setCommandQuery(atMatch[1]);
+      } else {
+        setCommandMenuOpen(false);
+        setCommandQuery("");
+      }
+    }
+  };
+
+  const handleCommandSelect = (cmd: { message: string }) => {
+    setCommandMenuOpen(false);
+    setCommandQuery("");
+    onChange("");
+    onCommandSelect?.(cmd.message);
+  };
 
   const handleTranscript = React.useCallback((text: string) => {
     onChange(value ? value + ' ' + text : text);
@@ -124,6 +155,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, [value]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (commandMenuOpen) return; // Let CommandMenu handle keys
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -171,6 +203,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className={fullPage ? "shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4" : "mt-4"}>
       <div className="relative max-w-3xl mx-auto">
+        {/* @ command menu */}
+        <ChatCommandMenu
+          query={commandQuery}
+          commands={commands}
+          onSelect={handleCommandSelect}
+          onDismiss={() => setCommandMenuOpen(false)}
+          visible={commandMenuOpen}
+        />
         <div className="relative bg-muted/30 border border-border/60 rounded-2xl transition-colors focus-within:border-border focus-within:bg-muted/40">
           {/* Attached file pill — inside the input area */}
           {attachedFile && (
@@ -193,7 +233,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             ref={textareaRef}
             value={value}
             onChange={(e) => {
-              onChange(e.target.value);
+              handleInputChange(e.target.value);
               adjustTextareaHeight();
             }}
             onKeyPress={handleKeyPress}
