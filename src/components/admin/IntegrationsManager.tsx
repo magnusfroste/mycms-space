@@ -66,6 +66,7 @@ const categoryLabels: Record<string, string> = {
   ai: 'AI Providers',
   utility: 'Utilities',
   source: 'Sources',
+  federation: 'Federation',
 };
 
 const IntegrationsManager: React.FC = () => {
