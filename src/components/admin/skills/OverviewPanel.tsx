@@ -213,6 +213,9 @@ export default function OverviewPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Architecture Diagram */}
+      <ArchitectureDiagram />
+
       {/* Self-healing alerts */}
       {disabledSkills.length > 0 && (
         <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
