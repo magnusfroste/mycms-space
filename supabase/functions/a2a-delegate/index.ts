@@ -13,7 +13,7 @@ const corsHeaders = {
 // Registry of known A2A agents
 const AGENT_REGISTRY: Record<string, { url: string; skill_id: string }> = {
   soundspace: {
-    url: 'https://soundspace.lovable.app/a2a',
+    url: 'https://soundzone.lovable.app/a2a',
     skill_id: 'generate_track',
   },
 };
