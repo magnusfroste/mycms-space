@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       integration,
       enabledTools,
       mode,
+      visitorConfig,
     } = await req.json();
 
     console.log("[AI Chat] Request:", {
