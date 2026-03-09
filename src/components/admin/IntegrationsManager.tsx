@@ -274,7 +274,7 @@ const IntegrationsManager: React.FC = () => {
       <Tabs value={activeCategory} onValueChange={setActiveCategory}>
         <TabsList className="w-full justify-start">
           <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-          {['ai', 'utility', 'source'].map(cat => (
+          {['ai', 'utility', 'source', ...(federationAgents.length > 0 ? ['federation'] : [])].map(cat => (
             <TabsTrigger key={cat} value={cat} className="text-xs">
               {categoryLabels[cat]}
             </TabsTrigger>
