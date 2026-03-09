@@ -514,6 +514,23 @@ export const getVisitorInsightsTool: ToolDefinition = {
   },
 };
 
+export const requestMusicTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "request_music",
+    description: "Request music creation from SoundSpace agent via A2A protocol. Use when a visitor asks for music, background tracks, or audio content. Delegates to the SoundSpace music AI agent which generates custom tracks.",
+    parameters: {
+      type: "object",
+      properties: {
+        prompt: { type: "string", description: "Description of the desired music (genre, mood, tempo, instruments, etc.)" },
+        duration: { type: "number", description: "Track duration in seconds (30-300). Default 120." },
+        context: { type: "string", description: "Additional context about what the music is for (e.g. 'background for a portfolio site', 'relaxing café vibe')" },
+      },
+      required: ["prompt"],
+    },
+  },
+};
+
 /** Public visitor tools */
 export const publicTools: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
@@ -521,6 +538,7 @@ export const publicTools: Record<string, ToolDefinition> = {
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
   get_visitor_insights: getVisitorInsightsTool,
+  request_music: requestMusicTool,
 };
 
 /** Admin CMS co-pilot tools */
