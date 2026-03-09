@@ -745,12 +745,18 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
+    // Force request_music tool on first iteration when music intent is detected
+    const toolChoice = (forceMusicTool && iteration === 0)
+      ? { type: "function", function: { name: "request_music" } }
+      : "auto";
+
     const data = await callOpenAICompatible({
       url,
       apiKey,
       model,
       messages: conversationMessages,
       tools: tools.length > 0 ? tools : undefined,
+      toolChoice: tools.length > 0 ? toolChoice : undefined,
     });
 
     const choice = data.choices?.[0];
