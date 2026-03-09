@@ -62,6 +62,7 @@ interface UseChatMessagesOptions {
   enabledTools?: string[];
   mode?: ChatMode;
   extensionId?: string;
+  visitorConfig?: VisitorConfig;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
 }
