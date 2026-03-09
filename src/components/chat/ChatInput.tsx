@@ -8,6 +8,8 @@ import { ArrowUp, Paperclip, X, FileText, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceRecorder } from "@/hooks/useVoice";
+import ChatCommandMenu from "./ChatCommandMenu";
+import type { QuickActionConfig } from "./types";
 
 interface ChatInputProps {
   value: string;
@@ -17,6 +19,8 @@ interface ChatInputProps {
   isLoading: boolean;
   fullPage: boolean;
   voiceEnabled?: boolean;
+  commands?: QuickActionConfig[];
+  onCommandSelect?: (message: string) => void;
 }
 
 const ACCEPTED_TYPES = [".md", ".txt", ".pdf"];
