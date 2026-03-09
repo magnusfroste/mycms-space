@@ -5,7 +5,7 @@
 // ============================================
 
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
-import { getActiveTools, getToolInstructions, parseToolCallResponse } from "./ai-tools.ts";
+import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 
 // ============================================
