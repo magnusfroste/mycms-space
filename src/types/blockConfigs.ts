@@ -298,6 +298,10 @@ export interface ChatHeroBlockConfig {
     order_index: number;
     enabled: boolean;
   }>;
+  // Typewriter greeting
+  greeting_messages?: string[];
+  typewriter_speed?: number;   // ms per char, default 40
+  enable_sound?: boolean;      // keystroke sound, default false
 }
 
 // CV Agent Block Config
