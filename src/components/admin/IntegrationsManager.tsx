@@ -319,6 +319,66 @@ const IntegrationsManager: React.FC = () => {
         ))
       )}
 
+      {/* Federation Agents */}
+      {(activeCategory === 'all' || activeCategory === 'federation') && federationAgents.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+            Federation
+          </h3>
+          <div className="space-y-1.5">
+            {federationAgents.map((agent) => {
+              const endpoint = agent.handler?.replace(/^a2a:/, '') || '';
+              return (
+                <button
+                  key={agent.id}
+                  type="button"
+                  onClick={() => setSearchParams({ tab: 'agency' })}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left hover:bg-muted/50 ${
+                    agent.enabled ? 'border-border' : 'border-border opacity-50'
+                  }`}
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-primary">
+                    <Network className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">{agent.name}</span>
+                      {agent.enabled && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
+                          <Wifi className="h-2.5 w-2.5" />
+                          Connected
+                        </Badge>
+                      )}
+                      {!agent.enabled && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                          <WifiOff className="h-2.5 w-2.5" />
+                          Disabled
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {agent.description || endpoint}
+                    </p>
+                  </div>
+                  <Circle className={`h-2.5 w-2.5 shrink-0 ${
+                    agent.enabled ? 'fill-green-500 text-green-500' : 'fill-muted-foreground/30 text-muted-foreground/30'
+                  }`} />
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Manage federation agents in{' '}
+            <button
+              onClick={() => setSearchParams({ tab: 'agency' })}
+              className="text-primary hover:underline"
+            >
+              Agency → Federation
+            </button>
+          </p>
+        </div>
+      )}
+
       {/* Detail Sheet */}
       {selectedIntegration && (
         <IntegrationDetailSheet
