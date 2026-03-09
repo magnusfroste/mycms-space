@@ -189,10 +189,10 @@ Deno.serve(async (req) => {
         errorMessage = `Auth rejected by ${match.name} (HTTP ${response.status}). Check API key '${tokenKey}' in API Tokens module.`;
       } else if (response.status === 429) {
         errorType = 'rate_limit';
-        errorMessage = `Rate limited by ${match.name} (HTTP 429). Retry after cooldown.`;
+        errorMessage = `Rate limited by ${match.name} after ${attempt} attempts (HTTP 429).`;
       } else if (response.status >= 500) {
         errorType = 'upstream';
-        errorMessage = `Upstream error from ${match.name} (HTTP ${response.status}): ${result.error || result.reason || 'Internal error'}`;
+        errorMessage = `Upstream error from ${match.name} after ${attempt} attempts (HTTP ${response.status}): ${result.error || result.reason || 'Internal error'}`;
       } else {
         errorType = 'client';
         errorMessage = `Request rejected by ${match.name} (HTTP ${response.status}): ${result.error || result.reason || 'Unknown'}`;
