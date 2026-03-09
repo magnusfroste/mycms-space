@@ -266,10 +266,11 @@ Style: Professional but approachable, with practical insights. Use subheadings, 
 
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+    const postSlug = `${slug}-${Date.now()}`;
     const { data: post, error: postError } = await supabase.from('blog_posts').insert({
       title,
-      slug: `${slug}-${Date.now()}`,
-      content: content.replace(/^# .+\n/, ''), // Remove title from content
+      slug: postSlug,
+      content: content.replace(/^# .+\n/, ''),
       excerpt: excerpt || content.substring(0, 155),
       status: 'draft',
       source: 'agent',
@@ -280,18 +281,74 @@ Style: Professional but approachable, with practical insights. Use subheadings, 
 
     if (postError) throw postError;
 
+    // Step 4: Generate cover image via AI
+    let coverImageUrl: string | null = null;
+    try {
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      if (LOVABLE_API_KEY) {
+        console.log('[blog_draft] Generating cover image for:', title);
+        const imgPrompt = `Create a modern, visually striking blog cover image for an article titled "${title}". Style: clean, minimal, tech-oriented with abstract geometric shapes or gradients. No text in the image. Professional color palette.`;
+        
+        const imgRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-image',
+            messages: [{ role: 'user', content: imgPrompt }],
+            modalities: ['image', 'text'],
+          }),
+        });
+
+        if (imgRes.ok) {
+          const imgData = await imgRes.json();
+          const base64Url = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          
+          if (base64Url) {
+            // Extract base64 data and upload to storage
+            const base64Data = base64Url.replace(/^data:image\/\w+;base64,/, '');
+            const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const imagePath = `covers/${postSlug}.png`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('blog-images')
+              .upload(imagePath, imageBytes, { contentType: 'image/png', upsert: true });
+
+            if (!uploadError) {
+              const { data: publicUrl } = supabase.storage.from('blog-images').getPublicUrl(imagePath);
+              coverImageUrl = publicUrl.publicUrl;
+              
+              await supabase.from('blog_posts').update({
+                cover_image_url: coverImageUrl,
+                cover_image_path: imagePath,
+              }).eq('id', post.id);
+              
+              console.log('[blog_draft] Cover image saved:', imagePath);
+            } else {
+              console.error('[blog_draft] Image upload error:', uploadError);
+            }
+          }
+        }
+      }
+    } catch (imgErr) {
+      console.error('[blog_draft] Cover image generation failed (non-blocking):', imgErr);
+    }
+
     await supabase.from('agent_tasks').update({
       status: 'needs_review',
       completed_at: new Date().toISOString(),
       output_data: { 
         blog_post_id: post.id, 
         title, 
-        slug,
+        slug: postSlug,
         topic,
+        cover_image_url: coverImageUrl,
       },
     }).eq('id', taskId);
 
-    return { success: true, taskId, postId: post.id, title };
+    return { success: true, taskId, postId: post.id, title, coverImageUrl };
   } catch (e) {
     await supabase.from('agent_tasks').update({
       status: 'failed',
