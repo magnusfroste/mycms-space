@@ -96,11 +96,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   isLoading,
   fullPage,
+  voiceEnabled = false,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+
+  const handleTranscript = React.useCallback((text: string) => {
+    onChange((prev: string) => prev ? prev + ' ' + text : text);
+  }, [onChange]);
+  
+  const { isRecording, toggleRecording } = useVoiceRecorder(handleTranscript);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
