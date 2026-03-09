@@ -531,8 +531,8 @@ export const requestMusicTool: ToolDefinition = {
   },
 };
 
-/** Public visitor tools */
-export const publicTools: Record<string, ToolDefinition> = {
+/** Hardcoded public tools — used as FALLBACK only when DB is unavailable */
+export const publicToolsFallback: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
   generate_portfolio: portfolioGeneratorTool,
   project_deep_dive: projectDeepDiveTool,
@@ -540,6 +540,9 @@ export const publicTools: Record<string, ToolDefinition> = {
   get_visitor_insights: getVisitorInsightsTool,
   request_music: requestMusicTool,
 };
+
+/** @deprecated Use publicToolsFallback. Kept for backwards compat */
+export const publicTools = publicToolsFallback;
 
 /** Admin CMS co-pilot tools */
 export const getSiteStatsTool: ToolDefinition = {
