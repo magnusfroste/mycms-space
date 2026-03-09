@@ -1,40 +1,41 @@
 // ============================================
 // Integrations Manager
-// Catalog of available integrations (n8n, OpenAI, etc.)
-// All integration settings consolidated here (n8n pattern)
+// List view with slide-in detail sheet
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings, ChevronDown, Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock, FolderOpen, Eye, Search, Loader2, ImageIcon } from 'lucide-react';
+import {
+  Webhook, Bot, Sparkles, Server, Check, ExternalLink, Settings,
+  Circle, AlertCircle, Key, Globe, Mail, Github, LayoutGrid, Clock,
+  FolderOpen, Eye, Search, Loader2, ImageIcon,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useAIModule, useUpdateAIModule, useGitHubModule, useUpdateGitHubModule } from '@/models/modules';
-
-import type { AIIntegrationType, UtilityIntegrationType, SourceIntegrationType, N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration, AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig } from '@/types/modules';
+import type {
+  AIIntegrationType, UtilityIntegrationType, SourceIntegrationType,
+  N8nIntegration, LovableIntegration, OpenAIIntegration, GeminiIntegration,
+  AIModuleConfig, IntegrationMeta, ResendIntegration, GitHubModuleConfig,
+} from '@/types/modules';
 import { integrationsMeta, defaultIntegrations, defaultModuleConfigs } from '@/types/modules';
-
-// Combined integration type (all categories)
-type IntegrationType = AIIntegrationType | UtilityIntegrationType | SourceIntegrationType;
-
-// Secret names for each integration
-const integrationSecrets: Partial<Record<IntegrationType, string>> = {
-  openai: 'OPENAI_API_KEY',
-  gemini: 'GEMINI_API_KEY',
-  firecrawl: 'FIRECRAWL_API_KEY',
-};
 import { toast } from 'sonner';
 
-// Integration icons
+import IntegrationListItem from './integrations/IntegrationListItem';
+import IntegrationDetailSheet from './integrations/IntegrationDetailSheet';
+import type { IntegrationStatus } from './integrations/IntegrationListItem';
+
+type IntegrationType = AIIntegrationType | UtilityIntegrationType | SourceIntegrationType;
+
+// Icons & colors
 const integrationIcons: Record<IntegrationType, React.ReactNode> = {
   n8n: <Webhook className="h-5 w-5" />,
   lovable: <Sparkles className="h-5 w-5" />,
@@ -61,14 +62,21 @@ const integrationColors: Record<IntegrationType, string> = {
   unsplash: 'text-slate-700 dark:text-slate-300',
 };
 
+const categoryLabels: Record<string, string> = {
+  ai: 'AI Providers',
+  utility: 'Utilities',
+  source: 'Sources',
+};
+
 const IntegrationsManager: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
   const { data: githubModule, config: githubConfig } = useGitHubModule();
   const updateModule = useUpdateAIModule();
   const updateGitHubModule = useUpdateGitHubModule();
-  const [expandedIntegration, setExpandedIntegration] = useState<IntegrationType | null>(null);
+  const [selectedType, setSelectedType] = useState<IntegrationType | null>(null);
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
 
-  // Gmail connection status
   const { data: gmailStatus } = useQuery({
     queryKey: ['gmail-status'],
     queryFn: async () => {
@@ -80,7 +88,7 @@ const IntegrationsManager: React.FC = () => {
     },
   });
 
-  const handleConfigUpdate = (updates: Partial<AIModuleConfig>) => {
+  const handleConfigUpdate = useCallback((updates: Partial<AIModuleConfig>) => {
     if (!config) return;
     updateModule.mutate(
       { module_config: { ...config, ...updates } },
@@ -89,68 +97,46 @@ const IntegrationsManager: React.FC = () => {
         onError: () => toast.error('Error saving'),
       }
     );
-  };
+  }, [config, updateModule]);
 
-  const handleIntegrationFieldUpdate = (integrationType: AIIntegrationType, field: string, value: string) => {
+  const handleIntegrationFieldUpdate = useCallback((integrationType: AIIntegrationType, field: string, value: string) => {
     if (!config) return;
-    
-    // Get existing integration or default
-    const existingIntegration = config.integration?.type === integrationType 
-      ? config.integration 
+    const existingIntegration = config.integration?.type === integrationType
+      ? config.integration
       : defaultIntegrations[integrationType];
-    
     const updatedIntegration = { ...existingIntegration, [field]: value };
-    
     handleConfigUpdate({
       integration: updatedIntegration,
-      // Also sync webhook_url for backwards compatibility
       ...(integrationType === 'n8n' && field === 'webhook_url' ? { webhook_url: value } : {}),
     });
-  };
+  }, [config, handleConfigUpdate]);
 
-  const activateIntegration = (integrationType: AIIntegrationType) => {
+  const activateIntegration = useCallback((integrationType: AIIntegrationType) => {
     const newIntegration = defaultIntegrations[integrationType];
     handleConfigUpdate({
       active_integration: integrationType,
       integration: { ...newIntegration, enabled: true },
       provider: integrationType === 'n8n' ? 'n8n' : integrationType === 'lovable' ? 'lovable' : 'custom',
     });
-  };
-
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
-  }
+  }, [handleConfigUpdate]);
 
   const activeIntegration = config?.active_integration || 'n8n';
   const currentIntegrationConfig = config?.integration || defaultIntegrations.n8n;
 
-  // Check if an integration is properly configured
-  const isIntegrationConfigured = (type: IntegrationType): boolean | 'requires_secret' | 'connected' => {
+  const isIntegrationConfigured = useCallback((type: IntegrationType): IntegrationStatus => {
     switch (type) {
       case 'n8n': {
-        const webhookUrl = config?.integration?.type === 'n8n' 
-          ? (config.integration as N8nIntegration).webhook_url 
+        const webhookUrl = config?.integration?.type === 'n8n'
+          ? (config.integration as N8nIntegration).webhook_url
           : config?.webhook_url;
         return !!webhookUrl && webhookUrl.trim().length > 0;
       }
-      case 'lovable':
-        return false; // Not available for self-hosted
+      case 'lovable': return false;
       case 'openai':
       case 'gemini':
-        // If it's the active integration, it's working (edge function validates the key)
-        // Otherwise show as ready (secrets are managed in backend)
         return activeIntegration === type ? 'connected' : true;
       case 'firecrawl':
-        return 'connected';
       case 'resend':
-        return 'connected';
       case 'unsplash':
         return 'connected';
       case 'github':
@@ -163,18 +149,14 @@ const IntegrationsManager: React.FC = () => {
         }
         return false;
       }
-      default:
-        return false;
+      default: return false;
     }
-  };
+  }, [config, activeIntegration, githubModule, githubConfig, gmailStatus]);
 
-  // Check if this is an AI integration (can be activated for chat)
-  const isAIIntegration = (type: IntegrationType): type is AIIntegrationType => {
-    return ['n8n', 'lovable', 'openai', 'gemini', 'custom'].includes(type);
-  };
+  const isAIIntegration = (type: IntegrationType): type is AIIntegrationType =>
+    ['n8n', 'lovable', 'openai', 'gemini', 'custom'].includes(type);
 
-  // Toggle GitHub integration
-  const toggleGitHubIntegration = (enabled: boolean) => {
+  const toggleGitHubIntegration = useCallback((enabled: boolean) => {
     updateGitHubModule.mutate(
       { enabled },
       {
@@ -182,10 +164,9 @@ const IntegrationsManager: React.FC = () => {
         onError: () => toast.error('Error saving'),
       }
     );
-  };
+  }, [updateGitHubModule]);
 
-  // Update GitHub config field
-  const handleGitHubConfigUpdate = <K extends keyof GitHubModuleConfig>(
+  const handleGitHubConfigUpdate = useCallback(<K extends keyof GitHubModuleConfig>(
     field: K,
     value: GitHubModuleConfig[K]
   ) => {
@@ -197,332 +178,248 @@ const IntegrationsManager: React.FC = () => {
         onError: () => toast.error('Error saving'),
       }
     );
-  };
+  }, [githubConfig, updateGitHubModule]);
 
-  // Legacy: updateGitHubUsername is now handled by handleGitHubConfigUpdate
-  const updateGitHubUsername = (username: string) => {
-    if (!githubConfig) return;
-    updateGitHubModule.mutate(
-      { module_config: { ...githubConfig, username } },
-      {
-        onSuccess: () => toast.success('Saved'),
-        onError: () => toast.error('Error saving'),
-      }
+  // Filter integrations
+  const filteredIntegrations = React.useMemo(() => {
+    let results = integrationsMeta;
+    if (activeCategory !== 'all') {
+      results = results.filter(i => i.category === activeCategory);
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      results = results.filter(i =>
+        i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
+      );
+    }
+    return results;
+  }, [query, activeCategory]);
+
+  // Group by category
+  const grouped = React.useMemo(() => {
+    const groups: Record<string, IntegrationMeta[]> = {};
+    for (const cat of ['ai', 'utility', 'source']) {
+      const entries = filteredIntegrations.filter(i => i.category === cat);
+      if (entries.length > 0) groups[cat] = entries;
+    }
+    return groups;
+  }, [filteredIntegrations]);
+
+  const selectedIntegration = selectedType
+    ? integrationsMeta.find(i => i.type === selectedType) ?? null
+    : null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="space-y-6 max-w-2xl">
+      {/* Header */}
+      <div className="flex items-center gap-3">
         <Settings className="h-8 w-8 text-primary" />
         <div>
           <h2 className="text-2xl font-bold">Integrations</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Connect to external services and AI providers
           </p>
         </div>
       </div>
 
-      {/* AI Integrations Section */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-muted-foreground">AI Providers</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {integrationsMeta.filter(i => i.category === 'ai').map((integration) => {
-            const isActive = activeIntegration === integration.type;
-            const isExpanded = expandedIntegration === integration.type;
-            const isAvailable = integration.available;
-            const isConfigured = isIntegrationConfigured(integration.type);
-            
-            return (
-              <IntegrationCard
-                key={integration.type}
-                integration={integration}
-                isActive={isActive}
-                isExpanded={isExpanded}
-                isAvailable={isAvailable}
-                isConfigured={isConfigured}
-                onActivate={() => isAIIntegration(integration.type) && activateIntegration(integration.type)}
-                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                showActivate={isAIIntegration(integration.type)}
-              >
-                {integration.type === 'n8n' && (
-                  <N8nConfig
-                    config={currentIntegrationConfig as N8nIntegration}
-                    legacyWebhookUrl={config?.webhook_url}
-                    onUpdate={(field, value) => handleIntegrationFieldUpdate('n8n', field, value)}
-                  />
-                )}
-                {integration.type === 'lovable' && (
-                  <LovableConfig
-                    config={currentIntegrationConfig as LovableIntegration}
-                    onUpdate={(field, value) => handleIntegrationFieldUpdate('lovable', field, value)}
-                  />
-                )}
-                {integration.type === 'openai' && (
-                  <OpenAIConfig
-                    config={currentIntegrationConfig as OpenAIIntegration}
-                    onUpdate={(field, value) => handleIntegrationFieldUpdate('openai', field, value)}
-                  />
-                )}
-                {integration.type === 'gemini' && (
-                  <GeminiConfig
-                    config={currentIntegrationConfig as GeminiIntegration}
-                    onUpdate={(field, value) => handleIntegrationFieldUpdate('gemini', field, value)}
-                  />
-                )}
-              </IntegrationCard>
-            );
-          })}
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search integrations…"
+          className="pl-9 pr-9"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <span className="sr-only">Clear</span>×
+          </button>
+        )}
       </div>
 
-      {/* Utility Integrations Section */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-muted-foreground">Utilities</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {integrationsMeta.filter(i => i.category === 'utility').map((integration) => {
-            const isExpanded = expandedIntegration === integration.type;
-            const isAvailable = integration.available;
-            const isConfigured = isIntegrationConfigured(integration.type);
-            
-            return (
-              <IntegrationCard
-                key={integration.type}
-                integration={integration}
-                isActive={false}
-                isExpanded={isExpanded}
-                isAvailable={isAvailable}
-                isConfigured={isConfigured}
-                onActivate={() => {}}
-                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                showActivate={false}
-              >
-                {integration.type === 'firecrawl' && <FirecrawlConfig />}
-                {integration.type === 'resend' && <ResendConfig />}
-                {integration.type === 'unsplash' && <UnsplashConfig />}
-              </IntegrationCard>
-            );
-          })}
-        </div>
-      </div>
+      {/* Category tabs */}
+      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+          {['ai', 'utility', 'source'].map(cat => (
+            <TabsTrigger key={cat} value={cat} className="text-xs">
+              {categoryLabels[cat]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
-      {/* Source Integrations Section (GitHub, etc.) */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-muted-foreground">Sources</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {integrationsMeta.filter(i => i.category === 'source').map((integration) => {
-            const isExpanded = expandedIntegration === integration.type;
-            const isAvailable = integration.available;
-            const isConfigured = isIntegrationConfigured(integration.type);
-            const isActive = (integration.type === 'github' && githubModule?.enabled) || (integration.type === 'gmail' && gmailStatus?.connected);
-            
-            return (
-              <IntegrationCard
-                key={integration.type}
-                integration={integration}
-                isActive={isActive}
-                isExpanded={isExpanded}
-                isAvailable={isAvailable}
-                isConfigured={isConfigured}
-                onActivate={() => {
-                  if (integration.type === 'github') {
-                    toggleGitHubIntegration(true);
-                    setExpandedIntegration('github');
-                  }
-                  if (integration.type === 'gmail') {
-                    // Open OAuth flow in new window
-                    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
-                    window.open(url, '_blank', 'width=600,height=700');
-                  }
-                }}
-                onToggleExpand={() => setExpandedIntegration(isExpanded ? null : integration.type)}
-                showActivate={(integration.type === 'github' && !githubModule?.enabled) || (integration.type === 'gmail' && !gmailStatus?.connected)}
-              >
-                {integration.type === 'github' && (
-                  <GitHubSourceConfig 
-                    config={githubConfig}
-                    enabled={githubModule?.enabled ?? false}
-                    onConfigUpdate={handleGitHubConfigUpdate}
-                    onToggle={toggleGitHubIntegration}
-                  />
-                )}
-                {integration.type === 'gmail' && (
-                  <GmailSourceConfig
-                    connected={gmailStatus?.connected ?? false}
-                    email={gmailStatus?.email ?? null}
-                    connectedAt={gmailStatus?.connected_at ?? null}
-                  />
-                )}
-              </IntegrationCard>
-            );
-          })}
+      {/* Integration list */}
+      {Object.keys(grouped).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Search className="h-8 w-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No integrations match your search</p>
         </div>
-      </div>
+      ) : (
+        Object.entries(grouped).map(([cat, entries]) => (
+          <div key={cat}>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              {categoryLabels[cat]}
+            </h3>
+            <div className="space-y-1.5">
+              {entries.map(integration => {
+                const isActive = integration.category === 'ai'
+                  ? activeIntegration === integration.type
+                  : (integration.type === 'github' && githubModule?.enabled) || (integration.type === 'gmail' && gmailStatus?.connected);
 
+                return (
+                  <IntegrationListItem
+                    key={integration.type}
+                    name={integration.name}
+                    description={integration.description}
+                    icon={integrationIcons[integration.type]}
+                    iconColor={integrationColors[integration.type]}
+                    isActive={!!isActive}
+                    isAvailable={integration.available}
+                    isConfigured={isIntegrationConfigured(integration.type)}
+                    onClick={() => setSelectedType(integration.type)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Detail Sheet */}
+      {selectedIntegration && (
+        <IntegrationDetailSheet
+          open={!!selectedType}
+          onClose={() => setSelectedType(null)}
+          name={selectedIntegration.name}
+          description={selectedIntegration.description}
+          icon={integrationIcons[selectedIntegration.type]}
+          iconColor={integrationColors[selectedIntegration.type]}
+          isActive={
+            selectedIntegration.category === 'ai'
+              ? activeIntegration === selectedIntegration.type
+              : (selectedIntegration.type === 'github' && !!githubModule?.enabled) ||
+                (selectedIntegration.type === 'gmail' && !!gmailStatus?.connected)
+          }
+          isAvailable={selectedIntegration.available}
+          isConfigured={isIntegrationConfigured(selectedIntegration.type)}
+          showActivate={
+            isAIIntegration(selectedIntegration.type) ||
+            (selectedIntegration.type === 'github' && !githubModule?.enabled) ||
+            (selectedIntegration.type === 'gmail' && !gmailStatus?.connected)
+          }
+          onActivate={() => {
+            if (isAIIntegration(selectedIntegration.type)) {
+              activateIntegration(selectedIntegration.type);
+            } else if (selectedIntegration.type === 'github') {
+              toggleGitHubIntegration(true);
+            } else if (selectedIntegration.type === 'gmail') {
+              const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+              window.open(url, '_blank', 'width=600,height=700');
+            }
+          }}
+        >
+          {/* AI Provider configs */}
+          {selectedType === 'n8n' && (
+            <N8nConfig
+              config={currentIntegrationConfig as N8nIntegration}
+              legacyWebhookUrl={config?.webhook_url}
+              onUpdate={(field, value) => handleIntegrationFieldUpdate('n8n', field, value)}
+            />
+          )}
+          {selectedType === 'lovable' && (
+            <LovableConfig
+              config={currentIntegrationConfig as LovableIntegration}
+              onUpdate={(field, value) => handleIntegrationFieldUpdate('lovable', field, value)}
+            />
+          )}
+          {selectedType === 'openai' && (
+            <OpenAIConfig
+              config={currentIntegrationConfig as OpenAIIntegration}
+              onUpdate={(field, value) => handleIntegrationFieldUpdate('openai', field, value)}
+            />
+          )}
+          {selectedType === 'gemini' && (
+            <GeminiConfig
+              config={currentIntegrationConfig as GeminiIntegration}
+              onUpdate={(field, value) => handleIntegrationFieldUpdate('gemini', field, value)}
+            />
+          )}
+          {/* Utility configs */}
+          {selectedType === 'firecrawl' && <FirecrawlConfig />}
+          {selectedType === 'resend' && <ResendConfig />}
+          {selectedType === 'unsplash' && <UnsplashConfig />}
+          {/* Source configs */}
+          {selectedType === 'github' && (
+            <GitHubSourceConfig
+              config={githubConfig}
+              enabled={githubModule?.enabled ?? false}
+              onConfigUpdate={handleGitHubConfigUpdate}
+              onToggle={toggleGitHubIntegration}
+            />
+          )}
+          {selectedType === 'gmail' && (
+            <GmailSourceConfig
+              connected={gmailStatus?.connected ?? false}
+              email={gmailStatus?.email ?? null}
+              connectedAt={gmailStatus?.connected_at ?? null}
+            />
+          )}
+        </IntegrationDetailSheet>
+      )}
     </div>
   );
 };
 
 // ============================================
-// Integration Card Component (Reusable)
+// Config sub-components (kept from original)
 // ============================================
-interface IntegrationCardProps {
-  integration: IntegrationMeta;
-  isActive: boolean;
-  isExpanded: boolean;
-  isAvailable: boolean;
-  isConfigured: boolean | 'requires_secret' | 'connected';
-  onActivate: () => void;
-  onToggleExpand: () => void;
-  showActivate: boolean;
-  children?: React.ReactNode;
-}
 
-const IntegrationCard: React.FC<IntegrationCardProps> = ({
-  integration,
-  isActive,
-  isExpanded,
-  isAvailable,
-  isConfigured,
-  onActivate,
-  onToggleExpand,
-  showActivate,
-  children,
-}) => {
-  return (
-    <Card className={`relative transition-all ${isActive ? 'ring-2 ring-primary' : ''} ${!isAvailable ? 'opacity-60' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-muted ${integrationColors[integration.type]}`}>
-              {integrationIcons[integration.type]}
-            </div>
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                {integration.name}
-                {isActive && (
-                  <Badge variant="default" className="text-xs">
-                    <Check className="h-3 w-3 mr-1" />
-                    Active
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {integration.description}
-              </CardDescription>
-            </div>
-          </div>
+const FirecrawlConfig: React.FC = () => (
+  <div className="space-y-4">
+    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+      <div className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-green-600 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-green-900 dark:text-green-100">Connected via Connector</p>
+          <p className="text-green-700 dark:text-green-300 mt-1">
+            API key <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">FIRECRAWL_API_KEY</code> is automatically available.
+          </p>
         </div>
-        
-        {/* Connection status indicator */}
-        {isAvailable && (
-          <div className="mt-3">
-            {isConfigured === 'connected' ? (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
-                <Circle className="h-2 w-2 mr-1.5 fill-green-500 text-green-500" />
-                Connected
-              </Badge>
-            ) : isConfigured === true ? (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
-                <Check className="h-3 w-3 mr-1" />
-                Ready
-              </Badge>
-            ) : isConfigured === 'requires_secret' ? (
-              <Badge variant="outline" className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
-                <Key className="h-3 w-3 mr-1" />
-                Requires secret
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Not configured
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {!isAvailable ? (
-          <Badge variant="outline" className="text-xs">Coming soon</Badge>
-        ) : (
-          <>
-            {/* Quick actions */}
-            <div className="flex gap-2">
-              {showActivate && !isActive && (
-                <Button size="sm" onClick={onActivate}>
-                  Activate
-                </Button>
-              )}
-              <Button size="sm" variant="outline" onClick={onToggleExpand}>
-                <Settings className="h-3 w-3 mr-1" />
-                Configure
-                <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-              </Button>
-              {integration.docs && (
-                <Button size="sm" variant="ghost" asChild>
-                  <a href={integration.docs} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </Button>
-              )}
-            </div>
-
-            {/* Expanded Configuration */}
-            {isExpanded && (
-              <div className="pt-4 border-t space-y-4">
-                {children}
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// ============================================
-// Firecrawl Configuration Component
-// ============================================
-const FirecrawlConfig: React.FC = () => {
-  return (
-    <div className="space-y-4">
-      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-        <div className="flex items-start gap-2">
-          <Check className="h-4 w-4 text-green-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-green-900 dark:text-green-100">Connected via Connector</p>
-            <p className="text-green-700 dark:text-green-300 mt-1">
-              Firecrawl is connected via Lovable connector. The API key <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">FIRECRAWL_API_KEY</code> is automatically available in edge functions.
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="text-sm text-muted-foreground">
-        <p className="font-medium mb-2">Available features:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>Scrape</strong> - Extract content from any URL</li>
-          <li><strong>Search</strong> - Web search with content extraction</li>
-          <li><strong>Map</strong> - Discover all URLs on a website</li>
-          <li><strong>Crawl</strong> - Recursively scrape entire sites</li>
-        </ul>
       </div>
     </div>
-  );
-};
+    <div className="text-sm text-muted-foreground">
+      <p className="font-medium mb-2">Features:</p>
+      <ul className="list-disc list-inside space-y-1 text-xs">
+        <li>Scrape — Extract content from any URL</li>
+        <li>Search — Web search with extraction</li>
+        <li>Map — Discover all URLs on a site</li>
+        <li>Crawl — Recursively scrape entire sites</li>
+      </ul>
+    </div>
+  </div>
+);
 
-// ============================================
-// Resend Configuration Component
-// ============================================
 const ResendConfig: React.FC = () => {
-  const [fromEmail, setFromEmail] = React.useState(() => 
+  const [fromEmail, setFromEmail] = React.useState(() =>
     localStorage.getItem('resend_from_email') || 'newsletter@froste.eu'
   );
-
-  const handleSave = () => {
-    localStorage.setItem('resend_from_email', fromEmail);
-    toast.success('From address saved');
-  };
 
   return (
     <div className="space-y-4">
@@ -536,406 +433,235 @@ const ResendConfig: React.FC = () => {
             onChange={(e) => setFromEmail(e.target.value)}
             placeholder="newsletter@example.com"
           />
-          <Button onClick={handleSave} size="sm">Save</Button>
+          <Button onClick={() => { localStorage.setItem('resend_from_email', fromEmail); toast.success('Saved'); }} size="sm">Save</Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          The email address newsletters are sent from. Must belong to a verified domain in Resend.
-        </p>
+        <p className="text-xs text-muted-foreground">Must belong to a verified domain in Resend.</p>
       </div>
-
       <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
         <div className="flex items-start gap-2">
           <Key className="h-4 w-4 text-blue-600 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-blue-900 dark:text-blue-100">API Key</p>
             <p className="text-blue-700 dark:text-blue-300 mt-1">
-              Configured via secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>
+              Configured via <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">RESEND_API_KEY</code>
             </p>
           </div>
         </div>
       </div>
-      
-      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-amber-900 dark:text-amber-100">⚠️ Important: Verify your domain</p>
-            <p className="text-amber-700 dark:text-amber-300 mt-1">
-              The from address must belong to a verified domain in Resend.
-            </p>
-            <a 
-              href="https://resend.com/domains" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-amber-800 dark:text-amber-200 underline mt-2 hover:text-amber-900"
-            >
-              Verify domain in Resend
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
+    </div>
+  );
+};
+
+const UnsplashConfig: React.FC = () => (
+  <div className="space-y-4">
+    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+      <div className="flex items-start gap-2">
+        <Check className="h-4 w-4 text-green-600 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
+          <p className="text-green-700 dark:text-green-300 mt-1">
+            Via <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">UNSPLASH_ACCESS_KEY</code>
+          </p>
         </div>
       </div>
-
-      <div className="text-sm text-muted-foreground">
-        <p className="font-medium mb-2">Used for:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>Newsletter</strong> - Send newsletters to subscribers</li>
-          <li><strong>Transactional email</strong> - Confirmations, notifications</li>
-        </ul>
-      </div>
     </div>
-  );
-};
+    <div className="text-sm text-muted-foreground">
+      <p className="font-medium mb-1">Used in:</p>
+      <p className="text-xs">Blog Editor — Search and set cover images</p>
+    </div>
+  </div>
+);
 
-// ============================================
-// Unsplash Configuration Component
-// ============================================
-const UnsplashConfig: React.FC = () => {
-  return (
-    <div className="space-y-4">
-      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-        <div className="flex items-start gap-2">
-          <Check className="h-4 w-4 text-green-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
-            <p className="text-green-700 dark:text-green-300 mt-1">
-              Unsplash is configured via secret <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">UNSPLASH_ACCESS_KEY</code>
-            </p>
-          </div>
+const N8nConfig: React.FC<{ config: N8nIntegration; legacyWebhookUrl?: string; onUpdate: (field: string, value: string) => void }> = ({ config, legacyWebhookUrl, onUpdate }) => (
+  <div className="space-y-4">
+    <p className="text-sm text-muted-foreground">Connect to an n8n workflow via webhook.</p>
+    <div className="space-y-2">
+      <Label htmlFor="webhook_url">Webhook URL</Label>
+      <Input
+        id="webhook_url"
+        type="url"
+        value={config.webhook_url || legacyWebhookUrl || ''}
+        onChange={(e) => onUpdate('webhook_url', e.target.value)}
+        placeholder="https://your-n8n.example.com/webhook/ai-chat"
+      />
+    </div>
+  </div>
+);
+
+const LovableConfig: React.FC<{ config: LovableIntegration; onUpdate: (field: string, value: string) => void }> = ({ config, onUpdate }) => (
+  <div className="space-y-4">
+    <p className="text-sm text-muted-foreground">Built-in AI gateway. No API key needed.</p>
+    <div className="space-y-2">
+      <Label htmlFor="model">Model</Label>
+      <select
+        id="model"
+        value={config.model || 'google/gemini-2.5-flash'}
+        onChange={(e) => onUpdate('model', e.target.value)}
+        className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+      >
+        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
+        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Powerful)</option>
+        <option value="openai/gpt-5-mini">GPT-5 Mini</option>
+        <option value="openai/gpt-5">GPT-5</option>
+      </select>
+    </div>
+  </div>
+);
+
+const OpenAIConfig: React.FC<{ config: OpenAIIntegration; onUpdate: (field: string, value: string) => void }> = ({ config, onUpdate }) => (
+  <div className="space-y-4">
+    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+      <div className="flex items-start gap-2">
+        <Key className="h-4 w-4 text-blue-600 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-blue-900 dark:text-blue-100">API Key</p>
+          <p className="text-blue-700 dark:text-blue-300 mt-1">
+            Secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">OPENAI_API_KEY</code>
+          </p>
         </div>
       </div>
-      <div className="text-sm text-muted-foreground">
-        <p className="font-medium mb-2">Used in:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li><strong>Blog Editor</strong> — Search and set cover images from Unsplash</li>
-        </ul>
-      </div>
     </div>
-  );
-};
-
-
-interface N8nConfigProps {
-  config: N8nIntegration;
-  legacyWebhookUrl?: string;
-  onUpdate: (field: string, value: string) => void;
-}
-
-const N8nConfig: React.FC<N8nConfigProps> = ({ config, legacyWebhookUrl, onUpdate }) => {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Connect to an n8n workflow via webhook. Your n8n agent will receive chat messages along with site context.
-      </p>
-      <div className="space-y-2">
-        <Label htmlFor="webhook_url">Webhook URL</Label>
-        <Input
-          id="webhook_url"
-          type="url"
-          value={config.webhook_url || legacyWebhookUrl || ''}
-          onChange={(e) => onUpdate('webhook_url', e.target.value)}
-          placeholder="https://your-n8n.example.com/webhook/ai-chat"
-        />
-        <p className="text-xs text-muted-foreground">
-          Create a webhook trigger in n8n and paste the production URL here
-        </p>
-      </div>
+    <div className="space-y-2">
+      <Label htmlFor="openai_model">Model</Label>
+      <select
+        id="openai_model"
+        value={config.model || 'gpt-4o'}
+        onChange={(e) => onUpdate('model', e.target.value)}
+        className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+      >
+        <option value="gpt-4o">GPT-4o (Recommended)</option>
+        <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
+        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+      </select>
     </div>
-  );
-};
+  </div>
+);
 
-// ============================================
-// Lovable AI Configuration Component
-// ============================================
-interface LovableConfigProps {
-  config: LovableIntegration;
-  onUpdate: (field: string, value: string) => void;
-}
-
-const LovableConfig: React.FC<LovableConfigProps> = ({ config, onUpdate }) => {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Use Lovable's built-in AI gateway. No API key needed - powered by Gemini/GPT models.
-      </p>
-      <div className="space-y-2">
-        <Label htmlFor="model">Model</Label>
-        <select
-          id="model"
-          value={config.model || 'google/gemini-2.5-flash'}
-          onChange={(e) => onUpdate('model', e.target.value)}
-          className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-        >
-          <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast)</option>
-          <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Powerful)</option>
-          <option value="openai/gpt-5-mini">GPT-5 Mini</option>
-          <option value="openai/gpt-5">GPT-5</option>
-        </select>
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// OpenAI Configuration Component
-// ============================================
-interface OpenAIConfigProps {
-  config: OpenAIIntegration;
-  onUpdate: (field: string, value: string) => void;
-}
-
-const OpenAIConfig: React.FC<OpenAIConfigProps> = ({ config, onUpdate }) => {
-  return (
-    <div className="space-y-4">
-      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-start gap-2">
-          <Key className="h-4 w-4 text-blue-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
-            <p className="text-blue-700 dark:text-blue-300 mt-1">
-              Add your OpenAI API key as a Supabase secret named <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">OPENAI_API_KEY</code>
-            </p>
-          </div>
+const GeminiConfig: React.FC<{ config: GeminiIntegration; onUpdate: (field: string, value: string) => void }> = ({ config, onUpdate }) => (
+  <div className="space-y-4">
+    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+      <div className="flex items-start gap-2">
+        <Key className="h-4 w-4 text-blue-600 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium text-blue-900 dark:text-blue-100">API Key</p>
+          <p className="text-blue-700 dark:text-blue-300 mt-1">
+            Secret <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">GEMINI_API_KEY</code>
+          </p>
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="openai_model">Model</Label>
-        <select
-          id="openai_model"
-          value={config.model || 'gpt-4o'}
-          onChange={(e) => onUpdate('model', e.target.value)}
-          className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-        >
-          <option value="gpt-4o">GPT-4o (Recommended)</option>
-          <option value="gpt-4o-mini">GPT-4o Mini (Faster)</option>
-          <option value="gpt-4-turbo">GPT-4 Turbo</option>
-          <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
-        </select>
-      </div>
     </div>
-  );
-};
-
-// ============================================
-// Gemini Configuration Component
-// ============================================
-interface GeminiConfigProps {
-  config: GeminiIntegration;
-  onUpdate: (field: string, value: string) => void;
-}
-
-const GeminiConfig: React.FC<GeminiConfigProps> = ({ config, onUpdate }) => {
-  return (
-    <div className="space-y-4">
-      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-start gap-2">
-          <Key className="h-4 w-4 text-blue-600 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-medium text-blue-900 dark:text-blue-100">API Key Required</p>
-            <p className="text-blue-700 dark:text-blue-300 mt-1">
-              Add your Google AI API key as a Supabase secret named <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs font-mono">GEMINI_API_KEY</code>
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="gemini_model">Model</Label>
-        <select
-          id="gemini_model"
-          value={config.model || 'gemini-1.5-flash'}
-          onChange={(e) => onUpdate('model', e.target.value)}
-          className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-        >
-          <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
-          <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
-          <option value="gemini-2.0-flash">Gemini 2.0 Flash (Latest)</option>
-        </select>
-      </div>
+    <div className="space-y-2">
+      <Label htmlFor="gemini_model">Model</Label>
+      <select
+        id="gemini_model"
+        value={config.model || 'gemini-1.5-flash'}
+        onChange={(e) => onUpdate('model', e.target.value)}
+        className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+      >
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
+        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Powerful)</option>
+        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Latest)</option>
+      </select>
     </div>
-  );
-};
+  </div>
+);
 
 // ============================================
-// GitHub Source Configuration Component (All-in-one)
+// GitHub Source Configuration
 // ============================================
-interface GitHubSourceConfigProps {
+const GitHubSourceConfig: React.FC<{
   config: GitHubModuleConfig | undefined;
   enabled: boolean;
   onConfigUpdate: <K extends keyof GitHubModuleConfig>(field: K, value: GitHubModuleConfig[K]) => void;
   onToggle: (enabled: boolean) => void;
-}
-
-
-const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({ 
-  config,
-  enabled,
-  onConfigUpdate,
-  onToggle 
-}) => {
+}> = ({ config, enabled, onConfigUpdate, onToggle }) => {
   const defaultConfig = defaultModuleConfigs.github;
   const currentConfig = config ?? defaultConfig;
   const [localUsername, setLocalUsername] = React.useState(currentConfig.username);
-
-  const handleSaveUsername = () => {
-    onConfigUpdate('username', localUsername);
-  };
+  const [, setSearchParams] = useSearchParams();
 
   return (
-    <div className="space-y-6">
-      {/* Enable/Disable */}
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <Label htmlFor="github_enabled">Enable GitHub Integration</Label>
-          <p className="text-xs text-muted-foreground">
-            Show GitHub content in your pages
-          </p>
+          <Label>Enable GitHub</Label>
+          <p className="text-xs text-muted-foreground">Show GitHub content in pages</p>
         </div>
-        <Switch
-          id="github_enabled"
-          checked={enabled}
-          onCheckedChange={onToggle}
-        />
+        <Switch checked={enabled} onCheckedChange={onToggle} />
       </div>
 
-      {/* Username */}
       <div className="space-y-2">
-        <Label htmlFor="github_username">GitHub Username</Label>
+        <Label>Username</Label>
         <div className="flex gap-2">
           <Input
-            id="github_username"
             value={localUsername}
             onChange={(e) => setLocalUsername(e.target.value)}
             placeholder="magnusfroste"
           />
-          <Button onClick={handleSaveUsername} size="sm">Save</Button>
+          <Button onClick={() => onConfigUpdate('username', localUsername)} size="sm">Save</Button>
         </div>
       </div>
 
       {enabled && currentConfig.username && (
-        <div className="space-y-3">
-          <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-            <div className="flex items-start gap-2">
-              <Check className="h-4 w-4 text-green-600 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-green-900 dark:text-green-100">Connected</p>
-                <p className="text-green-700 dark:text-green-300 mt-1">
-                  Fetching repos from <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded text-xs font-mono">github.com/{currentConfig.username}</code>
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Link to Repos Manager */}
-          <ManageReposLink />
-        </div>
-      )}
-
-      {/* Technical Settings - only show when enabled */}
-      {enabled && (
         <>
-          {/* Cache Settings */}
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => setSearchParams({ tab: 'github-repos' })}
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Manage Repositories
+          </Button>
+
+          {/* Cache */}
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center gap-2 mb-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Cache</span>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cache_duration">Cache Duration (minutes)</Label>
-              <Input
-                id="cache_duration"
-                type="number"
-                min={5}
-                max={1440}
-                value={currentConfig.cache_duration_minutes}
-                onChange={(e) => onConfigUpdate('cache_duration_minutes', parseInt(e.target.value) || 60)}
-              />
-              <p className="text-xs text-muted-foreground">
-                How long to cache GitHub API responses
-              </p>
-            </div>
+            <Label htmlFor="cache_dur">Duration (minutes)</Label>
+            <Input
+              id="cache_dur"
+              type="number"
+              min={5}
+              max={1440}
+              value={currentConfig.cache_duration_minutes}
+              onChange={(e) => onConfigUpdate('cache_duration_minutes', parseInt(e.target.value) || 60)}
+            />
           </div>
 
           {/* Filters */}
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-2 mb-4">
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
               <LayoutGrid className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Sync Filters</span>
             </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="hide_forked">Hide Forked Repos</Label>
-                  <p className="text-xs text-muted-foreground">Don't sync forked repositories</p>
-                </div>
-                <Switch
-                  id="hide_forked"
-                  checked={currentConfig.hide_forked ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('hide_forked', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="hide_archived">Hide Archived Repos</Label>
-                  <p className="text-xs text-muted-foreground">Don't sync archived repositories</p>
-                </div>
-                <Switch
-                  id="hide_archived"
-                  checked={currentConfig.hide_archived ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('hide_archived', checked)}
-                />
-              </div>
+            <div className="flex items-center justify-between">
+              <Label>Hide Forked</Label>
+              <Switch checked={currentConfig.hide_forked ?? true} onCheckedChange={(c) => onConfigUpdate('hide_forked', c)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>Hide Archived</Label>
+              <Switch checked={currentConfig.hide_archived ?? true} onCheckedChange={(c) => onConfigUpdate('hide_archived', c)} />
             </div>
           </div>
 
-          {/* Global Display Defaults */}
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-2 mb-4">
+          {/* Display */}
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
               <Eye className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Default Display Options</span>
+              <span className="text-sm font-medium">Display Defaults</span>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">
-              These are global defaults. You can override them per block in the page builder.
-            </p>
-            
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show_stars">Stars</Label>
-                <Switch
-                  id="show_stars"
-                  checked={currentConfig.show_stars ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('show_stars', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show_forks">Forks</Label>
-                <Switch
-                  id="show_forks"
-                  checked={currentConfig.show_forks ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('show_forks', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show_languages">Languages</Label>
-                <Switch
-                  id="show_languages"
-                  checked={currentConfig.show_languages ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('show_languages', checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="show_topics">Topics</Label>
-                <Switch
-                  id="show_topics"
-                  checked={currentConfig.show_topics ?? true}
-                  onCheckedChange={(checked) => onConfigUpdate('show_topics', checked)}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              {(['show_stars', 'show_forks', 'show_languages', 'show_topics'] as const).map(field => (
+                <div key={field} className="flex items-center justify-between">
+                  <Label className="text-xs capitalize">{field.replace('show_', '')}</Label>
+                  <Switch
+                    checked={currentConfig[field] ?? true}
+                    onCheckedChange={(c) => onConfigUpdate(field, c)}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </>
@@ -945,26 +671,7 @@ const GitHubSourceConfig: React.FC<GitHubSourceConfigProps> = ({
 };
 
 // ============================================
-// Manage Repos Link Component
-// ============================================
-const ManageReposLink: React.FC = () => {
-  const [, setSearchParams] = useSearchParams();
-
-  const handleClick = () => {
-    setSearchParams({ tab: 'github-repos' });
-  };
-
-  return (
-    <Button variant="outline" className="w-full justify-start" onClick={handleClick}>
-      <FolderOpen className="h-4 w-4 mr-2" />
-      Manage Repositories
-      <span className="ml-auto text-xs text-muted-foreground">Select & enrich repos</span>
-    </Button>
-  );
-};
-
-// ============================================
-// Gmail Source Config Component
+// Gmail Source Config
 // ============================================
 interface GmailStatusData {
   connected: boolean;
@@ -974,14 +681,10 @@ interface GmailStatusData {
   filter_labels: string[];
   max_messages: number;
   scan_days: number;
-  last_scan: { scanned_at: string; signal_count: number; suggested_topics: string[] } | null;
+  last_scan: { scanned_at: string; signal_count: number } | null;
 }
 
-interface ScanSignal {
-  from: string;
-  subject: string;
-  date: string;
-}
+interface ScanSignal { from: string; subject: string; date: string }
 
 const GmailSourceConfig: React.FC<{
   connected: boolean;
@@ -989,31 +692,26 @@ const GmailSourceConfig: React.FC<{
   connectedAt: string | null;
 }> = ({ connected, email, connectedAt }) => {
   const queryClient = useQueryClient();
-  const [disconnecting, setDisconnecting] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [scanSignals, setScanSignals] = useState<ScanSignal[]>([]);
+  const [disconnecting, setDisconnecting] = React.useState(false);
+  const [scanning, setScanning] = React.useState(false);
+  const [scanSignals, setScanSignals] = React.useState<ScanSignal[]>([]);
 
-  // Fetch full status including filter settings
   const { data: fullStatus } = useQuery({
     queryKey: ['gmail-status-full'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
-        body: { action: 'status' },
-      });
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', { body: { action: 'status' } });
       if (error) return null;
       return data as GmailStatusData;
     },
     enabled: connected,
   });
 
-  // Local filter state
-  const [senderInput, setSenderInput] = useState('');
-  const [localSenders, setLocalSenders] = useState<string[]>([]);
-  const [localScanDays, setLocalScanDays] = useState(7);
-  const [localMaxMessages, setLocalMaxMessages] = useState(20);
-  const [settingsDirty, setSettingsDirty] = useState(false);
+  const [senderInput, setSenderInput] = React.useState('');
+  const [localSenders, setLocalSenders] = React.useState<string[]>([]);
+  const [localScanDays, setLocalScanDays] = React.useState(7);
+  const [localMaxMessages, setLocalMaxMessages] = React.useState(20);
+  const [settingsDirty, setSettingsDirty] = React.useState(false);
 
-  // Sync from server
   React.useEffect(() => {
     if (fullStatus) {
       setLocalSenders(fullStatus.filter_senders || []);
@@ -1023,57 +721,26 @@ const GmailSourceConfig: React.FC<{
     }
   }, [fullStatus]);
 
-  const handleAddSender = () => {
-    const trimmed = senderInput.trim();
-    if (trimmed && !localSenders.includes(trimmed)) {
-      setLocalSenders([...localSenders, trimmed]);
-      setSenderInput('');
-      setSettingsDirty(true);
-    }
-  };
-
-  const handleRemoveSender = (sender: string) => {
-    setLocalSenders(localSenders.filter(s => s !== sender));
-    setSettingsDirty(true);
-  };
-
   const handleSaveSettings = async () => {
     try {
       await supabase.functions.invoke('gmail-oauth-callback', {
-        body: {
-          action: 'update_settings',
-          filter_senders: localSenders,
-          scan_days: localScanDays,
-          max_messages: localMaxMessages,
-        },
+        body: { action: 'update_settings', filter_senders: localSenders, scan_days: localScanDays, max_messages: localMaxMessages },
       });
       queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
       setSettingsDirty(false);
       toast.success('Settings saved');
-    } catch {
-      toast.error('Failed to save settings');
-    }
+    } catch { toast.error('Failed to save'); }
   };
 
   const handleDisconnect = async () => {
     setDisconnecting(true);
     try {
-      await supabase.functions.invoke('gmail-oauth-callback', {
-        body: { action: 'disconnect' },
-      });
+      await supabase.functions.invoke('gmail-oauth-callback', { body: { action: 'disconnect' } });
       queryClient.invalidateQueries({ queryKey: ['gmail-status'] });
       queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
       toast.success('Gmail disconnected');
-    } catch {
-      toast.error('Failed to disconnect');
-    } finally {
-      setDisconnecting(false);
-    }
-  };
-
-  const handleConnect = () => {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
-    window.open(url, '_blank', 'width=600,height=700');
+    } catch { toast.error('Failed to disconnect'); }
+    finally { setDisconnecting(false); }
   };
 
   const handleScan = async () => {
@@ -1081,133 +748,95 @@ const GmailSourceConfig: React.FC<{
     setScanSignals([]);
     try {
       toast.info('Scanning inbox...');
-      const { data, error } = await supabase.functions.invoke('agent-inbox-scan', {
-        body: { action: 'scan' },
-      });
+      const { data, error } = await supabase.functions.invoke('agent-inbox-scan', { body: { action: 'scan' } });
       if (error) throw error;
       setScanSignals(data.signals || []);
       queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
-      toast.success(`Scan complete: ${data.signalCount} signals found`);
+      toast.success(`Scan complete: ${data.signalCount} signals`);
     } catch (e) {
-      toast.error('Scan failed', { description: e instanceof Error ? e.message : 'Unknown error' });
-    } finally {
-      setScanning(false);
-    }
+      toast.error('Scan failed');
+    } finally { setScanning(false); }
   };
 
   if (connected) {
     return (
       <div className="space-y-5">
-        {/* Connection status */}
         <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">Connected</p>
           {email && <p className="text-xs text-green-600 dark:text-green-400 mt-1">{email}</p>}
           {connectedAt && <p className="text-xs text-muted-foreground mt-1">Since {new Date(connectedAt).toLocaleDateString()}</p>}
         </div>
 
-        {/* Filter Settings */}
-        <div className="border-t pt-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Scan Filters</span>
-          </div>
-
-          {/* Sender filter */}
+        {/* Filters */}
+        <div className="border-t pt-4 space-y-3">
+          <span className="text-sm font-medium">Scan Filters</span>
           <div className="space-y-2">
             <Label>Filter by Sender</Label>
             <div className="flex gap-2">
               <Input
                 value={senderInput}
                 onChange={(e) => setSenderInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSender())}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = senderInput.trim(); if (t && !localSenders.includes(t)) { setLocalSenders([...localSenders, t]); setSenderInput(''); setSettingsDirty(true); } } }}
                 placeholder="e.g. notifications@linkedin.com"
                 className="text-sm"
               />
-              <Button size="sm" variant="outline" onClick={handleAddSender}>Add</Button>
+              <Button size="sm" variant="outline" onClick={() => { const t = senderInput.trim(); if (t && !localSenders.includes(t)) { setLocalSenders([...localSenders, t]); setSenderInput(''); setSettingsDirty(true); } }}>Add</Button>
             </div>
-            {localSenders.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {localSenders.map(sender => (
-                  <Badge key={sender} variant="secondary" className="text-xs gap-1 pr-1">
-                    {sender}
-                    <button onClick={() => handleRemoveSender(sender)} className="ml-1 hover:text-destructive">×</button>
+            {localSenders.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {localSenders.map(s => (
+                  <Badge key={s} variant="secondary" className="text-xs gap-1 pr-1">
+                    {s}
+                    <button onClick={() => { setLocalSenders(localSenders.filter(x => x !== s)); setSettingsDirty(true); }} className="ml-1 hover:text-destructive">×</button>
                   </Badge>
                 ))}
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">No filter — all incoming mail will be scanned</p>
             )}
           </div>
 
-          {/* Scan period & max */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="scan_days" className="text-xs">Period (days)</Label>
-              <Input
-                id="scan_days"
-                type="number"
-                min={1}
-                max={90}
-                value={localScanDays}
-                onChange={(e) => { setLocalScanDays(parseInt(e.target.value) || 7); setSettingsDirty(true); }}
-                className="text-sm"
-              />
+              <Label className="text-xs">Period (days)</Label>
+              <Input type="number" min={1} max={90} value={localScanDays} onChange={(e) => { setLocalScanDays(parseInt(e.target.value) || 7); setSettingsDirty(true); }} className="text-sm" />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="max_messages" className="text-xs">Max messages</Label>
-              <Input
-                id="max_messages"
-                type="number"
-                min={1}
-                max={100}
-                value={localMaxMessages}
-                onChange={(e) => { setLocalMaxMessages(parseInt(e.target.value) || 20); setSettingsDirty(true); }}
-                className="text-sm"
-              />
+              <Label className="text-xs">Max messages</Label>
+              <Input type="number" min={1} max={100} value={localMaxMessages} onChange={(e) => { setLocalMaxMessages(parseInt(e.target.value) || 20); setSettingsDirty(true); }} className="text-sm" />
             </div>
           </div>
 
-          {settingsDirty && (
-            <Button size="sm" onClick={handleSaveSettings}>Save Settings</Button>
-          )}
+          {settingsDirty && <Button size="sm" onClick={handleSaveSettings}>Save Settings</Button>}
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 border-t pt-4">
           <Button size="sm" variant="outline" onClick={handleScan} disabled={scanning}>
             {scanning ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Search className="h-3 w-3 mr-1" />}
             Scan Now
           </Button>
           <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
-            {disconnecting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : null}
+            {disconnecting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
             Disconnect
           </Button>
         </div>
 
-        {/* Signal Preview Table */}
         {scanSignals.length > 0 && (
           <div className="border-t pt-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Scanned Signals ({scanSignals.length})</span>
-            </div>
+            <span className="text-sm font-medium">Scanned Signals ({scanSignals.length})</span>
             <div className="rounded-lg border overflow-hidden">
               <table className="w-full text-xs">
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="px-3 py-2 text-left font-medium">From</th>
                     <th className="px-3 py-2 text-left font-medium">Subject</th>
-                    <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Date</th>
+                    <th className="px-3 py-2 text-left font-medium">Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {scanSignals.map((sig, i) => (
                     <tr key={i} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 max-w-[140px] truncate">{sig.from}</td>
-                      <td className="px-3 py-2 max-w-[200px] truncate">{sig.subject}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                        {sig.date ? new Date(sig.date).toLocaleDateString() : '—'}
-                      </td>
+                      <td className="px-3 py-2 max-w-[120px] truncate">{sig.from}</td>
+                      <td className="px-3 py-2 max-w-[160px] truncate">{sig.subject}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{sig.date ? new Date(sig.date).toLocaleDateString() : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1216,7 +845,6 @@ const GmailSourceConfig: React.FC<{
           </div>
         )}
 
-        {/* Last scan info */}
         {!scanSignals.length && fullStatus?.last_scan && (
           <div className="text-xs text-muted-foreground border-t pt-3">
             Last scan: {new Date(fullStatus.last_scan.scanned_at).toLocaleString()} · {fullStatus.last_scan.signal_count} signals
@@ -1228,15 +856,11 @@ const GmailSourceConfig: React.FC<{
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Connect your Gmail to harvest signals from LinkedIn, newsletters, and industry updates. Only metadata and snippets are read.
-      </p>
-      <div className="text-xs text-muted-foreground space-y-1">
-        <p>• Requires <code>gmail.readonly</code> scope</p>
-        <p>• Configurable sender filters</p>
-        <p>• Privacy-first: only AI summaries are stored</p>
-      </div>
-      <Button size="sm" onClick={handleConnect}>
+      <p className="text-sm text-muted-foreground">Connect Gmail to harvest signals from LinkedIn, newsletters, and updates.</p>
+      <Button size="sm" onClick={() => {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
+        window.open(url, '_blank', 'width=600,height=700');
+      }}>
         Connect Gmail
       </Button>
     </div>
