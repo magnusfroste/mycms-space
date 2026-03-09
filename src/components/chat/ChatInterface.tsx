@@ -32,6 +32,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   extensionId,
   voiceEnabled = false,
   ttsVoice,
+  visitorConfig,
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -50,6 +51,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     extensionId,
     onMessagesChange,
     onSessionIdChange,
+    visitorConfig,
   });
 
   const handleSend = async (attachedFileContent?: string, attachedFileName?: string) => {
