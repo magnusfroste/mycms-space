@@ -30,6 +30,14 @@ export interface AgentRequest {
   enabledTools?: string[];
   config: AgentConfig;
   mode?: 'public' | 'admin';
+  visitorConfig?: {
+    enabled?: boolean;
+    power_user_visits?: number;
+    power_user_pages?: number;
+    exploring_visits?: number;
+    exploring_pages?: number;
+    show_artifact?: boolean;
+  };
 }
 
 export interface AgentResult {
