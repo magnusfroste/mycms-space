@@ -93,7 +93,14 @@ const ModuleDetailSheet: React.FC<{
 }> = ({ entry, open, onClose, isEnabled, onToggle, isPending }) => {
   const [, setSearchParams] = useSearchParams();
 
-  if (!entry) return null;
+  if (!entry) {
+    return (
+      <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+        <SheetContent className="overflow-y-auto sm:max-w-md" />
+      </Sheet>
+    );
+  }
+
   const Icon = iconMap[entry.icon] || Blocks;
   const isComingSoon = entry.status === 'coming_soon';
 
