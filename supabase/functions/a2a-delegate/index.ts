@@ -90,16 +90,57 @@ Deno.serve(async (req) => {
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
+    // Retry config for transient errors
+    const RETRYABLE_STATUSES = [429, 502, 503];
+    const MAX_RETRIES = 3;
+    const BASE_DELAY_MS = 1000;
+
     const startMs = Date.now();
-    let response: Response;
-    try {
-      response = await fetch(handlerUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(a2aPayload),
-      });
-    } catch (networkErr) {
-      const errMsg = `Network error connecting to ${match.name}: ${(networkErr as Error).message}`;
+    let response: Response | null = null;
+    let lastNetworkError: Error | null = null;
+    let attempt = 0;
+
+    while (attempt <= MAX_RETRIES) {
+      attempt++;
+      try {
+        response = await fetch(handlerUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(a2aPayload),
+        });
+
+        // If success or non-retryable error, break
+        if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) {
+          break;
+        }
+
+        // Retryable HTTP error
+        const retryAfter = response.status === 429
+          ? parseInt(response.headers.get('Retry-After') || '0', 10) * 1000
+          : 0;
+        const delay = Math.max(retryAfter, BASE_DELAY_MS * Math.pow(2, attempt - 1));
+
+        // Consume body to avoid resource leak
+        await response.text();
+
+        if (attempt <= MAX_RETRIES) {
+          console.warn(`[A2A Delegate] Retry ${attempt}/${MAX_RETRIES} for ${match.name} (HTTP ${response.status}), waiting ${delay}ms`);
+          await new Promise(r => setTimeout(r, delay));
+          response = null; // Reset for next attempt
+        }
+      } catch (networkErr) {
+        lastNetworkError = networkErr as Error;
+        if (attempt <= MAX_RETRIES) {
+          const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+          console.warn(`[A2A Delegate] Network retry ${attempt}/${MAX_RETRIES} for ${match.name}: ${lastNetworkError.message}, waiting ${delay}ms`);
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+
+    // All retries exhausted with network error
+    if (!response) {
+      const errMsg = `Network error connecting to ${match.name} after ${attempt} attempts: ${lastNetworkError?.message || 'Unknown'}`;
       console.error(`[A2A Delegate] ${errMsg}`);
       await supabase.from('agent_activity').insert({
         agent: 'magnet',
@@ -107,12 +148,12 @@ Deno.serve(async (req) => {
         skill_id: match.id,
         status: 'failed',
         input: a2aPayload,
-        output: { error_type: 'network', message: errMsg },
+        output: { error_type: 'network', message: errMsg, attempts: attempt },
         duration_ms: Date.now() - startMs,
         conversation_id: `a2a:outbound:${agentKey}`,
         error_message: errMsg,
       });
-      return new Response(JSON.stringify({ error: errMsg, error_type: 'network' }), {
+      return new Response(JSON.stringify({ error: errMsg, error_type: 'network', attempts: attempt }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
