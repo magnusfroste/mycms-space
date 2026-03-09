@@ -89,6 +89,22 @@ const IntegrationsManager: React.FC = () => {
     },
   });
 
+  // Federation agents query
+  const { data: federationAgents = [] } = useQuery({
+    queryKey: ['federation-agents'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_skills')
+        .select('id, name, description, handler, enabled, updated_at')
+        .eq('scope', 'federation')
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const [, setSearchParams] = useSearchParams();
+
   const handleConfigUpdate = useCallback((updates: Partial<AIModuleConfig>) => {
     if (!config) return;
     updateModule.mutate(
