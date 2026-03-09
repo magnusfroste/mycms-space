@@ -518,7 +518,7 @@ export const requestMusicTool: ToolDefinition = {
   type: "function",
   function: {
     name: "request_music",
-    description: "Request music creation from SoundSpace agent via A2A protocol. Use when a visitor asks for music, background tracks, or audio content. Delegates to the SoundSpace music AI agent which generates custom tracks.",
+    description: "Generate a music track by delegating to the SoundSpace AI agent. Call this tool IMMEDIATELY when a user wants music, a song, a track, background audio, or any audio generation. Provide a detailed prompt describing genre, mood, tempo, and instruments. The result includes a playable audio URL.",
     parameters: {
       type: "object",
       properties: {
