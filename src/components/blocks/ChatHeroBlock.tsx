@@ -27,6 +27,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [typingDone, setTypingDone] = useState(false);
+  const [greetingIndex, setGreetingIndex] = useState(0);
 
   // Config with defaults
   const agentName = typedConfig.agent_name || 'AI Assistant';
@@ -39,10 +40,11 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const typewriterSpeed = typedConfig.typewriter_speed || 40;
   const enableSound = typedConfig.enable_sound ?? false;
 
-  // Use first greeting message, fallback to agent_tagline
-  const greetingText = greetingMessages.length > 0
-    ? greetingMessages[0]
-    : (typedConfig.agent_tagline || 'How can I help you today?');
+  // All messages to cycle through
+  const allGreetings = greetingMessages.length > 0
+    ? greetingMessages
+    : [typedConfig.agent_tagline || 'How can I help you today?'];
+  const greetingText = allGreetings[greetingIndex % allGreetings.length];
 
   // Quick actions
   const quickActions: QuickActionConfig[] = (typedConfig.quick_actions || [])
@@ -67,7 +69,17 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
   const parallaxOffset = scrollY * 0.3;
 
-  const handleTypingComplete = useCallback(() => setTypingDone(true), []);
+  const handleTypingComplete = useCallback(() => {
+    setTypingDone(true);
+    // If multiple greetings, cycle to next after a pause
+    if (allGreetings.length > 1) {
+      const timer = setTimeout(() => {
+        setTypingDone(false);
+        setGreetingIndex((prev) => prev + 1);
+      }, 4000); // 4s pause between messages
+      return () => clearTimeout(timer);
+    }
+  }, [allGreetings.length]);
 
   // Navigate to /chat with message
   const handleSend = () => {
