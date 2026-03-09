@@ -81,7 +81,7 @@ const ModuleDetailSheet: React.FC<{
         role="dialog"
         aria-modal="true"
         aria-label={`${entry.name} module details`}
-        className="absolute right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-xl"
+        className="absolute right-0 top-0 h-full w-full max-w-md border-l border-border bg-background shadow-xl animate-slide-in-right"
       >
         <div className="h-full overflow-y-auto p-6">
           <header className="pb-4">
