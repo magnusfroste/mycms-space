@@ -564,7 +564,7 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
 
 /** Run the Magnet agent with multi-iteration tool loop */
 export async function runAgent(request: AgentRequest): Promise<AgentResult> {
-  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public' } = request;
+  const { messages, sessionId, systemPrompt, siteContext, enabledTools, config, mode = 'public', visitorConfig } = request;
 
   console.log(`[Agent] Provider: ${config.provider}, Model: ${config.model || 'default'}, Mode: ${mode}`);
 
