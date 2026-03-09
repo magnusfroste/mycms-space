@@ -155,6 +155,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   }, [value]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (commandMenuOpen) return; // Let CommandMenu handle keys
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
