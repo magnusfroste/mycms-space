@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar } from 'lucide-react';
+import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar, Mic } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -379,7 +379,55 @@ const AIModuleSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* System Prompt - Personality & Behavior */}
+      {/* Voice Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mic className="h-5 w-5" />
+            Voice
+          </CardTitle>
+          <CardDescription>
+            Enable voice input (Whisper) and text-to-speech for chat
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="voice-enabled">Enable Voice</Label>
+              <p className="text-sm text-muted-foreground">
+                Adds microphone input and read-aloud buttons to chat
+              </p>
+            </div>
+            <Switch
+              id="voice-enabled"
+              checked={config?.voice_enabled ?? false}
+              onCheckedChange={(checked) => handleConfigUpdate({ voice_enabled: checked })}
+            />
+          </div>
+
+          {config?.voice_enabled && (
+            <div className="space-y-2 pt-2 border-t">
+              <Label htmlFor="tts-voice">TTS Voice</Label>
+              <Select
+                value={config?.tts_voice || 'alloy'}
+                onValueChange={(v) => handleConfigUpdate({ tts_voice: v })}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border z-50">
+                  {['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'].map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {v.charAt(0).toUpperCase() + v.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">OpenAI TTS voice for read-aloud</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

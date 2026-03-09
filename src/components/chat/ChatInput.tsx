@@ -4,9 +4,10 @@
 // ============================================
 
 import React, { useRef, useEffect, useState } from "react";
-import { ArrowUp, Paperclip, X, FileText } from "lucide-react";
+import { ArrowUp, Paperclip, X, FileText, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useVoiceRecorder } from "@/hooks/useVoice";
 
 interface ChatInputProps {
   value: string;
@@ -15,6 +16,7 @@ interface ChatInputProps {
   placeholder: string;
   isLoading: boolean;
   fullPage: boolean;
+  voiceEnabled?: boolean;
 }
 
 const ACCEPTED_TYPES = [".md", ".txt", ".pdf"];
@@ -94,11 +96,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   isLoading,
   fullPage,
+  voiceEnabled = false,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+
+  const handleTranscript = React.useCallback((text: string) => {
+    onChange(value ? value + ' ' + text : text);
+  }, [onChange, value]);
+  
+  const { isRecording, toggleRecording } = useVoiceRecorder(handleTranscript);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -197,15 +206,33 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Bottom toolbar */}
           <div className="flex items-center justify-between px-2 pb-2">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading || isReadingFile}
-              className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
-              aria-label="Attach file"
-              type="button"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || isReadingFile}
+                className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
+                aria-label="Attach file"
+                type="button"
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
+
+              {voiceEnabled && (
+                <button
+                  onClick={toggleRecording}
+                  disabled={isLoading}
+                  className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
+                    isRecording
+                      ? "text-destructive bg-destructive/10 hover:bg-destructive/20"
+                      : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60"
+                  }`}
+                  aria-label={isRecording ? "Stop recording" : "Voice input"}
+                  type="button"
+                >
+                  {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
 
             <input
               ref={fileInputRef}

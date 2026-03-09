@@ -4,24 +4,33 @@
 // ============================================
 
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Globe, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, Loader2, Volume2, VolumeX } from "lucide-react";
 import { MarkdownContent } from "@/components/common";
 import ChatArtifactComponent from "./ChatArtifact";
 import type { Message } from "./types";
 
 interface ChatMessageProps {
   message: Message;
+  voiceEnabled?: boolean;
+  isPlaying?: boolean;
+  onSpeak?: (text: string, messageId: string) => void;
 }
 
 const USER_MSG_TRUNCATE = 200;
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled, isPlaying, onSpeak }) => {
   const [expanded, setExpanded] = useState(false);
   const isLongUserMsg = message.isUser && message.text.length > USER_MSG_TRUNCATE;
 
   const displayText = isLongUserMsg && !expanded
     ? message.text.substring(0, message.text.lastIndexOf(' ', USER_MSG_TRUNCATE) || USER_MSG_TRUNCATE) + '…'
     : message.text;
+
+  // Strip markdown for TTS
+  const plainText = message.text
+    .replace(/[#*_`~\[\]()>!|-]/g, '')
+    .replace(/\n+/g, ' ')
+    .trim();
 
   return (
     <div
@@ -66,6 +75,22 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           </>
         )}
       </div>
+
+      {/* TTS button for AI messages */}
+      {voiceEnabled && !message.isUser && plainText.length > 0 && (
+        <button
+          onClick={() => onSpeak?.(plainText, message.id)}
+          className={`mt-1 p-1 rounded-md transition-colors ${
+            isPlaying
+              ? "text-primary"
+              : "text-muted-foreground/40 hover:text-muted-foreground"
+          }`}
+          aria-label={isPlaying ? "Stop playback" : "Read aloud"}
+        >
+          {isPlaying ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+        </button>
+      )}
+
       {message.artifacts?.map((artifact, index) => (
         <div key={index} className="w-full max-w-[85%]">
           <ChatArtifactComponent artifact={artifact} />

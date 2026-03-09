@@ -5,21 +5,31 @@
 
 import React, { useRef, useEffect } from "react";
 import ChatMessage from "./ChatMessage";
+import { useTTS } from "@/hooks/useVoice";
 import type { Message } from "./types";
 
 interface ChatMessageListProps {
   messages: Message[];
   isLoading: boolean;
   fullPage: boolean;
+  voiceEnabled?: boolean;
+  ttsVoice?: string;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   isLoading,
   fullPage,
+  voiceEnabled = false,
+  ttsVoice,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isPlaying, speak } = useTTS();
+
+  const handleSpeak = (text: string, messageId: string) => {
+    speak(text, messageId, ttsVoice);
+  };
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -44,7 +54,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       {hasMessages && (
         <div className="space-y-5 animate-fade-in">
           {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
+            <ChatMessage
+              key={message.id}
+              message={message}
+              voiceEnabled={voiceEnabled}
+              isPlaying={isPlaying === message.id}
+              onSpeak={handleSpeak}
+            />
           ))}
 
           {isLoading && (

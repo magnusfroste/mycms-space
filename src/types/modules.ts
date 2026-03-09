@@ -358,6 +358,10 @@ export interface AIModuleConfig {
   webhook_url?: string;
   provider?: 'n8n' | 'custom' | 'lovable';
   
+  // Voice features
+  voice_enabled?: boolean;
+  tts_voice?: string; // OpenAI TTS voice id
+
   // Context sources
   include_page_context: boolean;
   selected_page_slugs: string[];

@@ -30,6 +30,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   enabledTools,
   mode = 'public',
   extensionId,
+  voiceEnabled = false,
+  ttsVoice,
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -81,6 +83,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         messages={messages}
         isLoading={isLoading}
         fullPage={fullPage}
+        voiceEnabled={voiceEnabled}
+        ttsVoice={ttsVoice}
       />
 
       <ChatInput
@@ -90,6 +94,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         placeholder={placeholder}
         isLoading={isLoading}
         fullPage={fullPage}
+        voiceEnabled={voiceEnabled}
       />
 
       {showQuickActions && messages.length === 0 && (
