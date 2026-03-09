@@ -747,7 +747,18 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         } else {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
-          if (parsed.artifacts?.length) {
+
+          // A2A delegation tools: call the delegate function AND produce artifacts
+          if (toolName === 'request_music') {
+            const delegateResult = await executeA2ADelegate(toolArgs);
+            const mergedData = { ...toolArgs, ...delegateResult };
+            if (parsed.artifacts?.length) {
+              lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
+            } else {
+              lastArtifacts = [{ type: 'music-player', title: (toolArgs.prompt as string)?.slice(0, 50) || 'Generated Music', data: mergedData }];
+            }
+            result = JSON.stringify(delegateResult);
+          } else if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
 
