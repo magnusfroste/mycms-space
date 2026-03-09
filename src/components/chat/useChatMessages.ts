@@ -216,14 +216,7 @@ export const useChatMessages = ({
             siteContext: siteContext,
             enabledTools: enabledTools,
             mode: mode,
-            visitorConfig: integrationConfig ? {
-              enabled: (integrationConfig as any).visitor_insights_enabled,
-              power_user_visits: (integrationConfig as any).visitor_power_user_visits,
-              power_user_pages: (integrationConfig as any).visitor_power_user_pages,
-              exploring_visits: (integrationConfig as any).visitor_exploring_visits,
-              exploring_pages: (integrationConfig as any).visitor_exploring_pages,
-              show_artifact: (integrationConfig as any).visitor_show_artifact,
-            } : undefined,
+            visitorConfig: visitorConfig,
           },
         });
 
