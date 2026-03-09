@@ -233,7 +233,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             ref={textareaRef}
             value={value}
             onChange={(e) => {
-              onChange(e.target.value);
+              handleInputChange(e.target.value);
               adjustTextareaHeight();
             }}
             onKeyPress={handleKeyPress}
