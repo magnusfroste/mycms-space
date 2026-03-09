@@ -25,11 +25,29 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastSpokenIdRef = useRef<string | null>(null);
   const { isPlaying, speak } = useTTS();
 
   const handleSpeak = (text: string, messageId: string) => {
     speak(text, messageId, ttsVoice);
   };
+
+  // Auto-read new AI messages when voice is enabled
+  useEffect(() => {
+    if (!voiceEnabled || messages.length === 0 || isLoading) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.isUser || lastMsg.id === lastSpokenIdRef.current) return;
+    
+    const plainText = lastMsg.text
+      .replace(/[#*_`~\[\]()>!|-]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim();
+    
+    if (plainText.length > 0) {
+      lastSpokenIdRef.current = lastMsg.id;
+      speak(plainText, lastMsg.id, ttsVoice);
+    }
+  }, [voiceEnabled, messages, isLoading, speak, ttsVoice]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
