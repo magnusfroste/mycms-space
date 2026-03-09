@@ -217,7 +217,7 @@ const ModuleDetailSheet: React.FC<{
           )}
         </div>
       </section>
-    </div>,
+    </>,
     document.body
   );
 };
