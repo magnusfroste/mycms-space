@@ -184,7 +184,7 @@ const ModulesManager: React.FC = () => {
         entry={selectedModule}
         open={!!selectedModule}
         onClose={() => setSelectedModule(null)}
-        isEnabled={selectedModule?.status === 'installed' ? getModuleEnabled(selectedModule.type as ModuleType) : false}
+        isEnabled={selectedModule ? getModuleEnabled(selectedModule.type as ModuleType) : false}
         onToggle={handleToggle}
         isPending={pendingType === selectedModule?.type}
       />
