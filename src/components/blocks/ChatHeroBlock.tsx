@@ -69,7 +69,17 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
   const parallaxOffset = scrollY * 0.3;
 
-  const handleTypingComplete = useCallback(() => setTypingDone(true), []);
+  const handleTypingComplete = useCallback(() => {
+    setTypingDone(true);
+    // If multiple greetings, cycle to next after a pause
+    if (allGreetings.length > 1) {
+      const timer = setTimeout(() => {
+        setTypingDone(false);
+        setGreetingIndex((prev) => prev + 1);
+      }, 4000); // 4s pause between messages
+      return () => clearTimeout(timer);
+    }
+  }, [allGreetings.length]);
 
   // Navigate to /chat with message
   const handleSend = () => {
