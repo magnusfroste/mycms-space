@@ -466,6 +466,34 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 // ============================================
 // Skill Execution (delegate to agent-execute)
 // ============================================
+// A2A Delegation
+// ============================================
+
+async function executeA2ADelegate(toolArgs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/a2a-delegate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        agent: 'soundspace',
+        prompt: toolArgs.prompt,
+        duration: toolArgs.duration || 120,
+        context: toolArgs.context || '',
+      }),
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', error: (e as Error).message };
+  }
+}
+
+// ============================================
 
 async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -747,7 +775,18 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
         } else {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
-          if (parsed.artifacts?.length) {
+
+          // A2A delegation tools: call the delegate function AND produce artifacts
+          if (toolName === 'request_music') {
+            const delegateResult = await executeA2ADelegate(toolArgs);
+            const mergedData = { ...toolArgs, ...delegateResult };
+            if (parsed.artifacts?.length) {
+              lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
+            } else {
+              lastArtifacts = [{ type: 'music-player', title: (toolArgs.prompt as string)?.slice(0, 50) || 'Generated Music', data: mergedData }];
+            }
+            result = JSON.stringify(delegateResult);
+          } else if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
 

@@ -3,13 +3,13 @@
 // Renders rich structured content (CV match, portfolio, project, availability)
 // ============================================
 
-import React, { Component, useState } from "react";
+import React, { Component, useState, useRef } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownContent } from "@/components/common";
-import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock, Eye, User, TrendingUp } from "lucide-react";
+import { Copy, Check, Target, FileText, Mail, FolderOpen, Code, Zap, Calendar, CheckCircle, XCircle, Clock, Eye, User, TrendingUp, Music, Play, Pause, Volume2, ExternalLink } from "lucide-react";
 import {
   RadarChart,
   PolarGrid,
@@ -476,6 +476,125 @@ class ArtifactErrorBoundary extends Component<
   }
 }
 
+// ---- Music Player Artifact ----
+const MusicPlayerArtifact: React.FC<{ data: Record<string, unknown> }> = ({ data }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const audioUrl = (data.audio_url as string) || '';
+  const title = (data.title as string) || (data.prompt as string)?.slice(0, 50) || 'Generated Track';
+  const genre = (data.genre as string) || '';
+  const bpm = data.bpm as number | null;
+  const keyScale = (data.key as string) || (data.key_scale as string) || '';
+  const duration = (data.duration as number) || 120;
+  const agent = (data.agent as string) || 'SoundSpace';
+  const status = (data.status as string) || 'completed';
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  const togglePlay = () => {
+    if (!audioUrl || !audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100 || 0);
+    }
+  };
+
+  // Pending state — task was queued
+  if (status !== 'completed' && status !== 'success' && !audioUrl) {
+    return (
+      <div className="mt-3 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="px-5 py-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Music className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Music Request Sent</p>
+              <p className="text-xs text-muted-foreground">
+                Delegated to <strong>{agent}</strong> via A2A — {status === 'pending' ? 'processing…' : status}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="px-5 py-3 text-xs text-muted-foreground">
+          <p>The SoundSpace agent is creating your track. This may take a moment.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* Header gradient */}
+      <div className="px-5 py-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-b border-border">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={togglePlay}
+            disabled={!audioUrl}
+            className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-50"
+          >
+            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">{title}</p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              {genre && <Badge variant="secondary" className="text-[10px]">{genre}</Badge>}
+              {bpm && <span>{bpm} BPM</span>}
+              {keyScale && <span>{keyScale}</span>}
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        {audioUrl && (
+          <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-200"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Volume2 className="h-3 w-3" />
+          <span>Created by <strong>{agent}</strong> via A2A</span>
+        </div>
+        {audioUrl && (
+          <a href={audioUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+            <ExternalLink className="h-3 w-3" />
+            Open
+          </a>
+        )}
+      </div>
+
+      {/* Hidden audio element */}
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={() => { setIsPlaying(false); setProgress(0); }}
+          preload="metadata"
+        />
+      )}
+    </div>
+  );
+};
+
 // ---- Main Artifact Router ----
 const ChatArtifactInner: React.FC<ChatArtifactProps> = ({ artifact }) => {
   switch (artifact.type) {
@@ -489,6 +608,8 @@ const ChatArtifactInner: React.FC<ChatArtifactProps> = ({ artifact }) => {
       return <AvailabilityArtifact data={artifact.data} />;
     case "visitor-profile":
       return <VisitorProfileArtifact data={artifact.data} />;
+    case "music-player":
+      return <MusicPlayerArtifact data={artifact.data} />;
     case "document":
       return (
         <div className="mt-3 rounded-xl border border-border bg-card p-4 shadow-sm">

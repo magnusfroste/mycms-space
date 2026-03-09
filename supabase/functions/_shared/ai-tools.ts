@@ -514,6 +514,23 @@ export const getVisitorInsightsTool: ToolDefinition = {
   },
 };
 
+export const requestMusicTool: ToolDefinition = {
+  type: "function",
+  function: {
+    name: "request_music",
+    description: "Request music creation from SoundSpace agent via A2A protocol. Use when a visitor asks for music, background tracks, or audio content. Delegates to the SoundSpace music AI agent which generates custom tracks.",
+    parameters: {
+      type: "object",
+      properties: {
+        prompt: { type: "string", description: "Description of the desired music (genre, mood, tempo, instruments, etc.)" },
+        duration: { type: "number", description: "Track duration in seconds (30-300). Default 120." },
+        context: { type: "string", description: "Additional context about what the music is for (e.g. 'background for a portfolio site', 'relaxing café vibe')" },
+      },
+      required: ["prompt"],
+    },
+  },
+};
+
 /** Public visitor tools */
 export const publicTools: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
@@ -521,6 +538,7 @@ export const publicTools: Record<string, ToolDefinition> = {
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
   get_visitor_insights: getVisitorInsightsTool,
+  request_music: requestMusicTool,
 };
 
 /** Admin CMS co-pilot tools */
@@ -758,6 +776,7 @@ export const toolDescriptions: Record<string, string> = {
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
+  request_music: "**request_music** — Delegate music creation to the SoundSpace AI agent via A2A. Returns a playable audio track.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
   run_research: "**run_research** — Research a topic using web sources.",
@@ -849,6 +868,7 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     project_deep_dive: (args) => ({ type: "project-deep-dive", title: (args.project_name as string) || "Project Deep Dive" }),
     check_availability: () => ({ type: "availability", title: "Availability" }),
     get_visitor_insights: (args) => ({ type: "visitor-profile", title: (args.summary as string) || "Visitor Profile" }),
+    request_music: (args) => ({ type: "music-player", title: (args.prompt as string)?.slice(0, 50) || "Generated Music" }),
     research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
     draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
     run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),

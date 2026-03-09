@@ -7,7 +7,7 @@ import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 
 // Artifact types for rich structured content in chat
 export interface ChatArtifact {
-  type: 'cv-match' | 'document' | 'portfolio' | 'project-deep-dive' | 'availability' | 'visitor-profile';
+  type: 'cv-match' | 'document' | 'portfolio' | 'project-deep-dive' | 'availability' | 'visitor-profile' | 'music-player';
   title: string;
   data: Record<string, unknown>;
 }
