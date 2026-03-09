@@ -58,7 +58,11 @@ const ModuleDetailSheet: React.FC<{
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="overflow-y-auto sm:max-w-md z-[100]">
+      <SheetContent
+        className="overflow-y-auto sm:max-w-md z-[100]"
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-3">
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isComingSoon ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
