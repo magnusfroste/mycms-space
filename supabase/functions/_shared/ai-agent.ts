@@ -5,7 +5,7 @@
 // ============================================
 
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
-import { getActiveTools, getToolInstructions, parseToolCallResponse } from "./ai-tools.ts";
+import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 
 // ============================================
@@ -619,7 +619,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   } catch { /* skill instructions optional */ }
 
-  fullPrompt += getToolInstructions(enabledTools, mode);
+  fullPrompt += await getToolInstructionsAsync(enabledTools, mode);
 
   // Load objectives for admin mode
   if (mode === 'admin') {
@@ -638,7 +638,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     } catch { /* objectives optional */ }
   }
 
-  const tools = getActiveTools(enabledTools, mode);
+  const tools = await getActiveToolsAsync(enabledTools, mode);
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;

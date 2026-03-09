@@ -531,8 +531,8 @@ export const requestMusicTool: ToolDefinition = {
   },
 };
 
-/** Public visitor tools */
-export const publicTools: Record<string, ToolDefinition> = {
+/** Hardcoded public tools — used as FALLBACK only when DB is unavailable */
+export const publicToolsFallback: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
   generate_portfolio: portfolioGeneratorTool,
   project_deep_dive: projectDeepDiveTool,
@@ -540,6 +540,9 @@ export const publicTools: Record<string, ToolDefinition> = {
   get_visitor_insights: getVisitorInsightsTool,
   request_music: requestMusicTool,
 };
+
+/** @deprecated Use publicToolsFallback. Kept for backwards compat */
+export const publicTools = publicToolsFallback;
 
 /** Admin CMS co-pilot tools */
 export const getSiteStatsTool: ToolDefinition = {
@@ -820,14 +823,62 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'file_list', 'file_read', 'file_write', 'file_delete',
 ];
 
-/** Get filtered tools based on enabled tool IDs and mode */
-export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
-  const toolPool = mode === 'admin' ? adminTools : publicTools;
+/**
+ * Load public tools dynamically from agent_skills table.
+ * Falls back to hardcoded definitions if DB is unavailable.
+ */
+export async function loadPublicToolsFromDB(): Promise<Record<string, ToolDefinition>> {
+  try {
+    const { createClient } = await import("npm:@supabase/supabase-js@2");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const { data: skills, error } = await supabase
+      .from('agent_skills')
+      .select('name, description, tool_definition, handler')
+      .eq('enabled', true)
+      .in('scope', ['public', 'both']);
+
+    if (error || !skills?.length) {
+      console.warn('[Tools] Failed to load from DB, using fallback:', error?.message);
+      return publicToolsFallback;
+    }
+
+    const tools: Record<string, ToolDefinition> = {};
+    for (const skill of skills) {
+      const td = skill.tool_definition as Record<string, unknown> | null;
+      if (td && td.function) {
+        tools[skill.name] = td as unknown as ToolDefinition;
+      } else if (td && td.parameters) {
+        tools[skill.name] = {
+          type: "function",
+          function: {
+            name: skill.name,
+            description: skill.description || '',
+            parameters: td.parameters as Record<string, unknown>,
+          },
+        };
+      } else if (publicToolsFallback[skill.name]) {
+        tools[skill.name] = publicToolsFallback[skill.name];
+      }
+    }
+
+    console.log(`[Tools] Loaded ${Object.keys(tools).length} public tools from DB: ${Object.keys(tools).join(', ')}`);
+    return Object.keys(tools).length > 0 ? tools : publicToolsFallback;
+  } catch (e) {
+    console.warn('[Tools] DB load failed, using fallback:', (e as Error).message);
+    return publicToolsFallback;
+  }
+}
+
+/** Get filtered tools — async version loads public tools from DB */
+export async function getActiveToolsAsync(enabledTools?: string[], mode?: string): Promise<ToolDefinition[]> {
+  const toolPool = mode === 'admin' ? adminTools : await loadPublicToolsFromDB();
   if (!enabledTools?.length) return Object.values(toolPool);
   const filtered = enabledTools
     .filter(id => toolPool[id])
     .map(id => toolPool[id]);
-  // Always include self-modification tools in admin mode
   if (mode === 'admin') {
     for (const toolName of ALWAYS_ON_ADMIN_TOOLS) {
       if (!filtered.find(t => t.function.name === toolName) && adminTools[toolName]) {
@@ -838,21 +889,57 @@ export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefi
   return filtered;
 }
 
-/** Get tool instructions for the system prompt */
-export function getToolInstructions(enabledTools?: string[], mode?: string): string {
-  const toolPool = mode === 'admin' ? adminTools : publicTools;
+/** Sync fallback — uses hardcoded tools only */
+export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
+  const toolPool = mode === 'admin' ? adminTools : publicToolsFallback;
+  if (!enabledTools?.length) return Object.values(toolPool);
+  const filtered = enabledTools
+    .filter(id => toolPool[id])
+    .map(id => toolPool[id]);
+  if (mode === 'admin') {
+    for (const toolName of ALWAYS_ON_ADMIN_TOOLS) {
+      if (!filtered.find(t => t.function.name === toolName) && adminTools[toolName]) {
+        filtered.push(adminTools[toolName]);
+      }
+    }
+  }
+  return filtered;
+}
+
+/** Get tool instructions — async, loads from DB for public mode */
+export async function getToolInstructionsAsync(enabledTools?: string[], mode?: string): Promise<string> {
+  const toolPool = mode === 'admin' ? adminTools : await loadPublicToolsFromDB();
   const activeNames = enabledTools?.length
-    ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k) && toolPool[k])
-    : Object.keys(toolPool).filter(k => toolDescriptions[k]);
+    ? Object.keys(toolPool).filter(k => enabledTools.includes(k))
+    : Object.keys(toolPool);
 
   if (activeNames.length === 0) return '';
 
-  const instructions = activeNames.map((name, i) => `${i + 1}. ${toolDescriptions[name]}`).join('\n');
+  const instructions = activeNames.map((name, i) => {
+    if (toolDescriptions[name]) return `${i + 1}. ${toolDescriptions[name]}`;
+    const tool = toolPool[name];
+    if (tool?.function?.description) return `${i + 1}. **${name}** — ${tool.function.description}`;
+    return `${i + 1}. **${name}**`;
+  }).join('\n');
   
   if (mode === 'admin') {
     return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
   }
   
+  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+}
+
+/** Sync fallback */
+export function getToolInstructions(enabledTools?: string[], mode?: string): string {
+  const toolPool = mode === 'admin' ? adminTools : publicToolsFallback;
+  const activeNames = enabledTools?.length
+    ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k) && toolPool[k])
+    : Object.keys(toolPool).filter(k => toolDescriptions[k]);
+  if (activeNames.length === 0) return '';
+  const instructions = activeNames.map((name, i) => `${i + 1}. ${toolDescriptions[name]}`).join('\n');
+  if (mode === 'admin') {
+    return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
+  }
   return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
