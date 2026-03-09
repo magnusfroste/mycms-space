@@ -129,14 +129,14 @@ export const useChatMessages = ({
     }
   }, []);
 
-  // Reset chat when resetTrigger changes
+  // Reset chat when resetTrigger changes (only for brand new chats)
   useEffect(() => {
-    if (resetTrigger > 0) {
+    if (resetTrigger > 0 && !initialSessionId) {
       setMessages([]);
       setSessionId(generateSessionId());
       hasSentInitialMessageRef.current = false;
     }
-  }, [resetTrigger]);
+  }, [resetTrigger, initialSessionId]);
 
   // Notify parent of messages changes
   useEffect(() => {
