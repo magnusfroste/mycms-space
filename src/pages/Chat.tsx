@@ -113,6 +113,8 @@ const Chat = () => {
             enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
             mode="public"
             extensionId={extConfig?.extension_id}
+            voiceEnabled={aiConfig?.voice_enabled ?? false}
+            ttsVoice={aiConfig?.tts_voice}
           />
         )}
       </main>
