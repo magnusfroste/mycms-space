@@ -655,6 +655,132 @@ You are [Name], an AI assistant for [Your Website]...
         </CardContent>
       </Card>
 
+      {/* Visitor Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Visitor Insights
+          </CardTitle>
+          <CardDescription>
+            Personalize chat greetings based on visitor behavior and show profile artifacts
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="visitor-insights-enabled">Enable Visitor Insights</Label>
+              <p className="text-sm text-muted-foreground">
+                Auto-detect returning visitors and personalize greetings
+              </p>
+            </div>
+            <Switch
+              id="visitor-insights-enabled"
+              checked={config?.visitor_insights_enabled ?? true}
+              onCheckedChange={(checked) => handleConfigUpdate({ visitor_insights_enabled: checked })}
+            />
+          </div>
+
+          {(config?.visitor_insights_enabled ?? true) && (
+            <div className="space-y-4 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="visitor-show-artifact">Show Profile Artifact</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display a radar chart card for power users
+                  </p>
+                </div>
+                <Switch
+                  id="visitor-show-artifact"
+                  checked={config?.visitor_show_artifact ?? true}
+                  onCheckedChange={(checked) => handleConfigUpdate({ visitor_show_artifact: checked })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-primary">Power User</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="pu-visits" className="text-xs text-muted-foreground">Sessions ≥</Label>
+                    <Select
+                      value={String(config?.visitor_power_user_visits ?? 3)}
+                      onValueChange={(v) => handleConfigUpdate({ visitor_power_user_visits: Number(v) })}
+                    >
+                      <SelectTrigger className="bg-background h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border z-50">
+                        {[2, 3, 4, 5, 7, 10].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="pu-pages" className="text-xs text-muted-foreground">or Unique pages ≥</Label>
+                    <Select
+                      value={String(config?.visitor_power_user_pages ?? 3)}
+                      onValueChange={(v) => handleConfigUpdate({ visitor_power_user_pages: Number(v) })}
+                    >
+                      <SelectTrigger className="bg-background h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border z-50">
+                        {[2, 3, 4, 5, 7, 10].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Exploring</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="ex-visits" className="text-xs text-muted-foreground">Sessions ≥</Label>
+                    <Select
+                      value={String(config?.visitor_exploring_visits ?? 2)}
+                      onValueChange={(v) => handleConfigUpdate({ visitor_exploring_visits: Number(v) })}
+                    >
+                      <SelectTrigger className="bg-background h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border z-50">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="ex-pages" className="text-xs text-muted-foreground">or Unique pages ≥</Label>
+                    <Select
+                      value={String(config?.visitor_exploring_pages ?? 2)}
+                      onValueChange={(v) => handleConfigUpdate({ visitor_exploring_pages: Number(v) })}
+                    >
+                      <SelectTrigger className="bg-background h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border z-50">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">
+                  💡 Visitors are classified as <strong>Power User</strong> (artifact + peer tone), <strong>Exploring</strong> (subtle welcome back), or <strong>New</strong> (warm intro). Data is stored locally in the visitor's browser.
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Context Payload Preview */}
       <Card>
         <CardHeader>
