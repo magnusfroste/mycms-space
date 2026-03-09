@@ -91,15 +91,75 @@ Deno.serve(async (req) => {
     }
 
     const startMs = Date.now();
-    const response = await fetch(handlerUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(a2aPayload),
-    });
+    let response: Response;
+    try {
+      response = await fetch(handlerUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(a2aPayload),
+      });
+    } catch (networkErr) {
+      const errMsg = `Network error connecting to ${match.name}: ${(networkErr as Error).message}`;
+      console.error(`[A2A Delegate] ${errMsg}`);
+      await supabase.from('agent_activity').insert({
+        agent: 'magnet',
+        skill_name: 'a2a_delegate',
+        skill_id: match.id,
+        status: 'failed',
+        input: a2aPayload,
+        output: { error_type: 'network', message: errMsg },
+        duration_ms: Date.now() - startMs,
+        conversation_id: `a2a:outbound:${agentKey}`,
+        error_message: errMsg,
+      });
+      return new Response(JSON.stringify({ error: errMsg, error_type: 'network' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const durationMs = Date.now() - startMs;
 
-    const result = await response.json();
-    console.log(`[A2A Delegate] Response from ${match.name} (${response.status}):`, result.type || result.status);
+    // Parse response body safely
+    let result: Record<string, unknown>;
+    const rawBody = await response.text();
+    try {
+      result = JSON.parse(rawBody);
+    } catch {
+      const errMsg = `Invalid JSON from ${match.name} (HTTP ${response.status}): ${rawBody.slice(0, 200)}`;
+      console.error(`[A2A Delegate] ${errMsg}`);
+      await supabase.from('agent_activity').insert({
+        agent: 'magnet', skill_name: 'a2a_delegate', skill_id: match.id,
+        status: 'failed', input: a2aPayload,
+        output: { error_type: 'parse', http_status: response.status, raw: rawBody.slice(0, 500) },
+        duration_ms: durationMs, conversation_id: `a2a:outbound:${agentKey}`,
+        error_message: errMsg,
+      });
+      return new Response(JSON.stringify({ error: errMsg, error_type: 'parse' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Classify error type for structured logging
+    let errorType: string | null = null;
+    let errorMessage: string | null = null;
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        errorType = 'auth';
+        errorMessage = `Auth rejected by ${match.name} (HTTP ${response.status}). Check API key '${tokenKey}' in API Tokens module.`;
+      } else if (response.status === 429) {
+        errorType = 'rate_limit';
+        errorMessage = `Rate limited by ${match.name} (HTTP 429). Retry after cooldown.`;
+      } else if (response.status >= 500) {
+        errorType = 'upstream';
+        errorMessage = `Upstream error from ${match.name} (HTTP ${response.status}): ${result.error || result.reason || 'Internal error'}`;
+      } else {
+        errorType = 'client';
+        errorMessage = `Request rejected by ${match.name} (HTTP ${response.status}): ${result.error || result.reason || 'Unknown'}`;
+      }
+      console.warn(`[A2A Delegate] ${errorType.toUpperCase()}: ${errorMessage}`);
+    } else {
+      console.log(`[A2A Delegate] OK from ${match.name} (${response.status}, ${durationMs}ms):`, result.type || result.status);
+    }
 
     // Log as agent activity
     await supabase.from('agent_activity').insert({
@@ -108,44 +168,58 @@ Deno.serve(async (req) => {
       skill_id: match.id,
       status: response.ok ? 'success' : 'failed',
       input: a2aPayload,
-      output: result,
+      output: { ...result, _http_status: response.status, _error_type: errorType },
       duration_ms: durationMs,
       conversation_id: `a2a:outbound:${agentKey}`,
-      error_message: response.ok ? null : `HTTP ${response.status}: ${result.error || result.reason || 'Unknown error'}`,
+      error_message: errorMessage,
     });
 
-    // Return generic response — no agent-specific parsing
-    if (result.status === 'completed' && result.result) {
+    // Auth/rate-limit errors — return clear error to caller
+    if (errorType === 'auth') {
       return new Response(JSON.stringify({
-        status: 'success',
-        agent: match.name,
-        skill_id: targetSkillId,
-        result: result.result,
-        task_id: result.task_id || null,
-        duration_ms: durationMs,
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        status: 'error', error_type: 'auth', agent: match.name,
+        message: errorMessage, http_status: response.status,
+      }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (errorType === 'rate_limit') {
+      return new Response(JSON.stringify({
+        status: 'error', error_type: 'rate_limit', agent: match.name,
+        message: errorMessage, retry_after: 60,
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } });
+    }
+    if (errorType === 'upstream') {
+      return new Response(JSON.stringify({
+        status: 'error', error_type: 'upstream', agent: match.name,
+        message: errorMessage, http_status: response.status,
+      }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (errorType) {
+      return new Response(JSON.stringify({
+        status: 'error', error_type: errorType, agent: match.name,
+        message: errorMessage, http_status: response.status,
+      }), { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Queued/pending/error — pass through
+    // Success — completed immediately
+    if (result.status === 'completed' && result.result) {
+      return new Response(JSON.stringify({
+        status: 'success', agent: match.name, skill_id: targetSkillId,
+        result: result.result, task_id: result.task_id || null, duration_ms: durationMs,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Queued/pending — pass through
     return new Response(JSON.stringify({
-      status: result.status || 'pending',
-      agent: match.name,
-      skill_id: targetSkillId,
-      task_id: result.task_id || null,
-      message: result.message || `Task delegated to ${match.name}`,
-      result: result.result || null,
-      duration_ms: durationMs,
-    }), {
-      status: result.status === 'error' ? 500 : (response.ok ? 200 : 202),
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      status: result.status || 'pending', agent: match.name, skill_id: targetSkillId,
+      task_id: result.task_id || null, message: result.message || `Task delegated to ${match.name}`,
+      result: result.result || null, duration_ms: durationMs,
+    }), { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (err) {
-    console.error('[A2A Delegate] Error:', err);
+    console.error('[A2A Delegate] Unhandled error:', err);
     return new Response(JSON.stringify({
       error: (err as Error).message || 'Failed to delegate task',
+      error_type: 'internal',
     }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
