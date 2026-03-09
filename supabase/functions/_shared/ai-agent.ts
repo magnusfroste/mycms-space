@@ -809,7 +809,9 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           // A2A delegation tools: call the delegate function AND produce artifacts
           if (toolName === 'request_music') {
             const delegateResult = await executeA2ADelegate(toolArgs);
-            const mergedData = { ...toolArgs, ...delegateResult };
+            // Flatten nested result (a2a-delegate returns { status, result: { audio_url, ... } })
+            const innerResult = (delegateResult.result as Record<string, unknown>) || {};
+            const mergedData = { ...toolArgs, ...delegateResult, ...innerResult };
             if (parsed.artifacts?.length) {
               lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
             } else {
