@@ -8,6 +8,7 @@ export { default as ChatArtifact } from "./ChatArtifact";
 export { default as ChatMessageList } from "./ChatMessageList";
 export { default as ChatInput } from "./ChatInput";
 export { default as ChatQuickActions } from "./ChatQuickActions";
+export { default as ChatCommandMenu } from "./ChatCommandMenu";
 export { useChatMessages } from "./useChatMessages";
 export * from "./types";
 export * from "./utils";
