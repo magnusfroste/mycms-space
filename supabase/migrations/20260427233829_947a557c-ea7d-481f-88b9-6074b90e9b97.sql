@@ -1,0 +1,1 @@
+ALTER TABLE public.mcp_api_keys ADD COLUMN IF NOT EXISTS key_plaintext TEXT;
