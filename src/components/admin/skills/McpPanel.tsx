@@ -286,19 +286,48 @@ export default function McpPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Prefix</TableHead>
+                  <TableHead>Key</TableHead>
                   <TableHead>Scopes</TableHead>
                   <TableHead>Uses</TableHead>
                   <TableHead>Last used</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {keys.map((k) => (
+                {keys.map((k) => {
+                  const isRevealed = !!revealed[k.id];
+                  const display = k.key_plaintext
+                    ? (isRevealed ? k.key_plaintext : `${k.key_prefix}${'•'.repeat(20)}`)
+                    : `${k.key_prefix}… (legacy)`;
+                  return (
                   <TableRow key={k.id}>
                     <TableCell className="font-medium">{k.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{k.key_prefix}…</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 max-w-[280px]">
+                        <code className="font-mono text-[11px] truncate flex-1 bg-muted rounded px-1.5 py-0.5">
+                          {display}
+                        </code>
+                        {k.key_plaintext && (
+                          <>
+                            <Button
+                              variant="ghost" size="icon" className="h-6 w-6 shrink-0"
+                              onClick={() => setRevealed((r) => ({ ...r, [k.id]: !r[k.id] }))}
+                              title={isRevealed ? 'Hide' : 'Reveal'}
+                            >
+                              {isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon" className="h-6 w-6 shrink-0"
+                              onClick={() => copyToClipboard(k.key_plaintext!, `key-${k.id}`)}
+                              title="Copy"
+                            >
+                              {copied === `key-${k.id}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {k.scopes.map((s) => (
@@ -322,32 +351,58 @@ export default function McpPanel() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {!k.revoked && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Revoke "{k.name}"?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Any client using this key will immediately lose access. This cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => revokeKey.mutate(k.id)}>
-                                Revoke
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                      <div className="flex items-center gap-0.5">
+                        {!k.revoked && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Rotate">
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Rotate "{k.name}"?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  A new key value will be generated. The old value stops working immediately.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => rotateKey.mutate(k.id)}>
+                                  Rotate
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        {!k.revoked && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Revoke">
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Revoke "{k.name}"?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Any client using this key will immediately lose access. This cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => revokeKey.mutate(k.id)}>
+                                  Revoke
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}
