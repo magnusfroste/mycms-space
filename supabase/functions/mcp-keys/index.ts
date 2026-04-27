@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
         name,
         key_hash: keyHash,
         key_prefix: keyPrefix,
+        key_plaintext: plainKey,
         scopes: scopes || ['tools:read', 'tools:call'],
         description: description || null,
         expires_at: expiresAt,
