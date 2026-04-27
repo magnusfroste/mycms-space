@@ -64,6 +64,7 @@ export default function McpPanel() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newKey, setNewKey] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const { data: keys = [], isLoading: keysLoading } = useQuery({
     queryKey: ['mcp-keys'],
