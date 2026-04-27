@@ -262,7 +262,7 @@ export default function McpPanel() {
               <KeyRound className="h-4 w-4" /> API Keys
             </CardTitle>
             <CardDescription className="mt-1">
-              Issue and revoke keys for external agents.
+              Issue, copy, rotate or revoke keys for external agents. Rotate often instead of hiding.
             </CardDescription>
           </div>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
