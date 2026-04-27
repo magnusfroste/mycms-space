@@ -654,6 +654,113 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_activities: {
+        Row: {
+          api_key_id: string | null
+          client_info: Json | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          input: Json | null
+          ip_address: string | null
+          key_name: string | null
+          method: string
+          output: Json | null
+          status: string
+          tool_name: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          client_info?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input?: Json | null
+          ip_address?: string | null
+          key_name?: string | null
+          method: string
+          output?: Json | null
+          status?: string
+          tool_name?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          client_info?: Json | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input?: Json | null
+          ip_address?: string | null
+          key_name?: string | null
+          method?: string
+          output?: Json | null
+          status?: string
+          tool_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_activities_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          revoked: boolean
+          revoked_at: string | null
+          scopes: string[]
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          revoked?: boolean
+          revoked_at?: string | null
+          scopes?: string[]
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          revoked?: boolean
+          revoked_at?: string | null
+          scopes?: string[]
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           created_at: string | null
