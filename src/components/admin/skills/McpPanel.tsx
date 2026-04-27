@@ -182,7 +182,7 @@ export default function McpPanel() {
               <Check className="h-5 w-5 text-green-600" /> Key created: {newKey?.name}
             </DialogTitle>
             <DialogDescription>
-              Copy this key now. For security, it will <strong>never</strong> be shown again.
+              The key is now visible in the table below — you can copy or rotate it anytime.
             </DialogDescription>
           </DialogHeader>
           <div className="bg-muted rounded-md p-3 font-mono text-xs break-all">
