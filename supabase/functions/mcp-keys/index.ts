@@ -92,6 +92,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'rotate') {
+      if (!key_id) {
+        return new Response(JSON.stringify({ error: 'key_id required' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const plainKey = generateKey();
+      const keyHash = await sha256Hex(plainKey);
+      const keyPrefix = plainKey.substring(0, 14);
+      const { data, error } = await supabase.from('mcp_api_keys').update({
+        key_hash: keyHash,
+        key_prefix: keyPrefix,
+        key_plaintext: plainKey,
+        revoked: false,
+        revoked_at: null,
+      }).eq('id', key_id).select('id, name, key_prefix').single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ ...data, key: plainKey }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'unknown action' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
