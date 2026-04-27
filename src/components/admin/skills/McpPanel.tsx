@@ -28,7 +28,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import {
   Plus, Copy, Trash2, Check, KeyRound, Activity, Server,
-  AlertTriangle, ExternalLink, Code,
+  AlertTriangle, ExternalLink, Code, Eye, EyeOff, RefreshCw,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -38,6 +38,7 @@ type McpKey = {
   id: string;
   name: string;
   key_prefix: string;
+  key_plaintext: string | null;
   description: string | null;
   scopes: string[];
   last_used_at: string | null;
