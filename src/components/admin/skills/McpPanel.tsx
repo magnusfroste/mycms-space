@@ -119,7 +119,7 @@ export default function McpPanel() {
       setNewKey({ key: data.key, name: variables.name });
       setCreateOpen(false);
       qc.invalidateQueries({ queryKey: ['mcp-keys'] });
-      toast({ title: 'API key created', description: 'Copy it now — it won\'t be shown again.' });
+      toast({ title: 'API key created', description: 'Key is visible in the table — rotate anytime.' });
     },
     onError: (err: Error) => toast({ title: 'Failed to create key', description: err.message, variant: 'destructive' }),
   });
@@ -137,6 +137,22 @@ export default function McpPanel() {
       toast({ title: 'Key revoked' });
     },
     onError: (err: Error) => toast({ title: 'Failed to revoke key', description: err.message, variant: 'destructive' }),
+  });
+
+  const rotateKey = useMutation({
+    mutationFn: async (key_id: string) => {
+      const { data, error } = await supabase.functions.invoke('mcp-keys', {
+        body: { action: 'rotate', key_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['mcp-keys'] });
+      toast({ title: 'Key rotated', description: `${data.name} has a new value.` });
+    },
+    onError: (err: Error) => toast({ title: 'Failed to rotate key', description: err.message, variant: 'destructive' }),
   });
 
   const copyToClipboard = (text: string, label: string) => {
