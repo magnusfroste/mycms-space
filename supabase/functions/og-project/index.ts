@@ -20,12 +20,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data: repo } = await supabase
+  const { data: repo, error: repoError } = await supabase
     .from("github_repos")
     .select("name, enriched_title, enriched_description, description, problem_statement, why_it_matters, language, topics, cover_image_url")
     .eq("name", repoName)
     .eq("enabled", true)
     .maybeSingle();
+  console.log("[og-project]", { repoName, found: !!repo, error: repoError?.message, title: repo?.enriched_title });
 
   const displayName = repo?.enriched_title || repo?.name || repoName;
   const title = `${displayName} — Magnus Froste`;
