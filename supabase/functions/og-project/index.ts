@@ -20,13 +20,24 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data: repo, error: repoError } = await supabase
+  const { data: repo } = await supabase
     .from("github_repos")
-    .select("name, enriched_title, enriched_description, description, problem_statement, why_it_matters, language, topics, cover_image_url")
+    .select("id, name, enriched_title, enriched_description, description, problem_statement, why_it_matters, language, topics")
     .eq("name", repoName)
     .eq("enabled", true)
     .maybeSingle();
-  console.log("[og-project]", { repoName, found: !!repo, error: repoError?.message, title: repo?.enriched_title });
+
+  let coverImage: string | null = null;
+  if (repo?.id) {
+    const { data: img } = await supabase
+      .from("github_repo_images")
+      .select("image_url")
+      .eq("repo_id", repo.id)
+      .order("order_index")
+      .limit(1)
+      .maybeSingle();
+    coverImage = img?.image_url || null;
+  }
 
   const displayName = repo?.enriched_title || repo?.name || repoName;
   const title = `${displayName} — Magnus Froste`;
@@ -36,7 +47,7 @@ Deno.serve(async (req) => {
     repo?.why_it_matters ||
     repo?.description ||
     `Case study and details for ${repoName}.`;
-  const image = repo?.cover_image_url || DEFAULT_OG_IMAGE;
+  const image = coverImage || DEFAULT_OG_IMAGE;
   const fullImageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const canonicalUrl = `${SITE_URL}/project/${repoName}`;
 
