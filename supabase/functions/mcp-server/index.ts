@@ -204,6 +204,7 @@ async function handleMethod(
         protocolVersion: PROTOCOL_VERSION,
         capabilities: {
           tools: { listChanged: false },
+          resources: { listChanged: false, subscribe: false },
           logging: {},
         },
         serverInfo: {
