@@ -37,7 +37,7 @@ const AIModuleSettings: React.FC = () => {
   // Local state for system_prompt to avoid DB calls on every keystroke
   const [localPrompt, setLocalPrompt] = useState('');
   const [promptDirty, setPromptDirty] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Sync local state when config loads
   useEffect(() => {
