@@ -17,17 +17,20 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
   const { data: repo } = await supabase
     .from("github_repos")
-    .select("name, description, problem_statement, why_it_matters, language, topics, cover_image_url")
+    .select("name, enriched_title, enriched_description, description, problem_statement, why_it_matters, language, topics, cover_image_url")
     .eq("name", repoName)
+    .eq("enabled", true)
     .maybeSingle();
 
-  const title = repo ? `${repo.name} — Magnus Froste` : `${repoName} — Magnus Froste`;
+  const displayName = repo?.enriched_title || repo?.name || repoName;
+  const title = `${displayName} — Magnus Froste`;
   const description =
+    repo?.enriched_description ||
     repo?.problem_statement ||
     repo?.why_it_matters ||
     repo?.description ||
