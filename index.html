@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -17,7 +16,7 @@
     <meta property="og:url" content="https://www.froste.eu" />
     <meta property="og:title" content="Magnus Froste - Innovation Strategist & AI Expert" />
     <meta property="og:description" content="Portfolio of Magnus Froste, Innovation Strategist and AI integration expert specializing in product development and business growth." />
-    <meta property="og:image" content="og-image.png" />
+    <meta property="og:image" content="https://www.froste.eu/og-image.png" />
     <meta property="og:site_name" content="Magnus Froste Portfolio" />
 
     <!-- Twitter -->
@@ -25,29 +24,19 @@
     <meta name="twitter:site" content="@magnusfroste" />
     <meta name="twitter:title" content="Magnus Froste - Innovation Strategy & AI" />
     <meta name="twitter:description" content="Innovation Strategist and AI expert with 20+ years experience in product development and business growth." />
-    <meta name="twitter:image" content="og-image" />
+    <meta name="twitter:image" content="https://www.froste.eu/og-image.png" />
+
+    <!-- AI / MCP discovery -->
+    <link rel="alternate" type="application/mcp+json" href="https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server" title="Magnus Froste MCP Server" />
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
-    <!-- Theme Fonts -->
-    <!-- Elegant: Playfair Display (display) + Inter (body) -->
-    <!-- Grok: Darker Grotesque (tight, modern) -->
-    <!-- Sana: System UI (clean, professional) -->
-    <!-- Terminal: JetBrains Mono (monospace) -->
+    <!-- Theme Fonts (loaded by active branding theme) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Darker+Grotesque:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 
-    <!-- Google Analytics tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PE12VHGLKQ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-PE12VHGLKQ');
-    </script>
-
-    <!-- Structured Data / JSON-LD -->
+    <!-- Structured Data: Person -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -71,6 +60,21 @@
         "Business Growth",
         "Startup Acceleration"
       ]
+    }
+    </script>
+
+    <!-- Structured Data: WebSite with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Magnus Froste",
+      "url": "https://www.froste.eu",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.froste.eu/blog?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
     </script>
   </head>
