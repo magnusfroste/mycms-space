@@ -231,7 +231,7 @@ async function handleMethod(
         .in('scope', ['public', 'both', 'external'])
         .order('category');
 
-      const tools = (skills || []).map((s: any) => {
+      const skillTools = (skills || []).map((s: any) => {
         const def = s.tool_definition?.function || s.tool_definition || {};
         return {
           name: s.name,
@@ -240,7 +240,7 @@ async function handleMethod(
         };
       });
 
-      return { tools };
+      return { tools: [...BUILTIN_TOOLS, ...skillTools] };
     }
 
     case 'tools/call': {
@@ -249,6 +249,12 @@ async function handleMethod(
       }
       const { name, arguments: args } = rpc.params || {};
       if (!name) throw new Error('Missing tool name');
+
+      // Built-in project tools
+      if (BUILTIN_TOOL_NAMES.has(name)) {
+        const text = await callBuiltinTool(supabase, name, args || {});
+        return { content: [{ type: 'text', text }], isError: false };
+      }
 
       // Verify the skill exists and is exposed
       const { data: skill } = await supabase
@@ -299,8 +305,43 @@ async function handleMethod(
       };
     }
 
-    case 'resources/list':
-      return { resources: [] };
+    case 'resources/list': {
+      if (!apiKey.scopes?.includes('tools:read')) {
+        throw new Error('Scope tools:read required');
+      }
+      const { data: repos } = await supabase
+        .from('github_repos')
+        .select('name, enriched_title, enriched_description, description, language, stars, topics')
+        .eq('enabled', true)
+        .order('order_index');
+
+      const resources = (repos || []).map((r: any) => ({
+        uri: `project://${r.name}`,
+        name: r.enriched_title || r.name,
+        description: r.enriched_description || r.description || `${r.language || ''} project`,
+        mimeType: 'application/json',
+      }));
+      return { resources };
+    }
+
+    case 'resources/read': {
+      if (!apiKey.scopes?.includes('tools:read')) {
+        throw new Error('Scope tools:read required');
+      }
+      const uri: string = rpc.params?.uri || '';
+      const match = uri.match(/^project:\/\/(.+)$/);
+      if (!match) throw new Error(`Unknown resource URI: ${uri}`);
+      const repoName = decodeURIComponent(match[1]);
+      const project = await getProjectDetail(supabase, repoName);
+      if (!project) throw new Error(`Project not found: ${repoName}`);
+      return {
+        contents: [{
+          uri,
+          mimeType: 'application/json',
+          text: JSON.stringify(project, null, 2),
+        }],
+      };
+    }
 
     case 'prompts/list':
       return { prompts: [] };
@@ -308,6 +349,111 @@ async function handleMethod(
     default:
       throw new Error(`Method not supported: ${rpc.method}`);
   }
+}
+
+// ============================================
+// Built-in tools — expose synced GitHub projects
+// ============================================
+const BUILTIN_TOOLS = [
+  {
+    name: 'list_projects',
+    description: 'List all enabled GitHub projects with enriched titles, descriptions, languages, stars and topics. Use this to discover what projects exist before fetching details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        language: { type: 'string', description: 'Optional: filter by primary language (e.g. TypeScript)' },
+        topic: { type: 'string', description: 'Optional: filter by topic/tag' },
+        limit: { type: 'number', description: 'Optional: max results (default 50)' },
+      },
+    },
+  },
+  {
+    name: 'get_project',
+    description: 'Get full enriched details for one GitHub project, including AI-enriched title, description, problem statement, why it matters, README, topics and images. Use this when writing about a specific project.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Repository name (e.g. "my-project")' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'search_projects',
+    description: 'Full-text search across project titles, descriptions, problem statements, why-it-matters and topics. Returns matching projects with enriched data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        limit: { type: 'number', description: 'Optional: max results (default 10)' },
+      },
+      required: ['query'],
+    },
+  },
+];
+const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
+
+async function callBuiltinTool(
+  supabase: ReturnType<typeof createClient>,
+  name: string,
+  args: any,
+): Promise<string> {
+  if (name === 'list_projects') {
+    let q = supabase
+      .from('github_repos')
+      .select('name, enriched_title, enriched_description, description, language, stars, forks, topics, homepage, url')
+      .eq('enabled', true)
+      .order('order_index')
+      .limit(Math.min(args.limit ?? 50, 200));
+    if (args.language) q = q.eq('language', args.language);
+    if (args.topic) q = q.contains('topics', [args.topic]);
+    const { data, error } = await q;
+    if (error) throw error;
+    return JSON.stringify({ count: data?.length || 0, projects: data || [] }, null, 2);
+  }
+
+  if (name === 'get_project') {
+    if (!args.name) throw new Error('Missing "name" argument');
+    const project = await getProjectDetail(supabase, args.name);
+    if (!project) return JSON.stringify({ error: `Project '${args.name}' not found` });
+    return JSON.stringify(project, null, 2);
+  }
+
+  if (name === 'search_projects') {
+    const query = (args.query || '').trim();
+    if (!query) throw new Error('Missing "query" argument');
+    const limit = Math.min(args.limit ?? 10, 50);
+    const pattern = `%${query}%`;
+    const { data, error } = await supabase
+      .from('github_repos')
+      .select('name, enriched_title, enriched_description, description, problem_statement, why_it_matters, language, stars, topics, homepage, url')
+      .eq('enabled', true)
+      .or(`name.ilike.${pattern},enriched_title.ilike.${pattern},enriched_description.ilike.${pattern},description.ilike.${pattern},problem_statement.ilike.${pattern},why_it_matters.ilike.${pattern}`)
+      .limit(limit);
+    if (error) throw error;
+    return JSON.stringify({ count: data?.length || 0, query, projects: data || [] }, null, 2);
+  }
+
+  throw new Error(`Unknown built-in tool: ${name}`);
+}
+
+async function getProjectDetail(
+  supabase: ReturnType<typeof createClient>,
+  name: string,
+): Promise<any | null> {
+  const { data: repo } = await supabase
+    .from('github_repos')
+    .select('*')
+    .eq('name', name)
+    .eq('enabled', true)
+    .maybeSingle();
+  if (!repo) return null;
+  const { data: images } = await supabase
+    .from('github_repo_images')
+    .select('image_url, alt_text, order_index')
+    .eq('repo_id', repo.id)
+    .order('order_index');
+  return { ...repo, images: images || [] };
 }
 
 // ============================================
