@@ -1,24 +1,25 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { loadSEOConfig, absoluteUrl, applyTitleTemplate } from "../_shared/seo-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SITE_URL = "https://www.froste.eu";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  const url = new URL(req.url);
-  const repoName = url.searchParams.get("repoName");
-  if (!repoName) return Response.redirect(`${SITE_URL}/`, 302);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  const seo = await loadSEOConfig(supabase);
+  const SITE_URL = seo.site_url.replace(/\/$/, "");
+
+  const url = new URL(req.url);
+  const repoName = url.searchParams.get("repoName");
+  if (!repoName) return Response.redirect(`${SITE_URL}/`, 302);
 
   const { data: repo } = await supabase
     .from("github_repos")
@@ -40,15 +41,15 @@ Deno.serve(async (req) => {
   }
 
   const displayName = repo?.enriched_title || repo?.name || repoName;
-  const title = `${displayName} — Magnus Froste`;
+  const title = applyTitleTemplate(displayName, seo);
   const description =
     repo?.enriched_description ||
     repo?.problem_statement ||
     repo?.why_it_matters ||
     repo?.description ||
-    `Case study and details for ${repoName}.`;
-  const image = coverImage || DEFAULT_OG_IMAGE;
-  const fullImageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
+    seo.site_description;
+  const image = coverImage || seo.default_og_image;
+  const fullImageUrl = absoluteUrl(image, SITE_URL);
   const canonicalUrl = `${SITE_URL}/project/${repoName}`;
 
   const jsonLd = {
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
     programmingLanguage: repo?.language || undefined,
     keywords: Array.isArray(repo?.topics) ? repo!.topics.join(", ") : undefined,
     url: canonicalUrl,
-    author: { "@type": "Person", name: "Magnus Froste", url: SITE_URL },
+    author: { "@type": "Person", name: seo.site_title, url: SITE_URL },
   };
 
   const html = `<!DOCTYPE html>
@@ -76,12 +77,13 @@ Deno.serve(async (req) => {
   <meta property="og:title" content="${esc(title)}" />
   <meta property="og:description" content="${esc(description)}" />
   <meta property="og:image" content="${esc(fullImageUrl)}" />
-  <meta property="og:site_name" content="Magnus Froste" />
+  <meta property="og:site_name" content="${esc(seo.site_title)}" />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${esc(title)}" />
   <meta name="twitter:description" content="${esc(description)}" />
   <meta name="twitter:image" content="${esc(fullImageUrl)}" />
+  ${seo.twitter_handle ? `<meta name="twitter:site" content="${esc(seo.twitter_handle)}" />` : ""}
 
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 

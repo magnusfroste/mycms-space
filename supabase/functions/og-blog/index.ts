@@ -1,16 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { loadSEOConfig, absoluteUrl, applyTitleTemplate } from "../_shared/seo-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const SITE_URL = "https://www.froste.eu";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
-const DEFAULT_TITLE = "Magnus Froste - Innovation Strategist & Agentic AI Expert";
-const DEFAULT_DESCRIPTION =
-  "Innovation Strategist and AI integration expert with 20+ years experience in product development, business growth, and technological advancement.";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,27 +15,28 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const slug = url.searchParams.get("slug");
 
-  if (!slug) {
-    return Response.redirect(`${SITE_URL}/blog`, 302);
-  }
-
-  // Fetch blog post from database
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  const seo = await loadSEOConfig(supabase);
+  const SITE_URL = seo.site_url.replace(/\/$/, "");
+
+  if (!slug) return Response.redirect(`${SITE_URL}/blog`, 302);
 
   const { data: post } = await supabase
     .from("blog_posts")
     .select("title, excerpt, cover_image_url, author_name, published_at, seo_title, seo_description")
     .eq("slug", slug)
     .eq("status", "published")
-    .single();
+    .maybeSingle();
 
-  const title = post?.seo_title || post?.title || DEFAULT_TITLE;
-  const description = post?.seo_description || post?.excerpt || DEFAULT_DESCRIPTION;
-  const image = post?.cover_image_url || DEFAULT_OG_IMAGE;
-  const fullImageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
+  const pageTitle = post?.seo_title || post?.title;
+  const title = applyTitleTemplate(pageTitle, seo);
+  const description = post?.seo_description || post?.excerpt || seo.site_description;
+  const image = post?.cover_image_url || seo.default_og_image;
+  const fullImageUrl = absoluteUrl(image, SITE_URL);
   const canonicalUrl = `${SITE_URL}/blog/${slug}`;
 
   const html = `<!DOCTYPE html>
@@ -48,32 +44,30 @@ Deno.serve(async (req) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(description)}" />
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(description)}" />
   <link rel="canonical" href="${canonicalUrl}" />
 
-  <!-- Open Graph -->
   <meta property="og:type" content="article" />
   <meta property="og:url" content="${canonicalUrl}" />
-  <meta property="og:title" content="${escapeHtml(title)}" />
-  <meta property="og:description" content="${escapeHtml(description)}" />
-  <meta property="og:image" content="${escapeHtml(fullImageUrl)}" />
-  <meta property="og:site_name" content="Magnus Froste" />
+  <meta property="og:title" content="${esc(title)}" />
+  <meta property="og:description" content="${esc(description)}" />
+  <meta property="og:image" content="${esc(fullImageUrl)}" />
+  <meta property="og:site_name" content="${esc(seo.site_title)}" />
   ${post?.published_at ? `<meta property="article:published_time" content="${post.published_at}" />` : ""}
-  ${post?.author_name ? `<meta property="article:author" content="${escapeHtml(post.author_name)}" />` : ""}
+  ${post?.author_name ? `<meta property="article:author" content="${esc(post.author_name)}" />` : ""}
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="${escapeHtml(title)}" />
-  <meta name="twitter:description" content="${escapeHtml(description)}" />
-  <meta name="twitter:image" content="${escapeHtml(fullImageUrl)}" />
+  <meta name="twitter:title" content="${esc(title)}" />
+  <meta name="twitter:description" content="${esc(description)}" />
+  <meta name="twitter:image" content="${esc(fullImageUrl)}" />
+  ${seo.twitter_handle ? `<meta name="twitter:site" content="${esc(seo.twitter_handle)}" />` : ""}
 
-  <!-- Redirect browsers to SPA -->
   <script>window.location.replace("${canonicalUrl}");</script>
   <noscript><meta http-equiv="refresh" content="0;url=${canonicalUrl}" /></noscript>
 </head>
 <body>
-  <p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(title)}</a>...</p>
+  <p>Redirecting to <a href="${canonicalUrl}">${esc(title)}</a>...</p>
 </body>
 </html>`;
 
@@ -86,7 +80,7 @@ Deno.serve(async (req) => {
   });
 });
 
-function escapeHtml(str: string): string {
+function esc(str: string): string {
   return str
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
