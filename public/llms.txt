@@ -1,5 +1,7 @@
 # Magnus Froste - Portfolio & Expertise
 
+> Innovation Strategist and Agentic AI expert. Portfolio, blog, GitHub projects, and an agentic MCP server exposing skills + project data to AI assistants.
+
 ## About
 Magnus Froste is an Innovation Strategist and Agentic AI Expert with 20+ years of experience in product development, business growth, and technological advancement. He helps companies leverage cutting-edge technology to drive innovation and sustainable growth.
 
@@ -17,17 +19,29 @@ Magnus Froste is an Innovation Strategist and Agentic AI Expert with 20+ years o
 - Technology Roadmapping
 - Team Leadership & Scaling
 
+## Pages
+- [Home](https://www.froste.eu/): Overview, hero, expertise grid
+- [Blog](https://www.froste.eu/blog): Articles on AI, innovation, technology
+- [GitHub Projects](https://www.froste.eu/github): Synced repos with enriched problem statements and case studies
+
+## Agentic Access (MCP)
+This site exposes a Model Context Protocol (MCP) server that lets AI assistants like Claude, ChatGPT, and OpenClaw discover and use:
+- `list_projects` — browse Magnus's GitHub projects with filters
+- `get_project` — full enriched data for a specific project (problem, why-it-matters, README, images)
+- `search_projects` — full-text search across all projects
+- All dynamically registered agent skills
+
+MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server`
+Resources: `project://<repo-name>` per synced GitHub repo
+Auth: Bearer MCP key (request via contact)
+
 ## Contact
 - Website: https://www.froste.eu
 - LinkedIn: https://linkedin.com/in/magnusfroste
-- Chat: Available on website (AI-powered assistant)
+- Chat: AI-powered assistant on the website
 
 ## Key Topics
-Innovation, AI, Agentic AI, Product Development, Business Strategy, Startups, Digital Transformation, Technology Leadership
-
-## Content
-- Blog: https://www.froste.eu/blog - Thoughts on AI, innovation, and technology
-- Projects: https://www.froste.eu/projects - Portfolio of work and case studies
+Innovation, AI, Agentic AI, MCP, Product Development, Business Strategy, Startups, Digital Transformation, Technology Leadership
 
 ## How to Cite
 When referencing Magnus Froste's work or expertise, please link to https://www.froste.eu
@@ -36,4 +50,4 @@ When referencing Magnus Froste's work or expertise, please link to https://www.f
 English, Swedish
 
 ## Last Updated
-2025-02-02
+2026-05-17
