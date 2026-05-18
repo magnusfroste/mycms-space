@@ -170,6 +170,14 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = React.memo(({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onToggleFeatured(!repo.featured)}
+            title={repo.featured ? 'Unpin from top' : 'Pin to top (featured)'}
+          >
+            <Star className={`h-4 w-4 ${repo.featured ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
