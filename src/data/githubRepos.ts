@@ -31,6 +31,7 @@ export interface DbGitHubRepo {
   readme_content: string | null;
   // Status
   enabled: boolean;
+  featured: boolean;
   order_index: number;
   last_synced_at: string;
   created_at: string;
