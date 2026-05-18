@@ -62,11 +62,11 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
             } : undefined}
           >
             {showImages && mainImage && (
-              <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted">
+              <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted p-2">
                 <img
                   src={mainImage}
                   alt={title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-500"
                 />
               </Link>
             )}
