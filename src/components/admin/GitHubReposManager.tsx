@@ -586,10 +586,11 @@ const GitHubReposManager: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Sort: enabled first, then by order_index
+  // Sort: enabled first, then featured, then by order_index
   const sortedRepos = useMemo(() => 
     [...(repos || [])].sort((a, b) => {
       if (a.enabled !== b.enabled) return b.enabled ? 1 : -1;
+      if (a.featured !== b.featured) return b.featured ? 1 : -1;
       return a.order_index - b.order_index;
     }), [repos]
   );
