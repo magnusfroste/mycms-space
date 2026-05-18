@@ -255,12 +255,12 @@ export const ShowcaseHeroLayout: React.FC<LayoutProps> = ({
       <div className="grid lg:grid-cols-2 gap-8 items-center">
         {/* Image */}
         {showImages && (
-          <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted">
+          <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted p-3">
             {mainImage ? (
               <img
                 src={mainImage}
                 alt={title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
