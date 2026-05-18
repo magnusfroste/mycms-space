@@ -1,0 +1,2 @@
+ALTER TABLE public.github_repos ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_github_repos_featured ON public.github_repos(featured DESC, order_index ASC);

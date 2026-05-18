@@ -578,6 +578,7 @@ export type Database = {
           enabled: boolean | null
           enriched_description: string | null
           enriched_title: string | null
+          featured: boolean
           forks: number | null
           full_name: string
           github_id: string
@@ -605,6 +606,7 @@ export type Database = {
           enabled?: boolean | null
           enriched_description?: string | null
           enriched_title?: string | null
+          featured?: boolean
           forks?: number | null
           full_name: string
           github_id: string
@@ -632,6 +634,7 @@ export type Database = {
           enabled?: boolean | null
           enriched_description?: string | null
           enriched_title?: string | null
+          featured?: boolean
           forks?: number | null
           full_name?: string
           github_id?: string
