@@ -42,11 +42,11 @@ const RelatedProjects: React.FC<RelatedProjectsProps> = ({ currentRepoName }) =>
               className="group rounded-xl border border-border bg-card overflow-hidden transition-shadow hover:shadow-lg"
             >
               {thumb && (
-                <div className="aspect-video bg-muted overflow-hidden">
+                <div className="aspect-video bg-muted overflow-hidden p-2">
                   <img
                     src={thumb}
                     alt={title}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    className="w-full h-full object-contain transition-transform group-hover:scale-[1.03]"
                     loading="lazy"
                   />
                 </div>
