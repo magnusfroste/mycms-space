@@ -77,6 +77,7 @@ interface SortableRepoItemProps {
   repo: GitHubRepoWithImages;
   onEdit: () => void;
   onToggle: (enabled: boolean) => void;
+  onToggleFeatured: (featured: boolean) => void;
   onDelete: () => void;
   onPushToGitHub: () => void;
   isPushing: boolean;
@@ -86,6 +87,7 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = React.memo(({
   repo, 
   onEdit, 
   onToggle, 
+  onToggleFeatured,
   onDelete,
   onPushToGitHub,
   isPushing,
