@@ -828,6 +828,7 @@ const GitHubReposManager: React.FC = () => {
                     repo={repo}
                     onEdit={() => setEditingId(repo.id)}
                     onToggle={(enabled) => handleToggle(repo.id, enabled)}
+                    onToggleFeatured={(featured) => handleToggleFeatured(repo.id, featured)}
                     onDelete={() => handleDelete(repo)}
                     onPushToGitHub={() => handleSyncToGitHub(repo.id, repo.full_name, {
                       description: repo.enriched_description || repo.description || '',
