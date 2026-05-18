@@ -54,10 +54,12 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
   // Get forks visibility from module config
   const showForks = moduleConfig?.show_forks ?? true;
 
-  // Shuffle repos once on mount for variety, then paginate
+  // Featured repos always first (in their order), then shuffle the rest for variety
   const shuffledRepos = useMemo(() => {
-    if (repos.length <= maxRepos) return repos;
-    return [...repos].sort(() => Math.random() - 0.5);
+    const featured = repos.filter((r) => (r as any).featured);
+    const rest = repos.filter((r) => !(r as any).featured);
+    const shuffledRest = rest.length <= maxRepos ? rest : [...rest].sort(() => Math.random() - 0.5);
+    return [...featured, ...shuffledRest];
   }, [repos, maxRepos]);
 
   const [visibleCount, setVisibleCount] = useState(maxRepos);

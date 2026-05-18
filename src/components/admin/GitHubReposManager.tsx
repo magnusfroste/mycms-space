@@ -77,6 +77,7 @@ interface SortableRepoItemProps {
   repo: GitHubRepoWithImages;
   onEdit: () => void;
   onToggle: (enabled: boolean) => void;
+  onToggleFeatured: (featured: boolean) => void;
   onDelete: () => void;
   onPushToGitHub: () => void;
   isPushing: boolean;
@@ -86,6 +87,7 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = React.memo(({
   repo, 
   onEdit, 
   onToggle, 
+  onToggleFeatured,
   onDelete,
   onPushToGitHub,
   isPushing,
@@ -168,6 +170,14 @@ const SortableRepoItem: React.FC<SortableRepoItemProps> = React.memo(({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onToggleFeatured(!repo.featured)}
+            title={repo.featured ? 'Unpin from top' : 'Pin to top (featured)'}
+          >
+            <Star className={`h-4 w-4 ${repo.featured ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -576,10 +586,11 @@ const GitHubReposManager: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Sort: enabled first, then by order_index
+  // Sort: enabled first, then featured, then by order_index
   const sortedRepos = useMemo(() => 
     [...(repos || [])].sort((a, b) => {
       if (a.enabled !== b.enabled) return b.enabled ? 1 : -1;
+      if (a.featured !== b.featured) return b.featured ? 1 : -1;
       return a.order_index - b.order_index;
     }), [repos]
   );
@@ -602,6 +613,10 @@ const GitHubReposManager: React.FC = () => {
 
   const handleToggle = useCallback((id: string, enabled: boolean) => {
     updateMutation.mutate({ id, updates: { enabled } });
+  }, [updateMutation]);
+
+  const handleToggleFeatured = useCallback((id: string, featured: boolean) => {
+    updateMutation.mutate({ id, updates: { featured } });
   }, [updateMutation]);
 
   const handleDelete = useCallback((repo: GitHubRepoWithImages) => {
@@ -813,6 +828,7 @@ const GitHubReposManager: React.FC = () => {
                     repo={repo}
                     onEdit={() => setEditingId(repo.id)}
                     onToggle={(enabled) => handleToggle(repo.id, enabled)}
+                    onToggleFeatured={(featured) => handleToggleFeatured(repo.id, featured)}
                     onDelete={() => handleDelete(repo)}
                     onPushToGitHub={() => handleSyncToGitHub(repo.id, repo.full_name, {
                       description: repo.enriched_description || repo.description || '',

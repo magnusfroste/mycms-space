@@ -31,6 +31,7 @@ export interface DbGitHubRepo {
   readme_content: string | null;
   // Status
   enabled: boolean;
+  featured: boolean;
   order_index: number;
   last_synced_at: string;
   created_at: string;
@@ -83,6 +84,7 @@ export const fetchEnabledGitHubRepos = async (): Promise<GitHubRepoWithImages[]>
     .from('github_repos')
     .select('*')
     .eq('enabled', true)
+    .order('featured', { ascending: false })
     .order('order_index');
 
   if (error) throw error;
@@ -169,7 +171,7 @@ export const updateGitHubRepo = async (
   id: string,
   updates: Partial<Pick<DbGitHubRepo, 
     'enriched_title' | 'enriched_description' | 'problem_statement' | 
-    'why_it_matters' | 'enabled' | 'order_index' | 'homepage' | 'topics'
+    'why_it_matters' | 'enabled' | 'featured' | 'order_index' | 'homepage' | 'topics'
   >>
 ): Promise<DbGitHubRepo> => {
   const { data, error } = await supabase
