@@ -615,6 +615,10 @@ const GitHubReposManager: React.FC = () => {
     updateMutation.mutate({ id, updates: { enabled } });
   }, [updateMutation]);
 
+  const handleToggleFeatured = useCallback((id: string, featured: boolean) => {
+    updateMutation.mutate({ id, updates: { featured } });
+  }, [updateMutation]);
+
   const handleDelete = useCallback((repo: GitHubRepoWithImages) => {
     if (confirm(`Remove "${repo.name}" from local database?`)) {
       toast.success('Delete not implemented yet');
