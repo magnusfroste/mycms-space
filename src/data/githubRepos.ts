@@ -84,6 +84,7 @@ export const fetchEnabledGitHubRepos = async (): Promise<GitHubRepoWithImages[]>
     .from('github_repos')
     .select('*')
     .eq('enabled', true)
+    .order('featured', { ascending: false })
     .order('order_index');
 
   if (error) throw error;
