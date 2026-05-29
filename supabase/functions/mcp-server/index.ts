@@ -413,6 +413,16 @@ const BUILTIN_TOOLS = [
       required: ['query'],
     },
   },
+  {
+    name: 'get_resume',
+    description: 'Get the full resume / CV: work experience, education, certifications, skills and other timeline entries. Use this to understand background, expertise and availability when matching to consulting assignments or job opportunities.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'Optional: filter by category (e.g. "experience", "education", "skill", "certification")' },
+      },
+    },
+  },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
 
