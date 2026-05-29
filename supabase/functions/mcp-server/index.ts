@@ -467,8 +467,23 @@ async function callBuiltinTool(
     return JSON.stringify({ count: data?.length || 0, query, projects: data || [] }, null, 2);
   }
 
+  if (name === 'get_resume') {
+    let q = supabase
+      .from('resume_entries')
+      .select('category, title, subtitle, description, start_date, end_date, is_current, tags, metadata')
+      .eq('enabled', true)
+      .order('category')
+      .order('order_index')
+      .order('start_date', { ascending: false });
+    if (args.category) q = q.eq('category', args.category);
+    const { data, error } = await q;
+    if (error) throw error;
+    return JSON.stringify({ count: data?.length || 0, entries: data || [] }, null, 2);
+  }
+
   throw new Error(`Unknown built-in tool: ${name}`);
 }
+
 
 async function getProjectDetail(
   supabase: ReturnType<typeof createClient>,
