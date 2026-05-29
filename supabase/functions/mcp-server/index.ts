@@ -69,52 +69,59 @@ Deno.serve(async (req) => {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
-  // ---- Authenticate via Bearer token ----
+  // ---- Authenticate via Bearer token (optional — anonymous = read-only built-ins) ----
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
+  let apiKey: any;
+
   if (!token) {
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Missing Authorization: Bearer <key>')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Anonymous read-only access — built-in tools only, no skill execution
+    apiKey = {
+      id: null,
+      name: 'anonymous',
+      scopes: ['tools:read', 'tools:call'],
+      anonymous: true,
+    };
+  } else {
+    const tokenHash = await sha256Hex(token);
+    const { data: foundKey } = await supabase
+      .from('mcp_api_keys')
+      .select('*')
+      .eq('key_hash', tokenHash)
+      .eq('revoked', false)
+      .maybeSingle();
+
+    if (!foundKey) {
+      await logActivity(supabase, {
+        api_key_id: null, key_name: null,
+        method: 'auth', tool_name: null,
+        input: {}, output: {},
+        status: 'failed',
+        error_message: 'Invalid or revoked API key',
+        duration_ms: 0,
+        ip_address: req.headers.get('x-forwarded-for') || null,
+        client_info: { user_agent: req.headers.get('user-agent') || '' },
+      });
+      return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Invalid or revoked API key')), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (foundKey.expires_at && new Date(foundKey.expires_at) < new Date()) {
+      return new Response(JSON.stringify(jsonRpcError(null, -32001, 'API key expired')), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    apiKey = foundKey;
+
+    // Bump usage (fire-and-forget)
+    supabase.from('mcp_api_keys').update({
+      last_used_at: new Date().toISOString(),
+      use_count: (foundKey.use_count || 0) + 1,
+    }).eq('id', foundKey.id).then(() => {});
   }
-
-  const tokenHash = await sha256Hex(token);
-  const { data: apiKey } = await supabase
-    .from('mcp_api_keys')
-    .select('*')
-    .eq('key_hash', tokenHash)
-    .eq('revoked', false)
-    .maybeSingle();
-
-  if (!apiKey) {
-    await logActivity(supabase, {
-      api_key_id: null, key_name: null,
-      method: 'auth', tool_name: null,
-      input: {}, output: {},
-      status: 'failed',
-      error_message: 'Invalid or revoked API key',
-      duration_ms: 0,
-      ip_address: req.headers.get('x-forwarded-for') || null,
-      client_info: { user_agent: req.headers.get('user-agent') || '' },
-    });
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Invalid or revoked API key')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Check expiry
-  if (apiKey.expires_at && new Date(apiKey.expires_at) < new Date()) {
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'API key expired')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Bump usage (fire-and-forget)
-  supabase.from('mcp_api_keys').update({
-    last_used_at: new Date().toISOString(),
-    use_count: (apiKey.use_count || 0) + 1,
-  }).eq('id', apiKey.id).then(() => {});
 
   // ---- Parse JSON-RPC request ----
   let body: JsonRpcRequest | JsonRpcRequest[];
