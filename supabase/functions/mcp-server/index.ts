@@ -231,6 +231,12 @@ async function handleMethod(
       if (!apiKey.scopes?.includes('tools:read')) {
         throw new Error('Scope tools:read required');
       }
+
+      // Anonymous = built-ins only (read-only metadata)
+      if (apiKey.anonymous) {
+        return { tools: BUILTIN_TOOLS };
+      }
+
       const { data: skills } = await supabase
         .from('agent_skills')
         .select('name, description, tool_definition, scope, category')
@@ -249,6 +255,27 @@ async function handleMethod(
 
       return { tools: [...BUILTIN_TOOLS, ...skillTools] };
     }
+
+    case 'tools/call': {
+      if (!apiKey.scopes?.includes('tools:call')) {
+        throw new Error('Scope tools:call required');
+      }
+      const { name, arguments: args } = rpc.params || {};
+      if (!name) throw new Error('Missing tool name');
+
+      // Built-in project tools — available to everyone (incl. anonymous)
+      if (BUILTIN_TOOL_NAMES.has(name)) {
+        const text = await callBuiltinTool(supabase, name, args || {});
+        return { content: [{ type: 'text', text }], isError: false };
+      }
+
+      // Skill execution requires an authenticated API key
+      if (apiKey.anonymous) {
+        return {
+          content: [{ type: 'text', text: `Tool '${name}' requires an API key. Built-in tools (${[...BUILTIN_TOOL_NAMES].join(', ')}) are available anonymously.` }],
+          isError: true,
+        };
+      }
 
     case 'tools/call': {
       if (!apiKey.scopes?.includes('tools:call')) {
