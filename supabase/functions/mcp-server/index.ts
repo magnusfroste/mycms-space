@@ -277,18 +277,7 @@ async function handleMethod(
         };
       }
 
-    case 'tools/call': {
-      if (!apiKey.scopes?.includes('tools:call')) {
-        throw new Error('Scope tools:call required');
-      }
-      const { name, arguments: args } = rpc.params || {};
-      if (!name) throw new Error('Missing tool name');
 
-      // Built-in project tools
-      if (BUILTIN_TOOL_NAMES.has(name)) {
-        const text = await callBuiltinTool(supabase, name, args || {});
-        return { content: [{ type: 'text', text }], isError: false };
-      }
 
       // Verify the skill exists and is exposed
       const { data: skill } = await supabase
