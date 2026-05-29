@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       transport: 'streamable-http',
       description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
-      auth: { type: 'bearer', header: 'Authorization' },
+      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows read-only built-in tools (list_projects, get_project, search_projects, get_resume). API key required for skill execution.' },
     }, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -69,52 +69,59 @@ Deno.serve(async (req) => {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
-  // ---- Authenticate via Bearer token ----
+  // ---- Authenticate via Bearer token (optional — anonymous = read-only built-ins) ----
   const authHeader = req.headers.get('authorization') || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
+  let apiKey: any;
+
   if (!token) {
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Missing Authorization: Bearer <key>')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Anonymous read-only access — built-in tools only, no skill execution
+    apiKey = {
+      id: null,
+      name: 'anonymous',
+      scopes: ['tools:read', 'tools:call'],
+      anonymous: true,
+    };
+  } else {
+    const tokenHash = await sha256Hex(token);
+    const { data: foundKey } = await supabase
+      .from('mcp_api_keys')
+      .select('*')
+      .eq('key_hash', tokenHash)
+      .eq('revoked', false)
+      .maybeSingle();
+
+    if (!foundKey) {
+      await logActivity(supabase, {
+        api_key_id: null, key_name: null,
+        method: 'auth', tool_name: null,
+        input: {}, output: {},
+        status: 'failed',
+        error_message: 'Invalid or revoked API key',
+        duration_ms: 0,
+        ip_address: req.headers.get('x-forwarded-for') || null,
+        client_info: { user_agent: req.headers.get('user-agent') || '' },
+      });
+      return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Invalid or revoked API key')), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (foundKey.expires_at && new Date(foundKey.expires_at) < new Date()) {
+      return new Response(JSON.stringify(jsonRpcError(null, -32001, 'API key expired')), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    apiKey = foundKey;
+
+    // Bump usage (fire-and-forget)
+    supabase.from('mcp_api_keys').update({
+      last_used_at: new Date().toISOString(),
+      use_count: (foundKey.use_count || 0) + 1,
+    }).eq('id', foundKey.id).then(() => {});
   }
-
-  const tokenHash = await sha256Hex(token);
-  const { data: apiKey } = await supabase
-    .from('mcp_api_keys')
-    .select('*')
-    .eq('key_hash', tokenHash)
-    .eq('revoked', false)
-    .maybeSingle();
-
-  if (!apiKey) {
-    await logActivity(supabase, {
-      api_key_id: null, key_name: null,
-      method: 'auth', tool_name: null,
-      input: {}, output: {},
-      status: 'failed',
-      error_message: 'Invalid or revoked API key',
-      duration_ms: 0,
-      ip_address: req.headers.get('x-forwarded-for') || null,
-      client_info: { user_agent: req.headers.get('user-agent') || '' },
-    });
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'Invalid or revoked API key')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Check expiry
-  if (apiKey.expires_at && new Date(apiKey.expires_at) < new Date()) {
-    return new Response(JSON.stringify(jsonRpcError(null, -32001, 'API key expired')), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Bump usage (fire-and-forget)
-  supabase.from('mcp_api_keys').update({
-    last_used_at: new Date().toISOString(),
-    use_count: (apiKey.use_count || 0) + 1,
-  }).eq('id', apiKey.id).then(() => {});
 
   // ---- Parse JSON-RPC request ----
   let body: JsonRpcRequest | JsonRpcRequest[];
@@ -224,6 +231,12 @@ async function handleMethod(
       if (!apiKey.scopes?.includes('tools:read')) {
         throw new Error('Scope tools:read required');
       }
+
+      // Anonymous = built-ins only (read-only metadata)
+      if (apiKey.anonymous) {
+        return { tools: BUILTIN_TOOLS };
+      }
+
       const { data: skills } = await supabase
         .from('agent_skills')
         .select('name, description, tool_definition, scope, category')
@@ -250,11 +263,21 @@ async function handleMethod(
       const { name, arguments: args } = rpc.params || {};
       if (!name) throw new Error('Missing tool name');
 
-      // Built-in project tools
+      // Built-in project tools — available to everyone (incl. anonymous)
       if (BUILTIN_TOOL_NAMES.has(name)) {
         const text = await callBuiltinTool(supabase, name, args || {});
         return { content: [{ type: 'text', text }], isError: false };
       }
+
+      // Skill execution requires an authenticated API key
+      if (apiKey.anonymous) {
+        return {
+          content: [{ type: 'text', text: `Tool '${name}' requires an API key. Built-in tools (${[...BUILTIN_TOOL_NAMES].join(', ')}) are available anonymously.` }],
+          isError: true,
+        };
+      }
+
+
 
       // Verify the skill exists and is exposed
       const { data: skill } = await supabase
@@ -390,6 +413,16 @@ const BUILTIN_TOOLS = [
       required: ['query'],
     },
   },
+  {
+    name: 'get_resume',
+    description: 'Get the full resume / CV: work experience, education, certifications, skills and other timeline entries. Use this to understand background, expertise and availability when matching to consulting assignments or job opportunities.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'Optional: filter by category (e.g. "experience", "education", "skill", "certification")' },
+      },
+    },
+  },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
 
@@ -434,8 +467,23 @@ async function callBuiltinTool(
     return JSON.stringify({ count: data?.length || 0, query, projects: data || [] }, null, 2);
   }
 
+  if (name === 'get_resume') {
+    let q = supabase
+      .from('resume_entries')
+      .select('category, title, subtitle, description, start_date, end_date, is_current, tags, metadata')
+      .eq('enabled', true)
+      .order('category')
+      .order('order_index')
+      .order('start_date', { ascending: false });
+    if (args.category) q = q.eq('category', args.category);
+    const { data, error } = await q;
+    if (error) throw error;
+    return JSON.stringify({ count: data?.length || 0, entries: data || [] }, null, 2);
+  }
+
   throw new Error(`Unknown built-in tool: ${name}`);
 }
+
 
 async function getProjectDetail(
   supabase: ReturnType<typeof createClient>,
