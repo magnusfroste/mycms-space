@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
       transport: 'streamable-http',
       description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
-      auth: { type: 'bearer', header: 'Authorization' },
+      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows read-only built-in tools (list_projects, get_project, search_projects, get_resume). API key required for skill execution.' },
     }, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
