@@ -5,7 +5,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
-import { handleEditorDraft, type DraftToSave } from "./editor.ts";
+import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -195,6 +195,16 @@ Be concise and actionable.`
     }).eq('id', id);
     throw e;
   }
+}
+
+// Picks today's research theme from the editor brief (one theme per day, rotating).
+async function themeOfTheDay(supabase: ReturnType<typeof getSupabase>): Promise<string | null> {
+  const { data } = await supabase.from('modules').select('module_config').eq('module_type', 'autopilot').maybeSingle();
+  const brief = (data?.module_config as Record<string, unknown> | null)?.editor_brief as EditorBrief | undefined;
+  if (!brief?.themes?.length) return null;
+  const day = Math.floor(Date.now() / 86_400_000);
+  const theme = brief.themes[day % brief.themes.length];
+  return `${theme.name}: ${theme.search_terms.join(', ')}`;
 }
 
 // Saves an editor draft as a blog post (draft status) and generates a cover image.
@@ -845,9 +855,14 @@ Deno.serve(async (req) => {
         result = await handleToggleWorkflow(supabase, jobName, active ?? true, schedule);
         break;
 
-      case 'research':
-        result = await handleResearch(effectiveTopic, effectiveSources, supabase, taskId);
+      case 'research': {
+        // Utan explicit ämne roterar daglig research mellan redaktörens kärnteman.
+        const themed = topic ? null : await themeOfTheDay(supabase);
+        result = themed
+          ? await handleResearch(themed, sources?.length ? sources : [], supabase, taskId)
+          : await handleResearch(effectiveTopic, effectiveSources, supabase, taskId);
         break;
+      }
 
       case 'blog_draft':
         // Redaktören väljer själv ämne utifrån profilen; ett explicit topic i anropet styr ämnet.
