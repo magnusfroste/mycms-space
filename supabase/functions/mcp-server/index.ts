@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
 // Method dispatcher
 // ============================================
 async function handleMethod(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   apiKey: any,
   rpc: JsonRpcRequest,
 ): Promise<any> {
@@ -427,7 +427,7 @@ const BUILTIN_TOOLS = [
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
 
 async function callBuiltinTool(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   name: string,
   args: any,
 ): Promise<string> {
@@ -486,7 +486,7 @@ async function callBuiltinTool(
 
 
 async function getProjectDetail(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   name: string,
 ): Promise<any | null> {
   const { data: repo } = await supabase
@@ -508,7 +508,7 @@ async function getProjectDetail(
 // Activity logging
 // ============================================
 async function logActivity(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   activity: {
     api_key_id: string | null;
     key_name: string | null;

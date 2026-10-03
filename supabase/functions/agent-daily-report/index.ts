@@ -260,7 +260,7 @@ Deno.serve(async (req: Request) => {
 
   } catch (err) {
     console.error('[daily-report] Error:', err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
