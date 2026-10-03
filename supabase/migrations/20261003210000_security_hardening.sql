@@ -129,6 +129,9 @@ create policy "Visitors can insert" on public.contact_messages for insert to ano
 create policy "Visitors can insert" on public.newsletter_subscribers for insert to anon, authenticated with check (true);
 create policy "Visitors can insert" on public.page_views for insert to anon, authenticated with check (true);
 create policy "Visitors can update" on public.chat_analytics for update to anon, authenticated using (true) with check (true);
+-- UPDATE … WHERE id = … also needs SELECT under RLS. chat_analytics only holds an
+-- anonymous visitor id and message counts, so public read is acceptable here.
+create policy "Visitors can read chat analytics" on public.chat_analytics for select to anon, authenticated using (true);
 
 -- Storage: public read for site images, admin-only writes.
 do $$
