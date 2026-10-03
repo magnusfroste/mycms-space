@@ -72,7 +72,8 @@ interface ContextSection {
   key: string;
   title: string;
   instruction: string;
-  formatData: (data: unknown[]) => string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formatData: (data: any) => string;
 }
 
 const contextSections: ContextSection[] = [
