@@ -22,7 +22,8 @@ function checkRateLimit(ip: string): boolean {
   return entry.count <= RATE_LIMIT;
 }
 
-async function validateA2AToken(supabase: ReturnType<typeof createClient>, req: Request): Promise<boolean> {
+async function validateA2AToken(// deno-lint-ignore no-explicit-any
+  supabase: any, req: Request): Promise<boolean> {
   const auth = req.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return false;
   const token = auth.replace('Bearer ', '').trim();
