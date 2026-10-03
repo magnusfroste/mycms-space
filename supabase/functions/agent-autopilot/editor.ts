@@ -102,7 +102,7 @@ async function search(query: string, opts: { tbs?: string; limit?: number; chars
   }
   const data = await res.json();
   return (data.data || [])
-    .filter((i: { url?: string }) => i.url)
+    .filter((i: { url?: string }) => i.url && !/\/(form|forms|login|signin|signup|register|subscribe)(\/|\?|$)/i.test(i.url))
     .map((i: { title?: string; url: string; markdown?: string; description?: string }) => ({
       title: i.title || i.url,
       url: i.url,
@@ -229,7 +229,10 @@ ${news.map((n) => `- ${n.title} | ${n.url}\n  ${n.text.replace(/\s+/g, " ").slic
 
 async function research(pick: TopicPick, news: Array<{ title: string; url: string; text: string }>): Promise<Source[]> {
   const fromNews = news.filter((n) => pick.news_urls?.includes(n.url));
-  const deep = await Promise.all((pick.research_queries || []).slice(0, 3).map((q) => search(q, { tbs: "qdr:m", limit: 4, chars: 2500 })));
+  const deep = await Promise.all((pick.research_queries || []).slice(0, 3).map(async (q) => {
+    const recent = await search(q, { tbs: "qdr:m", limit: 4, chars: 2500 });
+    return recent.length ? recent : search(q, { limit: 4, chars: 2500 });
+  }));
   // Re-fetch the chosen news items with full text
   const newsFull = await Promise.all(fromNews.map((n) => search(n.url, { limit: 1, chars: 2500 }).then((r) => r[0] || n)));
 
@@ -256,8 +259,10 @@ Redaktionella regler:
 - Varje faktapåstående som kommer från research ska länkas inline som markdown-länk till källans URL, t.ex. [enligt Reuters](https://...). Använd ENBART URL:er ur källistan. Minst ${MIN_SOURCES} olika källor.
 - Inga metaforkedjor, inga rubriker på formen "Den Digitala X:", inga tomma superlativ, ingen "i en värld där".
 - Ta upp det starkaste motargumentet och bemöt det.
+- Skriv aldrig ut etiketter som "Tes:" eller "Slutsats:" i löptexten – tesen ska framgå av texten.
+- Påstå bara erfarenheter, roller och projekt som står i profilen ovan eller i trovärdighetsraden. Hitta inte på anekdoter, siffror eller händelser. Nämns ett eget projekt ska läsaren få veta i en bisats vad det är.
 - 900–1400 ord. Mellanrubriker (##) där de hjälper läsaren.
-- Avsluta med en konkret slutsats eller handlingsråd. Högst en mening får knyta an till vad författaren erbjuder (${brief.offering}) – och bara om det är naturligt.
+- Avsluta med en konkret slutsats eller handlingsråd riktat till läsaren. Koppla gärna till författarens arbete (${brief.offering}) som erfarenhet, aldrig som erbjudande eller uppmaning att höra av sig.
 
 Utdataformat (exakt):
 # [Titel, max 70 tecken, konkret – inte metaforisk]
