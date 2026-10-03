@@ -10,7 +10,9 @@ Allow: /expertise
 Allow: /contact
 Allow: /blog
 
-# Sitemap
+# Sitemap (dynamisk: sidor, blogginlägg och projekt)
+Sitemap: https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/sitemap-dynamic
+# Statisk fallback
 Sitemap: https://www.froste.eu/sitemap.xml
 
 # AIEO - AI Engine Optimization

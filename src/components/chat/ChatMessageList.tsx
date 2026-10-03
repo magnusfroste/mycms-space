@@ -39,7 +39,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     if (lastMsg.isUser || lastMsg.id === lastSpokenIdRef.current) return;
     
     const plainText = lastMsg.text
-      .replace(/[#*_`~\[\]()>!|-]/g, '')
+      .replace(/[#*_`~[\]()>!|-]/g, '')
       .replace(/\n+/g, ' ')
       .trim();
     

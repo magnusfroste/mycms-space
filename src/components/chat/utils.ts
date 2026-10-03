@@ -14,6 +14,7 @@ export const cleanWebhookResponse = (text: string): string => {
     text
       .trim()
       // Remove any control characters except newlines and tabs
+      // eslint-disable-next-line no-control-regex
       .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "")
       // Normalize line breaks (convert CRLF and CR to LF)
       .replace(/\r\n/g, "\n")

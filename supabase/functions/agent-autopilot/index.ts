@@ -249,7 +249,7 @@ Style: Professional but approachable, with practical insights. Use subheadings, 
     
     // Extract metadata
     const metadataStart = blogContent.indexOf('METADATA:');
-    let content = metadataStart > 0 ? blogContent.substring(0, metadataStart).replace(/---\s*$/, '').trim() : blogContent;
+    const content = metadataStart > 0 ? blogContent.substring(0, metadataStart).replace(/---\s*$/, '').trim() : blogContent;
     
     let excerpt = '', seoDesc = '', seoTitle = '', seoKeywords: string[] = [];
     if (metadataStart > 0) {

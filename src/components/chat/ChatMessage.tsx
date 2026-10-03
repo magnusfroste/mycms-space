@@ -28,7 +28,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled, isPlay
 
   // Strip markdown for TTS
   const plainText = message.text
-    .replace(/[#*_`~\[\]()>!|-]/g, '')
+    .replace(/[#*_`~[\]()>!|-]/g, '')
     .replace(/\n+/g, ' ')
     .trim();
 

@@ -143,7 +143,7 @@ function AutomationEditorSheet({ automation, open, onClose, onSave }: { automati
     else if (triggerType === 'event') trigger_config = { event_name: eventName };
 
     let skill_arguments = {};
-    try { skill_arguments = JSON.parse(argsText); } catch {}
+    try { skill_arguments = JSON.parse(argsText); } catch { /* ogiltig JSON – behåll tomt objekt */ }
 
     onSave({
       ...(automation?.id ? { id: automation.id } : {}),

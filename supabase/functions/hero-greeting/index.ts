@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const hour = now.getHours();
     const timeOfDay = hour < 6 ? "night" : hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
     
-    let contextParts: string[] = [`Current time: ${timeOfDay}`];
+    const contextParts: string[] = [`Current time: ${timeOfDay}`];
     
     if (visitorContext) {
       if (visitorContext.isReturning) {

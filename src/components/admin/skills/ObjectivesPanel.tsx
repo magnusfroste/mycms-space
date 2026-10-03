@@ -200,8 +200,8 @@ function ObjectiveEditorSheet({ objective, open, onClose, onSave }: { objective:
   const handleSave = () => {
     let constraints = {};
     let success_criteria = {};
-    try { constraints = JSON.parse(constraintsText); } catch {}
-    try { success_criteria = JSON.parse(criteriaText); } catch {}
+    try { constraints = JSON.parse(constraintsText); } catch { /* ogiltig JSON – behåll tomt objekt */ }
+    try { success_criteria = JSON.parse(criteriaText); } catch { /* ogiltig JSON – behåll tomt objekt */ }
     onSave({ ...(objective?.id ? { id: objective.id } : {}), goal, constraints, success_criteria, status: objective?.status ?? 'active', progress: objective?.progress ?? {} });
     onClose();
   };
