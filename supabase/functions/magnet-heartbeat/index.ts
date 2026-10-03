@@ -122,7 +122,7 @@ async function loadObjectives(supabase: any): Promise<string> {
       : ' | NO PLAN (needs decompose_objective)';
     const deadline = o.constraints?.deadline ? ` | ⏰ deadline: ${o.constraints.deadline}` : '';
     const priority = o.constraints?.priority ? ` | priority: ${o.constraints.priority}` : '';
-    return `- #${i + 1} [score:${o._priority_score}] [${o.id.slice(0, 8)}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
   }).join('\n');
 }
 
@@ -153,11 +153,11 @@ async function loadLinkedAutomations(supabase: any): Promise<string> {
   let out = '\n\nEnabled automations (objective-linked ⭐ FIRST — prioritize these):';
   for (const a of linked) {
     const due = a.next_run_at && new Date(a.next_run_at) <= now ? ' ⏰ DUE' : '';
-    out += `\n- ⭐${due} [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id.slice(0, 8)} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
+    out += `\n- ⭐${due} [${a.id}] "${a.name}" → skill: ${a.skill_name} | objective: ${a.objective_id} | runs: ${a.run_count} | last_error: ${a.last_error || 'none'}`;
   }
   for (const a of unlinked) {
     const due = a.next_run_at && new Date(a.next_run_at) <= now ? ' ⏰ DUE' : '';
-    out += `\n-${due} [${a.id.slice(0, 8)}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
+    out += `\n-${due} [${a.id}] "${a.name}" → skill: ${a.skill_name} | runs: ${a.run_count}`;
   }
   return out;
 }
@@ -183,7 +183,7 @@ async function loadPendingSignals(supabase: any): Promise<string> {
     .order('created_at', { ascending: true }).limit(10);
   if (!data?.length) return '\nNo pending signals.';
   return '\n\n🚨 Pending signals (act on these NOW):\n' + data.map((t: any) =>
-    `- [${t.id.slice(0, 8)}] ${t.input_data?.title || t.input_data?.event || 'Unknown'} (${t.created_at})`
+    `- [${t.id}] ${t.input_data?.title || t.input_data?.event || 'Unknown'} (${t.created_at})`
   ).join('\n');
 }
 
