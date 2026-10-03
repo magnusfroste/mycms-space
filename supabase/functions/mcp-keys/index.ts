@@ -57,7 +57,6 @@ Deno.serve(async (req) => {
         name,
         key_hash: keyHash,
         key_prefix: keyPrefix,
-        key_plaintext: plainKey,
         scopes: scopes || ['tools:read', 'tools:call'],
         description: description || null,
         expires_at: expiresAt,
@@ -104,11 +103,11 @@ Deno.serve(async (req) => {
       const { data, error } = await supabase.from('mcp_api_keys').update({
         key_hash: keyHash,
         key_prefix: keyPrefix,
-        key_plaintext: plainKey,
         revoked: false,
         revoked_at: null,
       }).eq('id', key_id).select('id, name, key_prefix').single();
       if (error) throw error;
+      // Return the new plain key ONCE — only the hash is stored
       return new Response(JSON.stringify({ ...data, key: plainKey }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

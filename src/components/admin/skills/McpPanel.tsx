@@ -28,7 +28,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import {
   Plus, Copy, Trash2, Check, KeyRound, Activity, Server,
-  AlertTriangle, ExternalLink, Code, Eye, EyeOff, RefreshCw,
+  AlertTriangle, ExternalLink, Code, RefreshCw,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -38,7 +38,6 @@ type McpKey = {
   id: string;
   name: string;
   key_prefix: string;
-  key_plaintext: string | null;
   description: string | null;
   scopes: string[];
   last_used_at: string | null;
@@ -62,16 +61,15 @@ type McpActivity = {
 export default function McpPanel() {
   const qc = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
-  const [newKey, setNewKey] = useState<{ key: string; name: string } | null>(null);
+  const [newKey, setNewKey] = useState<{ key: string; name: string; rotated?: boolean } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const { data: keys = [], isLoading: keysLoading } = useQuery({
     queryKey: ['mcp-keys'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('mcp_api_keys')
-        .select('*')
+        .select('id, name, key_prefix, description, scopes, last_used_at, use_count, revoked, expires_at, created_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as McpKey[];
@@ -119,7 +117,7 @@ export default function McpPanel() {
       setNewKey({ key: data.key, name: variables.name });
       setCreateOpen(false);
       qc.invalidateQueries({ queryKey: ['mcp-keys'] });
-      toast({ title: 'API key created', description: 'Key is visible in the table — rotate anytime.' });
+      toast({ title: 'API key created', description: 'Copy it now — it is shown only once.' });
     },
     onError: (err: Error) => toast({ title: 'Failed to create key', description: err.message, variant: 'destructive' }),
   });
@@ -149,8 +147,9 @@ export default function McpPanel() {
       return data;
     },
     onSuccess: (data) => {
+      setNewKey({ key: data.key, name: data.name, rotated: true });
       qc.invalidateQueries({ queryKey: ['mcp-keys'] });
-      toast({ title: 'Key rotated', description: `${data.name} has a new value.` });
+      toast({ title: 'Key rotated', description: 'Copy the new key now — it is shown only once.' });
     },
     onError: (err: Error) => toast({ title: 'Failed to rotate key', description: err.message, variant: 'destructive' }),
   });
@@ -179,10 +178,10 @@ export default function McpPanel() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-600" /> Key created: {newKey?.name}
+              <Check className="h-5 w-5 text-green-600" /> {newKey?.rotated ? 'Key rotated' : 'Key created'}: {newKey?.name}
             </DialogTitle>
             <DialogDescription>
-              The key is now visible in the table below — you can copy or rotate it anytime.
+              Copy it now. Only a hash is stored, so the key cannot be shown again — if it is lost, rotate it.
             </DialogDescription>
           </DialogHeader>
           <div className="bg-muted rounded-md p-3 font-mono text-xs break-all">
@@ -262,7 +261,7 @@ export default function McpPanel() {
               <KeyRound className="h-4 w-4" /> API Keys
             </CardTitle>
             <CardDescription className="mt-1">
-              Issue, copy, rotate or revoke keys for external agents. Rotate often instead of hiding.
+              Issue, rotate or revoke keys for external agents. A key is shown once when it is created or rotated.
             </CardDescription>
           </div>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -296,36 +295,14 @@ export default function McpPanel() {
               </TableHeader>
               <TableBody>
                 {keys.map((k) => {
-                  const isRevealed = !!revealed[k.id];
-                  const display = k.key_plaintext
-                    ? (isRevealed ? k.key_plaintext : `${k.key_prefix}${'•'.repeat(20)}`)
-                    : `${k.key_prefix}… (legacy)`;
                   return (
                   <TableRow key={k.id}>
                     <TableCell className="font-medium">{k.name}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 max-w-[280px]">
                         <code className="font-mono text-[11px] truncate flex-1 bg-muted rounded px-1.5 py-0.5">
-                          {display}
+                          {`${k.key_prefix}…`}
                         </code>
-                        {k.key_plaintext && (
-                          <>
-                            <Button
-                              variant="ghost" size="icon" className="h-6 w-6 shrink-0"
-                              onClick={() => setRevealed((r) => ({ ...r, [k.id]: !r[k.id] }))}
-                              title={isRevealed ? 'Hide' : 'Reveal'}
-                            >
-                              {isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </Button>
-                            <Button
-                              variant="ghost" size="icon" className="h-6 w-6 shrink-0"
-                              onClick={() => copyToClipboard(k.key_plaintext!, `key-${k.id}`)}
-                              title="Copy"
-                            >
-                              {copied === `key-${k.id}` ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                            </Button>
-                          </>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -793,7 +793,6 @@ export type Database = {
           expires_at: string | null
           id: string
           key_hash: string
-          key_plaintext: string | null
           key_prefix: string
           last_used_at: string | null
           name: string
@@ -810,7 +809,6 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key_hash: string
-          key_plaintext?: string | null
           key_prefix: string
           last_used_at?: string | null
           name: string
@@ -827,7 +825,6 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key_hash?: string
-          key_plaintext?: string | null
           key_prefix?: string
           last_used_at?: string | null
           name?: string
