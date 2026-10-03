@@ -11,5 +11,5 @@
     "a2a_negotiate": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/a2a-negotiate"
   },
   "authentication": { "schemes": ["bearer"], "anonymous_read": true },
-  "mcp_manifest": "https://www.froste.eu/.well-known/mcp.json"
+  "mcp_manifest": "https://www.froste.eu/mcp.json"
 }

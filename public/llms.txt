@@ -28,8 +28,8 @@ Magnus Froste is an Innovation Strategist and Agentic AI Expert with 20+ years o
 www.froste.eu is a static site, so the MCP server is hosted on Supabase. Connect to the endpoint below, not to the domain.
 
 MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server` (streamable HTTP)
-Manifest: https://www.froste.eu/.well-known/mcp.json
-Agent card: https://www.froste.eu/.well-known/agent.json
+Manifest: https://www.froste.eu/mcp.json
+Agent card: https://www.froste.eu/agent.json
 
 Open without a key (read-only):
 - `list_projects` — browse Magnus's GitHub projects
