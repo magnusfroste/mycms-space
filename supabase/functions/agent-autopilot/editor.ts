@@ -15,6 +15,7 @@
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
 type Supabase = SupabaseClient;
 
@@ -128,6 +129,8 @@ async function buildBrief(supabase: Supabase): Promise<EditorBrief> {
   ).join("\n");
   const seoCfg = (seo.data?.module_config || {}) as Record<string, string>;
   const postText = (posts.data || []).map((p) => `- ${p.title}`).join("\n");
+  // The public knowledge base is the richest profile source when it exists.
+  const kbText = (await loadKnowledgeBase({ includePrivate: false }))?.slice(0, 40_000) || "";
 
   const raw = await chat(
     `Du är chefredaktör och varumärkesstrateg. Du bygger en redaktionell brief för en personlig expertblogg.
@@ -141,8 +144,8 @@ Svara ENBART med JSON enligt schemat:
 Ge 4–6 teman. Teman ska täcka personens faktiska expertis och projekt – inte bara det bloggen hittills skrivit om.`,
     `SEO-profil: ${seoCfg.site_title || ""} – ${seoCfg.site_description || ""}
 
-CV:
-${resumeText}
+CV / kunskapsbas:
+${kbText || resumeText}
 
 Egna projekt (GitHub):
 ${repoText}

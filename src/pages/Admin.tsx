@@ -43,7 +43,7 @@ const GeneralSettings = lazy(() => import('@/components/admin/GeneralSettings'))
 const LandingPageManager = lazy(() => import('@/components/admin/LandingPageManager'));
 const MagnetChat = lazy(() => import('@/components/admin/MagnetChat'));
 const Agency = lazy(() => import('@/components/admin/SkillHub'));
-const ResumeManager = lazy(() => import('@/components/admin/ResumeManager'));
+const KnowledgeBaseManager = lazy(() => import('@/components/admin/KnowledgeBaseManager'));
 const ChromeExtensionModuleSettings = lazy(() => import('@/components/admin/ChromeExtensionModuleSettings'));
 const ModulesManager = lazy(() => import('@/components/admin/ModulesManager'));
 
@@ -71,7 +71,7 @@ const TAB_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentTy
   settings: GeneralSettings,
   chat: MagnetChat,
   agency: Agency,
-  resume: ResumeManager,
+  resume: KnowledgeBaseManager,
   'chrome-extension': ChromeExtensionModuleSettings,
   modules: ModulesManager,
 };

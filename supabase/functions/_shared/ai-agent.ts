@@ -587,7 +587,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
   // Load context in parallel
   const [resumeContext, agentMemory] = await Promise.all([
-    loadResumeContext(),
+    loadResumeContext({ includePrivate: mode === 'admin' }),
     loadAgentMemory(),
   ]);
 
@@ -601,8 +601,10 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     console.log(`[Agent] Injected ${agentMemory.length} memory entries`);
   }
 
-  if (resumeContext && mode === 'public') {
-    fullPrompt += `\n\n## Magnus's Complete Profile\n${resumeContext}`;
+  if (resumeContext) {
+    fullPrompt += mode === 'public'
+      ? `\n\n## Magnus's Complete Profile\n${resumeContext}`
+      : `\n\n## Owner knowledge base (includes private documents – admin context only)\n${resumeContext}`;
   }
 
   // Load skill instructions from DB

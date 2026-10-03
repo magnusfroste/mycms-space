@@ -7,6 +7,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PROFILE_TOOLS, PROFILE_TOOL_NAMES, callProfileTool } from "./profile-tools.ts";
+import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "./knowledge-tools.ts";
+import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +62,7 @@ Deno.serve(async (req) => {
       transport: 'streamable-http',
       description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
-      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows the built-in tools (get_profile, list_projects, get_project, search_projects, get_resume, analyze_job_fit, generate_tailored_cv, contact_magnus). AI tools and contact are rate limited. API key required for skill execution.' },
+      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows the built-in read tools (get_profile, get_resume, list_projects, get_project, search_projects, kb_list, kb_get, analyze_job_fit, generate_tailored_cv, contact_magnus). AI tools and contact are rate limited. An API key is required to write the knowledge base (kb_upsert, kb_append, kb_delete) and to execute skills.' },
     }, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -235,7 +237,7 @@ async function handleMethod(
 
       // Anonymous = built-ins only (read-only metadata)
       if (apiKey.anonymous) {
-        return { tools: ALL_BUILTIN_TOOLS };
+        return { tools: ANON_TOOLS };
       }
 
       const { data: skills } = await supabase
@@ -265,12 +267,16 @@ async function handleMethod(
       if (!name) throw new Error('Missing tool name');
 
       // Built-in project tools — available to everyone (incl. anonymous)
+      if (KNOWLEDGE_TOOL_NAMES.has(name)) {
+        const text = await callKnowledgeTool(supabase, name, args || {}, { anonymous: !!apiKey.anonymous, keyName: apiKey.name || null });
+        return { content: [{ type: 'text', text }], isError: text.startsWith('{"error"') };
+      }
       if (PROFILE_TOOL_NAMES.has(name)) {
         const text = await callProfileTool(supabase, name, args || {}, { anonymous: !!apiKey.anonymous });
         return { content: [{ type: 'text', text }], isError: text.startsWith('{"error"') };
       }
       if (BUILTIN_TOOL_NAMES.has(name)) {
-        const text = await callBuiltinTool(supabase, name, args || {});
+        const text = await callBuiltinTool(supabase, name, args || {}, !!apiKey.anonymous);
         return { content: [{ type: 'text', text }], isError: false };
       }
 
@@ -430,12 +436,14 @@ const BUILTIN_TOOLS = [
   },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
-const ALL_BUILTIN_TOOLS = [...PROFILE_TOOLS, ...BUILTIN_TOOLS];
+const ALL_BUILTIN_TOOLS = [...PROFILE_TOOLS, ...BUILTIN_TOOLS, ...KNOWLEDGE_TOOLS];
+const ANON_TOOLS = ALL_BUILTIN_TOOLS.filter(t => !['kb_upsert', 'kb_append', 'kb_delete'].includes(t.name));
 
 async function callBuiltinTool(
   supabase: any,
   name: string,
   args: any,
+  anonymous = true,
 ): Promise<string> {
   if (name === 'list_projects') {
     let q = supabase
@@ -474,6 +482,11 @@ async function callBuiltinTool(
   }
 
   if (name === 'get_resume') {
+    // The knowledge base (markdown documents) is the primary profile source when it has content.
+    if (!args.category) {
+      const kb = await loadKnowledgeBase({ includePrivate: !anonymous });
+      if (kb) return kb;
+    }
     let q = supabase
       .from('resume_entries')
       .select('category, title, subtitle, description, start_date, end_date, is_current, tags, metadata')

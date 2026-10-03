@@ -327,9 +327,45 @@ check the review queue, approve pending tasks, show site analytics, and save/upd
 // Resume Context Loader (Server-side)
 // ============================================
 
-/** Load structured resume from resume_entries + resume module config */
-export async function loadResumeContext(): Promise<string | null> {
+/** Max characters of knowledge base text injected into a prompt (~30k words). */
+const KNOWLEDGE_MAX_CHARS = 200_000;
+
+/**
+ * Load the knowledge base (markdown documents maintained by the owner or by agents via MCP).
+ * Public documents only, unless includePrivate is set (admin chat, authenticated agents).
+ * Returns null when the knowledge base is empty, so callers can fall back to resume_entries.
+ */
+export async function loadKnowledgeBase(opts: { includePrivate?: boolean } = {}): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  let q = supabase
+    .from('knowledge_docs')
+    .select('title, content, visibility')
+    .order('order_index')
+    .order('title');
+  if (!opts.includePrivate) q = q.eq('visibility', 'public');
+  const { data, error } = await q;
+  if (error || !data?.length) return null;
+
+  let text = data
+    .filter((d) => (d.content as string)?.trim())
+    .map((d) => `# ${d.title}${d.visibility === 'private' ? ' (privat – citera inte för besökare)' : ''}\n\n${(d.content as string).trim()}`)
+    .join('\n\n---\n\n');
+  if (!text) return null;
+  if (text.length > KNOWLEDGE_MAX_CHARS) {
+    console.warn(`[AI Context] Knowledge base truncated from ${text.length} to ${KNOWLEDGE_MAX_CHARS} chars`);
+    text = text.slice(0, KNOWLEDGE_MAX_CHARS);
+  }
+  console.log(`[AI Context] Loaded knowledge base: ${data.length} docs, ${text.length} chars`);
+  return text;
+}
+
+/** Load the owner's profile: knowledge base first, then structured resume_entries, then page blocks. */
+export async function loadResumeContext(opts: { includePrivate?: boolean } = {}): Promise<string | null> {
   try {
+    const kb = await loadKnowledgeBase(opts);
+    if (kb) return kb;
+
     const supabase = getSupabaseClient();
     if (!supabase) return null;
 

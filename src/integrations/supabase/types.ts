@@ -657,6 +657,78 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_doc_versions: {
+        Row: {
+          change_type: string
+          changed_by: string | null
+          content: string
+          created_at: string
+          doc_id: string | null
+          id: string
+          slug: string
+          title: string
+          visibility: string
+        }
+        Insert: {
+          change_type: string
+          changed_by?: string | null
+          content: string
+          created_at?: string
+          doc_id?: string | null
+          id?: string
+          slug: string
+          title: string
+          visibility: string
+        }
+        Update: {
+          change_type?: string
+          changed_by?: string | null
+          content?: string
+          created_at?: string
+          doc_id?: string | null
+          id?: string
+          slug?: string
+          title?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      knowledge_docs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          order_index: number
+          slug: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          visibility: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          slug: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          slug?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: string
+        }
+        Relationships: []
+      }
       mcp_activities: {
         Row: {
           api_key_id: string | null
