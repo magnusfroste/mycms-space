@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
 // ============================================
 
 async function executeModuleAction(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   moduleName: string,
   _skillName: string,
   args: Record<string, unknown>,
@@ -177,7 +177,7 @@ async function executeModuleAction(
 // ============================================
 
 async function executeResumeAction(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
@@ -253,7 +253,7 @@ async function executeResumeAction(
 // ============================================
 
 async function executeDbAction(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   table: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
@@ -291,7 +291,7 @@ async function executeDbAction(
 // ============================================
 
 async function logActivity(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   activity: {
     agent: string; skill_id: string; skill_name: string;
     input: Record<string, unknown>; output: Record<string, unknown>;
@@ -330,7 +330,7 @@ const SKILL_OBJECTIVE_MAP: Record<string, string[]> = {
 };
 
 async function trackObjectiveProgress(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   skillName: string,
   activityId: string,
 ): Promise<void> {
