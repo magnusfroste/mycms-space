@@ -25,15 +25,20 @@ Magnus Froste is an Innovation Strategist and Agentic AI Expert with 20+ years o
 - [GitHub Projects](https://www.froste.eu/github): Synced repos with enriched problem statements and case studies
 
 ## Agentic Access (MCP)
-This site exposes a Model Context Protocol (MCP) server that lets AI assistants like Claude, ChatGPT, and OpenClaw discover and use:
-- `list_projects` — browse Magnus's GitHub projects with filters
-- `get_project` — full enriched data for a specific project (problem, why-it-matters, README, images)
-- `search_projects` — full-text search across all projects
-- All dynamically registered agent skills
+www.froste.eu is a static site, so the MCP server is hosted on Supabase. Connect to the endpoint below, not to the domain.
 
-MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server`
+MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server` (streamable HTTP)
+Manifest: https://www.froste.eu/.well-known/mcp.json
+Agent card: https://www.froste.eu/.well-known/agent.json
+
+Open without a key (read-only):
+- `list_projects` — browse Magnus's GitHub projects
+- `get_project` — full enriched data for one project (problem, why-it-matters, README, images)
+- `search_projects` — full-text search across all projects
+- `get_resume` — the full CV: experience, education, certifications, skills
+
+With a Bearer MCP key (request via contact): all dynamically registered agent skills.
 Resources: `project://<repo-name>` per synced GitHub repo
-Auth: Bearer MCP key (request via contact)
 
 ## Contact
 - Website: https://www.froste.eu

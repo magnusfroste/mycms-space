@@ -1,0 +1,25 @@
+{
+  "schema_version": "2025-06-18",
+  "name": "froste-eu",
+  "title": "Magnus Froste – Magnet",
+  "description": "MCP-server för Magnus Frostes portfolio: projekt, CV och agent-skills. Servern ligger på Supabase eftersom www.froste.eu är en statisk sajt – anslut till endpoint nedan, inte till domänen.",
+  "endpoint": "https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server",
+  "transport": "streamable-http",
+  "auth": {
+    "type": "bearer",
+    "header": "Authorization",
+    "required": false,
+    "note": "Läsverktygen fungerar utan nyckel. Nyckel krävs för skill-exekvering; den skapas av Magnus i admin under MCP."
+  },
+  "tools": {
+    "anonymous": [
+      { "name": "list_projects", "description": "Alla aktiva GitHub-projekt med berikade titlar, beskrivningar, språk och ämnen." },
+      { "name": "get_project", "description": "Fullständig information om ett projekt: problem, varför det spelar roll, README och bilder." },
+      { "name": "search_projects", "description": "Fritextsökning över projektens titlar, beskrivningar och ämnen." },
+      { "name": "get_resume", "description": "Hela CV:t: erfarenhet, utbildning, certifieringar och kompetenser." }
+    ],
+    "authenticated": "Dynamiskt registrerade agent-skills; listas via tools/list med giltig nyckel."
+  },
+  "documentation": "https://www.froste.eu/llms.txt",
+  "contact": "https://www.froste.eu/contact"
+}
