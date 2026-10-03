@@ -61,7 +61,7 @@ export async function callOpenAICompatible(params: {
   url: string;
   apiKey: string;
   model: string;
-  messages: Array<{ role: string; content: string; tool_calls?: unknown[]; tool_call_id?: string }>;
+  messages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }>;
   tools?: unknown[];
   toolChoice?: unknown;
 }): Promise<{ choices: Array<{ message: { content?: string; tool_calls?: Array<{ id?: string; function?: { name?: string; arguments?: string } }> } }> }> {
