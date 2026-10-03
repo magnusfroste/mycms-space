@@ -9,14 +9,42 @@
     "type": "bearer",
     "header": "Authorization",
     "required": false,
-    "note": "Läsverktygen fungerar utan nyckel. Nyckel krävs för skill-exekvering; den skapas av Magnus i admin under MCP."
+    "note": "Alla inbyggda verktyg fungerar utan nyckel; AI-verktygen och kontakt är begränsade per timme. Nyckel krävs för skill-exekvering; den skapas av Magnus i admin under MCP."
   },
   "tools": {
     "anonymous": [
-      { "name": "list_projects", "description": "Alla aktiva GitHub-projekt med berikade titlar, beskrivningar, språk och ämnen." },
-      { "name": "get_project", "description": "Fullständig information om ett projekt: problem, varför det spelar roll, README och bilder." },
-      { "name": "search_projects", "description": "Fritextsökning över projektens titlar, beskrivningar och ämnen." },
-      { "name": "get_resume", "description": "Hela CV:t: erfarenhet, utbildning, certifieringar och kompetenser." }
+      {
+        "name": "get_profile",
+        "description": "Vem Magnus är: positionering, målgrupp, erbjudande, kärnteman, nuvarande roller, tillgänglighet och länkar. Börja här."
+      },
+      {
+        "name": "get_resume",
+        "description": "Hela CV:t: erfarenhet, utbildning, certifieringar och kompetenser."
+      },
+      {
+        "name": "list_projects",
+        "description": "Alla aktiva GitHub-projekt med berikade titlar, beskrivningar, språk och ämnen."
+      },
+      {
+        "name": "get_project",
+        "description": "Fullständig information om ett projekt: problem, varför det spelar roll, README och bilder."
+      },
+      {
+        "name": "search_projects",
+        "description": "Fritextsökning över projektens titlar, beskrivningar och ämnen."
+      },
+      {
+        "name": "analyze_job_fit",
+        "description": "Matcha en tjänst eller ett uppdrag mot CV:t: poäng 0–100, kompetens för kompetens, styrkor, luckor och rekommendation."
+      },
+      {
+        "name": "generate_tailored_cv",
+        "description": "Matchningsanalys, anpassat CV och personligt brev i markdown – samma som CV-agenten på sajten."
+      },
+      {
+        "name": "contact_magnus",
+        "description": "Skicka ett meddelande till Magnus med namn och e-post; han svarar personligen."
+      }
     ],
     "authenticated": "Dynamiskt registrerade agent-skills; listas via tools/list med giltig nyckel."
   },

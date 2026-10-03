@@ -31,11 +31,16 @@ MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server`
 Manifest: https://www.froste.eu/mcp.json
 Agent card: https://www.froste.eu/agent.json
 
-Open without a key (read-only):
+Open without a key:
+- `get_profile` — who Magnus is: positioning, audience, offering, core themes, current roles, links. Start here.
+- `get_resume` — the full CV: experience, education, certifications, skills
 - `list_projects` — browse Magnus's GitHub projects
 - `get_project` — full enriched data for one project (problem, why-it-matters, README, images)
 - `search_projects` — full-text search across all projects
-- `get_resume` — the full CV: experience, education, certifications, skills
+- `analyze_job_fit` — score a role or assignment against the CV: 0–100, skill match, strengths, gaps, recommendation
+- `generate_tailored_cv` — match analysis, tailored CV and cover letter in markdown
+- `contact_magnus` — send Magnus a message with name and email; he replies personally
+AI tools and contact are rate limited per hour for anonymous callers.
 
 With a Bearer MCP key (request via contact): all dynamically registered agent skills.
 Resources: `project://<repo-name>` per synced GitHub repo

@@ -6,6 +6,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { PROFILE_TOOLS, PROFILE_TOOL_NAMES, callProfileTool } from "./profile-tools.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
       transport: 'streamable-http',
       description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
-      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows read-only built-in tools (list_projects, get_project, search_projects, get_resume). API key required for skill execution.' },
+      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows the built-in tools (get_profile, list_projects, get_project, search_projects, get_resume, analyze_job_fit, generate_tailored_cv, contact_magnus). AI tools and contact are rate limited. API key required for skill execution.' },
     }, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -234,7 +235,7 @@ async function handleMethod(
 
       // Anonymous = built-ins only (read-only metadata)
       if (apiKey.anonymous) {
-        return { tools: BUILTIN_TOOLS };
+        return { tools: ALL_BUILTIN_TOOLS };
       }
 
       const { data: skills } = await supabase
@@ -253,7 +254,7 @@ async function handleMethod(
         };
       });
 
-      return { tools: [...BUILTIN_TOOLS, ...skillTools] };
+      return { tools: [...ALL_BUILTIN_TOOLS, ...skillTools] };
     }
 
     case 'tools/call': {
@@ -264,6 +265,10 @@ async function handleMethod(
       if (!name) throw new Error('Missing tool name');
 
       // Built-in project tools — available to everyone (incl. anonymous)
+      if (PROFILE_TOOL_NAMES.has(name)) {
+        const text = await callProfileTool(supabase, name, args || {}, { anonymous: !!apiKey.anonymous });
+        return { content: [{ type: 'text', text }], isError: text.startsWith('{"error"') };
+      }
       if (BUILTIN_TOOL_NAMES.has(name)) {
         const text = await callBuiltinTool(supabase, name, args || {});
         return { content: [{ type: 'text', text }], isError: false };
@@ -272,7 +277,7 @@ async function handleMethod(
       // Skill execution requires an authenticated API key
       if (apiKey.anonymous) {
         return {
-          content: [{ type: 'text', text: `Tool '${name}' requires an API key. Built-in tools (${[...BUILTIN_TOOL_NAMES].join(', ')}) are available anonymously.` }],
+          content: [{ type: 'text', text: `Tool '${name}' requires an API key. Built-in tools (${[...PROFILE_TOOL_NAMES, ...BUILTIN_TOOL_NAMES].join(', ')}) are available anonymously.` }],
           isError: true,
         };
       }
@@ -425,6 +430,7 @@ const BUILTIN_TOOLS = [
   },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
+const ALL_BUILTIN_TOOLS = [...PROFILE_TOOLS, ...BUILTIN_TOOLS];
 
 async function callBuiltinTool(
   supabase: any,
