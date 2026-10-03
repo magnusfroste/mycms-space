@@ -66,18 +66,29 @@ export const fetchSubscribers = async (): Promise<NewsletterSubscriber[]> => {
 export const createSubscriber = async (
   input: CreateSubscriberInput
 ): Promise<NewsletterSubscriber> => {
-  const { data, error } = await supabase
+  // Visitors may insert but not read subscribers (RLS), so the id is generated
+  // client-side and the row is not selected back.
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const { error } = await supabase
     .from('newsletter_subscribers')
-    .insert(input)
-    .select()
-    .single();
+    .insert({ ...input, id });
 
   if (error) {
     console.error('Error creating subscriber:', error);
     throw error;
   }
 
-  return data as NewsletterSubscriber;
+  return {
+    id,
+    email: input.email,
+    name: (input as { name?: string | null }).name ?? null,
+    status: 'active',
+    subscribed_at: now,
+    unsubscribed_at: null,
+    created_at: now,
+    updated_at: now,
+  };
 };
 
 export const updateSubscriberStatus = async (

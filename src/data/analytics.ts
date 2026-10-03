@@ -40,17 +40,19 @@ export const trackProjectView = async (
 export const trackChatSession = async (): Promise<string> => {
   const visitorId = getVisitorId();
   
-  const { data, error } = await supabase
+  // Visitors may insert/update but not read chat analytics (RLS), so the id is
+  // generated client-side instead of selected back.
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from('chat_analytics')
     .insert({
+      id,
       visitor_id: visitorId,
       message_count: 0,
-    })
-    .select('id')
-    .single();
+    });
 
   if (error) throw error;
-  return data.id;
+  return id;
 };
 
 // Update chat session message count

@@ -33,13 +33,23 @@ export const fetchContactMessages = async (): Promise<ContactMessage[]> => {
 };
 
 export const createContactMessage = async (input: CreateContactMessageInput): Promise<ContactMessage> => {
-  const { data, error } = await supabase
+  // Visitors may insert but not read contact messages (RLS), so the id is
+  // generated client-side and the row is not selected back.
+  const id = crypto.randomUUID();
+  const { error } = await supabase
     .from('contact_messages')
-    .insert([input])
-    .select()
-    .single();
+    .insert([{ ...input, id }]);
 
   if (error) throw error;
+  const data: ContactMessage = {
+    id,
+    name: input.name,
+    email: input.email,
+    subject: input.subject ?? null,
+    message: input.message,
+    is_read: false,
+    created_at: new Date().toISOString(),
+  };
   
   // Dispatch webhook after successful creation
   try {
