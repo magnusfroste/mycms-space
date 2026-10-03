@@ -5,6 +5,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { handleEditorDraft, type DraftToSave } from "./editor.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,7 @@ interface AutopilotRequest {
   active?: boolean;
   schedule?: string;
   channels?: string[];
+  rebuild_brief?: boolean;
 }
 
 function getSupabase() {
@@ -195,167 +197,83 @@ Be concise and actionable.`
   }
 }
 
-async function handleBlogDraft(topic: string, sources: string[], supabase: ReturnType<typeof getSupabase>) {
-  const taskId = crypto.randomUUID();
-  await supabase.from('agent_tasks').insert({
-    id: taskId,
-    task_type: 'blog_draft',
-    status: 'running',
-    input_data: { topic, sources },
-  });
+// Saves an editor draft as a blog post (draft status) and generates a cover image.
+async function saveDraftPost(supabase: ReturnType<typeof getSupabase>, draft: DraftToSave) {
+  const title = draft.title;
+  const slug = title.toLowerCase()
+    .replace(/[åä]/g, 'a').replace(/ö/g, 'o')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const postSlug = `${slug}-${Date.now()}`;
 
+  const { data: post, error: postError } = await supabase.from('blog_posts').insert({
+    title,
+    slug: postSlug,
+    content: draft.content,
+    excerpt: draft.excerpt,
+    status: 'draft',
+    source: 'agent',
+    seo_title: draft.seoTitle || title,
+    seo_description: draft.seoDescription || draft.excerpt,
+    seo_keywords: draft.seoKeywords.length ? draft.seoKeywords : null,
+  }).select('id').single();
+
+  if (postError) throw postError;
+
+  let coverImageUrl: string | null = null;
   try {
-    // Step 0: Check existing posts to avoid duplicates
-    const { data: existingPosts } = await supabase
-      .from('blog_posts')
-      .select('title, slug, excerpt, status')
-      .order('created_at', { ascending: false })
-      .limit(30);
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (LOVABLE_API_KEY) {
+      console.log('[blog_draft] Generating cover image for:', title);
+      const imgPrompt = `Create a modern, visually striking blog cover image for an article titled "${title}". Style: clean, minimal, tech-oriented with abstract geometric shapes or gradients. No text in the image. Professional color palette.`;
+      
+      const imgRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image',
+          messages: [{ role: 'user', content: imgPrompt }],
+          modalities: ['image', 'text'],
+        }),
+      });
 
-    const existingTitles = (existingPosts || []).map(p => `- "${p.title}" (${p.status})`).join('\n');
-    const deduplicationContext = existingTitles
-      ? `\n\nIMPORTANT — These blog posts already exist on the site. You MUST choose a DIFFERENT angle, framing, and title. Do NOT repeat similar headlines or perspectives:\n${existingTitles}`
-      : '';
-
-    // Step 1: Research
-    const research = await researchTopic(topic, sources);
-
-    // Step 2: Generate blog post
-    const blogContent = await generateContent(
-      `Write a blog post about: "${topic}"\n\nResearch:\n${research}${deduplicationContext}`,
-      `You are a professional tech blogger writing for a personal brand site. Write an engaging, SEO-optimized blog post.
-
-CRITICAL: Every post must have a UNIQUE angle. If similar topics exist, find a fresh perspective — a different thesis, audience, format (tutorial, opinion, deep-dive, comparison, prediction), or sub-topic. Never reuse titles or framings.
-
-Output format (use these exact headers):
-# [Blog Title]
-
-[Full blog content in markdown, 800-1200 words]
-
----
-METADATA:
-title: [SEO title, max 60 chars]
-excerpt: [Compelling excerpt, max 160 chars]  
-seo_description: [Meta description, max 160 chars]
-seo_keywords: [comma-separated keywords]
-
-Style: Professional but approachable, with practical insights. Use subheadings, code examples where relevant, and end with a call-to-action or thought-provoking question.`
-    );
-
-    // Step 3: Parse and save as draft
-    const lines = blogContent.split('\n');
-    const titleMatch = lines.find(l => l.startsWith('# '));
-    const title = titleMatch?.replace('# ', '').trim() || topic;
-    
-    // Extract metadata
-    const metadataStart = blogContent.indexOf('METADATA:');
-    const content = metadataStart > 0 ? blogContent.substring(0, metadataStart).replace(/---\s*$/, '').trim() : blogContent;
-    
-    let excerpt = '', seoDesc = '', seoTitle = '', seoKeywords: string[] = [];
-    if (metadataStart > 0) {
-      const meta = blogContent.substring(metadataStart);
-      const extractMeta = (key: string) => {
-        const match = meta.match(new RegExp(`${key}:\\s*(.+)`));
-        return match?.[1]?.trim() || '';
-      };
-      seoTitle = extractMeta('title');
-      excerpt = extractMeta('excerpt');
-      seoDesc = extractMeta('seo_description');
-      seoKeywords = extractMeta('seo_keywords').split(',').map(k => k.trim()).filter(Boolean);
-    }
-
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-    const postSlug = `${slug}-${Date.now()}`;
-    const { data: post, error: postError } = await supabase.from('blog_posts').insert({
-      title,
-      slug: postSlug,
-      content: content.replace(/^# .+\n/, ''),
-      excerpt: excerpt || content.substring(0, 155),
-      status: 'draft',
-      source: 'agent',
-      seo_title: seoTitle || title,
-      seo_description: seoDesc || excerpt,
-      seo_keywords: seoKeywords.length ? seoKeywords : null,
-    }).select('id').single();
-
-    if (postError) throw postError;
-
-    // Step 4: Generate cover image via AI
-    let coverImageUrl: string | null = null;
-    try {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (LOVABLE_API_KEY) {
-        console.log('[blog_draft] Generating cover image for:', title);
-        const imgPrompt = `Create a modern, visually striking blog cover image for an article titled "${title}". Style: clean, minimal, tech-oriented with abstract geometric shapes or gradients. No text in the image. Professional color palette.`;
+      if (imgRes.ok) {
+        const imgData = await imgRes.json();
+        const base64Url = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
         
-        const imgRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-image',
-            messages: [{ role: 'user', content: imgPrompt }],
-            modalities: ['image', 'text'],
-          }),
-        });
-
-        if (imgRes.ok) {
-          const imgData = await imgRes.json();
-          const base64Url = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        if (base64Url) {
+          // Extract base64 data and upload to storage
+          const base64Data = base64Url.replace(/^data:image\/\w+;base64,/, '');
+          const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+          const imagePath = `covers/${postSlug}.png`;
           
-          if (base64Url) {
-            // Extract base64 data and upload to storage
-            const base64Data = base64Url.replace(/^data:image\/\w+;base64,/, '');
-            const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            const imagePath = `covers/${postSlug}.png`;
-            
-            const { error: uploadError } = await supabase.storage
-              .from('blog-images')
-              .upload(imagePath, imageBytes, { contentType: 'image/png', upsert: true });
+          const { error: uploadError } = await supabase.storage
+            .from('blog-images')
+            .upload(imagePath, imageBytes, { contentType: 'image/png', upsert: true });
 
-            if (!uploadError) {
-              const { data: publicUrl } = supabase.storage.from('blog-images').getPublicUrl(imagePath);
-              coverImageUrl = publicUrl.publicUrl;
-              
-              await supabase.from('blog_posts').update({
-                cover_image_url: coverImageUrl,
-                cover_image_path: imagePath,
-              }).eq('id', post.id);
-              
-              console.log('[blog_draft] Cover image saved:', imagePath);
-            } else {
-              console.error('[blog_draft] Image upload error:', uploadError);
-            }
+          if (!uploadError) {
+            const { data: publicUrl } = supabase.storage.from('blog-images').getPublicUrl(imagePath);
+            coverImageUrl = publicUrl.publicUrl;
+            
+            await supabase.from('blog_posts').update({
+              cover_image_url: coverImageUrl,
+              cover_image_path: imagePath,
+            }).eq('id', post.id);
+            
+            console.log('[blog_draft] Cover image saved:', imagePath);
+          } else {
+            console.error('[blog_draft] Image upload error:', uploadError);
           }
         }
       }
-    } catch (imgErr) {
-      console.error('[blog_draft] Cover image generation failed (non-blocking):', imgErr);
     }
-
-    await supabase.from('agent_tasks').update({
-      status: 'needs_review',
-      completed_at: new Date().toISOString(),
-      output_data: { 
-        blog_post_id: post.id, 
-        title, 
-        slug: postSlug,
-        topic,
-        cover_image_url: coverImageUrl,
-      },
-    }).eq('id', taskId);
-
-    return { success: true, taskId, postId: post.id, title, coverImageUrl };
-  } catch (e) {
-    await supabase.from('agent_tasks').update({
-      status: 'failed',
-      output_data: { error: e instanceof Error ? e.message : 'Unknown error' },
-    }).eq('id', taskId);
-    throw e;
+  } catch (imgErr) {
+    console.error('[blog_draft] Cover image generation failed (non-blocking):', imgErr);
   }
+
+  return { postId: post.id as string, slug: postSlug, coverImageUrl };
 }
 
 async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>) {
@@ -932,7 +850,12 @@ Deno.serve(async (req) => {
         break;
 
       case 'blog_draft':
-        result = await handleBlogDraft(effectiveTopic, effectiveSources, supabase);
+        // Redaktören väljer själv ämne utifrån profilen; ett explicit topic i anropet styr ämnet.
+        result = await handleEditorDraft(
+          supabase,
+          { saveDraft: (draft) => saveDraftPost(supabase, draft) },
+          { topic, rebuildBrief: body.rebuild_brief },
+        );
         break;
 
       case 'newsletter_draft':

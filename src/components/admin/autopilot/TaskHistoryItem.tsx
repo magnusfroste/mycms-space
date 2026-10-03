@@ -26,6 +26,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   completed: { label: 'Completed', variant: 'default', icon: CheckCircle },
   needs_review: { label: 'Needs Review', variant: 'secondary', icon: Eye },
   failed: { label: 'Failed', variant: 'destructive', icon: AlertCircle },
+  rejected: { label: 'Rejected by editor', variant: 'outline', icon: AlertCircle },
 };
 
 const taskTypeLabels: Record<string, { label: string; icon: typeof Search }> = {
