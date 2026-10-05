@@ -211,7 +211,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onDismiss={() => setCommandMenuOpen(false)}
           visible={commandMenuOpen}
         />
-        <div className="relative bg-muted/30 border border-border/60 rounded-2xl transition-colors focus-within:border-border focus-within:bg-muted/40">
+        <div className="relative bg-card border border-border rounded-2xl shadow-sm transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15">
           {/* Attached file pill — inside the input area */}
           {attachedFile && (
             <div className="px-3 pt-3 pb-0">
@@ -238,7 +238,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="w-full px-4 resize-none text-sm min-h-[44px] max-h-[200px] overflow-y-auto bg-transparent py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            className="w-full px-4 resize-none text-sm min-h-[44px] max-h-[200px] overflow-y-auto bg-transparent py-3 text-foreground placeholder:text-muted-foreground focus:outline-none"
             rows={1}
             disabled={isLoading || isReadingFile}
             autoFocus
@@ -250,7 +250,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isReadingFile}
-                className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
                 aria-label="Attach file"
                 type="button"
               >
@@ -294,9 +294,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
               onClick={handleSend}
               disabled={(!value.trim() && !attachedFile) || isLoading || isReadingFile}
               size="icon"
-              className="h-7 w-7 rounded-lg"
+              className="h-9 w-9 rounded-xl shrink-0 disabled:opacity-50"
+              aria-label="Send message"
             >
-              <ArrowUp className="h-3.5 w-3.5" />
+              <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
         </div>
