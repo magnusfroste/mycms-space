@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { Home, ExternalLink } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavLinks } from "@/hooks/useNavLinks";
+import { useAuth } from "@/hooks/useAuth";
 import { useHeaderModule } from "@/models/modules";
 import { cn } from "@/lib/utils";
 import ColorModeToggle from "@/components/ColorModeToggle";
@@ -16,7 +17,10 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHomePage = location.pathname === "/";
-  const { data: navLinks = [] } = useNavLinks();
+  const { data: allNavLinks = [] } = useNavLinks();
+  const { user } = useAuth();
+  // Admin link is only shown to signed-in users; visitors find it in the footer
+  const navLinks = user ? allNavLinks : allNavLinks.filter((l) => !l.url.startsWith('/admin'));
   const { config: headerConfig, isLoading } = useHeaderModule();
 
   const toggleMenu = () => setIsOpen(!isOpen);

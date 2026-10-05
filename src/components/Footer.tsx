@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Github, Linkedin, Twitter, Instagram, Youtube, Link as LinkIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useFooterModule } from '@/models/modules';
 import { cn } from '@/lib/utils';
 import type { SocialLink } from '@/types/modules';
@@ -84,6 +85,8 @@ const Footer = () => {
           <div className="flex items-center gap-3 text-muted-foreground/40">
             <div className="w-8 h-px bg-gradient-to-r from-transparent to-border" />
             <span className="text-xs uppercase tracking-widest">Built with care</span>
+            <span aria-hidden>·</span>
+            <Link to="/admin" className="text-xs uppercase tracking-widest hover:text-muted-foreground transition-colors">Admin</Link>
             <div className="w-8 h-px bg-gradient-to-l from-transparent to-border" />
           </div>
         </div>

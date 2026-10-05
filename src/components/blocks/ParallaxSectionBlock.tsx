@@ -7,6 +7,55 @@ import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MarkdownContent } from '@/components/common';
 
+// Plain-text content: a line ending with ":" starts a list of the following
+// paragraphs; a final paragraph after the list is kept as a closing line.
+// Markdown content (headings/lists) is rendered as-is.
+const ParallaxContent: React.FC<{ content: string }> = ({ content }) => {
+  if (/^\s*(#|[-*] |\d+\. )/m.test(content)) return <MarkdownContent content={content} />;
+
+  const paragraphs = content.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
+  const nodes: React.ReactNode[] = [];
+  let i = 0;
+  while (i < paragraphs.length) {
+    const lines = paragraphs[i].split('\n').map((l) => l.trim()).filter(Boolean);
+    const h = lines.findIndex((l) => l.endsWith(':'));
+    if (h >= 0) {
+      const last = lines[h];
+      lines.slice(0, h).forEach((l, k) => nodes.push(<p key={`${i}-${k}`}>{l}</p>));
+      let items = [...lines.slice(h + 1), ...paragraphs.slice(i + 1)];
+      let closing: string | undefined;
+      if (items.length > 2) { closing = items[items.length - 1]; items = items.slice(0, -1); }
+      nodes.push(
+        <div key={`list-${i}`}>
+          <h3 className="font-semibold mb-3">{last}</h3>
+          <ul className="space-y-2">
+            {items.map((it, k) => (
+              <li key={k} className="flex gap-3">
+                <span aria-hidden className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+      if (closing) nodes.push(<p key="closing" className="font-medium">{closing}</p>);
+      break;
+    }
+    if (lines.length > 1 && !/[.!?]$/.test(lines[0])) {
+      nodes.push(
+        <div key={i}>
+          <h3 className="font-semibold mb-2">{lines[0]}</h3>
+          <p>{lines.slice(1).join(' ')}</p>
+        </div>
+      );
+    } else {
+      nodes.push(<p key={i}>{lines.join(' ')}</p>);
+    }
+    i++;
+  }
+  return <div className="space-y-5">{nodes}</div>;
+};
+
 interface ParallaxSectionBlockConfig {
   background_image?: string;
   title?: string;
@@ -94,13 +143,13 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
           {settings.content && (
             <div
               className={cn(
-                'text-lg md:text-xl max-w-2xl mx-auto leading-relaxed',
+                'max-w-2xl mx-auto text-left rounded-2xl border border-border/60 bg-background/90 backdrop-blur-md shadow-sm p-6 md:p-8',
+                'text-base md:text-lg leading-relaxed text-foreground',
                 'opacity-0 translate-y-4 transition-all duration-700 delay-200 ease-out',
-                isVisible && 'opacity-100 translate-y-0',
-                isLight ? 'text-white/80' : 'text-muted-foreground'
+                isVisible && 'opacity-100 translate-y-0'
               )}
             >
-              <MarkdownContent content={settings.content} />
+              <ParallaxContent content={settings.content} />
             </div>
           )}
 

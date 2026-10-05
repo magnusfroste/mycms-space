@@ -125,7 +125,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
   };
 
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+    <section className="relative min-h-[auto] md:min-h-[72vh] py-16 md:py-20 flex items-center overflow-hidden">
       {/* Animated Mesh Gradient Background */}
       <div
         className="hero-parallax-orb absolute inset-0 transition-transform duration-1000 ease-out"
@@ -202,7 +202,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
             {/* Typing indicator + Typewriter greeting */}
             <div
-              className="min-h-[3rem] mb-12 animate-fade-in"
+              className="min-h-[3rem] mb-6 md:mb-8 animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
               {/* Typing dots — shown while loading or before typewriter starts */}
@@ -227,7 +227,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
             {/* Chat Input — fades in after typing completes */}
             <div
-              className={`transition-all duration-500 ${typingDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              className="animate-fade-in" style={{ animationDelay: '0.4s' }}
             >
               <ChatInput
                 value={inputValue}
@@ -242,7 +242,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
             {/* Quick Actions */}
             {showQuickActions && quickActions.length > 0 && (
               <div
-                className={`mt-6 transition-all duration-500 delay-200 ${typingDone ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+                className="mt-5 animate-fade-in" style={{ animationDelay: '0.5s' }}
               >
                 <div className="flex flex-wrap justify-center gap-2">
                   {quickActions.map((action) => {
@@ -252,7 +252,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
                         key={action.id || action.label}
                         onClick={() => handleQuickAction(action.message)}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal rounded-full bg-card/80 border border-border hover:bg-muted text-foreground/80 hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {IconComponent && <span className="w-4 h-4">{IconComponent}</span>}
                         {action.label}
@@ -265,7 +265,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
 
             {/* Scroll indicator */}
             <div
-              className={`mt-16 transition-all duration-500 delay-300 ${typingDone ? 'opacity-100' : 'opacity-0'}`}
+              className="mt-10 hidden md:block animate-fade-in" style={{ animationDelay: '0.6s' }}
             >
               <button
                 onClick={() => window.scrollTo({ top: window.innerHeight * 0.85, behavior: 'smooth' })}
