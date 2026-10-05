@@ -68,7 +68,7 @@ const SkillsBarBlock: React.FC<SkillsBarBlockProps> = ({ config }) => {
           </div>
         ) : layout === 'bars' ? (
           // Progress bars layout
-          <div className="max-w-3xl mx-auto space-y-10">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
             {categories.map((category, catIndex) => (
               <div 
                 key={category} 
@@ -76,18 +76,18 @@ const SkillsBarBlock: React.FC<SkillsBarBlockProps> = ({ config }) => {
                 style={{ animationDelay: `${0.1 + catIndex * 0.1}s` }}
               >
                 {categories.length > 1 && (
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
                     {category}
                   </h3>
                 )}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {groupedSkills[category].map((skill) => (
-                    <div key={skill.id} className="space-y-2">
-                      <div className="flex justify-between items-center">
+                    <div key={skill.id} className="space-y-1">
+                      <div className="flex justify-between items-center gap-3">
                         <span className="text-sm font-medium">{skill.name}</span>
-                        <span className="text-xs text-muted-foreground">{skill.level}%</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{skill.level}%</span>
                       </div>
-                      <Progress value={skill.level} className="h-2" />
+                      <Progress value={skill.level} className="h-1" />
                     </div>
                   ))}
                 </div>
