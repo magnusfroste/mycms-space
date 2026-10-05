@@ -27,8 +27,13 @@ const ParallaxContent: React.FC<{ content: string }> = ({ content }) => {
       nodes.push(
         <div key={`list-${i}`}>
           <h3 className="font-semibold mb-3">{last}</h3>
-          <ul className="list-disc pl-5 space-y-2 marker:text-primary">
-            {items.map((it, k) => <li key={k}>{it}</li>)}
+          <ul className="space-y-2">
+            {items.map((it, k) => (
+              <li key={k} className="flex gap-3">
+                <span aria-hidden className="mt-[0.7em] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{it}</span>
+              </li>
+            ))}
           </ul>
         </div>
       );
