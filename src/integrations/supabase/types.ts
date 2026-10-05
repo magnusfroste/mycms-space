@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agent_activity: {
         Row: {
           agent: string
@@ -793,7 +808,6 @@ export type Database = {
           expires_at: string | null
           id: string
           key_hash: string
-          key_plaintext: string | null
           key_prefix: string
           last_used_at: string | null
           name: string
@@ -810,7 +824,6 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key_hash: string
-          key_plaintext?: string | null
           key_prefix: string
           last_used_at?: string | null
           name: string
@@ -827,7 +840,6 @@ export type Database = {
           expires_at?: string | null
           id?: string
           key_hash?: string
-          key_plaintext?: string | null
           key_prefix?: string
           last_used_at?: string | null
           name?: string
@@ -1181,6 +1193,7 @@ export type Database = {
           username: string
         }[]
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
