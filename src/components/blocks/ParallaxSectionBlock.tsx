@@ -18,10 +18,11 @@ const ParallaxContent: React.FC<{ content: string }> = ({ content }) => {
   let i = 0;
   while (i < paragraphs.length) {
     const lines = paragraphs[i].split('\n').map((l) => l.trim()).filter(Boolean);
-    const last = lines[lines.length - 1];
-    if (last.endsWith(':')) {
-      lines.slice(0, -1).forEach((l, k) => nodes.push(<p key={`${i}-${k}`}>{l}</p>));
-      let items = paragraphs.slice(i + 1);
+    const h = lines.findIndex((l) => l.endsWith(':'));
+    if (h >= 0) {
+      const last = lines[h];
+      lines.slice(0, h).forEach((l, k) => nodes.push(<p key={`${i}-${k}`}>{l}</p>));
+      let items = [...lines.slice(h + 1), ...paragraphs.slice(i + 1)];
       let closing: string | undefined;
       if (items.length > 2) { closing = items[items.length - 1]; items = items.slice(0, -1); }
       nodes.push(
