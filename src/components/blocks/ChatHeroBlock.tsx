@@ -255,7 +255,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
                         key={action.id || action.label}
                         onClick={() => handleQuickAction(action.message)}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal rounded-full bg-card/80 border border-border hover:bg-muted text-foreground/80 hover:text-foreground transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-normal rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 hover:border-primary/40 text-foreground/80 hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {IconComponent && <span className="w-4 h-4">{IconComponent}</span>}
                         {action.label}
