@@ -86,8 +86,17 @@ export default {
       },
       fontFamily: {
         sans: [
+          "Epilogue",
           "Inter",
           "SF Pro Display",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "system-ui",
+          "sans-serif",
+        ],
+        heading: [
+          "Urbanist",
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
           "system-ui",
