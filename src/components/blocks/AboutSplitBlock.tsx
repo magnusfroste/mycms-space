@@ -60,77 +60,52 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
             <Skeleton className="h-48 w-48 rounded-2xl" />
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Top Row - Image + Intro Text Side by Side */}
-            <div 
-              className="flex flex-col sm:flex-row gap-6 lg:gap-10 items-start animate-fade-in"
-              style={{ animationDelay: '0.2s' }}
-            >
-              {/* Profile Image with Social Links */}
-              {imageUrl && (
-                <div className="relative group shrink-0">
-                  <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl overflow-hidden">
-                    <div className="absolute -inset-px bg-gradient-primary rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative bg-card rounded-2xl overflow-hidden p-0.5 h-full">
-                      <img 
-                        src={imageUrl} 
-                        alt={name || "Profile"} 
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    </div>
-                  </div>
-                  {/* Subtle Glow */}
-                  <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl -z-10" />
-                  
-                  {/* Social Links under image */}
-                  {socialLinks.length > 0 && (
-                    <div className="flex justify-center gap-2 mt-4">
-                      {socialLinks.map((link) => (
-                        <a
-                          key={link.platform}
-                          href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
-                          target={link.platform === 'email' ? undefined : '_blank'}
-                          rel="noopener noreferrer"
-                          className="w-9 h-9 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={link.platform}
-                        >
-                          {socialIconMap[link.platform]}
-                        </a>
-                      ))}
-                    </div>
-                  )}
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-center animate-fade-in"
+            style={{ animationDelay: '0.2s' }}
+          >
+            {/* Large Portrait with Glow */}
+            {imageUrl && (
+              <div className="relative group max-w-md w-full mx-auto md:mx-0">
+                <div className="absolute -inset-4 bg-primary rounded-3xl blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-500" />
+                <div className="relative aspect-square rounded-3xl overflow-hidden border border-border/60 bg-card">
+                  <img
+                    src={imageUrl}
+                    alt={name || "Profile"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Text Content */}
+            <div className="space-y-5">
+              <p className="text-lg lg:text-xl text-foreground/90 leading-relaxed">
+                {introText}
+              </p>
+              {additionalText && additionalText !== 'Additional text...' && (
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  {additionalText}
+                </p>
+              )}
+
+              {/* Social Links */}
+              {socialLinks.length > 0 && (
+                <div className="flex gap-2 pt-2">
+                  {socialLinks.map((link) => (
+                    <a
+                      key={link.platform}
+                      href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
+                      target={link.platform === 'email' ? undefined : '_blank'}
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                      aria-label={link.platform}
+                    >
+                      {socialIconMap[link.platform]}
+                    </a>
+                  ))}
                 </div>
               )}
-              
-              {/* Text Content */}
-              <div className="flex-1 space-y-4">
-                <p className="text-lg lg:text-xl text-foreground/90 leading-relaxed">
-                  {introText}
-                </p>
-                {additionalText && additionalText !== 'Additional text...' && (
-                  <p className="text-base text-muted-foreground leading-relaxed">
-                    {additionalText}
-                  </p>
-                )}
-                
-                {/* Social Links inline (if no image) */}
-                {!imageUrl && socialLinks.length > 0 && (
-                  <div className="flex gap-2 pt-2">
-                    {socialLinks.map((link) => (
-                      <a
-                        key={link.platform}
-                        href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
-                        target={link.platform === 'email' ? undefined : '_blank'}
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-muted/50 hover:bg-primary/10 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
-                        aria-label={link.platform}
-                      >
-                        {socialIconMap[link.platform]}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}

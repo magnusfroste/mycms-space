@@ -99,47 +99,47 @@
 
   .dark {
     /* ─────────────────────────────────────────
-       Dark Mode - Rich, Immersive, Premium
+       Dark Mode - Deep Obsidian Bento (#0f0e17 / #1e1b4b / #7c6cf0)
        ───────────────────────────────────────── */
-    --background: 225 25% 6%;
-    --foreground: 210 20% 95%;
+    --background: 248 21% 7%;
+    --foreground: 250 33% 97%;
 
-    --card: 225 20% 9%;
-    --card-foreground: 210 20% 95%;
+    --card: 243 40% 16%;
+    --card-foreground: 250 33% 97%;
 
-    --popover: 225 20% 9%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 243 40% 16%;
+    --popover-foreground: 250 33% 97%;
 
-    /* Primary: Vibrant Indigo */
-    --primary: 245 75% 68%;
-    --primary-foreground: 225 25% 6%;
+    /* Primary: Obsidian Violet */
+    --primary: 248 82% 68%;
+    --primary-foreground: 248 21% 7%;
 
-    /* Secondary: Dark Slate */
-    --secondary: 225 20% 14%;
-    --secondary-foreground: 210 20% 90%;
+    /* Secondary: Deep Indigo */
+    --secondary: 243 35% 20%;
+    --secondary-foreground: 250 25% 90%;
 
-    --muted: 225 20% 14%;
-    --muted-foreground: 220 15% 55%;
+    --muted: 243 30% 18%;
+    --muted-foreground: 245 15% 60%;
 
-    /* Accent: Bright Coral */
-    --accent: 12 95% 65%;
-    --accent-foreground: 225 25% 6%;
+    /* Accent: Soft Violet */
+    --accent: 255 70% 72%;
+    --accent-foreground: 248 21% 7%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 225 20% 15%;
-    --input: 225 20% 15%;
-    --ring: 245 75% 68%;
+    --border: 243 25% 22%;
+    --input: 243 25% 22%;
+    --ring: 248 82% 68%;
 
     /* Extended Tokens - Dark */
-    --gradient-start: 245 75% 68%;
-    --gradient-mid: 280 70% 65%;
-    --gradient-end: 12 95% 65%;
+    --gradient-start: 248 82% 68%;
+    --gradient-mid: 265 70% 62%;
+    --gradient-end: 243 47% 30%;
 
-    --surface-elevated: 225 20% 11%;
-    --surface-overlay: 225 25% 8% / 0.9;
-    --surface-glass: 225 20% 12% / 0.7;
+    --surface-elevated: 243 35% 18%;
+    --surface-overlay: 248 21% 9% / 0.9;
+    --surface-glass: 243 40% 16% / 0.6;
 
     --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.2);
     --shadow-sm: 0 2px 8px hsl(0 0% 0% / 0.3);
@@ -537,17 +537,17 @@
   /* Elegant: Premium serif display + clean sans body */
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Epilogue', 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-family: 'Urbanist', 'Inter', ui-sans-serif, system-ui, sans-serif;
     letter-spacing: var(--heading-tracking);
-    font-weight: 600;
+    font-weight: 700;
   }
   
   /* Grok: Tight grotesque, all caps headings */
@@ -612,9 +612,9 @@
   }
 
   .dark body {
-    background: 
+    background:
       radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.08), transparent),
-      linear-gradient(to bottom, hsl(var(--background)), hsl(225 25% 4%));
+      linear-gradient(to bottom, hsl(var(--background)), hsl(248 25% 5%));
   }
   
   /* Grok: Minimal background */

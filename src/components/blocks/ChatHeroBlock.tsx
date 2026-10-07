@@ -170,10 +170,10 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
         style={{ animationDelay: '-3s', transform: `translateY(${parallaxOffset * 0.15}px)` }}
       />
 
-      {/* Grid pattern */}
+      {/* Dot pattern */}
       <div
-        className="hero-parallax-orb absolute inset-0 opacity-[0.02] dark:opacity-[0.04]"
-        style={{ backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`, backgroundSize: '80px 80px', transform: `translateY(${parallaxOffset * 0.1}px)` }}
+        className="hero-parallax-orb absolute inset-0 opacity-[0.06] dark:opacity-[0.1]"
+        style={{ backgroundImage: `radial-gradient(hsl(var(--foreground) / 0.35) 1px, transparent 1px)`, backgroundSize: '40px 40px', transform: `translateY(${parallaxOffset * 0.1}px)` }}
       />
 
       {/* Radial vignette */}
@@ -185,7 +185,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
           <div className="max-w-3xl mx-auto text-center">
             {/* Welcome Badge */}
             <div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/20 mb-8 animate-fade-in"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/30 mb-8 animate-fade-in"
               style={{ animationDelay: '0s' }}
             >
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -225,18 +225,21 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               )}
             </div>
 
-            {/* Chat Input — fades in after typing completes */}
+            {/* Chat Input — glowing console, fades in after typing completes */}
             <div
-              className="animate-fade-in" style={{ animationDelay: '0.4s' }}
+              className="animate-fade-in relative group max-w-2xl mx-auto" style={{ animationDelay: '0.4s' }}
             >
-              <ChatInput
-                value={inputValue}
-                onChange={setInputValue}
-                onSend={handleSend}
-                placeholder={placeholder}
-                isLoading={isLoading}
-                fullPage={false}
-              />
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-[2rem] blur opacity-20 dark:opacity-30 group-focus-within:opacity-40 dark:group-focus-within:opacity-60 transition duration-1000 pointer-events-none" />
+              <div className="relative">
+                <ChatInput
+                  value={inputValue}
+                  onChange={setInputValue}
+                  onSend={handleSend}
+                  placeholder={placeholder}
+                  isLoading={isLoading}
+                  fullPage={false}
+                />
+              </div>
             </div>
 
             {/* Quick Actions */}
@@ -252,7 +255,7 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
                         key={action.id || action.label}
                         onClick={() => handleQuickAction(action.message)}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-normal rounded-full bg-card/80 border border-border hover:bg-muted text-foreground/80 hover:text-foreground transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-normal rounded-full bg-foreground/5 border border-foreground/10 hover:bg-foreground/10 hover:border-primary/40 text-foreground/80 hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {IconComponent && <span className="w-4 h-4">{IconComponent}</span>}
                         {action.label}
