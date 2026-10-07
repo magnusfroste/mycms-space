@@ -7,6 +7,7 @@ import React from 'react';
 import { Lightbulb, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/constants/iconMaps';
+import { cn } from '@/lib/utils';
 import type { ExpertiseGridBlockConfig } from '@/types/blockConfigs';
 
 interface ExpertiseGridBlockProps {

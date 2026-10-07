@@ -55,61 +55,63 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
   return (
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden">
-          {/* Gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-[hsl(var(--gradient-mid))] to-accent opacity-90" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_50%)]" />
+        {/* Gradient border frame */}
+        <div className="relative max-w-3xl mx-auto rounded-[2.5rem] bg-gradient-to-br from-primary to-secondary p-px shadow-2xl">
+          <div className="relative rounded-[calc(2.5rem-1px)] bg-card overflow-hidden">
+            {/* Ambient radial glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.14),transparent_55%)]" />
 
-          {/* Content */}
-          <div className="relative z-10 px-6 py-12 md:px-12 md:py-16 text-center">
-            {/* Badge */}
-            <Badge className="mb-6 bg-white/20 text-white border-white/30 hover:bg-white/30 gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" />
-              {badgeText}
-            </Badge>
+            {/* Content */}
+            <div className="relative z-10 px-6 py-12 md:px-12 md:py-16 text-center">
+              {/* Badge */}
+              <Badge className="mb-6 bg-primary/10 text-primary border-primary/30 hover:bg-primary/15 gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                {badgeText}
+              </Badge>
 
-            {/* Title */}
-            <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 tracking-tight">
-              {title}
-            </h2>
+              {/* Title */}
+              <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3 tracking-tight font-heading">
+                {title}
+              </h2>
 
-            {/* Subtitle */}
-            <p className="text-white/80 text-sm md:text-base max-w-lg mx-auto mb-8 leading-relaxed">
-              {subtitle}
-            </p>
+              {/* Subtitle */}
+              <p className="text-muted-foreground text-sm md:text-base max-w-lg mx-auto mb-8 leading-relaxed">
+                {subtitle}
+              </p>
 
-            {/* Textarea */}
-            <div className="max-w-xl mx-auto mb-6">
-              <Textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder={placeholder}
-                rows={5}
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30 resize-none backdrop-blur-sm"
-              />
-            </div>
+              {/* Textarea */}
+              <div className="max-w-xl mx-auto mb-6">
+                <Textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder={placeholder}
+                  rows={5}
+                  className="bg-secondary/40 border-border text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-primary/40 resize-none rounded-2xl"
+                />
+              </div>
 
-            {/* Button */}
-            <Button
-              size="lg"
-              onClick={handleSubmit}
-              disabled={!jobDescription.trim()}
-              className="bg-white text-primary hover:bg-white/90 font-semibold gap-2 px-8 disabled:opacity-40"
-            >
-              {buttonText}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+              {/* Button */}
+              <Button
+                size="lg"
+                onClick={handleSubmit}
+                disabled={!jobDescription.trim()}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 px-8 rounded-2xl shadow-glow disabled:opacity-40"
+              >
+                {buttonText}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
 
-            {/* Feature pills */}
-            <div className="flex flex-wrap justify-center gap-2 mt-8">
-              {features.map((feature, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 rounded-full text-xs font-medium bg-white/15 text-white/90 border border-white/20"
-                >
-                  {feature}
-                </span>
-              ))}
+              {/* Feature pills */}
+              <div className="flex flex-wrap justify-center gap-2 mt-8">
+                {features.map((feature, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-xs font-medium bg-foreground/5 text-muted-foreground border border-foreground/10"
+                  >
+                    {feature}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
