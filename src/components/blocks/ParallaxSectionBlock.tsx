@@ -100,31 +100,30 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
   const isLight = settings.text_color !== 'dark';
 
   return (
-    <section
-      ref={sectionRef}
-      className={cn(
-        'relative overflow-hidden',
-        heightClasses[settings.height || 'md']
-      )}
-    >
-      {/* Background with CSS parallax */}
-      {settings.background_image && (
-        <div
-          className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
-          style={{
-            backgroundImage: `url(${settings.background_image})`,
-          }}
-        />
-      )}
+    <section ref={sectionRef} className="py-12 md:py-20 px-4 md:px-6">
+      <div
+        className={cn(
+          'max-w-6xl mx-auto relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-border/50 bg-secondary flex items-end p-6 md:p-14',
+          heightClasses[settings.height || 'md']
+        )}
+      >
+        {/* Background with CSS parallax */}
+        {settings.background_image && (
+          <div
+            className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
+            style={{
+              backgroundImage: `url(${settings.background_image})`,
+            }}
+          />
+        )}
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-background/70" />
+        {/* Overlay — deep gradient anchoring text at the bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex items-center justify-center px-6">
+        {/* Content */}
         <div
           className={cn(
-            'max-w-3xl text-center space-y-6',
+            'relative z-10 max-w-2xl space-y-6',
             'opacity-0 translate-y-6 transition-all duration-700 ease-out',
             isVisible && 'opacity-100 translate-y-0'
           )}
@@ -132,7 +131,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
           {settings.title && (
             <h2
               className={cn(
-                'text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight',
+                'text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight font-heading',
                 isLight ? 'text-white' : 'text-foreground'
               )}
             >
@@ -143,8 +142,9 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
           {settings.content && (
             <div
               className={cn(
-                'max-w-2xl mx-auto text-left rounded-2xl border border-border/60 bg-background/90 backdrop-blur-md shadow-sm p-6 md:p-8',
-                'text-base md:text-lg leading-relaxed text-foreground',
+                'text-left rounded-2xl border border-foreground/10 bg-foreground/5 backdrop-blur-xl p-6 md:p-8',
+                'text-base md:text-lg leading-relaxed',
+                isLight ? 'text-white/90' : 'text-foreground',
                 'opacity-0 translate-y-4 transition-all duration-700 delay-200 ease-out',
                 isVisible && 'opacity-100 translate-y-0'
               )}
@@ -152,15 +152,6 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
               <ParallaxContent content={settings.content} />
             </div>
           )}
-
-          {/* Decorative line */}
-          <div
-            className={cn(
-              'w-16 h-0.5 mx-auto rounded-full bg-primary',
-              'opacity-0 scale-x-0 transition-all duration-700 delay-400 ease-out',
-              isVisible && 'opacity-100 scale-x-100'
-            )}
-          />
         </div>
       </div>
     </section>
