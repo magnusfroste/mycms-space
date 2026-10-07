@@ -23,9 +23,22 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
 
   const isLoading = !typedConfig.items;
 
-  const gridCols = columns === 2 
-    ? 'md:grid-cols-2' 
-    : 'md:grid-cols-2 lg:grid-cols-3';
+  // Bento layout: pairs of wide (8) + narrow (4) cards on desktop
+  const useBento = columns !== 2;
+  const gridCols = useBento
+    ? 'md:grid-cols-12'
+    : 'md:grid-cols-2';
+
+  const bentoSpan = (index: number) => {
+    const pos = index % 4;
+    if (pos === 0) return 'md:col-span-12 lg:col-span-8';
+    if (pos === 1) return 'md:col-span-6 lg:col-span-4';
+    if (pos === 2) return 'md:col-span-6 lg:col-span-4';
+    return 'md:col-span-12 lg:col-span-8';
+  };
+
+  // Every 4th card (the wide closer) becomes a gradient feature card
+  const isFeature = (index: number) => index % 4 === 3;
 
   return (
     <section id="services" className="section-container relative overflow-hidden">
