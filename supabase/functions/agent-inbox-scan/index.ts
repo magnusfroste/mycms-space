@@ -5,6 +5,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -198,6 +199,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+  if (!(await isTrustedCaller(req))) return forbidden(corsHeaders);
 
   try {
     const supabase = getSupabase();

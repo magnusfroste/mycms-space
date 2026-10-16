@@ -4,6 +4,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +32,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+  if (!(await isTrustedCaller(req))) return forbidden(corsHeaders);
 
   try {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
