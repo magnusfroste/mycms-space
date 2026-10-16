@@ -60,13 +60,11 @@ export const updateChatSession = async (
   sessionId: string,
   messageCount: number
 ): Promise<void> => {
-  await supabase
-    .from('chat_analytics')
-    .update({
-      message_count: messageCount,
-      session_end: new Date().toISOString(),
-    })
-    .eq('id', sessionId);
+  // Via RPC: visitors have no read/update rights on chat_analytics
+  await supabase.rpc('update_chat_session', {
+    p_id: sessionId,
+    p_message_count: messageCount,
+  });
 };
 
 // Fetch analytics summary
