@@ -856,19 +856,19 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
                 const saves: Promise<unknown>[] = [];
                 if (toolArgs.tailored_cv) {
                   const cvBlob = new Blob([toolArgs.tailored_cv as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
+                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
                 }
                 if (toolArgs.cover_letter) {
                   const clBlob = new Blob([toolArgs.cover_letter as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
+                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
                 }
                 // Save match summary as JSON
                 const summaryData = { overall_score: score, summary: toolArgs.summary, match_analysis: toolArgs.match_analysis, generated_at: new Date().toISOString() };
                 const summaryBlob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
-                saves.push(storageClient.storage.from('cms-files').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
+                saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
 
                 await Promise.all(saves);
-                console.log(`[Agent] Auto-saved CV artifacts to cms-files/${folder}`);
+                console.log(`[Agent] Auto-saved CV artifacts to agent-documents/${folder}`);
               } catch (saveErr) {
                 console.warn('[Agent] Failed to auto-save CV:', saveErr);
               }

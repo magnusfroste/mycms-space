@@ -3,6 +3,8 @@
 // Generates audio from text via OpenAI TTS API
 // ============================================
 
+import { clientIp, isRateLimited, tooManyRequests } from "../_shared/rate-limit.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -11,6 +13,11 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Paid API used by the public chat: cap per visitor IP.
+  if (await isRateLimited(`text-to-speech:${clientIp(req)}`, 600, 30)) {
+    return tooManyRequests(corsHeaders);
   }
 
   try {
