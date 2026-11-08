@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Mail, Send, Trash2, Users, FileText, Plus, Loader2 } from 'lucide-react';
+import { Mail, Send, Trash2, Users, FileText, Plus, Loader2, Check } from 'lucide-react';
 import {
   useSubscribers,
   useCampaigns,
@@ -35,6 +35,7 @@ import {
   useUpdateCampaign,
   useDeleteCampaign,
   useDeleteSubscriber,
+  useUpdateSubscriberStatus,
   useSendNewsletter,
   useSubscribersSubscription,
   useCampaignsSubscription,
@@ -44,6 +45,7 @@ import {
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/20 text-green-400',
+  pending: 'bg-blue-500/20 text-blue-400',
   unsubscribed: 'bg-yellow-500/20 text-yellow-400',
   bounced: 'bg-red-500/20 text-red-400',
   draft: 'bg-muted text-muted-foreground',
@@ -69,6 +71,7 @@ export default function NewsletterManager() {
   const updateCampaign = useUpdateCampaign();
   const deleteCampaign = useDeleteCampaign();
   const deleteSubscriber = useDeleteSubscriber();
+  const updateSubscriberStatus = useUpdateSubscriberStatus();
   const sendNewsletter = useSendNewsletter();
 
   const [formData, setFormData] = useState<CreateCampaignInput>({
@@ -381,6 +384,18 @@ export default function NewsletterManager() {
                           {format(new Date(subscriber.subscribed_at), 'yyyy-MM-dd')}
                         </TableCell>
                         <TableCell className="text-right">
+                          {subscriber.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Activate subscriber"
+                              onClick={() =>
+                                updateSubscriberStatus.mutate({ id: subscriber.id, status: 'active' })
+                              }
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"

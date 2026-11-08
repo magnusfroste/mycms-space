@@ -62,6 +62,23 @@ const integrationColors: Record<IntegrationType, string> = {
   unsplash: 'text-slate-700 dark:text-slate-300',
 };
 
+// Starts the Gmail OAuth flow: the edge function (admin only) issues a
+// one-time state and returns the Google consent URL. The popup is opened
+// synchronously so popup blockers allow it, then pointed at Google.
+async function startGmailConnect() {
+  const popup = window.open('', '_blank', 'width=600,height=700');
+  const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
+    body: { action: 'authorize' },
+  });
+  if (error || !data?.url) {
+    popup?.close();
+    toast.error('Could not start Gmail connection');
+    return;
+  }
+  if (popup) popup.location.href = data.url;
+  else window.location.href = data.url;
+}
+
 const categoryLabels: Record<string, string> = {
   ai: 'AI Providers',
   utility: 'Utilities',
@@ -407,8 +424,7 @@ const IntegrationsManager: React.FC = () => {
             } else if (selectedIntegration.type === 'github') {
               toggleGitHubIntegration(true);
             } else if (selectedIntegration.type === 'gmail') {
-              const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
-              window.open(url, '_blank', 'width=600,height=700');
+              startGmailConnect();
             }
           }}
         >
@@ -934,10 +950,7 @@ const GmailSourceConfig: React.FC<{
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">Connect Gmail to harvest signals from LinkedIn, newsletters, and updates.</p>
-      <Button size="sm" onClick={() => {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback?action=authorize`;
-        window.open(url, '_blank', 'width=600,height=700');
-      }}>
+      <Button size="sm" onClick={startGmailConnect}>
         Connect Gmail
       </Button>
     </div>

@@ -7,6 +7,7 @@ import {
   type AIMessage,
   type AIProviderConfig
 } from "../_shared/ai-provider.ts";
+import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -309,6 +310,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  if (!(await isTrustedCaller(req))) return forbidden(corsHeaders);
 
   try {
     const { messages, currentBlocks } = await req.json();
