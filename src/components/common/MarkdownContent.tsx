@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@/components/ui/table';
@@ -21,6 +22,17 @@ interface MarkdownContentProps {
 
 // Preprocess content to preserve blank lines as visible spacing
 // Double newline (\n\n) in markdown = paragraph break, we convert to extra spacing
+// Raw HTML is allowed for formatting, but scripts, iframes, event handlers
+// and javascript: URLs are stripped. Content can come from AI output and
+// agent-written drafts, which must never run code in the admin session.
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'className'],
+  },
+};
+
 const preprocessContent = (text: string): string => {
   // Convert 2+ consecutive newlines to paragraph + spacer for extra visual spacing
   // This makes a single blank line in the editor create visible space
@@ -62,7 +74,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
     >
       <ReactMarkdown 
         remarkPlugins={[remarkBreaks, remarkGfm]} 
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
         components={{
           table: ({ children }) => <Table>{children}</Table>,
           thead: ({ children }) => <TableHeader>{children}</TableHeader>,

@@ -535,6 +535,11 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
   if (config.provider === 'custom') {
     if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
     const envKey = config.apiKeyEnv || 'CUSTOM_AI_API_KEY';
+    // Only provider API keys may be forwarded to a custom endpoint —
+    // never platform secrets such as SUPABASE_SERVICE_ROLE_KEY.
+    if (!/^[A-Z0-9_]*API_KEY$/.test(envKey) || envKey.startsWith('SUPABASE')) {
+      throw new Error(`api_key_env not allowed: ${envKey}`);
+    }
     const apiKey = Deno.env.get(envKey) || '';
     return {
       url: config.baseUrl.endsWith('/chat/completions')

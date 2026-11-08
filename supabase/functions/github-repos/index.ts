@@ -4,6 +4,7 @@
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,6 +87,11 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { action = "fetch" } = body;
+
+    // Writing to GitHub and AI suggestions are admin-only; "fetch" stays public.
+    if ((action === "update" || action === "suggest-topics") && !(await isTrustedCaller(req))) {
+      return forbidden(corsHeaders);
+    }
 
     // Optional: Use GitHub token for higher rate limits and write access
     const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");

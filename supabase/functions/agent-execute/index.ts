@@ -5,6 +5,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +24,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Only other edge functions (service role), cron or a signed-in admin.
+  if (!(await isTrustedCaller(req))) return forbidden(corsHeaders);
 
   const startTime = Date.now();
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
