@@ -31,9 +31,12 @@ import {
 
 interface GitHubBlockProps {
   config: Record<string, unknown>;
+  /** Use 'h1' when this block is the main heading of the page */
+  headingLevel?: 'h1' | 'h2';
 }
 
-const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
+const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig, headingLevel = 'h2' }) => {
+  const Heading = headingLevel;
   const blockConfig = rawConfig as unknown as GitHubBlockConfig;
   const { config: moduleConfig } = useGitHubModule();
   const { data: repos = [], isLoading, error } = useEnabledGitHubRepos();
@@ -137,9 +140,9 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
             Open Source
           </span>
           {title && (
-            <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <Heading className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
               {title}
-            </h2>
+            </Heading>
           )}
           {subtitle && (
             <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>

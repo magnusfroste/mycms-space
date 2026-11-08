@@ -16,6 +16,7 @@ import MarkdownContent from '@/components/common/MarkdownContent';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/common/SEOHead';
+import { buildCanonicalUrl } from '@/lib/utils/seo';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -43,7 +44,7 @@ const BlogPost = () => {
     dateModified: post.updated_at || post.created_at,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${seoModule?.module_config?.site_url || ''}/blog/${post.slug}`,
+      '@id': buildCanonicalUrl(`/blog/${post.slug}`),
     },
   } : undefined;
 
@@ -75,6 +76,7 @@ const BlogPost = () => {
   if (error || !post) {
     return (
       <div className="min-h-screen flex flex-col">
+        <SEOHead title="Post not found" noIndex />
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -102,7 +104,7 @@ const BlogPost = () => {
         description={post.seo_description || post.excerpt || undefined}
         ogImage={post.cover_image_url || undefined}
         ogType="article"
-        canonicalUrl={`${seoModule?.module_config?.site_url || ''}/blog/${post.slug}`}
+        canonicalUrl={buildCanonicalUrl(`/blog/${post.slug}`)}
         article={{
           publishedTime: post.published_at || post.created_at,
           modifiedTime: post.updated_at || post.created_at,

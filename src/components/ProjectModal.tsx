@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import type { DisplayProject } from '@/types/displayProject';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import MarkdownContent from '@/components/common/MarkdownContent';
 
 interface ProjectModalProps {
   project: DisplayProject;
@@ -96,20 +97,20 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
           
           <div>
             <h3 className="text-lg font-semibold mb-2">Description</h3>
-            <p className="text-muted-foreground">{project.description}</p>
+            <MarkdownContent content={project.description} compact className="text-base text-muted-foreground" />
           </div>
           
           {project.problemStatement && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Problem</h3>
-              <p className="text-muted-foreground">{project.problemStatement}</p>
+              <MarkdownContent content={project.problemStatement} compact className="text-base text-muted-foreground" />
             </div>
           )}
           
           {project.whyBuilt && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Why It Matters</h3>
-              <p className="text-muted-foreground">{project.whyBuilt}</p>
+              <MarkdownContent content={project.whyBuilt} compact className="text-base text-muted-foreground" />
             </div>
           )}
         </div>

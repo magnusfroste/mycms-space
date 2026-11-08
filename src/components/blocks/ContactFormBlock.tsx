@@ -18,6 +18,8 @@ interface ContactFormBlockConfig {
   showSubject?: boolean;
   buttonText?: string;
   successMessage?: string;
+  /** Hide the eyebrow/title/subtitle (e.g. when the page provides its own heading) */
+  showHeader?: boolean;
 }
 
 interface ContactFormBlockProps {
@@ -31,6 +33,7 @@ const ContactFormBlock: React.FC<ContactFormBlockProps> = ({ config }) => {
     showSubject = true,
     buttonText = 'Send Message',
     successMessage = 'Thanks for reaching out! I\'ll get back to you soon.',
+    showHeader = true,
   } = config;
 
   const [formData, setFormData] = useState({
@@ -126,31 +129,33 @@ const ContactFormBlock: React.FC<ContactFormBlockProps> = ({ config }) => {
   }
 
   return (
-    <section className="section-container relative overflow-hidden">
+    <section className={showHeader ? 'section-container relative overflow-hidden' : 'pb-20 md:pb-28 relative overflow-hidden'}>
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-transparent to-muted/30" />
       
       <div className="container max-w-3xl mx-auto px-4 relative">
         {/* Header */}
-        <div className="text-center mb-12">
-          <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
-            Contact
-          </span>
-          <h2 
-            className="section-title animate-fade-in" 
-            style={{ animationDelay: '0.1s' }}
-          >
-            {title}
-          </h2>
-          {subtitle && (
-            <p 
-              className="section-subtitle mt-4 animate-fade-in"
-              style={{ animationDelay: '0.2s' }}
+        {showHeader && (
+          <div className="text-center mb-12">
+            <span className="inline-block text-sm font-medium text-primary uppercase tracking-widest mb-4 animate-fade-in">
+              Contact
+            </span>
+            <h2 
+              className="section-title animate-fade-in" 
+              style={{ animationDelay: '0.1s' }}
             >
-              {subtitle}
-            </p>
-          )}
-        </div>
+              {title}
+            </h2>
+            {subtitle && (
+              <p 
+                className="section-subtitle mt-4 animate-fade-in"
+                style={{ animationDelay: '0.2s' }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Form */}
         <form 

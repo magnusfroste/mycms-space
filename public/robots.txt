@@ -4,11 +4,14 @@ User-agent: *
 Allow: /
 
 # Important pages
-Allow: /about
-Allow: /projects
-Allow: /expertise
 Allow: /contact
 Allow: /blog
+Allow: /github
+Allow: /chat
+
+# Not for indexing
+Disallow: /admin
+Disallow: /demo
 
 # Sitemap (dynamisk: sidor, blogginlägg och projekt)
 Sitemap: https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/sitemap-dynamic
@@ -17,5 +20,3 @@ Sitemap: https://www.froste.eu/sitemap.xml
 
 # AIEO - AI Engine Optimization
 # See llms.txt for AI assistant context
-
-

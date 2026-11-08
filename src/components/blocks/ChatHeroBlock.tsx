@@ -4,7 +4,8 @@
 // ============================================
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
 import FallingStars from '@/components/animations/FallingStars';
 import ParticleField from '@/components/animations/ParticleField';
@@ -265,6 +266,17 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
                 </div>
               </div>
             )}
+
+            {/* Secondary CTA: direct contact for clients/recruiters */}
+            <div className="mt-6 animate-fade-in" style={{ animationDelay: '0.55s' }}>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Mail className="w-4 h-4" aria-hidden="true" />
+                Hiring or need a consultant? Contact me
+              </Link>
+            </div>
 
             {/* Scroll indicator */}
             <div

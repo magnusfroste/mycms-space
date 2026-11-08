@@ -4,6 +4,8 @@
 // ============================================
 
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/constants/iconMaps';
 import FallingStars from '@/components/animations/FallingStars';
@@ -245,6 +247,17 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ config }) => {
                     ))}
                   </div>
                 )}
+
+                {/* Secondary CTA: direct contact */}
+                <div className="mt-10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                  <Link
+                    to="/contact"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <Mail className="w-4 h-4" aria-hidden="true" />
+                    Contact me
+                  </Link>
+                </div>
 
                 {/* Scroll Indicator - links to chat */}
                 <div 

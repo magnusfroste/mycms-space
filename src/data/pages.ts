@@ -34,13 +34,10 @@ export const fetchPageBySlug = async (slug: string): Promise<Page | null> => {
     .from('pages')
     .select('*')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return data as Page;
+  if (error) throw error;
+  return (data as Page | null) ?? null;
 };
 
 export const fetchMainLandingPage = async (): Promise<Page | null> => {
@@ -48,13 +45,11 @@ export const fetchMainLandingPage = async (): Promise<Page | null> => {
     .from('pages')
     .select('*')
     .eq('is_main_landing', true)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
-  if (error) {
-    if (error.code === 'PGRST116') return null;
-    throw error;
-  }
-  return data as Page;
+  if (error) throw error;
+  return (data as Page | null) ?? null;
 };
 
 export const createPage = async (input: CreatePageInput): Promise<Page> => {
