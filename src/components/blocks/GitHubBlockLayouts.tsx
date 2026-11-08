@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { GitHubRepoWithImages } from '@/data/githubRepos';
 import TechBadge from '@/components/common/TechBadge';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface LayoutProps {
   repos: GitHubRepoWithImages[];
@@ -63,10 +64,14 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
           >
             {showImages && mainImage && (
               <Link to={`/project/${repo.name}`} className="block aspect-video overflow-hidden bg-muted p-2">
-                <img
+                <OptimizedImage
                   src={mainImage}
                   alt={title}
                   className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-500"
+                  displayWidth={640}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  width={640}
+                  height={360}
                 />
               </Link>
             )}
@@ -257,10 +262,14 @@ export const ShowcaseHeroLayout: React.FC<LayoutProps> = ({
         {showImages && (
           <div className="aspect-video lg:aspect-[4/3] rounded-xl overflow-hidden bg-muted p-3">
             {mainImage ? (
-              <img
+              <OptimizedImage
                 src={mainImage}
                 alt={title}
                 className="w-full h-full object-contain"
+                displayWidth={960}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                width={960}
+                height={720}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

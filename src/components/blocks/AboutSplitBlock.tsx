@@ -8,6 +8,7 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Linkedin, Github, Twitter, Globe, Mail, Instagram, Youtube } from 'lucide-react';
 import type { AboutSplitBlockConfig } from '@/types/blockConfigs';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface AboutSplitBlockProps {
   config: Record<string, unknown>;
@@ -69,10 +70,15 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
               <div className="relative group max-w-md w-full mx-auto md:mx-0">
                 <div className="absolute -inset-4 bg-primary rounded-3xl blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-500" />
                 <div className="relative aspect-square rounded-3xl overflow-hidden border border-border/60 bg-card">
-                  <img
+                  <OptimizedImage
                     src={imageUrl}
                     alt={name || "Profile"}
                     className="w-full h-full object-cover"
+                    displayWidth={640}
+                    widths={[320, 480, 640, 960]}
+                    sizes="(min-width: 768px) 448px, 100vw"
+                    width={448}
+                    height={448}
                   />
                 </div>
               </div>

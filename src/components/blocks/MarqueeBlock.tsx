@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface MarqueeItem {
   id: string;
@@ -92,10 +93,13 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({ config }) => {
               {settings.variant === 'logos' && item.image_url ? (
                 // Logo variant
                 <div className="w-24 h-12 md:w-32 md:h-16 flex items-center justify-center grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300">
-                  <img 
-                    src={item.image_url} 
-                    alt={item.text || ''} 
+                  <OptimizedImage
+                    src={item.image_url}
+                    alt={item.text || ''}
                     className="max-w-full max-h-full object-contain"
+                    displayWidth={256}
+                    widths={[128, 256]}
+                    sizes="128px"
                   />
                 </div>
               ) : (
@@ -135,10 +139,13 @@ const MarqueeBlock: React.FC<MarqueeBlockProps> = ({ config }) => {
             >
               {settings.variant === 'logos' && item.image_url ? (
                 <div className="w-24 h-12 md:w-32 md:h-16 flex items-center justify-center grayscale hover:grayscale-0 opacity-50 hover:opacity-100 transition-all duration-300">
-                  <img 
-                    src={item.image_url} 
-                    alt={item.text || ''} 
+                  <OptimizedImage
+                    src={item.image_url}
+                    alt={item.text || ''}
                     className="max-w-full max-h-full object-contain"
+                    displayWidth={256}
+                    widths={[128, 256]}
+                    sizes="128px"
                   />
                 </div>
               ) : (

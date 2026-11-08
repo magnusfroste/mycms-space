@@ -3,11 +3,13 @@
 // Renders a single chat message (user or bot)
 // ============================================
 
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { ChevronDown, ChevronUp, Globe, Loader2, Volume2, VolumeX } from "lucide-react";
 import { MarkdownContent } from "@/components/common";
-import ChatArtifactComponent from "./ChatArtifact";
 import type { Message } from "./types";
+
+// Artifacts pull in recharts (~400 KB) - load only when a message actually has one
+const ChatArtifactComponent = lazy(() => import("./ChatArtifact"));
 
 interface ChatMessageProps {
   message: Message;
@@ -93,7 +95,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled, isPlay
 
       {message.artifacts?.map((artifact, index) => (
         <div key={index} className="w-full max-w-[85%]">
-          <ChatArtifactComponent artifact={artifact} />
+          <Suspense fallback={<div className="mt-2 h-24 w-full rounded-xl border border-border/50 bg-muted/20 animate-pulse" />}>
+            <ChatArtifactComponent artifact={artifact} />
+          </Suspense>
         </div>
       ))}
     </div>

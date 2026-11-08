@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface ImageTextBlockConfig {
   title?: string;
@@ -44,10 +45,14 @@ const ImageTextBlock: React.FC<ImageTextBlockProps> = ({ config }) => {
           {/* Image */}
           <div className={cn('relative', imageOrder)}>
             {image_url ? (
-              <img
+              <OptimizedImage
                 src={image_url}
                 alt={title || 'Content image'}
                 className="w-full h-auto rounded-xl shadow-lg object-cover aspect-[4/3]"
+                displayWidth={960}
+                sizes="(min-width: 768px) 50vw, 100vw"
+                width={800}
+                height={600}
               />
             ) : (
               <div className="w-full aspect-[4/3] bg-muted rounded-xl flex items-center justify-center">

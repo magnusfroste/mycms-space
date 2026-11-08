@@ -7,6 +7,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface BentoItem {
   id: string;
@@ -138,10 +139,12 @@ const BentoGridBlock: React.FC<BentoGridBlockProps> = ({ config }) => {
                 {/* Image */}
                 {item.image_url && (
                   <div className="mb-5 rounded-2xl overflow-hidden">
-                    <img 
-                      src={item.image_url} 
+                    <OptimizedImage
+                      src={item.image_url}
                       alt={item.title}
                       className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                      displayWidth={640}
+                      sizes="(min-width: 768px) 50vw, 100vw"
                     />
                   </div>
                 )}

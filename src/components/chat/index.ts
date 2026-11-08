@@ -4,7 +4,7 @@
 
 export { default as ChatInterface } from "./ChatInterface";
 export { default as ChatMessage } from "./ChatMessage";
-export { default as ChatArtifact } from "./ChatArtifact";
+// ChatArtifact is lazy-loaded by ChatMessage (pulls in recharts) - import it directly if needed
 export { default as ChatMessageList } from "./ChatMessageList";
 export { default as ChatInput } from "./ChatInput";
 export { default as ChatQuickActions } from "./ChatQuickActions";

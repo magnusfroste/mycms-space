@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { FeaturedCarouselBlockConfig } from '@/types/blockConfigs';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface FeaturedCarouselBlockProps {
   config: Record<string, unknown>;
@@ -91,10 +92,14 @@ const FeaturedCarouselBlock: React.FC<FeaturedCarouselBlockProps> = ({ config })
                 <div className="bg-muted rounded-xl p-4">
                   <div className="h-72 rounded-lg flex items-center justify-center overflow-hidden bg-background">
                     {items[activeIndex]?.image_url ? (
-                      <img 
-                        src={items[activeIndex].image_url} 
+                      <OptimizedImage
+                        src={items[activeIndex].image_url}
                         alt={items[activeIndex].title}
                         className="object-contain w-full h-full rounded-lg"
+                        displayWidth={960}
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        width={960}
+                        height={540}
                       />
                     ) : (
                       <div className="flex flex-col items-center text-muted-foreground">

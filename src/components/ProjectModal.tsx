@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import type { DisplayProject } from '@/types/displayProject';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface ProjectModalProps {
   project: DisplayProject;
@@ -51,10 +52,14 @@ const ProjectModal = ({ project, isOpen, onClose }: ProjectModalProps) => {
               <div className="relative">
                 {/* Current Image */}
                 <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
-                  <img 
-                    src={imagesToShow[currentIndex]} 
+                  <OptimizedImage
+                    src={imagesToShow[currentIndex]}
                     alt={`${project.title} - Image ${currentIndex + 1}`}
                     className="w-full h-full object-cover"
+                    displayWidth={1280}
+                    sizes="(min-width: 768px) 768px, 100vw"
+                    width={1280}
+                    height={720}
                   />
                 </div>
 

@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/common/SEOHead';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 const BlogArchive = () => {
   const [search, setSearch] = useState('');
@@ -138,10 +139,14 @@ const BlogArchive = () => {
                   <Card className="overflow-hidden h-full hover:border-primary/50 transition-colors">
                     {post.cover_image_url && (
                       <div className="aspect-video overflow-hidden">
-                        <img
+                        <OptimizedImage
                           src={post.cover_image_url}
                           alt={post.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          displayWidth={640}
+                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          width={640}
+                          height={360}
                         />
                       </div>
                     )}
