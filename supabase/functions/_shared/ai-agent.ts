@@ -7,6 +7,7 @@
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
 import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
+import { callKnowledgeTool } from "./knowledge-tools.ts";
 
 // ============================================
 // Types
@@ -172,6 +173,7 @@ function isClientSideTool(name: string): boolean {
 }
 
 const BUILT_IN_TOOL_NAMES = [
+  'kb_list', 'kb_get', 'kb_upsert', 'kb_append',
   'save_memory', 'list_memory',
   'soul_update',
   'skill_create', 'skill_update', 'skill_list', 'skill_disable', 'skill_instruct',
@@ -218,6 +220,13 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
   );
 
   switch (toolName) {
+    // --- Knowledge base (admin chat only: tools are offered in admin mode) ---
+    case 'kb_list':
+    case 'kb_get':
+    case 'kb_upsert':
+    case 'kb_append':
+      return await callKnowledgeTool(supabase, toolName, toolArgs, { anonymous: false, keyName: null, author: 'magnet' });
+
     // --- Memory ---
     case 'save_memory': {
       const category = toolArgs.category as string;
@@ -646,6 +655,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   }
 
   const tools = await getActiveToolsAsync(enabledTools, mode);
+  const offeredToolNames = new Set(tools.map((t) => t.function.name));
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
@@ -786,6 +796,11 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
       let result: string;
       try {
+        // Only run tools that were offered in this mode — a provider must not
+        // be able to reach admin tools (file_write, kb_upsert …) from public chat.
+        if (!offeredToolNames.has(toolName)) {
+          throw new Error(`Tool not available: ${toolName}`);
+        }
         const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
 
         // Client-side tools: pause and return to frontend

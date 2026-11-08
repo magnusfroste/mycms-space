@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useKnowledgeDocs, useKnowledgeHistory, useSaveKnowledgeDoc, useDeleteKnowledgeDoc,
   estimateWords, slugify,
@@ -11,11 +11,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, History, Lock, Globe, Plus, Save, Trash2, RotateCcw } from 'lucide-react';
+import MarkdownContent from '@/components/common/MarkdownContent';
+import ProfileCard from '@/components/admin/ProfileCard';
+import { BookOpen, History, Lock, Globe, Plus, Save, Trash2, RotateCcw, Eye, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
-const ResumeManager = lazy(() => import('@/components/admin/ResumeManager'));
+/** Same cap as the MCP tools (kb_upsert / kb_append). */
+const MAX_DOC_CHARS = 60_000;
 
 interface Draft {
   id: string | null;
@@ -41,6 +43,8 @@ function KnowledgeBaseEditor() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [showHistory, setShowHistory] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const didAutoSelect = useRef(false);
   const { data: history = [] } = useKnowledgeHistory(showHistory ? draft.id : null);
 
   const selected = useMemo(() => docs.find((d) => d.id === selectedId) || null, [docs, selectedId]);
@@ -48,18 +52,31 @@ function KnowledgeBaseEditor() {
     ? draft.title !== selected.title || draft.content !== selected.content || draft.visibility !== selected.visibility
     : !!(draft.title || draft.content);
 
+  // Open the first document once on load — not again after "New" or Delete,
+  // which would otherwise jump back to docs[0] and swallow the new draft.
   useEffect(() => {
-    if (!selectedId && docs.length) {
-      setSelectedId(docs[0].id);
-      setDraft(toDraft(docs[0]));
-    }
-  }, [docs, selectedId]);
+    if (didAutoSelect.current || !docs.length) return;
+    didAutoSelect.current = true;
+    setSelectedId(docs[0].id);
+    setDraft(toDraft(docs[0]));
+  }, [docs]);
+
+  // Warn before closing the tab with unsaved text.
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
+
+  const tooLong = draft.content.length > MAX_DOC_CHARS;
 
   const open = (doc: KnowledgeDoc) => {
     if (dirty && !window.confirm('Discard unsaved changes?')) return;
     setSelectedId(doc.id);
     setDraft(toDraft(doc));
     setShowHistory(false);
+    setPreview(false);
   };
 
   const startNew = () => {
@@ -67,11 +84,13 @@ function KnowledgeBaseEditor() {
     setSelectedId(null);
     setDraft(emptyDraft);
     setShowHistory(false);
+    setPreview(false);
   };
 
   const handleSave = async () => {
     const title = draft.title.trim();
     if (!title) return toast.error('Title is required');
+    if (tooLong) return toast.error(`Too long (${draft.content.length.toLocaleString('sv-SE')} > ${MAX_DOC_CHARS.toLocaleString('sv-SE')} chars). Split it into several documents.`);
     const slug = draft.id ? draft.slug : slugify(draft.slug || title);
     if (!draft.id && docs.some((d) => d.slug === slug)) return toast.error(`A document with slug "${slug}" already exists`);
     try {
@@ -176,14 +195,35 @@ function KnowledgeBaseEditor() {
               ? 'Public: grounds the site chat and the open MCP tools.'
               : 'Private: only the admin chat and agents with an MCP key can read it.'}
           </p>
-          <Textarea
-            value={draft.content}
-            onChange={(e) => setDraft({ ...draft, content: e.target.value })}
-            placeholder={'## Title — Organisation (YYYY-MM – YYYY-MM)\n\nWhat you did, which problem you solved, the result…'}
-            className="min-h-[420px] font-mono text-sm"
-          />
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1">
+              <Button size="sm" variant={preview ? 'ghost' : 'secondary'} onClick={() => setPreview(false)}>
+                <Pencil className="mr-1 h-3.5 w-3.5" />Write
+              </Button>
+              <Button size="sm" variant={preview ? 'secondary' : 'ghost'} onClick={() => setPreview(true)}>
+                <Eye className="mr-1 h-3.5 w-3.5" />Preview
+              </Button>
+            </div>
+            <span className={`text-xs ${tooLong ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {draft.content.length.toLocaleString('sv-SE')} / {MAX_DOC_CHARS.toLocaleString('sv-SE')} chars
+            </span>
+          </div>
+          {preview ? (
+            <div className="min-h-[420px] rounded-md border p-4">
+              {draft.content.trim()
+                ? <MarkdownContent content={draft.content} />
+                : <p className="text-sm text-muted-foreground">Nothing to preview.</p>}
+            </div>
+          ) : (
+            <Textarea
+              value={draft.content}
+              onChange={(e) => setDraft({ ...draft, content: e.target.value })}
+              placeholder={'## Title — Organisation (YYYY-MM – YYYY-MM)\n\nWhat you did, which problem you solved, the result…'}
+              className="min-h-[420px] font-mono text-sm"
+            />
+          )}
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={handleSave} disabled={save.isPending || !dirty}>
+            <Button onClick={handleSave} disabled={save.isPending || !dirty || tooLong}>
               <Save className="mr-2 h-4 w-4" />{save.isPending ? 'Saving…' : 'Save'}
             </Button>
             {draft.id && (
@@ -235,23 +275,12 @@ export default function KnowledgeBaseManager() {
         <div>
           <h2 className="text-xl font-semibold">Knowledge base</h2>
           <p className="text-sm text-muted-foreground">
-            Your experience as plain markdown. The chat, the CV tools and any agent connected via MCP read it.
+            Your experience as plain markdown prose. The chat, the CV tools and any agent connected via MCP read it — and Magnet (admin chat) or an MCP agent can update it with kb_upsert / kb_append.
           </p>
         </div>
       </div>
-      <Tabs defaultValue="kb">
-        <TabsList>
-          <TabsTrigger value="kb">Documents</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline (legacy)</TabsTrigger>
-        </TabsList>
-        <TabsContent value="kb" className="mt-4"><KnowledgeBaseEditor /></TabsContent>
-        <TabsContent value="timeline" className="mt-4">
-          <p className="mb-3 text-sm text-muted-foreground">
-            Used only as a fallback when the knowledge base is empty, and for profile details such as name and availability.
-          </p>
-          <Suspense fallback={null}><ResumeManager /></Suspense>
-        </TabsContent>
-      </Tabs>
+      <ProfileCard />
+      <KnowledgeBaseEditor />
     </div>
   );
 }

@@ -38,7 +38,7 @@ export const KNOWLEDGE_TOOLS = [
         slug: { type: "string", description: "Stable lowercase id, e.g. 'roles' or 'client-assignments'." },
         title: { type: "string", description: "Human readable title." },
         content: { type: "string", description: `Full markdown content (max ${MAX_DOC_CHARS} characters).` },
-        visibility: { type: "string", enum: ["public", "private"], description: "Default private." },
+        visibility: { type: "string", enum: ["public", "private"], description: "Omit to keep the current visibility. New documents default to private." },
         order_index: { type: "number", description: "Optional sort order (lower first)." },
       },
       required: ["slug", "title", "content"],
@@ -78,12 +78,12 @@ export async function callKnowledgeTool(
   supabase: Supabase,
   name: string,
   args: Record<string, unknown>,
-  ctx: { anonymous: boolean; keyName: string | null },
+  ctx: { anonymous: boolean; keyName: string | null; author?: string },
 ): Promise<string> {
   if (WRITE_TOOLS.has(name) && ctx.anonymous) {
     return JSON.stringify({ error: `${name} requires an API key. Ask the site owner to create one in admin → MCP.` });
   }
-  const author = `mcp:${ctx.keyName || "unknown"}`;
+  const author = ctx.author || `mcp:${ctx.keyName || "unknown"}`;
 
   if (name === "kb_list") {
     let q = supabase.from("knowledge_docs").select("slug, title, visibility, content, updated_at, updated_by").order("order_index").order("title");
@@ -115,7 +115,15 @@ export async function callKnowledgeTool(
     const content = String(args.content || "");
     if (!title) throw new Error("title is required.");
     if (content.length > MAX_DOC_CHARS) throw new Error(`content is too long (${content.length} > ${MAX_DOC_CHARS}). Split it into several documents.`);
-    const visibility = args.visibility === "public" ? "public" : "private";
+    // Keep the existing visibility unless the caller sets it explicitly,
+    // so an edit never silently hides a public document from the chat.
+    let visibility: string;
+    if (args.visibility === "public" || args.visibility === "private") {
+      visibility = args.visibility;
+    } else {
+      const { data: existing } = await supabase.from("knowledge_docs").select("visibility").eq("slug", slug).maybeSingle();
+      visibility = existing?.visibility || "private";
+    }
     const row: Record<string, unknown> = { slug, title, content, visibility, updated_by: author };
     if (typeof args.order_index === "number") row.order_index = args.order_index;
     const { data, error } = await supabase.from("knowledge_docs").upsert(row, { onConflict: "slug" }).select("slug, title, visibility, updated_at").single();
@@ -126,14 +134,20 @@ export async function callKnowledgeTool(
   if (name === "kb_append") {
     const addition = String(args.content || "").trim();
     if (!addition) throw new Error("content is required.");
-    const { data: doc, error } = await supabase.from("knowledge_docs").select("content").eq("slug", slug).maybeSingle();
-    if (error) throw error;
-    if (!doc) return JSON.stringify({ error: `No document '${slug}'. Create it with kb_upsert first.` });
-    const content = `${doc.content.trimEnd()}\n\n${addition}\n`;
-    if (content.length > MAX_DOC_CHARS) throw new Error(`Document would exceed ${MAX_DOC_CHARS} characters. Start a new document.`);
-    const { error: upErr } = await supabase.from("knowledge_docs").update({ content, updated_by: author }).eq("slug", slug);
-    if (upErr) throw upErr;
-    return JSON.stringify({ status: "appended", slug, chars: content.length });
+    // Optimistic concurrency: only write if nobody changed the doc since we
+    // read it, so two agents appending at once never drop each other's text.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: doc, error } = await supabase.from("knowledge_docs").select("content, updated_at").eq("slug", slug).maybeSingle();
+      if (error) throw error;
+      if (!doc) return JSON.stringify({ error: `No document '${slug}'. Create it with kb_upsert first.` });
+      const content = `${doc.content.trimEnd()}\n\n${addition}\n`;
+      if (content.length > MAX_DOC_CHARS) throw new Error(`Document would exceed ${MAX_DOC_CHARS} characters. Start a new document.`);
+      const { data: updated, error: upErr } = await supabase.from("knowledge_docs")
+        .update({ content, updated_by: author }).eq("slug", slug).eq("updated_at", doc.updated_at).select("slug");
+      if (upErr) throw upErr;
+      if (updated?.length) return JSON.stringify({ status: "appended", slug, chars: content.length });
+    }
+    throw new Error(`'${slug}' is being edited by someone else right now. Try again.`);
   }
 
   if (name === "kb_delete") {

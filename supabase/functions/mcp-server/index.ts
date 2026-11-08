@@ -7,8 +7,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PROFILE_TOOLS, PROFILE_TOOL_NAMES, callProfileTool } from "./profile-tools.ts";
-import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "./knowledge-tools.ts";
-import { loadKnowledgeBase } from "../_shared/ai-context.ts";
+import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
+import { loadResumeContext } from "../_shared/ai-context.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -426,13 +426,8 @@ const BUILTIN_TOOLS = [
   },
   {
     name: 'get_resume',
-    description: 'Get the full resume / CV: work experience, education, certifications, skills and other timeline entries. Use this to understand background, expertise and availability when matching to consulting assignments or job opportunities.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        category: { type: 'string', description: 'Optional: filter by category (e.g. "experience", "education", "skill", "certification")' },
-      },
-    },
+    description: 'Get the full profile as markdown: name, title, availability and every knowledge base document (roles, assignments, projects). Use it to understand background and availability when matching to consulting assignments or jobs. Use kb_list / kb_get to read single documents.',
+    inputSchema: { type: 'object', properties: {} },
   },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
@@ -482,22 +477,9 @@ async function callBuiltinTool(
   }
 
   if (name === 'get_resume') {
-    // The knowledge base (markdown documents) is the primary profile source when it has content.
-    if (!args.category) {
-      const kb = await loadKnowledgeBase({ includePrivate: !anonymous });
-      if (kb) return kb;
-    }
-    let q = supabase
-      .from('resume_entries')
-      .select('category, title, subtitle, description, start_date, end_date, is_current, tags, metadata')
-      .eq('enabled', true)
-      .order('category')
-      .order('order_index')
-      .order('start_date', { ascending: false });
-    if (args.category) q = q.eq('category', args.category);
-    const { data, error } = await q;
-    if (error) throw error;
-    return JSON.stringify({ count: data?.length || 0, entries: data || [] }, null, 2);
+    // Profile header + knowledge base (markdown documents) — same source as the chat.
+    const profile = await loadResumeContext({ includePrivate: !anonymous });
+    return profile || JSON.stringify({ error: 'Profile data is unavailable right now.' });
   }
 
   throw new Error(`Unknown built-in tool: ${name}`);

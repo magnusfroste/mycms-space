@@ -347,27 +347,70 @@ export async function loadKnowledgeBase(opts: { includePrivate?: boolean } = {})
   const { data, error } = await q;
   if (error || !data?.length) return null;
 
-  let text = data
-    .filter((d) => (d.content as string)?.trim())
-    .map((d) => `# ${d.title}${d.visibility === 'private' ? ' (privat – citera inte för besökare)' : ''}\n\n${(d.content as string).trim()}`)
-    .join('\n\n---\n\n');
-  if (!text) return null;
-  if (text.length > KNOWLEDGE_MAX_CHARS) {
-    console.warn(`[AI Context] Knowledge base truncated from ${text.length} to ${KNOWLEDGE_MAX_CHARS} chars`);
-    text = text.slice(0, KNOWLEDGE_MAX_CHARS);
+  // Add whole documents (in order_index order) until the budget is spent,
+  // so a document is never cut off mid-sentence.
+  const parts: string[] = [];
+  let used = 0;
+  const skipped: string[] = [];
+  for (const d of data) {
+    const body = (d.content as string)?.trim();
+    if (!body) continue;
+    const part = `# ${d.title}${d.visibility === 'private' ? ' (privat – citera inte för besökare)' : ''}\n\n${body}`;
+    if (used + part.length > KNOWLEDGE_MAX_CHARS) { skipped.push(d.title as string); continue; }
+    parts.push(part);
+    used += part.length + 7;
   }
+  if (skipped.length) console.warn(`[AI Context] Knowledge base over budget, skipped: ${skipped.join(', ')}`);
+  const text = parts.join('\n\n---\n\n');
+  if (!text) return null;
   console.log(`[AI Context] Loaded knowledge base: ${data.length} docs, ${text.length} chars`);
   return text;
 }
 
-/** Load the owner's profile: knowledge base first, then structured resume_entries, then page blocks. */
+/**
+ * Short profile header (name, title, availability …) from the resume module
+ * settings. Prepended to the knowledge base so the chat can always answer
+ * "who is he and is he available?".
+ */
+export async function loadProfileHeader(): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from('modules')
+    .select('module_config')
+    .eq('module_type', 'resume')
+    .maybeSingle();
+  const c = data?.module_config as Record<string, unknown> | null;
+  if (!c) return null;
+  const parts: string[] = [];
+  if (c.owner_name) parts.push(`# ${c.owner_name}`);
+  if (c.owner_title) parts.push(`**${c.owner_title}**`);
+  if (c.owner_summary) parts.push(String(c.owner_summary));
+  if (c.owner_location) parts.push(`Location: ${c.owner_location}`);
+  if (c.owner_availability) {
+    parts.push(`Availability: ${c.owner_availability}${c.availability_note ? ` — ${c.availability_note}` : ''}`);
+  }
+  return parts.length ? parts.join('\n') : null;
+}
+
+/**
+ * Load the owner's profile: profile header + knowledge base. The legacy
+ * sources (resume_entries, page blocks) are only used while the knowledge
+ * base has no documents at all.
+ */
 export async function loadResumeContext(opts: { includePrivate?: boolean } = {}): Promise<string | null> {
   try {
-    const kb = await loadKnowledgeBase(opts);
-    if (kb) return kb;
-
     const supabase = getSupabaseClient();
     if (!supabase) return null;
+
+    const [header, kb, { count: kbCount }] = await Promise.all([
+      loadProfileHeader(),
+      loadKnowledgeBase(opts),
+      supabase.from('knowledge_docs').select('id', { count: 'exact', head: true }),
+    ]);
+    if (kb || (kbCount ?? 0) > 0) {
+      return [header, kb].filter(Boolean).join('\n\n---\n\n') || null;
+    }
 
     // Try structured resume_entries first
     const { data: entries, error: entriesError } = await supabase

@@ -3,6 +3,8 @@
 // Magnet tool definitions and artifact handling
 // ============================================
 
+import { KNOWLEDGE_TOOLS } from "./knowledge-tools.ts";
+
 export interface ToolDefinition {
   type: "function";
   function: {
@@ -559,89 +561,17 @@ export const getSiteStatsTool: ToolDefinition = {
   },
 };
 
-export const resumeLookupTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "resume_lookup",
-    description: "Query the structured resume knowledge base. Use to find specific experience, skills, education, or certifications. Useful when answering questions about qualifications or preparing proposals.",
-    parameters: {
-      type: "object",
-      properties: {
-        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary", "all"], description: "Category to query (or 'all')" },
-        search_tags: { type: "array", items: { type: "string" }, description: "Optional tags to filter by" },
-      },
-    },
-  },
-};
-
-export const addResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "add_resume_entry",
-    description: "Add a new entry to the resume knowledge base. Use when admin asks to add experience, skills, education, certifications, or languages.",
-    parameters: {
-      type: "object",
-      properties: {
-        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary"], description: "Entry category" },
-        title: { type: "string", description: "Title/role/skill name" },
-        subtitle: { type: "string", description: "Company, institution, or issuer" },
-        description: { type: "string", description: "Detailed description in markdown" },
-        start_date: { type: "string", description: "Start date (YYYY-MM-DD)" },
-        end_date: { type: "string", description: "End date (YYYY-MM-DD), omit if current" },
-        is_current: { type: "boolean", description: "Whether this is a current/ongoing entry" },
-        tags: { type: "array", items: { type: "string" }, description: "Relevant tags" },
-        metadata: { type: "object", description: "Extra data (e.g. { level: 85 } for skills)" },
-      },
-      required: ["category", "title"],
-    },
-  },
-};
-
-export const updateResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "update_resume_entry",
-    description: "Update an existing resume entry. Use when admin asks to edit, correct, or modify experience/skills/education details.",
-    parameters: {
-      type: "object",
-      properties: {
-        entry_id: { type: "string", description: "ID of the entry to update (use resume_lookup first to find it)" },
-        title: { type: "string" },
-        subtitle: { type: "string" },
-        description: { type: "string", description: "Updated description in markdown" },
-        start_date: { type: "string" },
-        end_date: { type: "string" },
-        is_current: { type: "boolean" },
-        tags: { type: "array", items: { type: "string" } },
-        metadata: { type: "object" },
-        enabled: { type: "boolean" },
-      },
-      required: ["entry_id"],
-    },
-  },
-};
-
-export const enrichResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "enrich_resume_entry",
-    description: "Enrich/expand a resume entry's description with more detail, better wording, or additional context. Use when admin asks to make an entry more detailed, professional, or comprehensive. Fetches the current entry, rewrites the description, and saves it.",
-    parameters: {
-      type: "object",
-      properties: {
-        entry_id: { type: "string", description: "ID of the entry to enrich (use resume_lookup first)" },
-        instructions: { type: "string", description: "How to improve: 'more technical detail', 'add metrics', 'make more concise', etc." },
-        new_description: { type: "string", description: "The enriched/rewritten description in markdown" },
-        new_tags: { type: "array", items: { type: "string" }, description: "Updated tags if relevant" },
-      },
-      required: ["entry_id", "new_description"],
-    },
-  },
-};
-
-// ============================================
-// File Manager Tools
-// ============================================
+// Knowledge base — same tools and rules as the MCP server (kb_delete stays
+// in the admin UI so the chat agent can't remove whole documents).
+const IN_APP_KB_TOOLS = ['kb_list', 'kb_get', 'kb_upsert', 'kb_append'];
+const kbTools: Record<string, ToolDefinition> = Object.fromEntries(
+  KNOWLEDGE_TOOLS
+    .filter((t) => IN_APP_KB_TOOLS.includes(t.name))
+    .map((t) => [t.name, {
+      type: "function" as const,
+      function: { name: t.name, description: t.description, parameters: t.inputSchema },
+    }]),
+);
 
 export const fileListTool: ToolDefinition = {
   type: "function",
@@ -752,11 +682,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   automation_list: automationListTool,
   // Reflection
   reflect: reflectTool,
-  // Resume
-  resume_lookup: resumeLookupTool,
-  add_resume_entry: addResumeEntryTool,
-  update_resume_entry: updateResumeEntryTool,
-  enrich_resume_entry: enrichResumeEntryTool,
+  // Knowledge base (grounds the chat)
+  ...kbTools,
   // Browser
   browser_scrape: browserScrapeTool,
   // File Manager
@@ -800,10 +727,10 @@ export const toolDescriptions: Record<string, string> = {
   automation_create: "**automation_create** — Create an automation (cron/signal/event trigger).",
   automation_list: "**automation_list** — List all automations.",
   reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
-  resume_lookup: "**resume_lookup** — Query the structured resume knowledge base by category or tags.",
-  add_resume_entry: "**add_resume_entry** — Add a new entry (experience, skill, education, etc.) to the resume knowledge base.",
-  update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
-  enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
+  kb_list: "**kb_list** — List the knowledge base documents (the source the public chat is grounded on).",
+  kb_get: "**kb_get** — Read a knowledge base document in full before changing it.",
+  kb_upsert: "**kb_upsert** — Create or rewrite a knowledge base document (markdown prose). Read it with kb_get first.",
+  kb_append: "**kb_append** — Append a section (e.g. a new assignment) to a knowledge base document.",
   browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
   file_list: "**file_list** — List files in a storage bucket. Use to browse uploaded documents, images, and CMS files.",
   file_read: "**file_read** — Read the text content of a file from storage (.md, .txt, .json, .csv).",
@@ -818,7 +745,7 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'objective_update_progress', 'objective_complete',
   'automation_create', 'automation_list',
   'reflect',
-  'resume_lookup', 'add_resume_entry', 'update_resume_entry', 'enrich_resume_entry',
+  'kb_list', 'kb_get', 'kb_upsert', 'kb_append',
   'browser_scrape',
   'file_list', 'file_read', 'file_write', 'file_delete',
 ];
