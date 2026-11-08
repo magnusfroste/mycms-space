@@ -483,34 +483,6 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 // ============================================
 // Skill Execution (delegate to agent-execute)
 // ============================================
-// A2A Delegation
-// ============================================
-
-async function executeA2ADelegate(toolArgs: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/a2a-delegate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({
-        agent: 'soundspace',
-        prompt: toolArgs.prompt,
-        duration: toolArgs.duration || 120,
-        context: toolArgs.context || '',
-      }),
-    });
-    return await response.json();
-  } catch (e) {
-    return { status: 'error', error: (e as Error).message };
-  }
-}
-
-// ============================================
 
 async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -743,16 +715,6 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   }
 
-  // Pre-route: detect music intent in last user message and force tool_choice
-  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-  const musicKeywords = /\b(musik|music|låt|song|track|beat|melody|audio|spela|skapa.*(låt|musik|song)|generera.*(låt|musik|song|audio))\b/i;
-  let forceMusicTool = false;
-  if (lastUserMsg && musicKeywords.test(lastUserMsg.content || '')) {
-    fullPrompt += `\n\n⚠️ CRITICAL OVERRIDE: The user is asking for MUSIC GENERATION. You MUST call the request_music tool NOW with a detailed prompt. Do NOT use any other tool. Do NOT explain or ask follow-up questions. Just call request_music immediately.`;
-    forceMusicTool = tools.some(t => (t as { function?: { name?: string } })?.function?.name === 'request_music');
-    console.log(`[Agent] Music intent detected — forceMusicTool=${forceMusicTool}`);
-  }
-
   // Multi-iteration tool loop
   const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
     { role: "system", content: fullPrompt },
@@ -762,10 +724,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    // Force request_music tool on first iteration when music intent is detected
-    const toolChoice = (forceMusicTool && iteration === 0)
-      ? { type: "function", function: { name: "request_music" } }
-      : "auto";
+    const toolChoice = "auto";
 
     const data = await callOpenAICompatible({
       url,
@@ -828,19 +787,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
 
-          // A2A delegation tools: call the delegate function AND produce artifacts
-          if (toolName === 'request_music') {
-            const delegateResult = await executeA2ADelegate(toolArgs);
-            // Flatten nested result (a2a-delegate returns { status, result: { audio_url, ... } })
-            const innerResult = (delegateResult.result as Record<string, unknown>) || {};
-            const mergedData = { ...toolArgs, ...delegateResult, ...innerResult };
-            if (parsed.artifacts?.length) {
-              lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
-            } else {
-              lastArtifacts = [{ type: 'music-player', title: (toolArgs.prompt as string)?.slice(0, 50) || 'Generated Music', data: mergedData }];
-            }
-            result = JSON.stringify(delegateResult);
-          } else if (parsed.artifacts?.length) {
+          if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
 

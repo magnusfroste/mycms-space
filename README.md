@@ -58,10 +58,9 @@ When multiple people deploy mycms.chat instances:
   - Adapt for each platform
 
 ### Phase 3: Agent Identity & Discovery 📋 (Planned)
-- [ ] **Agent Card** (`/.well-known/agent.json`)
-  - A2A-compatible agent descriptor
-  - Skills and capabilities declaration
-  - Contact endpoints
+- [x] **MCP server** (`/mcp.json`)
+  - Profile, knowledge base and projects as MCP tools
+  - Agents can maintain the knowledge base with an API key
 - [ ] **Agent Registry**
   - Optional public directory
   - Searchable by expertise
@@ -70,10 +69,6 @@ When multiple people deploy mycms.chat instances:
   - Domain ownership proof
 
 ### Phase 4: Federation & Collaboration 🔮 (Future)
-- [ ] **A2A Protocol support**
-  - Agent-to-agent communication
-  - Task delegation
-  - Collaborative responses
 - [ ] **Referral network**
   - "I don't know, but X does"
   - Credit and attribution
@@ -109,8 +104,8 @@ When multiple people deploy mycms.chat instances:
 │         ┌────────────┼────────────┐                            │
 │         ▼            ▼            ▼                            │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────┐                   │
-│  │  Chat    │ │ Content  │ │   A2A        │                   │
-│  │  Widget  │ │ Generator│ │   Endpoint   │                   │
+│  │  Chat    │ │ Content  │ │   MCP        │                   │
+│  │  Widget  │ │ Generator│ │   Server     │                   │
 │  └──────────┘ └──────────┘ └──────────────┘                   │
 │                                    │                            │
 └────────────────────────────────────┼────────────────────────────┘
@@ -312,40 +307,14 @@ If using Lovable Cloud, AI is pre-configured with no additional setup.
 
 ---
 
-## 🤝 Federation: The Agent Network
+## 🤖 Agent Access: MCP
 
-### Agent Card Specification (Planned)
+External agents (Hermes, Claude, ChatGPT, …) work with the CMS through one interface: the **MCP server** (`supabase/functions/mcp-server`, manifest at `/mcp.json`).
 
-Every mycms.chat instance will publish an Agent Card at `/.well-known/agent.json`:
+- **Open without a key:** profile, knowledge base (public documents), projects, job-fit analysis.
+- **With an API key** (Admin → Agency → MCP Server): write to the knowledge base (`kb_upsert`, `kb_append`) and run the site's agent skills.
 
-```json
-{
-  "@context": "https://a2a-protocol.org/context",
-  "type": "AgentCard",
-  "name": "Magnus Froste's Digital Agent",
-  "description": "Expert in Agentic AI, business innovation, and digital transformation",
-  "skills": [
-    "ai-strategy",
-    "business-innovation", 
-    "keynote-speaking"
-  ],
-  "endpoints": {
-    "chat": "https://mycms.chat/api/a2a/chat",
-    "discover": "https://mycms.chat/api/a2a/discover"
-  },
-  "owner": {
-    "name": "Magnus Froste",
-    "website": "https://mycms.chat"
-  }
-}
-```
-
-### How Federation Will Work
-
-1. **Discovery**: Agents find each other via Agent Cards
-2. **Capability Matching**: Query skills and expertise
-3. **Delegation**: "I'll ask my network about that"
-4. **Response**: Aggregated knowledge with attribution
+There is no separate agent-to-agent (A2A) protocol: anything an agent needs is exposed as MCP tools.
 
 ---
 
@@ -372,7 +341,6 @@ Every mycms.chat instance will publish an Agent Card at `/.well-known/agent.json
 This project draws inspiration from:
 
 - **[claude_life_assistant](https://github.com/lout33/claude_life_assistant)** — Symbiotic AI agent with persistent memory
-- **[A2A Protocol](https://a2a-protocol.org/)** — Google's Agent-to-Agent communication standard
 - **[MCP](https://modelcontextprotocol.io/)** — Anthropic's Model Context Protocol
 - **[IndieWeb](https://indieweb.org/)** — Decentralized personal web movement
 
@@ -411,7 +379,6 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 - Built with [shadcn/ui](https://ui.shadcn.com/)
 - Powered by [Supabase](https://supabase.com)
 - Icons by [Lucide](https://lucide.dev)
-- Inspired by the [A2A Protocol](https://a2a-protocol.org/)
 
 ---
 

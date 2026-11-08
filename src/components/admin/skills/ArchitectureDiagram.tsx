@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useSkills } from '@/hooks/useSkillHub';
 import {
-  Globe, Lock, Layers, Cpu, Database, Radio, Bot, ArrowRight, Workflow,
+  Globe, Lock, Layers, Cpu, Database, Bot, ArrowRight, Workflow,
 } from 'lucide-react';
 
 const HANDLER_META: Record<string, { label: string; icon: typeof Cpu; color: string }> = {
@@ -11,14 +11,12 @@ const HANDLER_META: Record<string, { label: string; icon: typeof Cpu; color: str
   builtin: { label: 'Built-in', icon: Layers, color: 'text-emerald-500' },
   module: { label: 'Module', icon: Workflow, color: 'text-amber-500' },
   db: { label: 'Database', icon: Database, color: 'text-violet-500' },
-  a2a: { label: 'Federation', icon: Radio, color: 'text-rose-500' },
 };
 
 const SCOPE_META: Record<string, { label: string; icon: typeof Globe; color: string }> = {
   public: { label: 'Public', icon: Globe, color: 'border-green-300 bg-green-500/10 text-green-700 dark:text-green-400' },
   internal: { label: 'Internal', icon: Lock, color: 'border-blue-300 bg-blue-500/10 text-blue-700 dark:text-blue-400' },
   both: { label: 'Both', icon: Layers, color: 'border-purple-300 bg-purple-500/10 text-purple-700 dark:text-purple-400' },
-  federation: { label: 'Federation', icon: Radio, color: 'border-rose-300 bg-rose-500/10 text-rose-700 dark:text-rose-400' },
 };
 
 export default function ArchitectureDiagram() {
@@ -58,7 +56,7 @@ export default function ArchitectureDiagram() {
             { label: 'Agent Loop', sub: 'ai-agent.ts' },
             { label: 'Tool Selection', sub: 'Dynamic from DB' },
             { label: 'Handler Dispatch', sub: 'agent-execute' },
-            { label: 'Execution', sub: 'edge / builtin / a2a' },
+            { label: 'Execution', sub: 'edge / builtin / module' },
           ].map((step, i, arr) => (
             <div key={step.label} className="flex items-center gap-2 shrink-0">
               <div className="rounded-lg border bg-muted/50 px-3 py-2 text-center min-w-[100px]">

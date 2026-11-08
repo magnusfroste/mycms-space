@@ -335,23 +335,6 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     tags: ['i18n', 'translation'],
   },
   {
-    type: 'a2a_federation',
-    name: 'A2A Federation',
-    description: 'Agent-to-agent communication and federated agent discovery',
-    longDescription: 'Enable your AI agent to discover and communicate with other agents using the A2A protocol. Supports capability negotiation, task delegation via federation skills, and an Agent Card endpoint for discoverability.',
-    icon: 'Network',
-    category: 'integrations',
-    sidebarItems: [],
-    defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['agents', 'federation'],
-    changelog: [
-      { version: '1.0.0', date: '2025-03-08', changes: ['A2A negotiate endpoint', 'Outbound delegation via federation skills', 'Agent Card (/.well-known/agent.json)'] },
-    ],
-  },
-  {
     type: 'crm',
     name: 'CRM',
     description: 'Contact management, pipelines and lead tracking',

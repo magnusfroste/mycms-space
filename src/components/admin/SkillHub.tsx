@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
-import { Plus, Globe, FileText, Server } from 'lucide-react';
+import { Plus, FileText, Server } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,6 @@ import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill, useActivity 
 import type { AgentSkill } from '@/types/agent';
 
 const OverviewPanel = lazy(() => import('@/components/admin/skills/OverviewPanel'));
-const FederationPanel = lazy(() => import('@/components/admin/skills/FederationPanel'));
 const DocumentsPanel = lazy(() => import('@/components/admin/skills/DocumentsPanel'));
 const McpPanel = lazy(() => import('@/components/admin/skills/McpPanel'));
 
@@ -80,10 +79,6 @@ export default function SkillHub() {
           <TabsTrigger value="documents" className="gap-1.5">
             <FileText className="h-3.5 w-3.5" />
             Documents
-          </TabsTrigger>
-          <TabsTrigger value="federation" className="gap-1.5">
-            <Globe className="h-3.5 w-3.5" />
-            Federation
           </TabsTrigger>
           <TabsTrigger value="mcp" className="gap-1.5">
             <Server className="h-3.5 w-3.5" />
@@ -152,11 +147,6 @@ export default function SkillHub() {
         <TabsContent value="documents">
           <Suspense fallback={<TabFallback />}>
             <DocumentsPanel />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="federation">
-          <Suspense fallback={<TabFallback />}>
-            <FederationPanel />
           </Suspense>
         </TabsContent>
         <TabsContent value="mcp">
