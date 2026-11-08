@@ -6,6 +6,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getAICompletion, getAIModuleConfig, handleProviderError } from "../_shared/ai-provider.ts";
+import { clientIp, isRateLimited, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,10 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  if (await isRateLimited(`hero-greeting:${clientIp(req)}`, 600, 20)) {
+    return tooManyRequests(corsHeaders);
   }
 
   try {

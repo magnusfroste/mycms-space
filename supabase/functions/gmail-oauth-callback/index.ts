@@ -4,6 +4,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isAdminRequest, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,7 @@ function getSupabase() {
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
+const STATE_TTL_MS = 10 * 60 * 1000;
 
 function getRedirectUri(): string {
   const url = Deno.env.get("SUPABASE_URL")!;
@@ -34,39 +36,30 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
 
   // ============================================
-  // GET /gmail-oauth-callback?action=authorize
-  // → Redirect user to Google consent screen
-  // ============================================
-  if (req.method === 'GET' && url.searchParams.get('action') === 'authorize') {
-    const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-    if (!clientId) {
-      return new Response('GOOGLE_CLIENT_ID not configured', { status: 500 });
-    }
-
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: getRedirectUri(),
-      response_type: 'code',
-      scope: SCOPES,
-      access_type: 'offline',
-      prompt: 'consent',
-      state: 'gmail_connect',
-    });
-
-    return Response.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`, 302);
-  }
-
-  // ============================================
   // GET /gmail-oauth-callback?code=...&state=...
   // → Exchange code for tokens, store in modules
   // ============================================
   if (req.method === 'GET' && url.searchParams.get('code')) {
     const code = url.searchParams.get('code')!;
+    const state = url.searchParams.get('state') || '';
     const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
       return new Response('Google OAuth not configured', { status: 500 });
+    }
+
+    // The state must have been issued to an admin by action=authorize within
+    // the last 10 minutes. It is single-use: deleted as it is consumed.
+    const { data: stateRow } = await getSupabase()
+      .from('oauth_states')
+      .delete()
+      .eq('state', state)
+      .eq('provider', 'gmail')
+      .select('created_at')
+      .maybeSingle();
+    if (!state || !stateRow || Date.now() - new Date(stateRow.created_at).getTime() > STATE_TTL_MS) {
+      return new Response('Invalid or expired OAuth state. Start the Gmail connection again from the admin panel.', { status: 400 });
     }
 
     try {
@@ -137,12 +130,56 @@ Deno.serve(async (req) => {
   }
 
   // ============================================
-  // POST /gmail-oauth-callback { action: 'disconnect' }
-  // → Remove tokens
+  // POST /gmail-oauth-callback { action: ... } — admin only
+  // authorize | disconnect | status | update_settings
   // ============================================
   if (req.method === 'POST') {
+    if (!(await isAdminRequest(req))) return forbidden(corsHeaders);
+
     const body = await req.json();
 
+    // ============================================
+    // POST { action: 'authorize' } (admin)
+    // → Issue a one-time state and return the Google consent URL
+    // ============================================
+    if (body.action === 'authorize') {
+      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
+      if (!clientId) {
+        return new Response(JSON.stringify({ error: 'GOOGLE_CLIENT_ID not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const supabase = getSupabase();
+      const token = req.headers.get('Authorization')!.replace(/^Bearer\s+/i, '');
+      const { data: userData } = await supabase.auth.getUser(token);
+      const state = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '');
+
+      // Drop expired states so the table stays small.
+      await supabase.from('oauth_states').delete()
+        .lt('created_at', new Date(Date.now() - STATE_TTL_MS).toISOString());
+      const { error: stateError } = await supabase.from('oauth_states')
+        .insert({ state, provider: 'gmail', user_id: userData.user?.id ?? null });
+      if (stateError) {
+        console.error('[Gmail OAuth] Could not store state:', stateError);
+        return new Response(JSON.stringify({ error: 'Could not start OAuth flow' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: getRedirectUri(),
+        response_type: 'code',
+        scope: SCOPES,
+        access_type: 'offline',
+        prompt: 'consent',
+        state,
+      });
+
+      return new Response(
+        JSON.stringify({ url: `${GOOGLE_AUTH_URL}?${params.toString()}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // → Remove tokens
     if (body.action === 'disconnect') {
       const supabase = getSupabase();
       await supabase.from('modules')

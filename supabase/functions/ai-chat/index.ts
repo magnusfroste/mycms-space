@@ -6,6 +6,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { runAgent } from "../_shared/ai-agent.ts";
 import { isAdminRequest } from "../_shared/cron-auth.ts";
+import { clientIp, isRateLimited, tooManyRequests } from "../_shared/rate-limit.ts";
 
 // Public requests: cap conversation size to limit cost abuse.
 const MAX_PUBLIC_MESSAGES = 40;
@@ -62,6 +63,9 @@ Deno.serve(async (req) => {
     let systemPrompt = body.systemPrompt;
 
     if (!isAdmin) {
+      if (await isRateLimited(`ai-chat:${clientIp(req)}`, 600, 30)) {
+        return tooManyRequests(corsHeaders);
+      }
       const publicConfig = await loadPublicAIConfig();
       integration = publicConfig.integration;
       systemPrompt = publicConfig.systemPrompt;

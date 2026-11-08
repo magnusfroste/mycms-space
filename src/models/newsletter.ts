@@ -49,7 +49,7 @@ export const useUpdateSubscriberStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'active' | 'unsubscribed' | 'bounced' }) =>
+    mutationFn: ({ id, status }: { id: string; status: 'pending' | 'active' | 'unsubscribed' | 'bounced' }) =>
       newsletterData.updateSubscriberStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: newsletterKeys.subscribers() });
