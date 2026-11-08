@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import type { GitHubRepoWithImages } from '@/data/githubRepos';
 import TechBadge from '@/components/common/TechBadge';
+import MarkdownContent from '@/components/common/MarkdownContent';
+import { stripMarkdown } from '@/lib/utils/markdown';
 import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface LayoutProps {
@@ -101,20 +103,20 @@ export const ProjectCardsLayout: React.FC<LayoutProps> = ({
             </CardHeader>
             <CardContent className="space-y-4">
               {description && (
-                <p className="text-muted-foreground">{description}</p>
+                <MarkdownContent content={description} compact className="text-base text-muted-foreground" />
               )}
               
               {showProblemStatement && repo.problem_statement && (
                 <div className="p-4 rounded-lg bg-muted/50 border-l-4 border-primary">
                   <p className="text-sm font-medium mb-1">The Problem</p>
-                  <p className="text-sm text-muted-foreground">{repo.problem_statement}</p>
+                  <MarkdownContent content={repo.problem_statement} compact className="text-muted-foreground" />
                 </div>
               )}
 
               {showWhyItMatters && repo.why_it_matters && (
                 <div className="p-4 rounded-lg bg-primary/5 border-l-4 border-primary/50">
                   <p className="text-sm font-medium mb-1">Why It Matters</p>
-                  <p className="text-sm text-muted-foreground">{repo.why_it_matters}</p>
+                  <MarkdownContent content={repo.why_it_matters} compact className="text-muted-foreground" />
                 </div>
               )}
 
@@ -202,7 +204,7 @@ export const ClassicGridLayout: React.FC<LayoutProps> = ({
           <CardContent className="space-y-3">
             {(repo.enriched_description || repo.description) && (
               <p className="text-muted-foreground text-sm line-clamp-2">
-                {repo.enriched_description || repo.description}
+                {stripMarkdown(repo.enriched_description || repo.description)}
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2">
@@ -297,21 +299,21 @@ export const ShowcaseHeroLayout: React.FC<LayoutProps> = ({
             </div>
             <h3 className="text-3xl font-bold mb-4">{title}</h3>
             {description && (
-              <p className="text-lg text-muted-foreground">{description}</p>
+              <MarkdownContent content={description} compact className="text-lg text-muted-foreground" />
             )}
           </div>
 
           {showProblemStatement && repo.problem_statement && (
             <div className="p-4 rounded-lg bg-muted/50 border-l-4 border-primary">
               <p className="text-sm font-medium mb-1">The Problem</p>
-              <p className="text-muted-foreground">{repo.problem_statement}</p>
+              <MarkdownContent content={repo.problem_statement} compact className="text-base text-muted-foreground" />
             </div>
           )}
 
           {showWhyItMatters && repo.why_it_matters && (
             <div className="p-4 rounded-lg bg-primary/5 border-l-4 border-primary/50">
               <p className="text-sm font-medium mb-1">Why It Matters</p>
-              <p className="text-muted-foreground">{repo.why_it_matters}</p>
+              <MarkdownContent content={repo.why_it_matters} compact className="text-base text-muted-foreground" />
             </div>
           )}
 
@@ -398,7 +400,7 @@ export const MinimalListLayout: React.FC<LayoutProps> = ({
               </div>
               {(repo.enriched_description || repo.description) && (
                 <p className="text-sm text-muted-foreground truncate mt-0.5">
-                  {repo.enriched_description || repo.description}
+                  {stripMarkdown(repo.enriched_description || repo.description)}
                 </p>
               )}
               {repo.homepage && (

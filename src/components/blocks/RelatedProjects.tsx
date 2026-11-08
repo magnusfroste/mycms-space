@@ -9,6 +9,7 @@ import { Star, GitFork } from 'lucide-react';
 import TechBadge from '@/components/common/TechBadge';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
 import OptimizedImage from '@/components/common/OptimizedImage';
+import { stripMarkdown } from '@/lib/utils/markdown';
 
 interface RelatedProjectsProps {
   currentRepoName: string;
@@ -61,7 +62,7 @@ const RelatedProjects: React.FC<RelatedProjectsProps> = ({ currentRepoName }) =>
                 </h3>
                 {repo.enriched_description && (
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {repo.enriched_description}
+                    {stripMarkdown(repo.enriched_description)}
                   </p>
                 )}
                 <div className="flex items-center gap-3 pt-1">

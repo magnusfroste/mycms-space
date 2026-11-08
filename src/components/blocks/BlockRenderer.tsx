@@ -39,9 +39,11 @@ const BLOCKS_WITH_DIVIDER = ['hero', 'chat-hero', 'about-split', 'expertise-grid
 interface BlockRendererProps {
   block: PageBlock;
   isLast?: boolean;
+  /** Render the block's section title as the page <h1> (when no hero block provides one) */
+  promoteHeading?: boolean;
 }
 
-const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) => {
+const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false, promoteHeading = false }) => {
   const { block_type, block_config } = block;
   const showDivider = !isLast && BLOCKS_WITH_DIVIDER.includes(block_type);
   
@@ -94,7 +96,7 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
       case 'newsletter-subscribe':
         return <NewsletterSubscribeBlock config={block_config as unknown as NewsletterSubscribeBlockConfig} />;
       case 'github':
-        return <GitHubBlock config={block_config} />;
+        return <GitHubBlock config={block_config} headingLevel={promoteHeading ? 'h1' : 'h2'} />;
       case 'skills-bar':
         return <SkillsBarBlock config={block_config} />;
       case 'values':
@@ -114,7 +116,8 @@ const BlockRenderer: React.FC<BlockRendererProps> = ({ block, isLast = false }) 
 
   return (
     <>
-      {anchorId && <div id={anchorId} className="scroll-mt-20" />}
+      {/* data-block-type lets nav anchors resolve by block type even when a custom anchor_id is set */}
+      <div id={anchorId || undefined} data-block-type={block_type} className="scroll-mt-20" />
       {renderBlock()}
       {showDivider && <SectionDivider variant="fade" />}
     </>

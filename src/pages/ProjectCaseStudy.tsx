@@ -15,6 +15,8 @@ import MarkdownContent from '@/components/common/MarkdownContent';
 import TechBadge from '@/components/common/TechBadge';
 import { useGitHubRepoByName } from '@/models/githubRepoByName';
 import RelatedProjects from '@/components/blocks/RelatedProjects';
+import NotFound from './NotFound';
+import { stripMarkdown } from '@/lib/utils/markdown';
 import { preloadMarkdown } from '@/components/common/markdownLoader';
 import OptimizedImage from '@/components/common/OptimizedImage';
 
@@ -25,13 +27,6 @@ const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
   const navigate = useNavigate();
   const { data: repo, isLoading, error } = useGitHubRepoByName(repoName);
-
-  // 404 redirect
-  React.useEffect(() => {
-    if (!isLoading && !repo && !error) {
-      navigate('/404', { replace: true });
-    }
-  }, [isLoading, repo, error, navigate]);
 
   if (isLoading) {
     return (
@@ -51,6 +46,8 @@ const ProjectCaseStudy = () => {
     );
   }
 
+  // Unknown repo: render 404 in place (keep the requested URL)
+  if (!repo && !error) return <NotFound />;
   if (!repo) return null;
 
   const title = repo.enriched_title || repo.name;
@@ -63,7 +60,7 @@ const ProjectCaseStudy = () => {
     <div className="min-h-screen flex flex-col">
       <SEOHead
         title={title}
-        description={description || `Project: ${title}`}
+        description={stripMarkdown(description) || `Project: ${title}`}
         ogImage={mainImage}
       />
       <Header />
@@ -103,9 +100,11 @@ const ProjectCaseStudy = () => {
 
           {/* Description */}
           {description && (
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-              {description}
-            </p>
+            <MarkdownContent
+              content={description}
+              compact
+              className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed"
+            />
           )}
 
           {/* Hero Image */}
@@ -131,9 +130,7 @@ const ProjectCaseStudy = () => {
                 The Problem
               </h2>
               <div className="p-6 rounded-xl bg-muted/50 border-l-4 border-primary">
-                <p className="text-foreground leading-relaxed">
-                  {repo.problem_statement}
-                </p>
+                <MarkdownContent content={repo.problem_statement} compact className="text-base text-foreground leading-relaxed" />
               </div>
             </section>
           )}
@@ -145,9 +142,7 @@ const ProjectCaseStudy = () => {
                 Why It Matters
               </h2>
               <div className="p-6 rounded-xl bg-primary/5 border-l-4 border-primary/50">
-                <p className="text-foreground leading-relaxed">
-                  {repo.why_it_matters}
-                </p>
+                <MarkdownContent content={repo.why_it_matters} compact className="text-base text-foreground leading-relaxed" />
               </div>
             </section>
           )}

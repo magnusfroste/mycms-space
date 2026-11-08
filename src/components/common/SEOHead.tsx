@@ -4,13 +4,16 @@
 // ============================================
 
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSEOModule } from '@/hooks/useSEOModule';
+import { buildCanonicalUrl } from '@/lib/utils/seo';
 
 interface SEOHeadProps {
   title?: string;
   description?: string;
   ogImage?: string;
   ogType?: 'website' | 'article';
+  /** Defaults to https://www.froste.eu + current pathname */
   canonicalUrl?: string;
   noIndex?: boolean;
   // For article schema
@@ -37,6 +40,50 @@ const SEOHead = ({
 }: SEOHeadProps) => {
   const { data: seoModule } = useSEOModule();
   const config = seoModule?.module_config;
+  const { pathname } = useLocation();
+  const resolvedCanonicalUrl = canonicalUrl || buildCanonicalUrl(pathname);
+
+  // Canonical + robots don't depend on the SEO module config, so set them right away
+  useEffect(() => {
+    let canonicalTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonicalTag) {
+      canonicalTag = document.createElement('link');
+      canonicalTag.rel = 'canonical';
+      document.head.appendChild(canonicalTag);
+    }
+    canonicalTag.href = resolvedCanonicalUrl;
+
+    let ogUrlTag = document.querySelector('meta[property="og:url"]') as HTMLMetaElement | null;
+    if (!ogUrlTag) {
+      ogUrlTag = document.createElement('meta');
+      ogUrlTag.setAttribute('property', 'og:url');
+      document.head.appendChild(ogUrlTag);
+    }
+    ogUrlTag.content = resolvedCanonicalUrl;
+  }, [resolvedCanonicalUrl]);
+
+  useEffect(() => {
+    if (!noIndex) {
+      const robotsTag = document.querySelector('meta[name="robots"]');
+      if (robotsTag && robotsTag.getAttribute('content')?.includes('noindex')) {
+        robotsTag.remove();
+      }
+      return;
+    }
+
+    let robotsTag = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    if (!robotsTag) {
+      robotsTag = document.createElement('meta');
+      robotsTag.name = 'robots';
+      document.head.appendChild(robotsTag);
+    }
+    robotsTag.content = 'noindex';
+
+    return () => {
+      // Don't leak noindex to the next route
+      document.querySelector('meta[name="robots"][content="noindex"]')?.remove();
+    };
+  }, [noIndex]);
 
   useEffect(() => {
     if (!config) return;
@@ -78,19 +125,6 @@ const SEOHead = ({
     setMeta('og:type', ogType, true);
     setMeta('og:site_name', config.site_title, true);
 
-    if (canonicalUrl) {
-      setMeta('og:url', canonicalUrl, true);
-      
-      // Update or create canonical link
-      let canonicalTag = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-      if (!canonicalTag) {
-        canonicalTag = document.createElement('link');
-        canonicalTag.rel = 'canonical';
-        document.head.appendChild(canonicalTag);
-      }
-      canonicalTag.href = canonicalUrl;
-    }
-
     // Twitter Card tags
     setMeta('twitter:card', 'summary_large_image');
     setMeta('twitter:title', fullTitle);
@@ -117,17 +151,6 @@ const SEOHead = ({
       }
     }
 
-    // Robots meta
-    if (noIndex) {
-      setMeta('robots', 'noindex, nofollow');
-    } else {
-      // Remove robots meta if it exists and we don't want noindex
-      const robotsTag = document.querySelector('meta[name="robots"]');
-      if (robotsTag && robotsTag.getAttribute('content')?.includes('noindex')) {
-        robotsTag.remove();
-      }
-    }
-
     // JSON-LD structured data
     if (jsonLd) {
       // Remove existing script if any
@@ -148,7 +171,7 @@ const SEOHead = ({
     return () => {
       // Reset title on unmount (optional - React Router handles this)
     };
-  }, [config, title, description, ogImage, ogType, canonicalUrl, noIndex, article, jsonLd]);
+  }, [config, title, description, ogImage, ogType, article, jsonLd]);
 
   // This component doesn't render anything
   return null;

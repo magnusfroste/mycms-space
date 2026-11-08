@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
+import SEOHead from "@/components/common/SEOHead";
 import { useChromeExtensionModule } from "@/models/modules";
 
 interface Message {
@@ -59,6 +60,10 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEOHead
+        title="Chat with Magnet"
+        description="Ask Magnet, Magnus Froste's AI agent, about his experience, projects and availability."
+      />
       {/* Grok-inspired minimal header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
         <div className="container mx-auto px-4 h-12 flex items-center justify-between">
@@ -89,6 +94,7 @@ const Chat = () => {
       </header>
 
       <main className="flex-1 flex flex-col overflow-hidden">
+        <h1 className="sr-only">Chat with Magnet, Magnus Froste's AI agent</h1>
         {hasInitialMessages && !contextReady ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-3 text-muted-foreground">

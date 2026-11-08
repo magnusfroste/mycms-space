@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Suspense, lazy, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -20,6 +20,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const BlogArchive = lazy(() => import("./pages/BlogArchive"));
 const ProjectCaseStudy = lazy(() => import("./pages/ProjectCaseStudy"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 // Theme and tracking component
 const AppBootstrap = () => {
@@ -82,6 +83,10 @@ const App = () => {
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/project/:repoName" element={<ProjectCaseStudy />} />
+            <Route path="/contact" element={<Contact />} />
+            {/* Legacy/guessable URLs for the projects section (falls back to /github if home has none) */}
+            <Route path="/portfolio" element={<Navigate to="/#project-showcase" replace />} />
+            <Route path="/projects" element={<Navigate to="/#project-showcase" replace />} />
             {/* Dynamic page route - catches any slug */}
             <Route path="/:slug" element={<DynamicPage />} />
             {/* 404 fallback */}

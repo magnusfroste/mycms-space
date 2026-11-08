@@ -4,23 +4,32 @@
 // ============================================
 
 import React, { useState, useEffect } from "react";
-import { Home, ExternalLink } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, ExternalLink, Mail } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useNavLinks } from "@/hooks/useNavLinks";
 import { useAuth } from "@/hooks/useAuth";
 import { useHeaderModule } from "@/models/modules";
 import { cn } from "@/lib/utils";
 import ColorModeToggle from "@/components/ColorModeToggle";
+import { scrollToAnchor, getAnchorFallbackRoute } from "@/lib/utils/anchors";
+
+// Contact is always shown as a CTA button, so hide DB nav links that duplicate it
+const isContactLink = (link: { label: string; url: string }) =>
+  link.label.trim().toLowerCase() === "contact" ||
+  ["#contact", "#contact-form", "/contact"].includes(link.url.trim().toLowerCase());
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
+  const isContactPage = location.pathname === "/contact";
   const { data: allNavLinks = [] } = useNavLinks();
   const { user } = useAuth();
   // Admin link is only shown to signed-in users; visitors find it in the footer
-  const navLinks = user ? allNavLinks : allNavLinks.filter((l) => !l.url.startsWith('/admin'));
+  const navLinks = (user ? allNavLinks : allNavLinks.filter((l) => !l.url.startsWith('/admin')))
+    .filter((l) => !isContactLink(l));
   const { config: headerConfig, isLoading } = useHeaderModule();
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -85,12 +94,46 @@ const Header = () => {
       );
     }
 
+    // In-page anchor (e.g. "#project-showcase"): resolve with aliases so links
+    // keep working if the section uses another block type / anchor id
+    const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!link.url.startsWith('#')) {
+        if (isMobile) toggleMenu();
+        return;
+      }
+      e.preventDefault();
+      stopSpeech();
+      if (isMobile) toggleMenu();
+      if (scrollToAnchor(link.url)) {
+        // Keep React Router's history state, just reflect the hash in the URL
+        window.history.replaceState(window.history.state, '', link.url);
+        return;
+      }
+      const fallback = getAnchorFallbackRoute(link.url);
+      if (fallback) navigate(fallback);
+    };
+
     return (
-      <a key={link.url} href={link.url} className={baseClasses} onClick={isMobile ? toggleMenu : undefined}>
+      <a key={link.url} href={link.url} className={baseClasses} onClick={handleAnchorClick}>
         {link.label}
       </a>
     );
   };
+
+  const renderContactButton = (isMobile = false) => (
+    <Link
+      to="/contact"
+      aria-current={isContactPage ? "page" : undefined}
+      onClick={stopSpeech}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-medium shadow-sm transition-all hover:bg-primary/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        isMobile ? "px-5 py-2.5 text-base" : "px-4 py-1.5 text-sm"
+      )}
+    >
+      <Mail size={isMobile ? 18 : 15} aria-hidden="true" />
+      Contact
+    </Link>
+  );
 
   const renderLogo = () => {
     if (headerConfig?.logo_image_url) {
@@ -156,11 +199,20 @@ const Header = () => {
                 Home
               </Link>
             )}
+            {renderContactButton()}
             <ColorModeToggle />
           </nav>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-2">
+            <Link
+              to="/contact"
+              onClick={stopSpeech}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <Mail size={14} aria-hidden="true" />
+              Contact
+            </Link>
             <ColorModeToggle />
             <button 
               className={cn(
@@ -220,6 +272,7 @@ const Header = () => {
                 Home
               </Link>
             )}
+            {renderContactButton(true)}
           </nav>
         </div>
       </div>
