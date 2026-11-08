@@ -6,6 +6,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MarkdownContent } from '@/components/common';
+import { optimizedImageUrl } from '@/lib/imageUrl';
+
+// bg-fixed covers the viewport: request a viewport-sized variant (bucketed
+// to 480px steps so few distinct transforms are generated)
+const viewportImageWidth = (): number => {
+  if (typeof window === 'undefined') return 1920;
+  const px = window.innerWidth * (window.devicePixelRatio || 1);
+  return Math.min(2500, Math.ceil(px / 480) * 480);
+};
 
 // Plain-text content: a line ending with ":" starts a list of the following
 // paragraphs; a final paragraph after the list is kept as a closing line.
@@ -112,7 +121,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
             style={{
-              backgroundImage: `url(${settings.background_image})`,
+              backgroundImage: `url("${optimizedImageUrl(settings.background_image, viewportImageWidth(), 70)}")`,
             }}
           />
         )}

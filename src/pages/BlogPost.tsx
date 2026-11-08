@@ -16,6 +16,11 @@ import MarkdownContent from '@/components/common/MarkdownContent';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/common/SEOHead';
+import { preloadMarkdown } from '@/components/common/markdownLoader';
+import OptimizedImage from '@/components/common/OptimizedImage';
+
+// Fetch the markdown chunk in parallel with the post/project data
+preloadMarkdown();
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -158,10 +163,15 @@ const BlogPost = () => {
           {/* Cover Image */}
           {post.cover_image_url && (
             <div className="aspect-video rounded-lg overflow-hidden mb-8">
-              <img
+              <OptimizedImage
                 src={post.cover_image_url}
                 alt={post.title}
                 className="w-full h-full object-cover"
+                priority
+                displayWidth={1280}
+                sizes="(min-width: 896px) 896px, 100vw"
+                width={1280}
+                height={720}
               />
             </div>
           )}
@@ -182,10 +192,14 @@ const BlogPost = () => {
                     <Card className="overflow-hidden hover:border-primary/50 transition-colors h-full">
                       {relatedPost.cover_image_url && (
                         <div className="aspect-video overflow-hidden">
-                          <img
+                          <OptimizedImage
                             src={relatedPost.cover_image_url}
                             alt={relatedPost.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            displayWidth={640}
+                            sizes="(min-width: 768px) 50vw, 100vw"
+                            width={640}
+                            height={360}
                           />
                         </div>
                       )}

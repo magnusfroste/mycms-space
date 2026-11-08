@@ -15,6 +15,11 @@ import MarkdownContent from '@/components/common/MarkdownContent';
 import TechBadge from '@/components/common/TechBadge';
 import { useGitHubRepoByName } from '@/models/githubRepoByName';
 import RelatedProjects from '@/components/blocks/RelatedProjects';
+import { preloadMarkdown } from '@/components/common/markdownLoader';
+import OptimizedImage from '@/components/common/OptimizedImage';
+
+// Fetch the markdown chunk in parallel with the post/project data
+preloadMarkdown();
 
 const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
@@ -106,11 +111,15 @@ const ProjectCaseStudy = () => {
           {/* Hero Image */}
           {mainImage && (
             <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-12">
-              <img
+              <OptimizedImage
                 src={mainImage}
                 alt={title}
                 className="w-full h-full object-cover"
-                loading="eager"
+                priority
+                displayWidth={1280}
+                sizes="(min-width: 1024px) 1024px, 100vw"
+                width={1280}
+                height={720}
               />
             </div>
           )}
@@ -181,11 +190,14 @@ const ProjectCaseStudy = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 {additionalImages.map((img) => (
                   <div key={img.id} className="rounded-xl overflow-hidden bg-muted aspect-video">
-                    <img
+                    <OptimizedImage
                       src={img.image_url}
                       alt={img.alt_text || title}
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      displayWidth={640}
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      width={640}
+                      height={360}
                     />
                   </div>
                 ))}

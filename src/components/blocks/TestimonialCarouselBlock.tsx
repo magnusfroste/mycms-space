@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 interface Testimonial {
   id: string;
@@ -166,10 +167,15 @@ const TestimonialCarouselBlock: React.FC<TestimonialCarouselBlockProps> = ({ con
                     {/* Avatar */}
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg font-semibold text-primary">
                       {testimonial.avatar_url ? (
-                        <img 
-                          src={testimonial.avatar_url} 
+                        <OptimizedImage
+                          src={testimonial.avatar_url}
                           alt={testimonial.author}
                           className="w-full h-full rounded-full object-cover"
+                          displayWidth={96}
+                          widths={[48, 96, 144]}
+                          sizes="48px"
+                          width={48}
+                          height={48}
                         />
                       ) : (
                         testimonial.author.charAt(0)
