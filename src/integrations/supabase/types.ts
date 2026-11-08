@@ -1183,10 +1183,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      update_chat_session: {
-        Args: { p_id: string; p_message_count: number }
-        Returns: undefined
-      }
       alter_cron_job: {
         Args: { job_name: string; new_active?: boolean; new_schedule?: string }
         Returns: undefined
@@ -1217,6 +1213,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_valid_cron_secret: { Args: { p_secret: string }; Returns: boolean }
+      update_chat_session: {
+        Args: { p_id: string; p_message_count: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
