@@ -79,7 +79,7 @@ Tools by scope:
 
 | Scope | Tools |
 |---|---|
-| none (anonymous) | `get_profile`, `get_resume`, `kb_list`, `kb_get`, `list_projects`, `get_project`, `search_projects`, `analyze_job_fit`, `generate_tailored_cv`, `contact_magnus` |
+| none (anonymous) | `get_profile`, `get_resume`, `kb_list`, `kb_get`, `list_projects`, `get_project`, `search_projects`, `analyze_job_fit`, `generate_tailored_cv`, `contact_owner` |
 | `read` | `site_overview`, `blog_list`, `blog_get`, `pages_list`, `page_get`, `block_types`, `projects_list`, `inbox_list`, `conversations_list`, `conversation_get`, `analytics_summary`, `review_queue_list`, `autopilot_status`, `settings_get`, `modules_list`, `nav_list`, `newsletter_overview`, `media_list`, `activity_log` (+ private knowledge base documents) |
 | `content` | `kb_upsert`, `kb_append`, `kb_delete`, `blog_upsert`, `page_block_update`, `page_block_add`, `page_block_move`, `page_block_delete`, `project_update`, `inbox_mark`, `newsletter_draft` (+ public agent skills) |
 | `review` | `review_decide`, `blog_publish`, `newsletter_send` |

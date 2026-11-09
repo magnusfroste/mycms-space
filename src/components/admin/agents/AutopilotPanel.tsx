@@ -43,18 +43,28 @@ function Guardrails() {
   const save = useSaveAutopilotGuardrails();
   const [maxWaiting, setMaxWaiting] = useState('');
   const [expiry, setExpiry] = useState('');
+  const [autoPublish, setAutoPublish] = useState(false);
+  const [minScore, setMinScore] = useState('');
 
   useEffect(() => {
     if (data) {
       setMaxWaiting(String(data.guardrails.max_waiting_reviews));
       setExpiry(String(data.guardrails.draft_expiry_days));
+      setAutoPublish(data.guardrails.auto_publish);
+      setMinScore(String(data.guardrails.auto_publish_min_score));
     }
   }, [data]);
 
   const dirty =
     !!data &&
-    (Number(maxWaiting) !== data.guardrails.max_waiting_reviews || Number(expiry) !== data.guardrails.draft_expiry_days);
-  const valid = Number(maxWaiting) >= 1 && Number(maxWaiting) <= 50 && Number(expiry) >= 1 && Number(expiry) <= 90;
+    (Number(maxWaiting) !== data.guardrails.max_waiting_reviews ||
+      Number(expiry) !== data.guardrails.draft_expiry_days ||
+      autoPublish !== data.guardrails.auto_publish ||
+      Number(minScore) !== data.guardrails.auto_publish_min_score);
+  const valid =
+    Number(maxWaiting) >= 1 && Number(maxWaiting) <= 50 &&
+    Number(expiry) >= 1 && Number(expiry) <= 90 &&
+    Number(minScore) >= 7 && Number(minScore) <= 10;
 
   return (
     <div className="px-[18px] py-3.5">
@@ -84,6 +94,24 @@ function Guardrails() {
             aria-label="Days before a draft expires"
           />
         </label>
+        <label className="flex items-center justify-between gap-2">
+          <span title="Blog drafts that pass every check and score at least this are published without review">Auto-publish blog</span>
+          <Switch checked={autoPublish} onCheckedChange={setAutoPublish} aria-label="Publish good blog drafts automatically" />
+        </label>
+        {autoPublish && (
+          <label className="flex items-center justify-between gap-2">
+            <span>Min score (7–10)</span>
+            <Input
+              type="number"
+              min={7}
+              max={10}
+              value={minScore}
+              onChange={(e) => setMinScore(e.target.value)}
+              className="h-7 w-16 px-2 text-right font-mono text-[13px]"
+              aria-label="Minimum review score for auto-publish"
+            />
+          </label>
+        )}
       </div>
       {dirty && (
         <Button
@@ -94,7 +122,12 @@ function Guardrails() {
             data &&
             save.mutate(
               {
-                guardrails: { max_waiting_reviews: Number(maxWaiting), draft_expiry_days: Number(expiry) },
+                guardrails: {
+                  max_waiting_reviews: Number(maxWaiting),
+                  draft_expiry_days: Number(expiry),
+                  auto_publish: autoPublish,
+                  auto_publish_min_score: Number(minScore),
+                },
                 current: data.config,
                 exists: data.exists,
               },

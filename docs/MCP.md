@@ -14,8 +14,16 @@ Source: `supabase/functions/mcp-server/` (`index.ts`, `cms-tools.ts`,
 ```
 
 - Transport: streamable HTTP, JSON-RPC 2.0 over `POST` (batches allowed).
-- Protocol version reported: `2024-11-05`. Server name: `openclaw-mcp`.
-- `GET` on the endpoint returns a small JSON capability description.
+- Protocol versions: `2025-06-18`, `2025-03-26`, `2024-11-05`. The server
+  answers with the client's version when it is one of these, otherwise with
+  the newest. Server name: `mycms`; `serverInfo.title` is the site title.
+- `initialize` returns `instructions`: who the site belongs to, the key's
+  scopes and how to start (`site_overview`). Agents that read server
+  instructions need no extra prompt.
+- Tool names are unique: a skill whose name matches a CMS or built-in tool is
+  left out of `tools/list` (many LLM APIs reject duplicate function names).
+- `GET` on the endpoint returns a small JSON capability description. A `GET`
+  that asks for `text/event-stream` gets `405`: the server never pushes.
 - Methods: `initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`,
   `resources/read`, `prompts/list` (empty), notifications.
 - Resources: `project://<repo-name>` for every enabled GitHub repo.
@@ -42,7 +50,30 @@ domain. (`vercel.json` rewrites `/mcp` to the endpoint, but only on Vercel.)
 }
 ```
 
-5. Tell the agent to start with `site_overview`.
+5. Tell the agent to start with `site_overview` (the server's
+   `instructions` say the same).
+
+Client notes:
+
+| Client | How |
+|---|---|
+| Hermes Agent | `mcp_servers` in `~/.hermes/config.yaml`: `url` plus `headers: { Authorization: "Bearer <key>" }`. |
+| Claude Code | `claude mcp add --transport http mycms <url> --header "Authorization: Bearer <key>"` |
+| Cursor, Windsurf, Claude Desktop (via config file) | The JSON above. |
+| Claude.ai / ChatGPT connectors | These connect with OAuth or without auth, not with a static key. Without a key they get the public tools; the CMS tools need a client that can send the header. |
+
+## Run it for your own site
+
+Nothing in the server is tied to one person. Names and links in tool
+descriptions and `instructions` come from the database:
+
+- `resume` module: `owner_name` (descriptions use the first name), title,
+  summary, availability.
+- `seo` module: `site_url`, `site_title`, `linkedin_url`.
+- `github` module: `username`.
+
+Set those in admin, deploy the edge functions (see `DEPLOYMENT.md`), create a
+key and connect your agent as above.
 
 Keys are issued only by a signed-in admin (`mcp-keys` function). Creating,
 revoking or rotating keys and reading secrets is **not** possible through MCP.
@@ -74,11 +105,11 @@ prefixed with their scope, e.g. `[content] …`.
 | `list_projects`, `get_project`, `search_projects` | Enabled GitHub projects with AI-enriched fields. |
 | `analyze_job_fit` | Score a job/assignment against the profile (AI). |
 | `generate_tailored_cv` | Match analysis, tailored CV and cover letter in markdown (AI). |
-| `contact_magnus` | Leave a message (name + email required); lands in the inbox. |
+| `contact_owner` | Leave a message (name + email required); lands in the inbox. `contact_magnus` still works as an unlisted alias. |
 
 Anonymous limits are counted from `mcp_activities` and shared by all anonymous
 callers: 20 AI calls (`analyze_job_fit` + `generate_tailored_cv`) and 5
-`contact_magnus` calls per hour.
+`contact_owner` calls per hour.
 
 ### `read`
 

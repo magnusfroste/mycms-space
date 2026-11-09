@@ -1,12 +1,13 @@
 // ============================================
 // MCP Server — Model Context Protocol endpoint
-// Exposes OpenClaw agent_skills as MCP tools
+// External agents (Hermes, Claude, ChatGPT …) operate the CMS through it:
+// CMS tools by key scope, profile/project/knowledge tools, and agent skills.
 // Spec: https://modelcontextprotocol.io
 // Transport: Streamable HTTP (JSON-RPC 2.0)
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { PROFILE_TOOLS, PROFILE_TOOL_NAMES, callProfileTool } from "./profile-tools.ts";
+import { PROFILE_TOOL_NAMES, callProfileTool, loadOwner, profileTools, type Owner } from "./profile-tools.ts";
 import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
 import { loadResumeContext } from "../_shared/ai-context.ts";
 import { CMS_TOOL_NAMES, callCmsTool, cmsToolsFor, effectiveScopes } from "./cms-tools.ts";
@@ -17,9 +18,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-const PROTOCOL_VERSION = '2024-11-05';
-const SERVER_NAME = 'openclaw-mcp';
-const SERVER_VERSION = '2.0.0';
+// Newest first. The server answers with the client's version when it is listed,
+// otherwise with the newest one (spec: lifecycle / version negotiation).
+const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
+const PROTOCOL_VERSION = PROTOCOL_VERSIONS[0];
+const SERVER_NAME = 'mycms';
+const SERVER_VERSION = '2.1.0';
 
 // Hash a key using SHA-256 (matches Web Crypto for verification)
 async function sha256Hex(input: string): Promise<string> {
@@ -54,6 +58,12 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
+  // ---- GET with Accept: text/event-stream = a client asking for a server-push
+  // stream. This server never pushes, so per spec it answers 405.
+  if (req.method === 'GET' && (req.headers.get('accept') || '').includes('text/event-stream')) {
+    return new Response('This server does not offer a server-initiated stream', { status: 405, headers: { ...corsHeaders, Allow: 'POST, OPTIONS' } });
+  }
+
   // ---- GET = capability discovery (handy for browsers / health checks)
   if (req.method === 'GET') {
     return new Response(JSON.stringify({
@@ -61,7 +71,7 @@ Deno.serve(async (req) => {
       version: SERVER_VERSION,
       protocol: PROTOCOL_VERSION,
       transport: 'streamable-http',
-      description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
+      description: "Personal CMS MCP server: external agents operate the site; visiting agents read the public profile.",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
       auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous: public read tools (profile, projects, public knowledge base, job fit, contact). With an API key the CMS tools appear according to the key scopes: read (everything incl. inbox, analytics, private knowledge), content (blog drafts, pages & blocks, projects, newsletter drafts, knowledge base writes), review (approve Autopilot work, publish, send newsletters), settings (site settings, modules, navigation, automations, internal skills). Start with site_overview.' },
     }, null, 2), {
@@ -144,6 +154,8 @@ Deno.serve(async (req) => {
   for (const rpc of requests) {
     const startTime = Date.now();
     try {
+      // Notifications (initialized, cancelled, progress …) need no handling.
+      if (typeof rpc.method === 'string' && rpc.method.startsWith('notifications/')) continue;
       const result = await handleMethod(supabase, apiKey, rpc);
       // Notifications (no id) get no response
       if (rpc.id === undefined || rpc.id === null) {
@@ -173,7 +185,7 @@ Deno.serve(async (req) => {
       const message = (err as Error).message || 'Internal error';
       console.error('[mcp-server] error:', message);
       if (rpc.id !== undefined && rpc.id !== null) {
-        responses.push(jsonRpcError(rpc.id, -32603, message));
+        responses.push(jsonRpcError(rpc.id, message.startsWith('Method not supported') ? -32601 : -32603, message));
       }
       await logActivity(supabase, {
         api_key_id: apiKey.id,
@@ -211,31 +223,33 @@ async function handleMethod(
   rpc: JsonRpcRequest,
 ): Promise<any> {
   switch (rpc.method) {
-    case 'initialize':
+    case 'initialize': {
+      const requested = rpc.params?.protocolVersion;
+      const owner = await loadOwner(supabase);
       return {
-        protocolVersion: PROTOCOL_VERSION,
+        protocolVersion: PROTOCOL_VERSIONS.includes(requested) ? requested : PROTOCOL_VERSION,
         capabilities: {
           tools: { listChanged: false },
           resources: { listChanged: false, subscribe: false },
-          logging: {},
+          prompts: { listChanged: false },
         },
         serverInfo: {
           name: SERVER_NAME,
+          title: owner.siteTitle || `${owner.name} – personal CMS`,
           version: SERVER_VERSION,
         },
+        instructions: serverInstructions(owner, apiKey),
       };
-
-    case 'notifications/initialized':
-    case 'notifications/cancelled':
-      return null; // notifications don't return
+    }
 
     case 'ping':
       return {};
 
     case 'tools/list': {
       // Anonymous = public read-only built-ins
+      const owner = await loadOwner(supabase);
       if (apiKey.anonymous) {
-        return { tools: ANON_TOOLS };
+        return { tools: allBuiltinTools(owner).filter((t) => !KB_WRITE_TOOLS.has(t.name)) };
       }
       const scopes = apiKey.cmsScopes as Set<string>;
       if (!scopes.size) throw new Error('This key has no scopes.');
@@ -263,8 +277,13 @@ async function handleMethod(
         };
       });
 
-      const builtins = ALL_BUILTIN_TOOLS.filter((t) => !KB_WRITE_TOOLS.has(t.name) || scopes.has('content'));
-      return { tools: [...cmsToolsFor(scopes as any), ...builtins, ...skillTools] };
+      const builtins = allBuiltinTools(owner).filter((t) => !KB_WRITE_TOOLS.has(t.name) || scopes.has('content'));
+      // Tool names must be unique: many LLM APIs reject a request with duplicate
+      // function names. CMS and built-in tools win over a skill with the same name.
+      const seen = new Set<string>();
+      const tools = [...cmsToolsFor(scopes as any), ...builtins, ...skillTools]
+        .filter((t) => (seen.has(t.name) ? false : (seen.add(t.name), true)));
+      return { tools };
     }
 
     case 'tools/call': {
@@ -357,7 +376,7 @@ async function handleMethod(
 
       return {
         content: [{ type: 'text', text }],
-        isError: !execResp.ok || execResult.error,
+        isError: !execResp.ok || !!execResult?.error,
       };
     }
 
@@ -447,9 +466,24 @@ const BUILTIN_TOOLS = [
   },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
-const ALL_BUILTIN_TOOLS = [...PROFILE_TOOLS, ...BUILTIN_TOOLS, ...KNOWLEDGE_TOOLS];
+const allBuiltinTools = (owner: Owner) => [...profileTools(owner), ...BUILTIN_TOOLS, ...KNOWLEDGE_TOOLS];
 const KB_WRITE_TOOLS = new Set(['kb_upsert', 'kb_append', 'kb_delete']);
-const ANON_TOOLS = ALL_BUILTIN_TOOLS.filter(t => !KB_WRITE_TOOLS.has(t.name));
+
+/** Sent in initialize: tells any agent what this server is and how to start. */
+function serverInstructions(owner: Owner, apiKey: any): string {
+  const site = owner.siteUrl ? ` (${owner.siteUrl})` : '';
+  if (apiKey.anonymous) {
+    return `Public MCP server for ${owner.name}${site}. Read the profile with get_profile, projects with list_projects / search_projects, the public knowledge base with kb_list / kb_get. analyze_job_fit scores a role against the profile; contact_owner sends ${owner.first} a message (real name and email required). An API key unlocks the CMS tools.`;
+  }
+  const scopes = [...(apiKey.cmsScopes as Set<string>)].join(', ') || 'none';
+  return `You operate the personal CMS of ${owner.name}${site}. This key's scopes: ${scopes}.
+Start every session with site_overview: it shows inquiries (the north star: clients and recruiters who make contact), traffic, the Autopilot review queue and what needs attention.
+- read: inspect everything (blog_list, pages_list, analytics_summary, inbox_list, review_queue_list, kb_list …).
+- content: write the knowledge base (kb_append for news, kb_upsert for whole documents; no email addresses or phone numbers in public documents), blog drafts (blog_upsert), page blocks (block_types lists the valid ones), projects.
+- review: decide Autopilot work (review_decide) and publish (blog_publish, newsletter_send).
+- settings: module settings, navigation, automations.
+Autopilot is the internal housekeeping agent; you are the operator. Prefer small, reversible changes and say what you changed.`;
+}
 
 async function callBuiltinTool(
   supabase: any,

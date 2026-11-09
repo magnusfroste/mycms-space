@@ -159,7 +159,7 @@ const BlogManager = ({ section }: { section?: string }) => {
     <div className="space-y-6">
       <AdminPageHeader
         title="Blog"
-        description="Posts and categories. Autopilot drafts posts into the review queue; nothing is published without a decision."
+        description="Posts and categories. Autopilot drafts posts into the review queue. With auto-publish on (Agents → Autopilot), drafts that score high enough go live directly."
         actions={activeTab === 'settings' ? undefined : (
         <>
           <div className="relative">

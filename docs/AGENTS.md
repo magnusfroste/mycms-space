@@ -66,8 +66,23 @@ Stored in the `autopilot` module config, changeable with `settings_update`
   expire. Blog posts get status `archived`; newsletter drafts are copied into
   the task log before the unsent campaign is removed.
 
+- `auto_publish` (default `false`) and `auto_publish_min_score` (default 8,
+  range 7–10): a blog draft that passes every mechanical check (sources,
+  length, no invented links, title rules) and scores at least the minimum in
+  the self-review is published directly. The task is logged as `completed`
+  with `decision: auto_published`. Lower scores go to the review queue as
+  before. Admin → Agents → Autopilot → Guardrails has the switch.
+
 The guardrails apply to the drafting actions `blog_draft`,
 `newsletter_draft` and `multichannel_draft`.
+
+### Blog pipeline
+
+`blog_draft` (cron `autopilot-daily-blog-draft`, Mondays 07:30 UTC) runs
+`agent-autopilot/editor.ts`: profile brief → topic from the week's news →
+research (broadened once with the topic and thesis when fewer than 3 sources
+are found) → writing → mechanical checks → self-review, one revision → review
+queue or, with `auto_publish`, published.
 
 ### Review queue
 
