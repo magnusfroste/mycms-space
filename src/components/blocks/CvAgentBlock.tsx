@@ -10,6 +10,8 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useIsStudio } from "@/hooks/useCurrentTheme";
 
 interface CvAgentBlockConfig {
   title?: string;
@@ -28,6 +30,8 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
   const c = (config || {}) as CvAgentBlockConfig;
   const navigate = useNavigate();
   const [jobDescription, setJobDescription] = useState("");
+  // Studio: hairline card, no gradient frame or glow
+  const isStudio = useIsStudio();
 
   const title = c.title || "Is Magnus the Right Fit for Your Gig?";
   const subtitle = c.subtitle || "Paste a job description and let Magnet analyze the match, generate a tailored CV, and write a cover letter — in seconds.";
@@ -53,13 +57,13 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
   };
 
   return (
-    <section className="py-16 md:py-24">
+    <section className={isStudio ? "border-t border-border/70 py-16 md:py-20" : "py-16 md:py-24"}>
       <div className="container mx-auto px-4">
         {/* Gradient border frame */}
-        <div className="relative max-w-3xl mx-auto rounded-[2.5rem] bg-gradient-to-br from-primary to-secondary p-px shadow-2xl">
-          <div className="relative rounded-[calc(2.5rem-1px)] bg-card overflow-hidden">
+        <div className={cn("relative max-w-3xl mx-auto", isStudio ? "rounded-[14px] border border-border" : "rounded-[2.5rem] bg-gradient-to-br from-primary to-secondary p-px shadow-2xl")}>
+          <div className={cn("relative bg-card overflow-hidden", isStudio ? "rounded-[14px]" : "rounded-[calc(2.5rem-1px)]")}>
             {/* Ambient radial glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.14),transparent_55%)]" />
+            {!isStudio && <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.14),transparent_55%)]" />}
 
             {/* Content */}
             <div className="relative z-10 px-6 py-12 md:px-12 md:py-16 text-center">
@@ -95,7 +99,7 @@ const CvAgentBlock: React.FC<CvAgentBlockProps> = ({ config }) => {
                 size="lg"
                 onClick={handleSubmit}
                 disabled={!jobDescription.trim()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 px-8 rounded-2xl shadow-glow disabled:opacity-40"
+                className={cn("bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 px-8 disabled:opacity-40", isStudio ? "rounded-full" : "rounded-2xl shadow-glow")}
               >
                 {buttonText}
                 <ArrowRight className="h-4 w-4" />

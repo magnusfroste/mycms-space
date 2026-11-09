@@ -156,14 +156,14 @@ const ContactFormBlock: React.FC<ContactFormBlockProps> = ({ config }) => {
               Contact
             </span>
             <h2 
-              className="section-title animate-fade-in" 
+              className={cn("section-title animate-fade-in", isStudio && "!text-left")}
               style={{ animationDelay: '0.1s' }}
             >
               {title}
             </h2>
             {subtitle && (
               <p 
-                className="section-subtitle mt-4 animate-fade-in"
+                className={cn("section-subtitle mt-4 animate-fade-in", isStudio && "!mx-0 !text-left")}
                 style={{ animationDelay: '0.2s' }}
               >
                 {subtitle}

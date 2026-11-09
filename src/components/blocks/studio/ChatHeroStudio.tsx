@@ -30,7 +30,8 @@ const ChatHeroStudio: React.FC<ChatHeroStudioProps> = ({ config }) => {
 
   const agentName = c.agent_name || 'AI Assistant';
   const headline = c.headline || agentName;
-  const intro = c.intro;
+  // Without an intro, the old welcome badge still says who this is
+  const intro = c.intro ?? c.welcome_badge;
   const placeholder = c.placeholder || 'Ask me anything…';
 
   const isAvailable = resume?.owner_availability ? resume.owner_availability !== 'unavailable' : true;
