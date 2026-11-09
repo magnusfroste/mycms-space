@@ -226,8 +226,8 @@ export default function ProfileSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-base font-semibold">Profile</h1>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
           Manage your author profile that appears on blog posts and content.
         </p>
       </div>

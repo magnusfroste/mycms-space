@@ -44,11 +44,16 @@ import {
 } from 'lucide-react';
 import BlogPostEditor from './block-editor/BlogPostEditor';
 import BlogCategoryEditor from './block-editor/BlogCategoryEditor';
+import BlogModuleSettings from './BlogModuleSettings';
 import type { BlogPost, BlogCategory } from '@/types/blog';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
+import { underlineTabs } from '@/components/admin/shell/primitives';
 
-const BlogManager = () => {
+const BlogManager = ({ section }: { section?: string }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('posts');
+  const [activeTab, setActiveTab] = useState(
+    section === 'settings' || section === 'categories' ? section : 'posts'
+  );
   const [search, setSearch] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -117,6 +122,8 @@ const BlogManager = () => {
         return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Published</Badge>;
       case 'scheduled':
         return <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">Scheduled</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="text-muted-foreground">Archived</Badge>;
       default:
         return <Badge variant="secondary">Draft</Badge>;
     }
@@ -149,19 +156,11 @@ const BlogManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            Blog
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Create and manage blog posts and categories.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Blog"
+        description="Posts and categories. Autopilot drafts posts into the review queue; nothing is published without a decision."
+        actions={activeTab === 'settings' ? undefined : (
+        <>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -177,22 +176,24 @@ const BlogManager = () => {
             }
           >
             <Plus className="h-4 w-4 mr-2" />
-            {activeTab === 'posts' ? 'New Post' : 'New Category'}
+            {activeTab === 'posts' ? 'New post' : 'New category'}
           </Button>
-        </div>
-      </div>
+        </>
+        )}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="posts" className="gap-2">
+        <TabsList className={underlineTabs.list}>
+          <TabsTrigger value="posts" className={`${underlineTabs.trigger} gap-2`}>
             <FileText className="h-4 w-4" />
             Posts ({posts.length})
           </TabsTrigger>
-          <TabsTrigger value="categories" className="gap-2">
+          <TabsTrigger value="categories" className={`${underlineTabs.trigger} gap-2`}>
             <Tag className="h-4 w-4" />
             Categories ({categories.length})
           </TabsTrigger>
+          <TabsTrigger value="settings" className={underlineTabs.trigger}>Settings</TabsTrigger>
         </TabsList>
 
         {/* Posts Tab */}
@@ -364,6 +365,10 @@ const BlogManager = () => {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-6">
+          <BlogModuleSettings />
         </TabsContent>
       </Tabs>
 

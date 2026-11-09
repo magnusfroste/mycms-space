@@ -30,11 +30,7 @@ const adminQuickActions = [
   { id: 'newsletter', label: '📰 Draft newsletter', message: 'Draft a newsletter from recent research and published blog posts.', icon: 'Mail', order_index: 4, enabled: true },
 ];
 
-interface MagnetChatProps {
-  headerSlot?: React.ReactNode;
-}
-
-const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
+const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
@@ -94,7 +90,6 @@ const MagnetChat: React.FC<MagnetChatProps> = ({ headerSlot }) => {
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {headerSlot}
         {/* Compact toolbar */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-border h-10">
           <div className="flex items-center gap-2 min-w-0">

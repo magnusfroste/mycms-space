@@ -250,8 +250,8 @@ export const NavSettings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Navigation Menu</h2>
-          <p className="text-muted-foreground">Manage header navigation links</p>
+          <h2 className="text-base font-semibold">Navigation Menu</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">Manage header navigation links</p>
         </div>
 
         <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }}>

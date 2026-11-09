@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { Settings2, Bot, Key, Copy, RefreshCw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Bot, Key, Copy, RefreshCw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -149,7 +149,7 @@ const ApiTokensCard: React.FC = () => {
           API Tokens
         </CardTitle>
         <CardDescription>
-          Keys for the Chrome extension and signal integrations. External agents connect via MCP (Agency → MCP Server).
+          Keys for the Chrome extension and signal integrations. External agents connect via MCP keys under Operators &amp; Autopilot.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -225,11 +225,10 @@ const GeneralSettings: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings2 className="h-8 w-8 text-primary" />
+      <div className="flex items-center gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Settings</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-base font-semibold">Settings</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             Global admin settings
           </p>
         </div>

@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { Chrome, Plus, X, Save, Info, Copy, CheckCircle } from 'lucide-react';
+import { Plus, X, Save, Info, Copy, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,8 +94,7 @@ const ChromeExtensionModuleSettings: React.FC = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Chrome className="h-6 w-6" />
+        <h2 className="text-base font-semibold">
           Chrome Extension
         </h2>
         <p className="text-sm text-muted-foreground mt-1">

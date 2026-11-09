@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Bot, Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar, Mic, Users } from 'lucide-react';
+import { Power, FileText, Newspaper, Check, Plug, MessageSquare, Github, Database, Eye, Copy, ChevronDown, Wrench, FolderOpen, Search, Calendar, Mic, Users } from 'lucide-react';
 import PromptEnhancer from './PromptEnhancer';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -24,6 +24,7 @@ import type { AIModuleConfig, AIIntegrationType, MagnetToolConfig } from '@/type
 import { integrationsMeta, defaultIntegrations, defaultMagnetTools } from '@/types/modules';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 const AIModuleSettings: React.FC = () => {
   const { data: module, config, isLoading } = useAIModule();
@@ -243,26 +244,29 @@ const AIModuleSettings: React.FC = () => {
   })();
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Bot className="h-8 w-8 text-primary" />
-          <div>
-            <h2 className="text-2xl font-bold">AI Chat</h2>
-            <p className="text-muted-foreground">
-              Configure chat widget behavior and context
-            </p>
-          </div>
-        </div>
-        
-        {/* Active Context Sources Badge */}
-        {activeContextSources.length > 0 && (
-          <Badge variant="secondary" className="gap-1.5 text-sm py-1.5 px-3">
-            <Database className="h-4 w-4" />
-            {activeContextSources.join(', ')}
-          </Badge>
-        )}
-      </div>
+    <div className="space-y-6 [&>*:not(:first-child)]:max-w-3xl">
+      <AdminPageHeader
+        title="Magnet"
+        description="Your public AI twin on the site. It answers from the knowledge base, hands serious leads to the inbox and never changes content."
+        actions={
+          <>
+            {activeContextSources.length > 0 && (
+              <span className="inline-flex h-[26px] items-center gap-1.5 rounded-full bg-muted px-2.5 text-[12.5px] font-medium text-foreground/80">
+                <Database className="h-3.5 w-3.5" />
+                {activeContextSources.join(', ')}
+              </span>
+            )}
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-8 items-center rounded-lg border border-border px-3 text-[13px] font-medium hover:bg-muted"
+            >
+              Test chat ↗
+            </a>
+          </>
+        }
+      />
 
       {/* Enable/Disable Module */}
       <Card>
