@@ -100,7 +100,7 @@ const extractBlockContent = (blockType: string, config: Record<string, unknown>)
 export const useAIChatContext = () => {
   const { config: aiConfig, isLoading: aiLoading } = useAIModule();
   const { data: allPages = [], isLoading: pagesLoading } = usePages();
-  const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts();
+  const { data: allPosts = [], isLoading: postsLoading } = useBlogPosts({ status: 'published', limit: 1000 });
   const { data: allRepos = [], isLoading: reposLoading } = useEnabledGitHubRepos();
 
   // Debug logging

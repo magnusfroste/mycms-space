@@ -16,7 +16,7 @@ import TechBadge from '@/components/common/TechBadge';
 import { useGitHubRepoByName } from '@/models/githubRepoByName';
 import RelatedProjects from '@/components/blocks/RelatedProjects';
 import NotFound from './NotFound';
-import { stripMarkdown } from '@/lib/utils/markdown';
+import { resolveReadmeUrls, stripMarkdown } from '@/lib/utils/markdown';
 import { preloadMarkdown } from '@/components/common/markdownLoader';
 import OptimizedImage from '@/components/common/OptimizedImage';
 import { useIsStudio } from '@/hooks/useCurrentTheme';
@@ -179,7 +179,7 @@ const ProjectCaseStudy = () => {
                 About This Project
               </h2>
               <div className="rounded-xl border border-border p-6 md:p-8 bg-card">
-                <MarkdownContent content={repo.readme_content} />
+                <MarkdownContent content={resolveReadmeUrls(repo.readme_content, repo.full_name)} />
               </div>
             </section>
           )}

@@ -574,7 +574,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   // Load context in parallel
   const [resumeContext, agentMemory] = await Promise.all([
     loadResumeContext({ includePrivate: mode === 'admin' }),
-    loadAgentMemory(),
+    loadAgentMemory(mode === 'admin' ? {} : { categories: ['soul'] }),
   ]);
 
   // Build system prompt
@@ -597,11 +597,14 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   try {
     const { createClient } = await import("npm:@supabase/supabase-js@2");
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: skillInstructions } = await supabase
+    // Public chat only sees instructions for the skills it can use.
+    let skillQuery = supabase
       .from('agent_skills')
       .select('name, instructions')
       .eq('enabled', true)
       .not('instructions', 'is', null);
+    if (mode !== 'admin') skillQuery = skillQuery.in('scope', ['public', 'both']);
+    const { data: skillInstructions } = await skillQuery;
     if (skillInstructions?.length) {
       fullPrompt += `\n\n## Skill Knowledge\n${skillInstructions.map((s: any) => `### ${s.name}\n${s.instructions}`).join('\n\n')}`;
     }

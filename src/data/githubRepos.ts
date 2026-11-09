@@ -106,64 +106,17 @@ export const fetchEnabledGitHubRepos = async (): Promise<GitHubRepoWithImages[]>
   }));
 };
 
-// Sync repos from GitHub API
-export const syncGitHubRepos = async (username: string): Promise<{ synced: number; new: number }> => {
-  // Fetch from edge function
+// Sync repos from GitHub into github_repos (done server-side by the github-repos
+// function, the same path the nightly Autopilot job uses).
+export const syncGitHubRepos = async (
+  username: string,
+): Promise<{ synced: number; new: number; failed?: number; warning?: string }> => {
   const { data, error } = await supabase.functions.invoke('github-repos', {
-    body: { username, includeProfile: false, limit: 100, sort: 'pushed' },
+    body: { action: 'sync', username },
   });
-
   if (error) throw error;
-
-  const apiResponse = data as GitHubApiResponse;
-  const apiRepos = apiResponse.repos;
-
-  // Get existing repos
-  const { data: existing } = await supabase
-    .from('github_repos')
-    .select('github_id');
-
-  const existingIds = new Set((existing || []).map((r: { github_id: string }) => r.github_id));
-
-  let newCount = 0;
-
-  // Upsert each repo
-  for (const repo of apiRepos) {
-    const isNew = !existingIds.has(repo.id);
-    if (isNew) newCount++;
-
-    const { error: upsertError } = await supabase
-      .from('github_repos')
-      .upsert({
-        github_id: repo.id,
-        name: repo.name,
-        full_name: repo.fullName,
-        description: repo.description,
-        url: repo.url,
-        homepage: repo.homepage,
-        language: repo.language,
-        stars: repo.stars,
-        forks: repo.forks,
-        topics: repo.topics,
-        pushed_at: repo.pushedAt,
-        created_at_github: repo.createdAt,
-        is_fork: repo.isFork,
-        is_archived: repo.isArchived,
-        readme_content: repo.readmeContent,
-        last_synced_at: new Date().toISOString(),
-        // Preserve enabled/order_index on update
-        ...(isNew ? { enabled: false, order_index: 999 } : {}),
-      }, {
-        onConflict: 'github_id',
-        ignoreDuplicates: false,
-      });
-
-    if (upsertError) {
-      console.error('Upsert error for', repo.name, upsertError);
-    }
-  }
-
-  return { synced: apiRepos.length, new: newCount };
+  if (data?.error) throw new Error(data.error);
+  return data;
 };
 
 // Update repo enrichment

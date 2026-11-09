@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { listStorageEntries } from '@/data/mediaHub';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -41,26 +42,20 @@ async function listDocFiles(bucket?: DocBucket): Promise<DocFile[]> {
   const targets = bucket ? [bucket] : BUCKETS;
   const results = await Promise.all(
     targets.map(async (b) => {
-      const { data, error } = await supabase.storage.from(b).list('', {
-        limit: 500,
-        sortBy: { column: 'created_at', order: 'desc' },
+      const files = await listStorageEntries(b);
+      return files.map(({ path, entry: f }) => {
+        const { data: urlData } = supabase.storage.from(b).getPublicUrl(path);
+        return {
+          id: f.id as string,
+          name: f.name,
+          bucket: b,
+          path,
+          publicUrl: urlData.publicUrl,
+          size: f.metadata?.size || 0,
+          createdAt: f.created_at || '',
+          mimeType: (f.metadata?.mimetype as string) || null,
+        };
       });
-      if (error || !data) return [];
-      return data
-        .filter((f) => f.id && f.name)
-        .map((f) => {
-          const { data: urlData } = supabase.storage.from(b).getPublicUrl(f.name);
-          return {
-            id: f.id,
-            name: f.name,
-            bucket: b,
-            path: f.name,
-            publicUrl: urlData.publicUrl,
-            size: f.metadata?.size || 0,
-            createdAt: f.created_at || '',
-            mimeType: (f.metadata?.mimetype as string) || null,
-          };
-        });
     })
   );
   return results.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -123,7 +118,12 @@ export default function DocumentsPanel() {
     setPreviewContent(null);
 
     if (file.mimeType?.startsWith('image/')) {
-      setPreviewContent(null); // Image uses URL directly
+      setPreviewContent(null);
+      // agent-documents is private: a public URL doesn't load, use a short-lived signed one.
+      if (file.bucket === 'agent-documents') {
+        const { data } = await supabase.storage.from(file.bucket).createSignedUrl(file.path, 600);
+        if (data?.signedUrl) setPreviewFile({ ...file, publicUrl: data.signedUrl });
+      }
       return;
     }
 

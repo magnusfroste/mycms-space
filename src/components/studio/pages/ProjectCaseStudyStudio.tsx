@@ -13,7 +13,7 @@ import OptimizedImage from '@/components/common/OptimizedImage';
 import { StudioContainer, studioH2 } from '@/components/studio/StudioSection';
 import { WorkList, splitRepoTitle } from '@/components/blocks/studio/GitHubStudio';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
-import { stripMarkdown } from '@/lib/utils/markdown';
+import { resolveReadmeUrls, stripMarkdown } from '@/lib/utils/markdown';
 import type { GitHubRepoWithImages } from '@/data/githubRepos';
 
 const pill =
@@ -131,7 +131,7 @@ const ProjectCaseStudyStudio: React.FC<{ repo: GitHubRepoWithImages }> = ({ repo
                 <section>
                   <SectionTitle>About this project</SectionTitle>
                   <div className="studio-article border-t border-border pt-6">
-                    <MarkdownContent content={repo.readme_content} blankLineSpacers={false} />
+                    <MarkdownContent content={resolveReadmeUrls(repo.readme_content, repo.full_name)} blankLineSpacers={false} />
                   </div>
                 </section>
               )}

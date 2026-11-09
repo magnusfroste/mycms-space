@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SkillCard } from '@/components/admin/skills/SkillCard';
 import { SkillEditorSheet } from '@/components/admin/skills/SkillEditorSheet';
 import { useDeleteSkill, useSkills, useToggleSkill, useUpsertSkill } from '@/hooks/useSkillHub';
-import type { AgentSkill } from '@/types/agent';
+import { AGENT_SKILL_CATEGORIES, type AgentSkill } from '@/types/agent';
 
 /** The skills Autopilot (and operators, depending on scope) can call. */
 export function SkillsPanel() {
@@ -35,12 +35,9 @@ export function SkillsPanel() {
           <SelectTrigger className="h-8 w-40 text-[13px]"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
-            <SelectItem value="content">Content</SelectItem>
-            <SelectItem value="crm">CRM</SelectItem>
-            <SelectItem value="communication">Communication</SelectItem>
-            <SelectItem value="automation">Automation</SelectItem>
-            <SelectItem value="search">Search</SelectItem>
-            <SelectItem value="analytics">Analytics</SelectItem>
+            {AGENT_SKILL_CATEGORIES.map((c) => (
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={scopeFilter} onValueChange={setScopeFilter}>
@@ -48,7 +45,7 @@ export function SkillsPanel() {
           <SelectContent>
             <SelectItem value="all">All scopes</SelectItem>
             <SelectItem value="internal">Internal</SelectItem>
-            <SelectItem value="external">External</SelectItem>
+            <SelectItem value="public">Public</SelectItem>
             <SelectItem value="both">Both</SelectItem>
           </SelectContent>
         </Select>

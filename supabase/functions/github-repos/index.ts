@@ -5,6 +5,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,6 +79,44 @@ interface TransformedProfile {
   twitter: string | null;
 }
 
+function serviceClient() {
+  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+}
+
+/** Upsert fetched repos into github_repos. New repos start hidden; enabled/order of existing ones are kept. */
+async function saveRepos(repos: TransformedRepo[]): Promise<{ synced: number; new: number; failed: number }> {
+  const db = serviceClient();
+  const { data: existing } = await db.from("github_repos").select("github_id");
+  const known = new Set((existing || []).map((r: { github_id: string }) => r.github_id));
+  let added = 0, failed = 0;
+  for (const repo of repos) {
+    const isNew = !known.has(repo.id);
+    const { error } = await db.from("github_repos").upsert({
+      github_id: repo.id,
+      name: repo.name,
+      full_name: repo.fullName,
+      description: repo.description,
+      url: repo.url,
+      homepage: repo.homepage,
+      language: repo.language,
+      stars: repo.stars,
+      forks: repo.forks,
+      topics: repo.topics,
+      pushed_at: repo.pushedAt,
+      created_at_github: repo.createdAt,
+      is_fork: repo.isFork,
+      is_archived: repo.isArchived,
+      // Keep the stored README when this run could not fetch one.
+      ...(repo.readmeContent !== null ? { readme_content: repo.readmeContent } : {}),
+      last_synced_at: new Date().toISOString(),
+      ...(isNew ? { enabled: false, order_index: 999 } : {}),
+    }, { onConflict: "github_id" });
+    if (error) { failed++; console.error("[github-repos] upsert failed for", repo.name, error.message); }
+    else if (isNew) added++;
+  }
+  return { synced: repos.length - failed, new: added, failed };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -86,11 +125,30 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action = "fetch" } = body;
+    let { action = "fetch" } = body;
+    const trusted = await isTrustedCaller(req);
 
-    // Writing to GitHub and AI suggestions are admin-only; "fetch" stays public.
-    if ((action === "update" || action === "suggest-topics") && !(await isTrustedCaller(req))) {
+    // A trusted caller without a username (Autopilot skill, nightly job) means "sync".
+    if (action === "fetch" && !body.username && trusted) action = "sync";
+
+    // Writing to GitHub, AI suggestions and saving to the database are admin-only; "fetch" stays public.
+    if ((action === "update" || action === "suggest-topics" || action === "sync") && !trusted) {
       return forbidden(corsHeaders);
+    }
+
+    // SYNC: fetch every repo of the configured user and save them to github_repos.
+    if (action === "sync") {
+      const { data: mod } = await serviceClient().from("modules").select("module_config").eq("module_type", "github").maybeSingle();
+      const configured = (mod?.module_config as { username?: string } | null)?.username;
+      body.username = body.username || configured;
+      body.limit = 100;
+      body.includeProfile = false;
+      if (!body.username) {
+        return new Response(
+          JSON.stringify({ error: "No GitHub username configured (admin → Projects → Settings)." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Optional: Use GitHub token for higher rate limits and write access
@@ -103,6 +161,20 @@ serve(async (req) => {
     if (GITHUB_TOKEN) {
       headers["Authorization"] = `Bearer ${GITHUB_TOKEN}`;
     }
+
+    // An expired or revoked GITHUB_TOKEN makes GitHub answer 401 even for public
+    // data. Fall back to anonymous requests (60/hour) and say so in the response.
+    let tokenInvalid = false;
+    const ghFetch = async (url: string, extra: Record<string, string> = {}) => {
+      let res = await fetch(url, { headers: { ...headers, ...extra } });
+      if (res.status === 401 && headers["Authorization"]) {
+        tokenInvalid = true;
+        delete headers["Authorization"];
+        console.warn("[github-repos] GITHUB_TOKEN rejected (401) — continuing without it");
+        res = await fetch(url, { headers: { ...headers, ...extra } });
+      }
+      return res;
+    };
 
     // ============================================
     // ACTION: SUGGEST-TOPICS - Generate topic suggestions using AI
@@ -121,12 +193,7 @@ serve(async (req) => {
       let readme = "";
       try {
         const readmeUrl = `https://api.github.com/repos/${owner}/${repo}/readme`;
-        const readmeResponse = await fetch(readmeUrl, {
-          headers: {
-            ...headers,
-            "Accept": "application/vnd.github.v3.raw",
-          },
-        });
+        const readmeResponse = await ghFetch(readmeUrl, { "Accept": "application/vnd.github.v3.raw" });
         if (readmeResponse.ok) {
           readme = await readmeResponse.text();
           // Truncate README to first 3000 chars to save tokens
@@ -363,7 +430,7 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
 
     // Fetch repos
     const reposUrl = `https://api.github.com/users/${username}/repos?sort=${sort}&direction=desc&per_page=${limit}`;
-    const reposResponse = await fetch(reposUrl, { headers });
+    const reposResponse = await ghFetch(reposUrl);
 
     if (!reposResponse.ok) {
       if (reposResponse.status === 404) {
@@ -390,6 +457,16 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
     for (const repo of filteredRepos) {
       // Fetch README for each repo
       let readmeContent: string | null = null;
+      // Without a working token GitHub allows 60 requests/hour: don't spend them on READMEs.
+      if (tokenInvalid || !headers["Authorization"]) {
+        transformedRepos.push({
+          id: String(repo.id), name: repo.name, fullName: repo.full_name, description: repo.description || "",
+          url: repo.html_url, homepage: repo.homepage, language: repo.language, stars: repo.stargazers_count,
+          forks: repo.forks_count, topics: repo.topics || [], pushedAt: repo.pushed_at, createdAt: repo.created_at,
+          isArchived: repo.archived, isFork: repo.fork, readmeContent: null,
+        });
+        continue;
+      }
       try {
         const readmeUrl = `https://api.github.com/repos/${repo.full_name}/readme`;
         const readmeResponse = await fetch(readmeUrl, {
@@ -428,7 +505,7 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
     let profile: TransformedProfile | null = null;
     if (includeProfile) {
       const profileUrl = `https://api.github.com/users/${username}`;
-      const profileResponse = await fetch(profileUrl, { headers });
+      const profileResponse = await ghFetch(profileUrl);
       
       if (profileResponse.ok) {
         const user: GitHubUser = await profileResponse.json();
@@ -449,6 +526,14 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
       }
     }
 
+    if (action === "sync") {
+      const result = await saveRepos(transformedRepos);
+      return new Response(
+        JSON.stringify({ ...result, username: body.username, tokenInvalid, warning: tokenInvalid ? "GITHUB_TOKEN is expired or revoked; synced without it. Renew the secret." : undefined }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Get rate limit info
     const rateLimit = {
       remaining: reposResponse.headers.get("X-RateLimit-Remaining"),
@@ -457,7 +542,7 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
     };
 
     // Check if we have write access
-    const hasWriteAccess = !!GITHUB_TOKEN;
+    const hasWriteAccess = !!GITHUB_TOKEN && !tokenInvalid;
 
     return new Response(
       JSON.stringify({
@@ -465,6 +550,7 @@ Example output: ["react", "typescript", "cms", "portfolio", "open-source", "web-
         profile,
         rateLimit,
         hasWriteAccess,
+        tokenInvalid,
         cached: false,
         fetchedAt: new Date().toISOString(),
       }),

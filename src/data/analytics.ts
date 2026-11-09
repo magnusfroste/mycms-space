@@ -73,13 +73,20 @@ export const fetchAnalyticsSummary = async (days: number = 30) => {
   startDate.setDate(startDate.getDate() - days);
   const startDateStr = startDate.toISOString();
 
-  // Fetch page views
-  const { data: pageViews, error: pvError } = await supabase
-    .from('page_views')
-    .select('*')
-    .gte('created_at', startDateStr);
-
-  if (pvError) throw pvError;
+  // Fetch page views. PostgREST returns at most 1000 rows per request and
+  // real traffic exceeds that within 30 days, so page through the range.
+  const pageViews: { visitor_id: string; page_slug: string; created_at: string }[] = [];
+  for (let from = 0; from < 100_000; from += 1000) {
+    const { data, error: pvError } = await supabase
+      .from('page_views')
+      .select('visitor_id, page_slug, created_at')
+      .gte('created_at', startDateStr)
+      .order('created_at')
+      .range(from, from + 999);
+    if (pvError) throw pvError;
+    pageViews.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
+  }
 
   // Fetch chat analytics
   const { data: chatData, error: chatError } = await supabase

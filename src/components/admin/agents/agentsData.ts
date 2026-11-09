@@ -235,6 +235,10 @@ const eventWords: Record<string, string> = {
   'subscriber.created': 'New subscriber',
   'blog.published': 'Post published',
   'github.synced': 'After GitHub sync',
+  // Names written by the create_cms_signal() DB trigger
+  contact_received: 'New message',
+  subscriber_added: 'New subscriber',
+  blog_published: 'Post published',
 };
 
 export function triggerToWords(type: string, config: Record<string, unknown> | null | undefined): string {
@@ -244,6 +248,9 @@ export function triggerToWords(type: string, config: Record<string, unknown> | n
     const name = (c.event_name as string) || (c.event as string) || '';
     return eventWords[name] ?? (name ? `On ${name}` : 'On event');
   }
-  if (type === 'signal') return 'When a signal arrives';
+  if (type === 'signal') {
+    const name = (c.event_name as string) || '';
+    return eventWords[name] ?? 'When a signal arrives';
+  }
   return type;
 }
