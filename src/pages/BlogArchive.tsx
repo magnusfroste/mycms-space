@@ -75,9 +75,9 @@ const BlogArchive = () => {
         <div className="container px-4 py-16">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4">Blog</h1>
+            <h1 className="text-4xl font-bold mb-4">Blog: AI agents, product and software development</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Thoughts, ideas, and insights on technology, design, and more.
+              Articles by Magnus Froste on building AI agents, shipping digital products and practical lessons from consulting work.
             </p>
           </div>
 

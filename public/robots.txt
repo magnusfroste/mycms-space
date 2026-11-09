@@ -13,9 +13,7 @@ Allow: /chat
 Disallow: /admin
 Disallow: /demo
 
-# Sitemap (dynamisk: sidor, blogginlägg och projekt)
-Sitemap: https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/sitemap-dynamic
-# Statisk fallback
+# Sitemap
 Sitemap: https://www.froste.eu/sitemap.xml
 
 # AIEO - AI Engine Optimization

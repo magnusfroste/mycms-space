@@ -47,7 +47,10 @@ const DynamicPage = () => {
       <Header />
       <main className="flex-grow">
         {!isLoading && headingPlan.needsFallbackH1 && page?.title && (
-          <h1 className="sr-only">{page.title}</h1>
+          <div className="container mx-auto px-4 pt-12">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{page.title}</h1>
+            {page.description && <p className="mt-4 max-w-2xl text-muted-foreground">{page.description}</p>}
+          </div>
         )}
         {isLoading ? (
           <div className="container mx-auto px-4 py-12 space-y-8">
