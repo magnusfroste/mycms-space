@@ -484,6 +484,24 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 // Skill Execution (delegate to agent-execute)
 // ============================================
 
+/** Owner availability from the resume module (the profile shown on the site). */
+async function loadAvailabilityProfile(): Promise<Record<string, unknown>> {
+  try {
+    const { createClient } = await import("npm:@supabase/supabase-js@2");
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data } = await sb.from('modules').select('module_config').eq('module_type', 'resume').maybeSingle();
+    const c = (data?.module_config || {}) as Record<string, unknown>;
+    return {
+      status: c.owner_availability || 'available',
+      summary: c.availability_note || '',
+      preferred_contact: 'The contact form at www.froste.eu/contact',
+      next_steps: 'Share a short description of the assignment or role, and Magnus will get back to you.',
+    };
+  } catch {
+    return {};
+  }
+}
+
 async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -793,6 +811,19 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
+
+            // Availability comes from the owner's profile, not from the model's guess:
+            // fill status/summary/contact when the model left them out, so the card
+            // and the answer agree with what the owner set.
+            if (toolName === 'check_availability') {
+              const profile = await loadAvailabilityProfile();
+              const merged: Record<string, unknown> = {
+                ...profile,
+                ...Object.fromEntries(Object.entries(toolArgs).filter(([, v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length === 0))),
+              };
+              lastArtifacts = parsed.artifacts.map((a) => ({ ...a, data: merged }));
+              result = JSON.stringify(merged);
+            }
 
             // Auto-save generated CVs and cover letters to file manager
             if (toolName === 'generate_tailored_cv' && (toolArgs.tailored_cv || toolArgs.cover_letter)) {
