@@ -1007,6 +1007,27 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_states: {
+        Row: {
+          created_at: string
+          provider: string
+          state: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          provider?: string
+          state: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          provider?: string
+          state?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       page_blocks: {
         Row: {
           block_config: Json | null
@@ -1097,6 +1118,24 @@ export type Database = {
           slug?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -1210,6 +1249,10 @@ export type Database = {
           schedule: string
           username: string
         }[]
+      }
+      hit_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_seconds: number }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_valid_cron_secret: { Args: { p_secret: string }; Returns: boolean }
