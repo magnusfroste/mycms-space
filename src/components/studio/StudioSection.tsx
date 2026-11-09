@@ -54,6 +54,7 @@ interface StudioSectionHeaderProps {
   className?: string;
 }
 
+export const studioH1 = 'text-[36px] sm:text-[48px] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground';
 export const studioH2 = 'text-[26px] sm:text-[32px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground';
 
 export const StudioSectionHeader: React.FC<StudioSectionHeaderProps> = ({
@@ -70,12 +71,19 @@ export const StudioSectionHeader: React.FC<StudioSectionHeaderProps> = ({
     <div className={cn('flex flex-wrap items-end justify-between gap-x-6 gap-y-3', className)}>
       <div className="min-w-0">
         {title && (
-          <Heading id={id} className={studioH2}>
+          <Heading id={id} className={Heading === 'h1' ? studioH1 : studioH2}>
             {title}
           </Heading>
         )}
         {subtitle && layout === 'stacked' && (
-          <p className="mt-2 max-w-[560px] text-[15px] leading-[1.55] text-muted-foreground">{subtitle}</p>
+          <p
+            className={cn(
+              'max-w-[560px] leading-[1.55] text-muted-foreground',
+              Heading === 'h1' ? 'mt-3 text-[17px]' : 'mt-2 text-[15px]'
+            )}
+          >
+            {subtitle}
+          </p>
         )}
       </div>
       {subtitle && layout === 'split' && (

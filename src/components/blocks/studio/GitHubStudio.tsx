@@ -113,17 +113,24 @@ const WorkCards: React.FC<{ repos: GitHubRepoWithImages[]; showLanguages: boolea
             to={`/project/${repo.name}`}
             className="group flex h-full flex-col overflow-hidden rounded-[14px] border border-border bg-card transition-colors hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {image && (
-              <div className="aspect-[16/9] overflow-hidden border-b border-border bg-muted">
-                <OptimizedImage
-                  src={image}
-                  alt=""
-                  className="h-full w-full object-cover object-top"
-                  displayWidth={640}
-                  sizes="(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
-                  width={640}
-                  height={360}
-                />
+            {showImages && (
+              <div className="flex aspect-[16/9] items-center justify-center overflow-hidden border-b border-border bg-muted/60">
+                {image ? (
+                  <OptimizedImage
+                    src={image}
+                    alt=""
+                    className="h-full w-full object-cover object-top"
+                    displayWidth={640}
+                    sizes="(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
+                    width={640}
+                    height={360}
+                  />
+                ) : (
+                  // Keeps the grid rhythm for projects without a screenshot
+                  <span aria-hidden="true" className="font-mono text-sm text-muted-foreground">
+                    {repo.name}
+                  </span>
+                )}
               </div>
             )}
             <div className="flex flex-1 flex-col gap-2 p-5">
