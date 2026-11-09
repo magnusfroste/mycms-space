@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, SquarePen } from "lucide-react";
 import { ChatInterface } from "@/components/chat";
 import { useAIModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
@@ -19,7 +18,14 @@ import {
 import { defaultMagnetTools } from "@/types/modules";
 import SEOHead from "@/components/common/SEOHead";
 import { useChromeExtensionModule } from "@/models/modules";
-import { useIsStudio } from "@/hooks/useCurrentTheme";
+
+// Starting points for visitors (clients and recruiters), shown under the composer.
+const SUGGESTIONS = [
+  { id: "work", label: "What does Magnus work on?", message: "What does Magnus work on, and what kind of assignments does he take?", icon: "Briefcase", order_index: 0, enabled: true },
+  { id: "available", label: "Is he available?", message: "Is Magnus available for a new assignment or role right now?", icon: "Calendar", order_index: 1, enabled: true },
+  { id: "fit", label: "Check fit for a role", message: "I'd like to check how well Magnus fits a role. I'll paste the job description next.", icon: "FileText", order_index: 2, enabled: true },
+  { id: "ai", label: "His work with AI agents", message: "What has Magnus built with AI agents? Give concrete examples.", icon: "Lightbulb", order_index: 3, enabled: true },
+];
 
 interface Message {
   id: string;
@@ -42,11 +48,9 @@ const Chat = () => {
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
   const hasInitialMessages = Boolean(location.state?.messages?.length);
-  const isStudio = useIsStudio();
-  // Studio shows a short intro above the input until the conversation starts
   const [hasMessages, setHasMessages] = React.useState(hasInitialMessages);
   const handleMessagesChange = React.useCallback((msgs: Message[]) => setHasMessages(msgs.length > 0), []);
-  const showIntro = isStudio && !hasMessages;
+  const startNewChat = () => (hasMessages ? setShowNewChatDialog(true) : setResetTrigger((n) => n + 1));
   const [contextReady, setContextReady] = React.useState(!hasInitialMessages);
 
   React.useEffect(() => {
@@ -65,63 +69,46 @@ const Chat = () => {
   const passedPlaceholder = location.state?.placeholder as string | undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background">
       <SEOHead
         title="Chat with Magnet"
         description="Ask Magnet, Magnus Froste's AI agent, about his experience, projects and availability."
       />
-      {/* Grok-inspired minimal header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
-        <div className="container mx-auto px-4 h-12 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
+      <header className="flex h-14 shrink-0 items-center justify-between px-3 sm:px-4">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
             onClick={() => navigate("/")}
-            className="gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Back to froste.eu"
+            title="Back to froste.eu"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back
-          </Button>
-
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground">
-            Magnet
-          </span>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowNewChatDialog(true)}
-            className="gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent"
+            <ArrowLeft className="h-[18px] w-[18px]" />
+          </button>
+          <span className="px-1.5 text-[17px] font-semibold tracking-[-0.01em] text-foreground">Magnet</span>
+          <span className="hidden text-[13px] text-muted-foreground sm:inline">· Magnus Froste's AI twin</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={startNewChat}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="New chat"
+            title="New chat"
           >
-            <Plus className="h-3.5 w-3.5" />
-            New
-          </Button>
+            <SquarePen className="h-[18px] w-[18px]" />
+          </button>
+          <Link
+            to="/contact"
+            className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[13.5px] font-medium text-background transition-opacity hover:opacity-85"
+          >
+            Contact Magnus
+          </Link>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {showIntro ? (
-          <div className="mx-auto w-full max-w-3xl px-6 pb-2 pt-12 md:pt-20">
-            <span
-              aria-hidden="true"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-[15px] font-bold text-accent"
-            >
-              M
-            </span>
-            <h1 className="mt-4 text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground sm:text-[32px]">
-              Ask Magnet, Magnus' AI twin
-            </h1>
-            <p className="mt-2 max-w-[560px] text-[15px] leading-[1.55] text-muted-foreground">
-              Answers from his CV, projects and writing. Paste a job description to check the fit, or{" "}
-              <Link to="/contact" className="studio-link font-medium">
-                contact Magnus directly
-              </Link>
-              .
-            </p>
-          </div>
-        ) : (
-          <h1 className="sr-only">Chat with Magnet, Magnus Froste's AI agent</h1>
-        )}
+      <main className="flex min-h-0 flex-1 flex-col">
+        {hasMessages && <h1 className="sr-only">Chat with Magnet, Magnus Froste's AI agent</h1>}
         {hasInitialMessages && !contextReady ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-3 text-muted-foreground">
@@ -133,8 +120,17 @@ const Chat = () => {
           <ChatInterface
             webhookUrl={webhookUrl}
             fullPage={true}
-            initialPlaceholder={passedPlaceholder || "Ask me anything…"}
-            activePlaceholder={passedPlaceholder || "Continue…"}
+            initialPlaceholder={passedPlaceholder || "Ask anything about Magnus…"}
+            activePlaceholder="Ask a follow-up…"
+            emptyTitle="What would you like to know about Magnus?"
+            emptySubtitle="Magnet answers from his CV, projects and writing. Paste a job description to check the fit."
+            footerNote={
+              <>
+                Magnet is an AI and can make mistakes. For anything important,{" "}
+                <Link to="/contact" className="underline underline-offset-2 hover:text-foreground">contact Magnus</Link>.
+              </>
+            }
+            quickActions={SUGGESTIONS}
             initialMessages={initialMessages}
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}

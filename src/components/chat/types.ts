@@ -1,3 +1,4 @@
+import type React from "react";
 // ============================================
 // Chat Types
 // Shared types for chat components
@@ -94,6 +95,10 @@ export interface ChatInterfaceProps {
   activePlaceholder?: string;
   quickActions?: QuickActionConfig[];
   fullPage?: boolean;
+  /** Full page only: heading, subline and footnote around the empty-state composer. */
+  emptyTitle?: string;
+  emptySubtitle?: React.ReactNode;
+  footerNote?: React.ReactNode;
   initialMessages?: Message[];
   resetTrigger?: number;
   onMessagesChange?: (messages: Message[]) => void;

@@ -33,6 +33,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   voiceEnabled = false,
   ttsVoice,
   visitorConfig,
+  emptyTitle,
+  emptySubtitle,
+  footerNote,
 }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -78,9 +81,51 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const placeholder = messages.length > 0 ? activePlaceholder : initialPlaceholder;
+  const isEmpty = messages.length === 0;
+  const suggestions = showQuickActions && isEmpty ? (
+    <ChatQuickActions actions={quickActions} onSelect={handleQuickAction} isLoading={isLoading} />
+  ) : null;
+
+  const input = (variant: "docked" | "inline") => (
+    <ChatInput
+      value={inputValue}
+      onChange={setInputValue}
+      onSend={handleSend}
+      placeholder={placeholder}
+      isLoading={isLoading}
+      fullPage={fullPage}
+      variant={variant}
+      footer={variant === "docked" ? footerNote : undefined}
+      voiceEnabled={voiceEnabled}
+      commands={quickActions}
+      onCommandSelect={handleQuickAction}
+    />
+  );
+
+  // Full page, no messages yet: heading, composer and suggestions centred (ChatGPT's new chat).
+  if (fullPage && isEmpty) {
+    return (
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 pb-[12vh] pt-8 sm:px-6">
+          {emptyTitle && (
+            <h1 className="mb-2 text-center text-[26px] font-semibold tracking-[-0.02em] text-foreground sm:text-[30px]">
+              {emptyTitle}
+            </h1>
+          )}
+          {emptySubtitle && (
+            <p className="mx-auto mb-7 max-w-xl text-center text-[15px] leading-[1.55] text-muted-foreground">{emptySubtitle}</p>
+          )}
+          {!emptySubtitle && emptyTitle && <div className="mb-5" />}
+          {input("inline")}
+          {suggestions && <div className="mt-5">{suggestions}</div>}
+        </div>
+        {footerNote && <p className="shrink-0 px-4 pb-3 text-center text-xs text-muted-foreground">{footerNote}</p>}
+      </div>
+    );
+  }
 
   return (
-    <div className={fullPage ? "flex flex-col h-full overflow-hidden" : "max-w-3xl mx-auto"}>
+    <div className={fullPage ? "flex h-full flex-col overflow-hidden" : "mx-auto max-w-3xl"}>
       <ChatMessageList
         messages={messages}
         isLoading={isLoading}
@@ -88,28 +133,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         voiceEnabled={voiceEnabled}
         ttsVoice={ttsVoice}
       />
-
-      <ChatInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSend={handleSend}
-        placeholder={placeholder}
-        isLoading={isLoading}
-        fullPage={fullPage}
-        voiceEnabled={voiceEnabled}
-        commands={quickActions}
-        onCommandSelect={handleQuickAction}
-      />
-
-      {showQuickActions && messages.length === 0 && (
-        <div className="px-6">
-          <ChatQuickActions
-            actions={quickActions}
-            onSelect={handleQuickAction}
-            isLoading={isLoading}
-          />
-        </div>
-      )}
+      {input(fullPage ? "docked" : "inline")}
+      {suggestions && <div className="mt-4 px-4">{suggestions}</div>}
     </div>
   );
 };
