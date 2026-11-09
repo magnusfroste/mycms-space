@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin sidebar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#3F33B8}a:hover{color:#2A2180}
+</style>
+</helmet>
+<nav aria-label="Admin" style="width: 232px; min-height: 1132px; box-sizing: border-box; padding: 16px 12px 20px; background: #FAFAFB; border-right: 1px solid #E6E6EA; font-family: Inter, system-ui, sans-serif; color: #0B0B0F; display: flex; flex-direction: column; gap: 20px">
+  <sc-for list="{{groups}}" as="group" hint-placeholder-count="6">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <sc-if value="{{group.hasLabel}}" hint-placeholder-val="{{ true }}">
+        <p style="margin: 0 0 6px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5F5F6B">{{group.label}}</p>
+      </sc-if>
+      <sc-for list="{{group.items}}" as="item" hint-placeholder-count="4">
+        <sc-if value="{{item.active}}" hint-placeholder-val="{{ false }}">
+          <a href="{{item.href}}" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 10px; border-radius: 6px; background: #FFFFFF; box-shadow: 0 0 0 1px #E6E6EA, 0 1px 2px rgba(11,11,15,0.04); color: #0B0B0F; font-size: 13.5px; font-weight: 600; text-decoration: none">
+            <span>{{item.label}}</span>
+            <sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5F5F6B">{{item.badge}}</span></sc-if>
+          </a>
+        </sc-if>
+        <sc-if value="{{item.inactive}}" hint-placeholder-val="{{ true }}">
+          <a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; height: 32px; padding: 0 10px; border-radius: 6px; color: #3A3A44; font-size: 13.5px; font-weight: 500; text-decoration: none">
+            <span>{{item.label}}</span>
+            <sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{ false }}"><span style="min-width: 18px; height: 18px; padding: 0 6px; box-sizing: border-box; border-radius: 9px; background: {{item.badgeBg}}; color: {{item.badgeFg}}; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center">{{item.badge}}</span></sc-if>
+          </a>
+        </sc-if>
+      </sc-for>
+    </div>
+  </sc-for>
+  <div style="margin-top: auto; padding: 12px 10px 0; border-top: 1px solid #E6E6EA; display: flex; flex-direction: column; gap: 8px">
+    <p style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5F5F6B">MCP endpoint</p>
+    <code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3A3A44; word-break: break-all">…supabase.co/functions/v1/mcp-server</code>
+    <a href="#" style="font-size: 13px; text-decoration: none">Copy for your agent</a>
+  </div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["overview","review","agents","magnet","knowledge","blog","projects","pages","media","newsletter","inbox","conversations","analytics","integrations","modules","settings","activity"],"default":"overview"},"$preview":{"width":232,"height":1132}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'overview';
+    const links = {
+      overview: 'Main.dc.html',
+      agents: 'Agents.dc.html',
+      integrations: 'Integrations.dc.html',
+      modules: 'Modules.dc.html'
+    };
+    const neutral = { bg: '#EEEEF2', fg: '#3A3A44' };
+    const alert = { bg: '#FFF1DC', fg: '#8A4B00' };
+    const groups = [
+      { label: '', items: [
+        { id: 'overview', label: 'Overview' },
+        { id: 'review', label: 'Review queue', badge: '229', tone: alert }
+      ] },
+      { label: 'Agents', items: [
+        { id: 'agents', label: 'Operators & Autopilot' },
+        { id: 'magnet', label: 'Magnet (public chat)' }
+      ] },
+      { label: 'Content', items: [
+        { id: 'knowledge', label: 'Knowledge base' },
+        { id: 'blog', label: 'Blog', badge: '8', tone: neutral },
+        { id: 'projects', label: 'Projects' },
+        { id: 'pages', label: 'Pages' },
+        { id: 'media', label: 'Media' },
+        { id: 'newsletter', label: 'Newsletter' }
+      ] },
+      { label: 'Audience', items: [
+        { id: 'inbox', label: 'Inbox' },
+        { id: 'conversations', label: 'Conversations' },
+        { id: 'analytics', label: 'Analytics' }
+      ] },
+      { label: 'Platform', items: [
+        { id: 'integrations', label: 'Integrations', badge: '1', tone: alert },
+        { id: 'modules', label: 'Modules' },
+        { id: 'settings', label: 'Site settings' },
+        { id: 'activity', label: 'Activity log' }
+      ] }
+    ];
+    return {
+      groups: groups.map((g) => ({
+        label: g.label,
+        hasLabel: !!g.label,
+        items: g.items.map((it) => ({
+          label: it.label,
+          href: links[it.id] || '#',
+          active: it.id === active,
+          inactive: it.id !== active,
+          hasBadge: !!it.badge,
+          badge: it.badge || '',
+          badgeBg: (it.tone || neutral).bg,
+          badgeFg: (it.tone || neutral).fg
+        }))
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

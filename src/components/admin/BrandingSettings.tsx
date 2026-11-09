@@ -29,6 +29,19 @@ interface ThemeTemplate {
 
 const themeTemplates: ThemeTemplate[] = [
   {
+    id: 'studio',
+    name: 'Studio',
+    description: 'Inter + mono numbers. Hairline borders, near-black buttons, one violet accent. Quiet and precise.',
+    icon: <Palette className="h-5 w-5" />,
+    preview: {
+      background: 'bg-white',
+      primary: 'bg-neutral-950',
+      accent: 'bg-violet-600',
+      text: 'text-neutral-950',
+    },
+    tags: ['Precise', 'Dense', 'Recommended'],
+  },
+  {
     id: 'elegant',
     name: 'Elegant',
     description: 'Playfair Display + Inter. Rounded corners, glassmorphism, parallax animations.',
@@ -86,13 +99,13 @@ const BrandingSettings: React.FC = () => {
   const { data: module, isLoading } = useModule('branding');
   const updateModule = useUpdateModule('branding');
   
-  const [selectedTheme, setSelectedTheme] = useState<'elegant' | 'grok' | 'sana' | 'terminal'>('elegant');
+  const [selectedTheme, setSelectedTheme] = useState<'elegant' | 'grok' | 'sana' | 'terminal' | 'studio'>('elegant');
   const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   // Load saved settings
   useEffect(() => {
     if (module?.module_config) {
-      const config = module.module_config as { theme?: 'elegant' | 'grok' | 'sana' | 'terminal' };
+      const config = module.module_config as { theme?: 'elegant' | 'grok' | 'sana' | 'terminal' | 'studio' };
       setSelectedTheme(config.theme || 'elegant');
     }
   }, [module]);
@@ -133,7 +146,7 @@ const BrandingSettings: React.FC = () => {
     }
   };
 
-  const handleThemeSelect = (themeId: 'elegant' | 'grok' | 'sana' | 'terminal') => {
+  const handleThemeSelect = (themeId: 'elegant' | 'grok' | 'sana' | 'terminal' | 'studio') => {
     setSelectedTheme(themeId);
     setPreviewTheme(themeId);
   };
@@ -182,7 +195,7 @@ const BrandingSettings: React.FC = () => {
                   ? 'ring-2 ring-primary shadow-md' 
                   : 'hover:ring-1 hover:ring-border'
               )}
-              onClick={() => handleThemeSelect(template.id as 'elegant' | 'grok' | 'sana' | 'terminal')}
+              onClick={() => handleThemeSelect(template.id as 'elegant' | 'grok' | 'sana' | 'terminal' | 'studio')}
             >
               {/* Preview */}
               <div className={cn('h-24 relative', template.preview.background)}>
@@ -237,7 +250,7 @@ const BrandingSettings: React.FC = () => {
             variant="outline" 
             onClick={() => {
               setPreviewTheme(null);
-              const savedTheme = (module?.module_config as { theme?: 'elegant' | 'grok' | 'sana' | 'terminal' })?.theme || 'elegant';
+              const savedTheme = (module?.module_config as { theme?: 'elegant' | 'grok' | 'sana' | 'terminal' | 'studio' })?.theme || 'elegant';
               setSelectedTheme(savedTheme);
             }}
           >

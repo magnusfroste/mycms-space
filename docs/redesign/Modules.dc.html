@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin modules</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#3F33B8}a:hover{color:#2A2180}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0B0B0F; background: #FFFFFF; min-height: 1180px; display: flex; flex-direction: column">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid #E6E6EA; background: #FFFFFF; flex-wrap: wrap">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0B0B0F">
+      <span style="width: 24px; height: 24px; border-radius: 6px; background: #0B0B0F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">f</span>
+      <span style="font-size: 14px; font-weight: 600">froste.eu</span>
+    </a>
+    <span style="color: #C9C9D1; font-size: 14px">/</span>
+    <span style="font-size: 14px; color: #3A3A44">Modules</span>
+    <label style="margin-left: 24px; flex: 1 1 280px; max-width: 420px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #E6E6EA; border-radius: 8px; background: #FAFAFB; box-sizing: border-box">
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5F5F6B" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="search" placeholder="Search or jump to…" aria-label="Search admin" style="flex: 1; border: 0; background: transparent; font: inherit; font-size: 13.5px; color: #0B0B0F; outline: none; min-width: 0">
+      <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5F5F6B; border: 1px solid #E6E6EA; border-radius: 4px; padding: 1px 5px; background: #FFFFFF">⌘K</kbd>
+    </label>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+      <a href="Landing.dc.html" style="height: 34px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #3A3A44; text-decoration: none; display: inline-flex; align-items: center">View site ↗</a>
+      <button type="button" aria-label="Account menu" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #ECEAFB; color: #3F33B8; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">MF</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1">
+    <dc-import name="AdminNav" active="modules" hint-size="232px,1128px"></dc-import>
+
+    <main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 48px; box-sizing: border-box">
+      <div style="max-width: 1120px; display: flex; flex-direction: column; gap: 20px">
+
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em">Modules</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; color: #5F5F6B; max-width: 680px">Features you can switch on and off. Turning one off hides it on the site, in this admin and in the MCP tools. Core modules are always on.</p>
+          </div>
+          <div style="display: flex; gap: 8px; font-size: 12.5px">
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #EEEEF2; color: #3A3A44; display: inline-flex; align-items: center; font-weight: 500">5 core</span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #E9F6EE; color: #157F3B; display: inline-flex; align-items: center; font-weight: 500">8 optional · all on</span>
+          </div>
+        </div>
+
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <section style="display: flex; flex-direction: column; gap: 10px">
+            <div>
+              <h2 style="margin: 0; font-size: 14px; font-weight: 600">{{g.title}}</h2>
+              <p style="margin: 2px 0 0; font-size: 12.5px; color: #5F5F6B">{{g.hint}}</p>
+            </div>
+            <div style="border: 1px solid #E6E6EA; border-radius: 12px; overflow-x: auto">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px">
+                <thead>
+                  <tr style="text-align: left; color: #5F5F6B; background: #FAFAFB">
+                    <th scope="col" style="padding: 9px 16px; font-weight: 500; font-size: 12px; width: 22%">Module</th>
+                    <th scope="col" style="padding: 9px 16px; font-weight: 500; font-size: 12px">What it adds</th>
+                    <th scope="col" style="padding: 9px 16px; font-weight: 500; font-size: 12px; width: 15%">Admin</th>
+                    <th scope="col" style="padding: 9px 16px; font-weight: 500; font-size: 12px; width: 11%">MCP</th>
+                    <th scope="col" style="padding: 9px 16px; font-weight: 500; font-size: 12px; width: 9%; text-align: right">On</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{g.items}}" as="m" hint-placeholder-count="5">
+                    <tr style="border-top: 1px solid #F0F0F3">
+                      <td style="padding: 12px 16px; font-weight: 600">{{m.name}}</td>
+                      <td style="padding: 12px 16px; color: #3A3A44">{{m.what}}</td>
+                      <td style="padding: 12px 16px"><a href="#" style="font-size: 12.5px; text-decoration: none">{{m.admin}}</a></td>
+                      <td style="padding: 12px 16px; font-size: 12px; font-weight: 600; color: {{m.mcpFg}}">{{m.mcp}}</td>
+                      <td style="padding: 12px 16px; text-align: right">
+                        <sc-if value="{{m.locked}}" hint-placeholder-val="{{ false }}">
+                          <span style="font-size: 12px; color: #5F5F6B">Always</span>
+                        </sc-if>
+                        <sc-if value="{{m.toggle}}" hint-placeholder-val="{{ true }}">
+                          <button type="button" role="switch" aria-checked="true" aria-label="{{m.switchLabel}}" style="width: 36px; height: 20px; border-radius: 10px; border: 0; background: #0B0B0F; position: relative; cursor: pointer; padding: 0"><span style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF"></span></button>
+                        </sc-if>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </sc-for>
+
+        <p style="margin: 0; font-size: 12.5px; color: #5F5F6B">Not built yet and removed from this list: Forms builder, E-commerce, Multi-language, CRM. They live in the roadmap instead.</p>
+
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mcp = {
+      yes: { t: 'Full', fg: '#157F3B' },
+      part: { t: 'Partly', fg: '#8A4B00' },
+      no: { t: 'Not yet', fg: '#A3271B' },
+      na: { t: '—', fg: '#5F5F6B' }
+    };
+    const mk = (name, what, admin, m, locked) => ({
+      name, what, admin,
+      mcp: mcp[m].t, mcpFg: mcp[m].fg,
+      locked: !!locked, toggle: !locked,
+      switchLabel: 'Turn ' + name + ' off'
+    });
+    const groups = [
+      { title: 'Core', hint: 'The site does not work without these.', items: [
+        mk('Knowledge base', 'Profile and markdown documents that ground the chat and the CV tools.', 'Knowledge base', 'yes', true),
+        mk('Site shell', 'Header, footer and navigation.', 'Site settings', 'no', true),
+        mk('Appearance', 'Colours, fonts and dark mode.', 'Site settings', 'no', true),
+        mk('SEO & AIEO', 'Titles, sitemap, llms.txt and structured data.', 'Site settings', 'no', true),
+        mk('Analytics', 'Page views, chat sessions and the funnel on Overview.', 'Analytics', 'part', true)
+      ] },
+      { title: 'Content', hint: 'What visitors read.', items: [
+        mk('Blog', 'Posts with categories, SEO and scheduling.', 'Blog', 'part'),
+        mk('Projects', 'Case studies built from your GitHub repositories.', 'Projects', 'part'),
+        mk('Newsletter', 'Subscribers and campaigns, sent with Resend.', 'Newsletter', 'no')
+      ] },
+      { title: 'Agents & connections', hint: 'How the site talks to people and other systems.', items: [
+        mk('Magnet chat', 'The AI twin on the site, with tools for CV match and project deep dives.', 'Magnet', 'na'),
+        mk('GitHub', 'Syncs repositories into Projects every night.', 'Integrations', 'part'),
+        mk('Webhooks', 'Sends events such as new contact messages to other services.', 'Site settings', 'no'),
+        mk('Chrome extension', 'Captures pages from your browser into the agent.', 'Integrations', 'no')
+      ] }
+    ];
+    return { groups };
+  }
+}
+</script>
+</body>
+</html>

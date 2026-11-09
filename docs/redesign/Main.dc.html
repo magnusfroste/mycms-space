@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#3F33B8}a:hover{color:#2A2180}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0B0B0F; background: #FFFFFF; min-height: 1180px; display: flex; flex-direction: column">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid #E6E6EA; background: #FFFFFF; flex-wrap: wrap">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0B0B0F">
+      <span style="width: 24px; height: 24px; border-radius: 6px; background: #0B0B0F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">f</span>
+      <span style="font-size: 14px; font-weight: 600">froste.eu</span>
+    </a>
+    <span style="color: #C9C9D1; font-size: 14px">/</span>
+    <span style="font-size: 14px; color: #3A3A44">Admin</span>
+    <label style="margin-left: 24px; flex: 1 1 280px; max-width: 420px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #E6E6EA; border-radius: 8px; background: #FAFAFB; box-sizing: border-box">
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5F5F6B" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="search" placeholder="Search or jump to…" aria-label="Search admin" style="flex: 1; border: 0; background: transparent; font: inherit; font-size: 13.5px; color: #0B0B0F; outline: none; min-width: 0">
+      <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5F5F6B; border: 1px solid #E6E6EA; border-radius: 4px; padding: 1px 5px; background: #FFFFFF">⌘K</kbd>
+    </label>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+      <button type="button" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #E6E6EA; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #0B0B0F; display: inline-flex; align-items: center; gap: 8px; cursor: pointer">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: #5B4BDB"></span>Ask Magnet
+      </button>
+      <a href="Landing.dc.html" style="height: 34px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #3A3A44; text-decoration: none; display: inline-flex; align-items: center">View site ↗</a>
+      <button type="button" aria-label="Account menu" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #ECEAFB; color: #3F33B8; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">MF</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1">
+    <dc-import name="AdminNav" active="overview" hint-size="232px,1128px"></dc-import>
+
+    <main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 48px; box-sizing: border-box">
+      <div style="max-width: 1080px; display: flex; flex-direction: column; gap: 24px">
+
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em">Overview</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; color: #5F5F6B">Good morning, Magnus. Here is how froste.eu is doing this month.</p>
+          </div>
+          <div role="group" aria-label="Period" style="display: inline-flex; padding: 3px; border: 1px solid #E6E6EA; border-radius: 8px; background: #FAFAFB">
+            <button type="button" style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: #5F5F6B; cursor: pointer">7 days</button>
+            <button type="button" aria-pressed="true" style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: #FFFFFF; box-shadow: 0 0 0 1px #E6E6EA; font: inherit; font-size: 13px; font-weight: 600; color: #0B0B0F; cursor: pointer">This month</button>
+            <button type="button" style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: #5F5F6B; cursor: pointer">90 days</button>
+          </div>
+        </div>
+
+        <section aria-labelledby="ns" style="border: 1px solid #E6E6EA; border-radius: 12px; padding: 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; background: #FFFFFF">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <p id="ns" style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #3F33B8">North star · Inquiries</p>
+            <div style="display: flex; align-items: baseline; gap: 12px">
+              <span style="font-size: 48px; font-weight: 600; letter-spacing: -0.02em; font-family: 'JetBrains Mono', monospace">1</span>
+              <span style="font-size: 13px; color: #157F3B; font-weight: 500">+1 vs October</span>
+            </div>
+            <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #3A3A44; max-width: 380px">Clients and recruiters who reached out through the contact form this month. Everything else on this page exists to move this number.</p>
+            <a href="#" style="font-size: 13px; font-weight: 500; text-decoration: none">Open inbox →</a>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <p style="margin: 0; font-size: 12px; color: #5F5F6B">From visit to inquiry, this month</p>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Visitors</span><span style="font-family: 'JetBrains Mono', monospace">508</span></div>
+              <div style="height: 8px; border-radius: 4px; background: #5B4BDB"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Started a chat with Magnet</span><span style="font-family: 'JetBrains Mono', monospace">4 · 0.8%</span></div>
+              <div style="height: 8px; border-radius: 4px; background: #EEEEF2"><div style="width: 3%; height: 8px; border-radius: 4px; background: #5B4BDB"></div></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Sent an inquiry</span><span style="font-family: 'JetBrains Mono', monospace">1 · 0.2%</span></div>
+              <div style="height: 8px; border-radius: 4px; background: #EEEEF2"><div style="width: 1.5%; height: 8px; border-radius: 4px; background: #5B4BDB"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section aria-label="Key numbers" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+          <div style="border: 1px solid #E6E6EA; border-radius: 10px; padding: 16px">
+            <p style="margin: 0; font-size: 12.5px; color: #5F5F6B">Visitors · 7 days</p>
+            <p style="margin: 8px 0 0; font-size: 24px; font-weight: 600; font-family: 'JetBrains Mono', monospace">422</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #8A4B00">−4.5% vs prior 7 days</p>
+          </div>
+          <div style="border: 1px solid #E6E6EA; border-radius: 10px; padding: 16px">
+            <p style="margin: 0; font-size: 12.5px; color: #5F5F6B">Chat conversations · 7 days</p>
+            <p style="margin: 8px 0 0; font-size: 24px; font-weight: 600; font-family: 'JetBrains Mono', monospace">4</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #5F5F6B">5 the week before</p>
+          </div>
+          <div style="border: 1px solid #E6E6EA; border-radius: 10px; padding: 16px">
+            <p style="margin: 0; font-size: 12.5px; color: #5F5F6B">Published posts</p>
+            <p style="margin: 8px 0 0; font-size: 24px; font-weight: 600; font-family: 'JetBrains Mono', monospace">25</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #5F5F6B">Last one 3 Oct · 8 drafts</p>
+          </div>
+          <div style="border: 1px solid #E6E6EA; border-radius: 10px; padding: 16px">
+            <p style="margin: 0; font-size: 12.5px; color: #5F5F6B">Newsletter subscribers</p>
+            <p style="margin: 8px 0 0; font-size: 24px; font-weight: 600; font-family: 'JetBrains Mono', monospace">0</p>
+            <p style="margin: 4px 0 0; font-size: 12px; color: #5F5F6B">0 waiting for approval</p>
+          </div>
+        </section>
+
+        <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+          <section aria-labelledby="attention" style="grid-column: span 3; border: 1px solid #E6E6EA; border-radius: 12px; overflow: hidden">
+            <div style="padding: 14px 18px; border-bottom: 1px solid #E6E6EA; display: flex; justify-content: space-between; align-items: center">
+              <h2 id="attention" style="margin: 0; font-size: 14px; font-weight: 600">Needs your attention</h2>
+              <span style="font-size: 12px; color: #5F5F6B">4 items</span>
+            </div>
+            <ul style="list-style: none; margin: 0; padding: 0">
+              <sc-for list="{{attention}}" as="row" hint-placeholder-count="4">
+                <li style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #F0F0F3">
+                  <span style="flex-shrink: 0; height: 22px; padding: 0 8px; border-radius: 11px; background: {{row.tagBg}}; color: {{row.tagFg}}; font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center">{{row.tag}}</span>
+                  <div style="flex: 1; min-width: 0">
+                    <p style="margin: 0; font-size: 13.5px; font-weight: 500">{{row.title}}</p>
+                    <p style="margin: 2px 0 0; font-size: 12.5px; color: #5F5F6B">{{row.why}}</p>
+                  </div>
+                  <a href="{{row.href}}" style="flex-shrink: 0; font-size: 13px; font-weight: 500; text-decoration: none">{{row.action}}</a>
+                </li>
+              </sc-for>
+            </ul>
+          </section>
+
+          <section aria-labelledby="agent" style="grid-column: span 2; border: 1px solid #E6E6EA; border-radius: 12px; overflow: hidden">
+            <div style="padding: 14px 18px; border-bottom: 1px solid #E6E6EA; display: flex; justify-content: space-between; align-items: center">
+              <h2 id="agent" style="margin: 0; font-size: 14px; font-weight: 600">Agents</h2>
+              <a href="Agents.dc.html" style="font-size: 13px; font-weight: 500; text-decoration: none">Open →</a>
+            </div>
+            <ul style="list-style: none; margin: 0; padding: 0">
+              <sc-for list="{{agentFacts}}" as="f" hint-placeholder-count="3">
+                <li style="padding: 14px 18px; border-bottom: 1px solid #F0F0F3; display: flex; gap: 12px; align-items: flex-start">
+                  <span style="margin-top: 5px; flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: {{f.dot}}"></span>
+                  <div style="flex: 1; min-width: 0">
+                    <p style="margin: 0; font-size: 13.5px; font-weight: 600">{{f.k}} <span style="font-weight: 400; color: #5F5F6B">· {{f.role}}</span></p>
+                    <p style="margin: 3px 0 0; font-size: 12.5px; color: #3A3A44; font-family: 'JetBrains Mono', monospace">{{f.v}}</p>
+                  </div>
+                </li>
+              </sc-for>
+            </ul>
+          </section>
+        </div>
+
+        <section aria-labelledby="pages" style="border: 1px solid #E6E6EA; border-radius: 12px; overflow: hidden">
+          <div style="padding: 14px 18px; border-bottom: 1px solid #E6E6EA; display: flex; justify-content: space-between; align-items: center">
+            <h2 id="pages" style="margin: 0; font-size: 14px; font-weight: 600">Most visited · 7 days</h2>
+            <a href="#" style="font-size: 13px; font-weight: 500; text-decoration: none">All analytics →</a>
+          </div>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+              <thead>
+                <tr style="text-align: left; color: #5F5F6B">
+                  <th scope="col" style="padding: 10px 18px; font-weight: 500; font-size: 12px">Page</th>
+                  <th scope="col" style="padding: 10px 18px; font-weight: 500; font-size: 12px; width: 50%">Share</th>
+                  <th scope="col" style="padding: 10px 18px; font-weight: 500; font-size: 12px; text-align: right">Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{topPages}}" as="p" hint-placeholder-count="5">
+                  <tr style="border-top: 1px solid #F0F0F3">
+                    <td style="padding: 10px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px">{{p.path}}</td>
+                    <td style="padding: 10px 18px"><div style="height: 6px; border-radius: 3px; background: #EEEEF2"><div style="width: {{p.pct}}; height: 6px; border-radius: 3px; background: {{p.bar}}"></div></div></td>
+                    <td style="padding: 10px 18px; text-align: right; font-family: 'JetBrains Mono', monospace">{{p.views}}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tone = {
+      act: { bg: '#FFF1DC', fg: '#8A4B00' },
+      risk: { bg: '#FDECEA', fg: '#A3271B' },
+      info: { bg: '#EEEEF2', fg: '#3A3A44' }
+    };
+    const attention = [
+      { tag: 'Security', t: tone.risk, title: 'Rotate keys that were publicly readable', why: 'Reconnect Gmail and regenerate the signal ingest token.', action: 'Open settings', href: 'Integrations.dc.html' },
+      { tag: 'Autopilot', t: tone.act, title: '229 drafts waiting, 253 failed runs', why: 'The loop produces faster than anyone reviews. Cap the queue and let old drafts expire.', action: 'Fix the loop', href: 'Agents.dc.html' },
+      { tag: 'Content', t: tone.info, title: 'Knowledge base unchanged for 37 days', why: 'Magnet answers from it. Add your latest assignment so the chat stays current.', action: 'Update', href: '#' },
+      { tag: 'Broken', t: tone.act, title: '17 visits hit a 404 this week', why: 'Old links still point to pages that no longer exist.', action: 'See URLs', href: '#' }
+    ].map((r) => ({ ...r, tagBg: r.t.bg, tagFg: r.t.fg }));
+    const agentFacts = [
+      { k: 'hermes', role: 'Operator via MCP', v: 'last call yesterday 23:21 · 8 calls / 30 d', dot: '#1F9D4E' },
+      { k: 'Autopilot', role: 'housekeeping loop', v: '7 automations · 229 waiting · 253 failed', dot: '#D97706' },
+      { k: 'Magnet', role: 'talks to visitors', v: 'gpt-4o · 4 chats / 7 d · 6 knowledge docs', dot: '#1F9D4E' }
+    ];
+    const max = 86;
+    const topPages = [
+      { path: '/', views: 86 },
+      { path: '/blog', views: 21 },
+      { path: '404', views: 17, warn: true },
+      { path: '/project/private-ai-portal', views: 16 },
+      { path: '/github', views: 14 }
+    ].map((p) => ({ ...p, pct: Math.round((p.views / max) * 100) + '%', bar: p.warn ? '#D97706' : '#5B4BDB' }));
+    return { attention, agentFacts, topPages };
+  }
+}
+</script>
+</body>
+</html>
