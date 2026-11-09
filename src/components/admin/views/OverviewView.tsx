@@ -174,10 +174,10 @@ export default function OverviewView() {
         title="Overview"
         description={`${greeting()}. Here is how ${host} is doing ${labels.phrase}.`}
         actions={
-          <Segmented<Period>
+          <Segmented
             label="Period"
             value={period}
-            onChange={setPeriod}
+            onChange={(v) => setPeriod(v as Period)}
             options={[
               { value: '7d', label: '7 days' },
               { value: 'month', label: 'This month' },
