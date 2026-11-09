@@ -12,7 +12,26 @@ type Supabase = any;
 
 const MAX_DOC_CHARS = 60_000;
 
-const WRITING_GUIDE = `Guidelines for writing: keep one area per document (e.g. "roles", "client-assignments", "projects", "case-studies", "skills", "problems-solved"). Write in markdown. For every role or assignment, start with one exact header line: "## <Title> — <Organisation> (<YYYY-MM> – <YYYY-MM or present>)" and never guess dates or titles. Only write facts the owner has given you. Use visibility "private" for anything with client names, figures or details the owner has not cleared for the public; the public chat can read "public" documents only.`;
+const WRITING_GUIDE = `Guidelines for writing: keep one area per document (e.g. "roles", "client-assignments", "projects", "case-studies", "skills", "problems-solved"). Write in markdown. For every role or assignment, start with one exact header line: "## <Title> — <Organisation> (<YYYY-MM> – <YYYY-MM or present>)" and never guess dates or titles. Only write facts the owner has given you. Use visibility "private" for anything with client names, figures or details the owner has not cleared for the public; the public chat can read "public" documents only. Never put personal data in a public document: no phone numbers, personal email addresses, home address or neighbourhood, family details, health, salary, or names of private individuals (references, colleagues) — keep those in a private document such as "contact-and-search".`;
+
+// Public documents feed the public chat and the open MCP tools. Refuse obvious
+// personal data there; the agent can move it to a private document instead.
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const PHONE_RE = /(?:\+\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?){2,}\d{2,4}(?!\d)/g;
+function isYearRange(digits: string): boolean {
+  // "2003-2005", "(2022 – 2025)" … two 4-digit years, not a phone number.
+  return /^(19|20)\d{2}(19|20)\d{2}$/.test(digits);
+}
+function findPublicPii(content: string): string | null {
+  const email = content.match(EMAIL_RE);
+  if (email) return `an email address ("${email[0]}")`;
+  for (const m of content.matchAll(PHONE_RE)) {
+    const digits = m[0].replace(/\D/g, "");
+    if (digits.length < 8 || isYearRange(digits)) continue;
+    return `a phone number ("${m[0].trim()}")`;
+  }
+  return null;
+}
 
 export const KNOWLEDGE_TOOLS = [
   {
@@ -124,6 +143,10 @@ export async function callKnowledgeTool(
       const { data: existing } = await supabase.from("knowledge_docs").select("visibility").eq("slug", slug).maybeSingle();
       visibility = existing?.visibility || "private";
     }
+    if (visibility === "public") {
+      const pii = findPublicPii(content);
+      if (pii) return JSON.stringify({ error: `Not saved: this public document contains ${pii}. Remove it, or save that detail in a private document.` });
+    }
     const row: Record<string, unknown> = { slug, title, content, visibility, updated_by: author };
     if (typeof args.order_index === "number") row.order_index = args.order_index;
     const { data, error } = await supabase.from("knowledge_docs").upsert(row, { onConflict: "slug" }).select("slug, title, visibility, updated_at").single();
@@ -137,9 +160,13 @@ export async function callKnowledgeTool(
     // Optimistic concurrency: only write if nobody changed the doc since we
     // read it, so two agents appending at once never drop each other's text.
     for (let attempt = 0; attempt < 3; attempt++) {
-      const { data: doc, error } = await supabase.from("knowledge_docs").select("content, updated_at").eq("slug", slug).maybeSingle();
+      const { data: doc, error } = await supabase.from("knowledge_docs").select("content, updated_at, visibility").eq("slug", slug).maybeSingle();
       if (error) throw error;
       if (!doc) return JSON.stringify({ error: `No document '${slug}'. Create it with kb_upsert first.` });
+      if (doc.visibility === "public") {
+        const pii = findPublicPii(addition);
+        if (pii) return JSON.stringify({ error: `Not appended: '${slug}' is public and the text contains ${pii}. Remove it, or append it to a private document.` });
+      }
       const content = `${doc.content.trimEnd()}\n\n${addition}\n`;
       if (content.length > MAX_DOC_CHARS) throw new Error(`Document would exceed ${MAX_DOC_CHARS} characters. Start a new document.`);
       const { data: updated, error: upErr } = await supabase.from("knowledge_docs")

@@ -142,16 +142,23 @@ function getSupabaseClient() {
 }
 
 /** Load all agent memory entries */
-export async function loadAgentMemory(): Promise<AgentMemoryEntry[]> {
+/**
+ * Load the agent's long-term memory. Pass `categories` to limit it — the public
+ * chat only gets 'soul' (identity and tone); operational facts, traffic reports
+ * and errors are for the admin chat and Autopilot only.
+ */
+export async function loadAgentMemory(opts: { categories?: string[] } = {}): Promise<AgentMemoryEntry[]> {
   try {
     const supabase = getSupabaseClient();
     if (!supabase) return [];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('agent_memory')
       .select('*')
       .order('category')
       .order('key');
+    if (opts.categories?.length) query = query.in('category', opts.categories);
+    const { data, error } = await query;
 
     if (error) {
       console.error('[AI Context] Failed to load agent memory:', error);
