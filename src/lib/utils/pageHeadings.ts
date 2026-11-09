@@ -6,7 +6,7 @@
 import type { PageBlock } from '@/types';
 
 // Block types that render their own page-level <h1>
-const H1_BLOCK_TYPES = ['hero', 'chat-hero', 'video-hero'];
+const H1_BLOCK_TYPES = ['chat-hero'];
 // Block types whose section title can be promoted to the page <h1>
 const HEADING_PROMOTABLE_BLOCK_TYPES = ['github'];
 

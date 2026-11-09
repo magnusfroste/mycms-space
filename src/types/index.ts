@@ -220,31 +220,13 @@ export interface ContactMessage {
 // ============================================
 
 export type BlockType =
-  | 'hero'
   | 'chat-hero'
-  | 'chat-widget'
   | 'text-section'
-  | 'about-split'
-  | 'featured-carousel'
   | 'expertise-grid'
-  | 'project-showcase'
-  | 'image-text'
   | 'cta-banner'
-  | 'spacer'
-  | 'video-hero'
-  | 'parallax-section'
-  | 'bento-grid'
-  | 'marquee'
-  | 'stats-counter'
-  | 'testimonial-carousel'
   | 'contact-form'
   | 'blog'
-  | 'newsletter-subscribe'
   | 'github'
-  | 'skills-bar'
-  | 'values'
-  | 'cv-agent'
-  | 'agent-status';
 
 export interface PageBlock {
   id: string;
