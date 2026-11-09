@@ -42,7 +42,8 @@ Open without a key:
 - `contact_magnus` — send Magnus a message with name and email; he replies personally
 AI tools and contact are rate limited per hour for anonymous callers.
 
-With a Bearer MCP key (request via contact): all dynamically registered agent skills.
+With a Bearer MCP key (the site owner's operator agents): the CMS itself. Tools appear according to the key's scopes —
+`read` (site_overview, inbox, conversations, analytics, review queue, settings, private knowledge), `content` (blog drafts, pages and blocks, projects, newsletter drafts, knowledge base writes), `review` (approve Autopilot work, publish posts, send newsletters) and `settings` (site settings, modules, navigation, automations). Start with `site_overview`.
 Resources: `project://<repo-name>` per synced GitHub repo
 
 ## Contact

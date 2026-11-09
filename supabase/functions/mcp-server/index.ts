@@ -9,6 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { PROFILE_TOOLS, PROFILE_TOOL_NAMES, callProfileTool } from "./profile-tools.ts";
 import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
 import { loadResumeContext } from "../_shared/ai-context.ts";
+import { CMS_TOOL_NAMES, callCmsTool, cmsToolsFor, effectiveScopes } from "./cms-tools.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +19,7 @@ const corsHeaders = {
 
 const PROTOCOL_VERSION = '2024-11-05';
 const SERVER_NAME = 'openclaw-mcp';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = '2.0.0';
 
 // Hash a key using SHA-256 (matches Web Crypto for verification)
 async function sha256Hex(input: string): Promise<string> {
@@ -62,7 +63,7 @@ Deno.serve(async (req) => {
       transport: 'streamable-http',
       description: "OpenClaw MCP Server — exposes Magnet's skill engine to external agents",
       endpoint: `${supabaseUrl}/functions/v1/mcp-server`,
-      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous access allows the built-in read tools (get_profile, get_resume, list_projects, get_project, search_projects, kb_list, kb_get, analyze_job_fit, generate_tailored_cv, contact_magnus). AI tools and contact are rate limited. An API key is required to write the knowledge base (kb_upsert, kb_append, kb_delete) and to execute skills.' },
+      auth: { type: 'bearer', header: 'Authorization', required: false, note: 'Anonymous: public read tools (profile, projects, public knowledge base, job fit, contact). With an API key the CMS tools appear according to the key scopes: read (everything incl. inbox, analytics, private knowledge), content (blog drafts, pages & blocks, projects, newsletter drafts, knowledge base writes), review (approve Autopilot work, publish, send newsletters), settings (site settings, modules, navigation, automations, internal skills). Start with site_overview.' },
     }, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -118,6 +119,7 @@ Deno.serve(async (req) => {
     }
 
     apiKey = foundKey;
+    apiKey.cmsScopes = effectiveScopes(foundKey.scopes);
 
     // Bump usage (fire-and-forget)
     supabase.from('mcp_api_keys').update({
@@ -231,44 +233,60 @@ async function handleMethod(
       return {};
 
     case 'tools/list': {
-      if (!apiKey.scopes?.includes('tools:read')) {
-        throw new Error('Scope tools:read required');
-      }
-
-      // Anonymous = built-ins only (read-only metadata)
+      // Anonymous = public read-only built-ins
       if (apiKey.anonymous) {
         return { tools: ANON_TOOLS };
       }
+      const scopes = apiKey.cmsScopes as Set<string>;
+      if (!scopes.size) throw new Error('This key has no scopes.');
 
-      const { data: skills } = await supabase
-        .from('agent_skills')
-        .select('name, description, tool_definition, scope, category')
-        .eq('enabled', true)
-        .in('scope', ['public', 'both', 'external'])
-        .order('category');
+      // Agent skills: public ones need 'content', internal Autopilot skills need 'settings'.
+      const skillScopes = [
+        ...(scopes.has('content') ? ['public', 'both', 'external'] : []),
+        ...(scopes.has('settings') ? ['internal'] : []),
+      ];
+      const { data: skills } = skillScopes.length
+        ? await supabase
+          .from('agent_skills')
+          .select('name, description, tool_definition, scope, category')
+          .eq('enabled', true)
+          .in('scope', skillScopes)
+          .order('category')
+        : { data: [] };
 
       const skillTools = (skills || []).map((s: any) => {
         const def = s.tool_definition?.function || s.tool_definition || {};
         return {
           name: s.name,
-          description: def.description || s.description || '',
+          description: `[skill] ${def.description || s.description || ''}`,
           inputSchema: def.parameters || { type: 'object', properties: {} },
         };
       });
 
-      return { tools: [...ALL_BUILTIN_TOOLS, ...skillTools] };
+      const builtins = ALL_BUILTIN_TOOLS.filter((t) => !KB_WRITE_TOOLS.has(t.name) || scopes.has('content'));
+      return { tools: [...cmsToolsFor(scopes as any), ...builtins, ...skillTools] };
     }
 
     case 'tools/call': {
-      if (!apiKey.scopes?.includes('tools:call')) {
-        throw new Error('Scope tools:call required');
-      }
       const { name, arguments: args } = rpc.params || {};
       if (!name) throw new Error('Missing tool name');
+      const scopes: Set<string> = apiKey.anonymous ? new Set() : apiKey.cmsScopes;
+
+      // CMS tools (admin parity) — keyed operators only, checked per scope
+      if (CMS_TOOL_NAMES.has(name)) {
+        if (apiKey.anonymous) {
+          return { content: [{ type: 'text', text: `Tool '${name}' requires an API key.` }], isError: true };
+        }
+        const text = await callCmsTool(supabase, name, args || {}, { scopes: scopes as any, keyName: apiKey.name || null });
+        return { content: [{ type: 'text', text }], isError: text.includes('"error"') && text.length < 400 };
+      }
+      if (KB_WRITE_TOOLS.has(name) && !apiKey.anonymous && !scopes.has('content')) {
+        return { content: [{ type: 'text', text: `${name} needs the 'content' scope.` }], isError: true };
+      }
 
       // Built-in project tools — available to everyone (incl. anonymous)
       if (KNOWLEDGE_TOOL_NAMES.has(name)) {
-        const text = await callKnowledgeTool(supabase, name, args || {}, { anonymous: !!apiKey.anonymous, keyName: apiKey.name || null });
+        const text = await callKnowledgeTool(supabase, name, args || {}, { anonymous: !!apiKey.anonymous || !scopes.has('read'), keyName: apiKey.name || null });
         return { content: [{ type: 'text', text }], isError: text.startsWith('{"error"') };
       }
       if (PROFILE_TOOL_NAMES.has(name)) {
@@ -304,9 +322,12 @@ async function handleMethod(
           isError: true,
         };
       }
-      if (!['public', 'both', 'external'].includes(skill.scope)) {
+      const allowed = ['public', 'both', 'external'].includes(skill.scope)
+        ? scopes.has('content')
+        : skill.scope === 'internal' && scopes.has('settings');
+      if (!allowed) {
         return {
-          content: [{ type: 'text', text: `Tool '${name}' is internal-only` }],
+          content: [{ type: 'text', text: `Skill '${name}' needs the '${skill.scope === 'internal' ? 'settings' : 'content'}' scope.` }],
           isError: true,
         };
       }
@@ -323,7 +344,8 @@ async function handleMethod(
         body: JSON.stringify({
           skill_name: name,
           arguments: args || {},
-          agent_type: 'chat',
+          // Internal Autopilot skills only run for keys with the settings scope (checked above).
+          agent_type: skill.scope === 'internal' ? 'magnet' : 'chat',
           conversation_id: `mcp-${apiKey.id}`,
         }),
       });
@@ -340,9 +362,6 @@ async function handleMethod(
     }
 
     case 'resources/list': {
-      if (!apiKey.scopes?.includes('tools:read')) {
-        throw new Error('Scope tools:read required');
-      }
       const { data: repos } = await supabase
         .from('github_repos')
         .select('name, enriched_title, enriched_description, description, language, stars, topics')
@@ -359,9 +378,6 @@ async function handleMethod(
     }
 
     case 'resources/read': {
-      if (!apiKey.scopes?.includes('tools:read')) {
-        throw new Error('Scope tools:read required');
-      }
       const uri: string = rpc.params?.uri || '';
       const match = uri.match(/^project:\/\/(.+)$/);
       if (!match) throw new Error(`Unknown resource URI: ${uri}`);
@@ -432,7 +448,8 @@ const BUILTIN_TOOLS = [
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
 const ALL_BUILTIN_TOOLS = [...PROFILE_TOOLS, ...BUILTIN_TOOLS, ...KNOWLEDGE_TOOLS];
-const ANON_TOOLS = ALL_BUILTIN_TOOLS.filter(t => !['kb_upsert', 'kb_append', 'kb_delete'].includes(t.name));
+const KB_WRITE_TOOLS = new Set(['kb_upsert', 'kb_append', 'kb_delete']);
+const ANON_TOOLS = ALL_BUILTIN_TOOLS.filter(t => !KB_WRITE_TOOLS.has(t.name));
 
 async function callBuiltinTool(
   supabase: any,
