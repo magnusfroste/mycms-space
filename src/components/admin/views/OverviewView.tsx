@@ -177,7 +177,7 @@ export default function OverviewView() {
           <Segmented
             label="Period"
             value={period}
-            onChange={setPeriod}
+            onChange={(v) => setPeriod(v as Period)}
             options={[
               { value: '7d', label: '7 days' },
               { value: 'month', label: 'This month' },
