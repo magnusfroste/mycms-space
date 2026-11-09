@@ -29,11 +29,11 @@ www.froste.eu is a static site, so the MCP server is hosted on Supabase. Connect
 
 MCP endpoint: `https://jcsjqnjvnqqghiaawhcl.supabase.co/functions/v1/mcp-server` (streamable HTTP)
 Manifest: https://www.froste.eu/mcp.json
-Agent card: https://www.froste.eu/agent.json
 
 Open without a key:
-- `get_profile` — who Magnus is: positioning, audience, offering, core themes, current roles, links. Start here.
-- `get_resume` — the full CV: experience, education, certifications, skills
+- `get_profile` — who Magnus is: positioning, audience, offering, core themes, availability, links. Start here.
+- `get_resume` — the full profile as markdown: name, title, availability, roles, assignments, projects
+- `kb_list` / `kb_get` — the public knowledge base documents one by one
 - `list_projects` — browse Magnus's GitHub projects
 - `get_project` — full enriched data for one project (problem, why-it-matters, README, images)
 - `search_projects` — full-text search across all projects
@@ -42,7 +42,8 @@ Open without a key:
 - `contact_magnus` — send Magnus a message with name and email; he replies personally
 AI tools and contact are rate limited per hour for anonymous callers.
 
-With a Bearer MCP key (request via contact): all dynamically registered agent skills.
+With a Bearer MCP key (the site owner's operator agents): the CMS itself. Tools appear according to the key's scopes —
+`read` (site_overview, inbox, conversations, analytics, review queue, settings, private knowledge), `content` (blog drafts, pages and blocks, projects, newsletter drafts, knowledge base writes), `review` (approve Autopilot work, publish posts, send newsletters) and `settings` (site settings, modules, navigation, automations). Start with `site_overview`.
 Resources: `project://<repo-name>` per synced GitHub repo
 
 ## Contact

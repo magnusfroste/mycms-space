@@ -11,11 +11,10 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { 
-  Webhook, 
-  Send, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Send,
+  CheckCircle,
+  XCircle,
   Clock,
   Mail,
   MessageSquare,
@@ -122,11 +121,10 @@ export default function WebhooksManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Webhook className="h-6 w-6" />
+          <h2 className="text-base font-semibold">
             Webhooks Hub
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             Connect system events to external services like n8n or Zapier
           </p>
         </div>

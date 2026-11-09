@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin integrations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#3F33B8}a:hover{color:#2A2180}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #0B0B0F; background: #FFFFFF; min-height: 1180px; display: flex; flex-direction: column">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 16px; border-bottom: 1px solid #E6E6EA; background: #FFFFFF; flex-wrap: wrap">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0B0B0F">
+      <span style="width: 24px; height: 24px; border-radius: 6px; background: #0B0B0F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center">f</span>
+      <span style="font-size: 14px; font-weight: 600">froste.eu</span>
+    </a>
+    <span style="color: #C9C9D1; font-size: 14px">/</span>
+    <span style="font-size: 14px; color: #3A3A44">Integrations</span>
+    <label style="margin-left: 24px; flex: 1 1 280px; max-width: 420px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #E6E6EA; border-radius: 8px; background: #FAFAFB; box-sizing: border-box">
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5F5F6B" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input type="search" placeholder="Search or jump to…" aria-label="Search admin" style="flex: 1; border: 0; background: transparent; font: inherit; font-size: 13.5px; color: #0B0B0F; outline: none; min-width: 0">
+      <kbd style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #5F5F6B; border: 1px solid #E6E6EA; border-radius: 4px; padding: 1px 5px; background: #FFFFFF">⌘K</kbd>
+    </label>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+      <button type="button" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #E6E6EA; background: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; color: #0B0B0F; display: inline-flex; align-items: center; gap: 8px; cursor: pointer"><span style="width: 7px; height: 7px; border-radius: 50%; background: #5B4BDB"></span>Ask Magnet</button>
+      <a href="Landing.dc.html" style="height: 34px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #3A3A44; text-decoration: none; display: inline-flex; align-items: center">View site ↗</a>
+      <button type="button" aria-label="Account menu" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #ECEAFB; color: #3F33B8; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">MF</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1">
+    <dc-import name="AdminNav" active="integrations" hint-size="232px,1128px"></dc-import>
+
+    <main style="flex: 999 1 560px; min-width: 0; padding: 32px 40px 48px; box-sizing: border-box">
+      <div style="max-width: 1120px; display: flex; flex-direction: column; gap: 20px">
+
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+          <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em">Integrations</h1>
+            <p style="margin: 6px 0 0; font-size: 14px; color: #5F5F6B; max-width: 640px">External services the site and Magnet talk to. Each one says what it powers, so you know what breaks if it stops working.</p>
+          </div>
+          <div style="display: flex; gap: 8px; font-size: 12.5px">
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #E9F6EE; color: #157F3B; display: inline-flex; align-items: center; font-weight: 500">3 connected</span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #FFF1DC; color: #8A4B00; display: inline-flex; align-items: center; font-weight: 500">1 needs attention</span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #EEEEF2; color: #3A3A44; display: inline-flex; align-items: center; font-weight: 500">5 available</span>
+          </div>
+        </div>
+
+        <div role="tablist" aria-label="Filter" style="display: flex; gap: 4px; border-bottom: 1px solid #E6E6EA">
+          <button type="button" role="tab" aria-selected="true" style="height: 36px; padding: 0 12px; border: 0; border-bottom: 2px solid #0B0B0F; background: transparent; font: inherit; font-size: 13.5px; font-weight: 600; color: #0B0B0F; cursor: pointer">All</button>
+          <button type="button" role="tab" style="height: 36px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 13.5px; color: #5F5F6B; cursor: pointer">AI models</button>
+          <button type="button" role="tab" style="height: 36px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 13.5px; color: #5F5F6B; cursor: pointer">Content sources</button>
+          <button type="button" role="tab" style="height: 36px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; font: inherit; font-size: 13.5px; color: #5F5F6B; cursor: pointer">Tools</button>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start">
+          <div style="flex: 3 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 22px">
+            <sc-for list="{{sections}}" as="sec" hint-placeholder-count="3">
+              <section style="display: flex; flex-direction: column; gap: 10px">
+                <div>
+                  <h2 style="margin: 0; font-size: 14px; font-weight: 600">{{sec.title}}</h2>
+                  <p style="margin: 2px 0 0; font-size: 12.5px; color: #5F5F6B">{{sec.hint}}</p>
+                </div>
+                <div style="border: 1px solid #E6E6EA; border-radius: 12px; overflow: hidden">
+                  <sc-for list="{{sec.items}}" as="it" hint-placeholder-count="3">
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #F0F0F3; background: {{it.rowBg}}">
+                      <span aria-hidden="true" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; border: 1px solid #E6E6EA; background: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #3A3A44">{{it.mono}}</span>
+                      <div style="flex: 1; min-width: 0">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+                          <span style="font-size: 14px; font-weight: 600">{{it.name}}</span>
+                          <span style="display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px; border-radius: 10px; background: {{it.stBg}}; color: {{it.stFg}}; font-size: 11.5px; font-weight: 500"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{it.dot}}"></span>{{it.status}}</span>
+                        </div>
+                        <p style="margin: 3px 0 0; font-size: 12.5px; color: #5F5F6B">{{it.what}}</p>
+                        <p style="margin: 6px 0 0; font-size: 12px; color: #3A3A44">Powers: <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px">{{it.powers}}</span></p>
+                      </div>
+                      <button type="button" style="flex-shrink: 0; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid {{it.btnBorder}}; background: {{it.btnBg}}; color: {{it.btnFg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{it.action}}</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </sc-for>
+          </div>
+
+          <aside aria-labelledby="detail" style="flex: 2 1 320px; min-width: 0; border: 1px solid #E6E6EA; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+            <div style="padding: 18px; border-bottom: 1px solid #E6E6EA; display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 10px; background: #0B0B0F; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">GH</span>
+              <div style="flex: 1">
+                <h2 id="detail" style="margin: 0; font-size: 16px; font-weight: 600">GitHub</h2>
+                <p style="margin: 2px 0 0; font-size: 12.5px; color: #157F3B; font-weight: 500">Connected · 42 repos synced</p>
+              </div>
+              <button type="button" aria-label="Close" style="width: 30px; height: 30px; border-radius: 6px; border: 0; background: transparent; color: #5F5F6B; font-size: 18px; cursor: pointer">×</button>
+            </div>
+            <div style="padding: 18px; display: flex; flex-direction: column; gap: 18px">
+              <div>
+                <p style="margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5F5F6B">What it does</p>
+                <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #3A3A44">Pulls your public repositories, enriches them with AI and turns them into project pages. Magnet uses them to answer questions about your work.</p>
+              </div>
+              <div>
+                <p style="margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5F5F6B">Used by</p>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                  <span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #F4F4F6; font-size: 12px; display: inline-flex; align-items: center">/github page</span>
+                  <span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #F4F4F6; font-size: 12px; display: inline-flex; align-items: center">Project case studies</span>
+                  <span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #F4F4F6; font-size: 12px; display: inline-flex; align-items: center">Magnet · project deep dive</span>
+                  <span style="height: 24px; padding: 0 9px; border-radius: 6px; background: #F4F4F6; font-size: 12px; display: inline-flex; align-items: center">MCP · list_projects</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <p style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5F5F6B">Settings</p>
+                <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">GitHub username
+                  <input type="text" value="magnusfroste" style="height: 34px; padding: 0 10px; border: 1px solid #E6E6EA; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 400">
+                </label>
+                <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px">Hide forked repositories <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #0B0B0F"></label>
+                <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px">Hide archived repositories <input type="checkbox" checked style="width: 18px; height: 18px; accent-color: #0B0B0F"></label>
+                <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px">Cache, minutes <input type="number" value="5" style="width: 64px; height: 30px; padding: 0 8px; border: 1px solid #E6E6EA; border-radius: 6px; font: inherit; font-size: 13px"></label>
+              </div>
+              <div style="padding: 12px; border-radius: 8px; background: #FAFAFB; border: 1px solid #F0F0F3">
+                <p style="margin: 0; font-size: 12.5px; color: #3A3A44"><strong style="font-weight: 600">Secret:</strong> <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">GITHUB_TOKEN</span> is set in Supabase. It is only needed for writing topics back to GitHub and for higher rate limits.</p>
+              </div>
+              <div style="display: flex; gap: 8px">
+                <button type="button" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 0; background: #0B0B0F; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Save</button>
+                <button type="button" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #E6E6EA; background: #FFFFFF; color: #0B0B0F; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Sync now</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = {
+      on: { label: 'Connected', bg: '#E9F6EE', fg: '#157F3B', dot: '#1F9D4E' },
+      active: { label: 'Active · default', bg: '#ECEAFB', fg: '#3F33B8', dot: '#5B4BDB' },
+      warn: { label: 'Reconnect needed', bg: '#FFF1DC', fg: '#8A4B00', dot: '#D97706' },
+      off: { label: 'Not set up', bg: '#F4F4F6', fg: '#3A3A44', dot: '#A1A1AA' }
+    };
+    const primary = { border: '#0B0B0F', bg: '#0B0B0F', fg: '#FFFFFF' };
+    const ghost = { border: '#E6E6EA', bg: '#FFFFFF', fg: '#0B0B0F' };
+    const row = (o) => {
+      const s = st[o.s];
+      const b = o.primary ? primary : ghost;
+      return { ...o, status: s.label, stBg: s.bg, stFg: s.fg, dot: s.dot, btnBorder: b.border, btnBg: b.bg, btnFg: b.fg, rowBg: o.selected ? '#FAFAFB' : '#FFFFFF' };
+    };
+    const sections = [
+      { title: 'AI models', hint: 'The brain behind the chat, the blog editor and the CV tools. One is the default; the others are fallbacks.', items: [
+        row({ mono: 'AI', name: 'OpenAI', s: 'active', what: 'GPT-4o answers visitors and writes drafts.', powers: 'chat · autopilot · cv tools', action: 'Configure' }),
+        row({ mono: 'G', name: 'Google Gemini', s: 'off', what: 'Alternative model provider.', powers: 'chat (fallback)', action: 'Set up' }),
+        row({ mono: '{ }', name: 'Self-hosted model', s: 'off', what: 'Any OpenAI-compatible endpoint, e.g. Ollama or vLLM.', powers: 'chat (private)', action: 'Set up' }),
+        row({ mono: 'n8n', name: 'n8n workflow', s: 'off', what: 'Hand the whole chat to an n8n agent via webhook.', powers: 'chat (custom)', action: 'Set up' })
+      ] },
+      { title: 'Content sources', hint: 'Where content and signals come from.', items: [
+        row({ mono: 'GH', name: 'GitHub', s: 'on', selected: true, what: 'Repositories become project pages.', powers: '/github · case studies · mcp', action: 'Manage' }),
+        row({ mono: 'M', name: 'Gmail signals', s: 'warn', primary: true, what: 'Scans your inbox for leads and assignments.', powers: 'inbox scan · daily report', action: 'Reconnect' })
+      ] },
+      { title: 'Tools', hint: 'Helpers the agent calls when it needs them.', items: [
+        row({ mono: 'R', name: 'Resend', s: 'on', what: 'Sends the newsletter and notification emails.', powers: 'newsletter · contact alerts', action: 'Manage' }),
+        row({ mono: 'FC', name: 'Firecrawl', s: 'off', what: 'Reads web pages for research.', powers: 'autopilot research', action: 'Set up' }),
+        row({ mono: 'U', name: 'Unsplash', s: 'off', what: 'Finds cover images for posts.', powers: 'blog editor', action: 'Set up' })
+      ] }
+    ];
+    return { sections };
+  }
+}
+</script>
+</body>
+</html>

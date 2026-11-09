@@ -37,6 +37,18 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        // Status colours (defined by the studio theme, with fallbacks for the others)
+        success: {
+          DEFAULT: "hsl(var(--success, 142 66% 29%))",
+          soft: "hsl(var(--success-soft, 142 52% 95%))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning, 32 100% 27%))",
+          soft: "hsl(var(--warning-soft, 37 100% 93%))",
+        },
+        danger: {
+          soft: "hsl(var(--danger-soft, 5 86% 96%))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -102,7 +114,7 @@ export default {
           "system-ui",
           "sans-serif",
         ],
-        mono: ["SF Mono", "JetBrains Mono", "monospace"],
+        mono: ["JetBrains Mono", "SF Mono", "ui-monospace", "monospace"],
       },
       fontSize: {
         "display-lg": ["4.5rem", { lineHeight: "1.1", letterSpacing: "-0.03em" }],

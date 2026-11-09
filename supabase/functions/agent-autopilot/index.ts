@@ -7,6 +7,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
+import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "./guardrails.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -844,6 +845,20 @@ Deno.serve(async (req) => {
     const effectiveSources = sources?.length ? sources : config.default_sources;
 
     console.log(`[Autopilot] Action: ${action}, Topic: ${effectiveTopic}`);
+
+    // Guardrails: expire stale proposals, and don't draft more while the queue is full.
+    if (DRAFTING_ACTIONS.has(action)) {
+      const guard = await loadGuardrails(supabase);
+      const expired = await expireOldReviews(supabase, guard);
+      const { full, waiting } = await queueIsFull(supabase, guard);
+      if (full) {
+        console.log(`[Autopilot] Skipping ${action}: ${waiting} item(s) already wait for review (max ${guard.maxWaiting})`);
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: 'review_queue_full', waiting, max_waiting: guard.maxWaiting, expired }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
 
     let result;
 

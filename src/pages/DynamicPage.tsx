@@ -1,44 +1,54 @@
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { BlockRenderer } from '@/components/blocks';
 import { usePageBlocks, usePageBlocksSubscription } from '@/models/pageBlocks';
 import { usePageBySlug } from '@/models/pages';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useHashScroll } from '@/hooks/useHashScroll';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
+import { getHeadingPlan } from '@/lib/utils/pageHeadings';
+import NotFound from './NotFound';
 
 const DynamicPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  
+
   // Track page visit
   useAnalytics(slug || 'unknown');
 
   // Fetch page metadata
   const { data: page, isLoading: pageLoading } = usePageBySlug(slug || '');
-  
+
   // Fetch blocks for this page
   const { data: blocks, isLoading: blocksLoading } = usePageBlocks(slug || '');
-  
+
   // Subscribe to realtime updates
   usePageBlocksSubscription(slug || '');
 
   const isLoading = pageLoading || blocksLoading;
+  useHashScroll(!isLoading && !!page);
 
-  // If page doesn't exist or is not enabled, redirect to 404
+  // Unknown or unpublished page (RLS hides disabled pages from visitors):
+  // render 404 in place and keep the requested URL
   if (!pageLoading && !page) {
-    return <Navigate to="/404" replace />;
+    return <NotFound />;
   }
+
+  const headingPlan = getHeadingPlan(blocks);
 
   return (
     <div className="min-h-screen flex flex-col">
-      <SEOHead 
+      <SEOHead
         title={page?.title}
         description={page?.description || undefined}
       />
       <Header />
       <main className="flex-grow">
+        {!isLoading && headingPlan.needsFallbackH1 && page?.title && (
+          <h1 className="sr-only">{page.title}</h1>
+        )}
         {isLoading ? (
           <div className="container mx-auto px-4 py-12 space-y-8">
             <Skeleton className="h-96 w-full" />
@@ -47,10 +57,11 @@ const DynamicPage = () => {
           </div>
         ) : (
           blocks?.map((block, index) => (
-            <BlockRenderer 
-              key={block.id} 
-              block={block} 
-              isLast={index === blocks.length - 1} 
+            <BlockRenderer
+              key={block.id}
+              block={block}
+              isLast={index === blocks.length - 1}
+              promoteHeading={index === headingPlan.promoteIndex}
             />
           ))
         )}

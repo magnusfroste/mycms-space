@@ -6,6 +6,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MarkdownContent } from '@/components/common';
+import { optimizedImageUrl } from '@/lib/imageUrl';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import { StudioSection, studioH2 } from '@/components/studio/StudioSection';
+
+// bg-fixed covers the viewport: request a viewport-sized variant (bucketed
+// to 480px steps so few distinct transforms are generated)
+const viewportImageWidth = (): number => {
+  if (typeof window === 'undefined') return 1920;
+  const px = window.innerWidth * (window.devicePixelRatio || 1);
+  return Math.min(2500, Math.ceil(px / 480) * 480);
+};
 
 // Plain-text content: a line ending with ":" starts a list of the following
 // paragraphs; a final paragraph after the list is kept as a closing line.
@@ -68,7 +79,7 @@ interface ParallaxSectionBlockProps {
   config: Record<string, unknown>;
 }
 
-const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) => {
+const ParallaxSectionClassic: React.FC<ParallaxSectionBlockProps> = ({ config }) => {
   const settings = config as ParallaxSectionBlockConfig;
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -112,7 +123,7 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-center bg-fixed"
             style={{
-              backgroundImage: `url(${settings.background_image})`,
+              backgroundImage: `url("${optimizedImageUrl(settings.background_image, viewportImageWidth(), 70)}")`,
             }}
           />
         )}
@@ -156,6 +167,45 @@ const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = ({ config }) =
       </div>
     </section>
   );
+};
+
+// Studio: no parallax or overlay; title (and a still image) beside the text
+const ParallaxSectionStudio: React.FC<ParallaxSectionBlockProps> = ({ config }) => {
+  const settings = config as ParallaxSectionBlockConfig;
+  const headingId = React.useId();
+  return (
+    <StudioSection labelledBy={settings.title ? headingId : undefined}>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-14">
+        <div className="min-w-0 space-y-6">
+          {settings.title && (
+            <h2 id={headingId} className={studioH2}>
+              {settings.title}
+            </h2>
+          )}
+          {settings.background_image && (
+            <div className="aspect-[4/3] overflow-hidden rounded-[14px] border border-border bg-muted">
+              <img
+                src={optimizedImageUrl(settings.background_image, 960, 70)}
+                alt=""
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+        </div>
+        {settings.content && (
+          <div className="min-w-0 max-w-[62ch] text-[16px] leading-[1.65] text-foreground/80 [&_h3]:text-[17px] [&_h3]:text-foreground">
+            <ParallaxContent content={settings.content} />
+          </div>
+        )}
+      </div>
+    </StudioSection>
+  );
+};
+
+const ParallaxSectionBlock: React.FC<ParallaxSectionBlockProps> = (props) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <ParallaxSectionStudio {...props} /> : <ParallaxSectionClassic {...props} />;
 };
 
 export default ParallaxSectionBlock;

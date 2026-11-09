@@ -7,6 +7,7 @@
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
 import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
+import { callKnowledgeTool } from "./knowledge-tools.ts";
 
 // ============================================
 // Types
@@ -172,6 +173,7 @@ function isClientSideTool(name: string): boolean {
 }
 
 const BUILT_IN_TOOL_NAMES = [
+  'kb_list', 'kb_get', 'kb_upsert', 'kb_append',
   'save_memory', 'list_memory',
   'soul_update',
   'skill_create', 'skill_update', 'skill_list', 'skill_disable', 'skill_instruct',
@@ -218,6 +220,13 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
   );
 
   switch (toolName) {
+    // --- Knowledge base (admin chat only: tools are offered in admin mode) ---
+    case 'kb_list':
+    case 'kb_get':
+    case 'kb_upsert':
+    case 'kb_append':
+      return await callKnowledgeTool(supabase, toolName, toolArgs, { anonymous: false, keyName: null, author: 'magnet' });
+
     // --- Memory ---
     case 'save_memory': {
       const category = toolArgs.category as string;
@@ -474,34 +483,6 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 // ============================================
 // Skill Execution (delegate to agent-execute)
 // ============================================
-// A2A Delegation
-// ============================================
-
-async function executeA2ADelegate(toolArgs: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/a2a-delegate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({
-        agent: 'soundspace',
-        prompt: toolArgs.prompt,
-        duration: toolArgs.duration || 120,
-        context: toolArgs.context || '',
-      }),
-    });
-    return await response.json();
-  } catch (e) {
-    return { status: 'error', error: (e as Error).message };
-  }
-}
-
-// ============================================
 
 async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, unknown>): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -535,6 +516,11 @@ export function resolveProvider(config: AgentConfig): { url: string; apiKey: str
   if (config.provider === 'custom') {
     if (!config.baseUrl) throw new Error("Custom endpoint base URL is required");
     const envKey = config.apiKeyEnv || 'CUSTOM_AI_API_KEY';
+    // Only provider API keys may be forwarded to a custom endpoint —
+    // never platform secrets such as SUPABASE_SERVICE_ROLE_KEY.
+    if (!/^[A-Z0-9_]*API_KEY$/.test(envKey) || envKey.startsWith('SUPABASE')) {
+      throw new Error(`api_key_env not allowed: ${envKey}`);
+    }
     const apiKey = Deno.env.get(envKey) || '';
     return {
       url: config.baseUrl.endsWith('/chat/completions')
@@ -641,6 +627,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   }
 
   const tools = await getActiveToolsAsync(enabledTools, mode);
+  const offeredToolNames = new Set(tools.map((t) => t.function.name));
   console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
 
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
@@ -728,16 +715,6 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   }
 
-  // Pre-route: detect music intent in last user message and force tool_choice
-  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-  const musicKeywords = /\b(musik|music|låt|song|track|beat|melody|audio|spela|skapa.*(låt|musik|song)|generera.*(låt|musik|song|audio))\b/i;
-  let forceMusicTool = false;
-  if (lastUserMsg && musicKeywords.test(lastUserMsg.content || '')) {
-    fullPrompt += `\n\n⚠️ CRITICAL OVERRIDE: The user is asking for MUSIC GENERATION. You MUST call the request_music tool NOW with a detailed prompt. Do NOT use any other tool. Do NOT explain or ask follow-up questions. Just call request_music immediately.`;
-    forceMusicTool = tools.some(t => (t as { function?: { name?: string } })?.function?.name === 'request_music');
-    console.log(`[Agent] Music intent detected — forceMusicTool=${forceMusicTool}`);
-  }
-
   // Multi-iteration tool loop
   const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
     { role: "system", content: fullPrompt },
@@ -747,10 +724,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
   let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    // Force request_music tool on first iteration when music intent is detected
-    const toolChoice = (forceMusicTool && iteration === 0)
-      ? { type: "function", function: { name: "request_music" } }
-      : "auto";
+    const toolChoice = "auto";
 
     const data = await callOpenAICompatible({
       url,
@@ -781,6 +755,11 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
 
       let result: string;
       try {
+        // Only run tools that were offered in this mode — a provider must not
+        // be able to reach admin tools (file_write, kb_upsert …) from public chat.
+        if (!offeredToolNames.has(toolName)) {
+          throw new Error(`Tool not available: ${toolName}`);
+        }
         const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
 
         // Client-side tools: pause and return to frontend
@@ -808,19 +787,7 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
           // Check if this is an artifact-producing tool (public visitor tools)
           const parsed = parseToolCallResponse(toolCall, msg.content || '');
 
-          // A2A delegation tools: call the delegate function AND produce artifacts
-          if (toolName === 'request_music') {
-            const delegateResult = await executeA2ADelegate(toolArgs);
-            // Flatten nested result (a2a-delegate returns { status, result: { audio_url, ... } })
-            const innerResult = (delegateResult.result as Record<string, unknown>) || {};
-            const mergedData = { ...toolArgs, ...delegateResult, ...innerResult };
-            if (parsed.artifacts?.length) {
-              lastArtifacts = parsed.artifacts.map(a => ({ ...a, data: mergedData }));
-            } else {
-              lastArtifacts = [{ type: 'music-player', title: (toolArgs.prompt as string)?.slice(0, 50) || 'Generated Music', data: mergedData }];
-            }
-            result = JSON.stringify(delegateResult);
-          } else if (parsed.artifacts?.length) {
+          if (parsed.artifacts?.length) {
             lastArtifacts = parsed.artifacts;
             result = JSON.stringify(toolArgs);
 
@@ -836,19 +803,19 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
                 const saves: Promise<unknown>[] = [];
                 if (toolArgs.tailored_cv) {
                   const cvBlob = new Blob([toolArgs.tailored_cv as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
+                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
                 }
                 if (toolArgs.cover_letter) {
                   const clBlob = new Blob([toolArgs.cover_letter as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('cms-files').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
+                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
                 }
                 // Save match summary as JSON
                 const summaryData = { overall_score: score, summary: toolArgs.summary, match_analysis: toolArgs.match_analysis, generated_at: new Date().toISOString() };
                 const summaryBlob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
-                saves.push(storageClient.storage.from('cms-files').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
+                saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
 
                 await Promise.all(saves);
-                console.log(`[Agent] Auto-saved CV artifacts to cms-files/${folder}`);
+                console.log(`[Agent] Auto-saved CV artifacts to agent-documents/${folder}`);
               } catch (saveErr) {
                 console.warn('[Agent] Failed to auto-save CV:', saveErr);
               }

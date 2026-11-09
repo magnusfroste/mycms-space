@@ -32,7 +32,9 @@ export default defineConfig(({ mode }) => ({
             'react-dom', 
             'react-router-dom',
             '@tanstack/react-query'
-          ]
+          ],
+          // Rarely changes - keep in its own long-cacheable chunk
+          supabase: ['@supabase/supabase-js'],
         }
       }
     }

@@ -28,6 +28,7 @@ import {
   useSessionMessages,
   useDeleteOldMessages,
 } from "@/models/chatMessages";
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 const ChatHistoryManager: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -48,14 +49,10 @@ const ChatHistoryManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Chat History</h2>
-          <p className="text-muted-foreground">
-            View conversation history from AI chat widget
-          </p>
-        </div>
+      <AdminPageHeader
+        title="Conversations"
+        description="What visitors asked Magnet on the site. Use it to spot gaps in the knowledge base."
+        actions={
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="outline" size="sm">
@@ -77,7 +74,8 @@ const ChatHistoryManager: React.FC = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">

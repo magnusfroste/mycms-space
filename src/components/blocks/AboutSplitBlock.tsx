@@ -8,6 +8,9 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Linkedin, Github, Twitter, Globe, Mail, Instagram, Youtube } from 'lucide-react';
 import type { AboutSplitBlockConfig } from '@/types/blockConfigs';
+import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import ServiceCardsStudio from './studio/ServiceCardsStudio';
 
 interface AboutSplitBlockProps {
   config: Record<string, unknown>;
@@ -23,7 +26,7 @@ const socialIconMap: Record<string, React.ReactNode> = {
   youtube: <Youtube className="h-5 w-5" />,
 };
 
-const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
+const AboutSplitClassic: React.FC<AboutSplitBlockProps> = ({ config }) => {
   const typedConfig = config as AboutSplitBlockConfig;
   
   const name = typedConfig.name;
@@ -69,10 +72,15 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
               <div className="relative group max-w-md w-full mx-auto md:mx-0">
                 <div className="absolute -inset-4 bg-primary rounded-3xl blur-2xl opacity-10 group-hover:opacity-20 transition-opacity duration-500" />
                 <div className="relative aspect-square rounded-3xl overflow-hidden border border-border/60 bg-card">
-                  <img
+                  <OptimizedImage
                     src={imageUrl}
                     alt={name || "Profile"}
                     className="w-full h-full object-cover"
+                    displayWidth={640}
+                    widths={[320, 480, 640, 960]}
+                    sizes="(min-width: 768px) 448px, 100vw"
+                    width={448}
+                    height={448}
                   />
                 </div>
               </div>
@@ -112,6 +120,72 @@ const AboutSplitBlock: React.FC<AboutSplitBlockProps> = ({ config }) => {
       </div>
     </section>
   );
+};
+
+// Studio: optional portrait + text, and the skills as numbered cards
+const AboutSplitStudio: React.FC<AboutSplitBlockProps> = ({ config }) => {
+  const typedConfig = config as AboutSplitBlockConfig;
+  const introText = typedConfig.intro_text;
+  const additionalText = typedConfig.additional_text;
+  const imageUrl = typedConfig.image_url;
+  const socialLinks = typedConfig.social_links?.filter((link) => link.enabled && link.url) || [];
+  const skills = typedConfig.skills || [];
+
+  const lead = (introText || imageUrl) && (
+    <div className="flex flex-col gap-8 md:flex-row md:items-start">
+      {imageUrl && (
+        <div className="w-28 shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:w-36">
+          <OptimizedImage
+            src={imageUrl}
+            alt={typedConfig.name || 'Profile'}
+            className="aspect-square h-full w-full object-cover"
+            displayWidth={320}
+            widths={[160, 320]}
+            sizes="144px"
+            width={144}
+            height={144}
+          />
+        </div>
+      )}
+      <div className="max-w-[68ch] space-y-4">
+        {introText && <p className="text-[17px] leading-[1.6] text-foreground">{introText}</p>}
+        {additionalText && additionalText !== 'Additional text...' && (
+          <p className="text-[15px] leading-[1.6] text-muted-foreground">{additionalText}</p>
+        )}
+        {socialLinks.length > 0 && (
+          <div className="flex gap-1 pt-1">
+            {socialLinks.map((link) => (
+              <a
+                key={link.platform}
+                href={link.platform === 'email' ? `mailto:${link.url}` : link.url}
+                target={link.platform === 'email' ? undefined : '_blank'}
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={link.platform}
+              >
+                {socialIconMap[link.platform]}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <ServiceCardsStudio
+      title={typedConfig.title || 'Who I am'}
+      subtitle={typedConfig.subtitle}
+      tone="default"
+      lead={lead}
+      items={skills.map((s) => ({ title: s.title, description: s.description }))}
+    />
+  );
+};
+
+const AboutSplitBlock: React.FC<AboutSplitBlockProps> = (props) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <AboutSplitStudio {...props} /> : <AboutSplitClassic {...props} />;
 };
 
 export default AboutSplitBlock;

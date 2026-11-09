@@ -13,6 +13,8 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useProjectsModule } from '@/models/modules';
 import type { ProjectShowcaseBlockConfig } from '@/types/blockConfigs';
 import type { DisplayProject } from '@/types/displayProject';
+import OptimizedImage from '@/components/common/OptimizedImage';
+import { stripMarkdown } from '@/lib/utils/markdown';
 
 interface ProjectShowcaseBlockProps {
   config: Record<string, unknown>;
@@ -173,10 +175,14 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
                   {/* Image */}
                   <div className="aspect-[4/3] bg-muted overflow-hidden relative">
                     {projectImage ? (
-                      <img
+                      <OptimizedImage
                         src={projectImage}
                         alt={project.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        displayWidth={640}
+                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                        width={640}
+                        height={480}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -200,7 +206,7 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
                       {project.title}
                     </h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.description}
+                      {stripMarkdown(project.description)}
                     </p>
                   </div>
                 </article>
@@ -240,10 +246,14 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
                       }`}
                     >
                       {projectImage ? (
-                        <img
+                        <OptimizedImage
                           src={projectImage}
                           alt={project.title}
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          displayWidth={960}
+                          sizes="(min-width: 1024px) 50vw, 100vw"
+                          width={960}
+                          height={720}
                         />
                       ) : (
                         <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground">
@@ -262,7 +272,7 @@ const ProjectShowcaseBlock: React.FC<ProjectShowcaseBlockProps> = ({ config }) =
                         {project.title}
                       </h3>
                       <p className="text-muted-foreground mb-8 leading-relaxed">
-                        {project.description}
+                        {stripMarkdown(project.description)}
                       </p>
                       <div className="flex flex-wrap gap-3">
                         <a

@@ -13,12 +13,15 @@ import { Clock, User, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BlogBlockConfig } from '@/types/blog';
 import type { BlogPost } from '@/types/blog';
+import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import BlogStudio, { BlogCompactList } from './studio/BlogStudio';
 
 interface BlogBlockProps {
   config: BlogBlockConfig;
 }
 
-const BlogBlock = ({ config }: BlogBlockProps) => {
+const BlogBlockClassic = ({ config }: BlogBlockProps) => {
   const displayMode = config.display_mode || 'latest';
   const layout = config.layout || 'grid';
   const postsCount = config.posts_count || 6;
@@ -82,10 +85,15 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
             <div className="flex flex-col sm:flex-row">
               {post.cover_image_url && (
                 <div className="sm:w-48 sm:shrink-0">
-                  <img
+                  <OptimizedImage
                     src={post.cover_image_url}
                     alt={post.title}
                     className="w-full h-40 sm:h-full object-cover"
+                    displayWidth={480}
+                    widths={[320, 480, 640]}
+                    sizes="(min-width: 640px) 192px, 100vw"
+                    width={480}
+                    height={320}
                   />
                 </div>
               )}
@@ -136,10 +144,14 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
             <div className="grid lg:grid-cols-2 h-full">
               {post.cover_image_url && (
                 <div className="relative h-64 lg:h-full">
-                  <img
+                  <OptimizedImage
                     src={post.cover_image_url}
                     alt={post.title}
                     className="absolute inset-0 w-full h-full object-cover"
+                    displayWidth={960}
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    width={960}
+                    height={640}
                   />
                 </div>
               )}
@@ -185,10 +197,14 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
         <Card className="overflow-hidden h-full hover:border-primary/50 transition-colors">
           {post.cover_image_url && (
             <div className="relative aspect-video overflow-hidden">
-              <img
+              <OptimizedImage
                 src={post.cover_image_url}
                 alt={post.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                displayWidth={640}
+                sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                width={640}
+                height={360}
               />
             </div>
           )}
@@ -248,7 +264,11 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
         </div>
 
         {/* Posts Grid */}
-        <div className={gridClasses}>{displayPosts.map((post, i) => renderPost(post, i))}</div>
+        {layout === 'compact-list' ? (
+          <BlogCompactList posts={displayPosts} className="max-w-3xl mx-auto" />
+        ) : (
+          <div className={gridClasses}>{displayPosts.map((post, i) => renderPost(post, i))}</div>
+        )}
 
         {/* View All Link */}
         <div className="text-center mt-10">
@@ -263,6 +283,11 @@ const BlogBlock = ({ config }: BlogBlockProps) => {
       </div>
     </section>
   );
+};
+
+const BlogBlock = ({ config }: BlogBlockProps) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <BlogStudio config={config} /> : <BlogBlockClassic config={config} />;
 };
 
 export default BlogBlock;

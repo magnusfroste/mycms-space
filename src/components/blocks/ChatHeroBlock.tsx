@@ -4,7 +4,8 @@
 // ============================================
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail } from 'lucide-react';
 import { iconMap } from '@/lib/constants/iconMaps';
 import FallingStars from '@/components/animations/FallingStars';
 import ParticleField from '@/components/animations/ParticleField';
@@ -15,12 +16,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVisitorInsights, formatVisitorInsightsForAI } from '@/hooks/useVisitorInsights';
 import type { ChatHeroBlockConfig } from '@/types/blockConfigs';
 import type { QuickActionConfig, Message } from '@/components/chat/types';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import ChatHeroStudio from './studio/ChatHeroStudio';
 
 interface ChatHeroBlockProps {
   config: Record<string, unknown>;
 }
 
-const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
+const ChatHeroClassic: React.FC<ChatHeroBlockProps> = ({ config }) => {
   const navigate = useNavigate();
   const typedConfig = config as ChatHeroBlockConfig;
   const visitorInsights = useVisitorInsights();
@@ -266,6 +269,17 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
               </div>
             )}
 
+            {/* Secondary CTA: direct contact for clients/recruiters */}
+            <div className="mt-6 animate-fade-in" style={{ animationDelay: '0.55s' }}>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Mail className="w-4 h-4" aria-hidden="true" />
+                Hiring or need a consultant? Contact me
+              </Link>
+            </div>
+
             {/* Scroll indicator */}
             <div
               className="mt-10 hidden md:block animate-fade-in" style={{ animationDelay: '0.6s' }}
@@ -286,6 +300,12 @@ const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
       </div>
     </section>
   );
+};
+
+// Studio gets a calm split hero (headline + chat card); other themes keep the animated hero
+const ChatHeroBlock: React.FC<ChatHeroBlockProps> = ({ config }) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <ChatHeroStudio config={config} /> : <ChatHeroClassic config={config} />;
 };
 
 export default ChatHeroBlock;

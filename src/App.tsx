@@ -3,21 +3,24 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
 import Index from "./pages/Index";
-import DynamicPage from "./pages/DynamicPage";
-import Chat from "./pages/Chat";
-import BlockDemo from "./pages/BlockDemo";
-import Admin from "./pages/Admin";
-import BlogPost from "./pages/BlogPost";
-import BlogArchive from "./pages/BlogArchive";
 import NotFound from "./pages/NotFound";
-import ProjectCaseStudy from "./pages/ProjectCaseStudy";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useBrandingTheme } from "@/hooks/useBrandingTheme";
 import { useColorMode } from "@/hooks/useColorMode";
 import GoogleAnalytics from "@/components/common/GoogleAnalytics";
+
+// Route-level code splitting: only the home page is in the main bundle
+const DynamicPage = lazy(() => import("./pages/DynamicPage"));
+const Chat = lazy(() => import("./pages/Chat"));
+const BlockDemo = lazy(() => import("./pages/BlockDemo"));
+const Admin = lazy(() => import("./pages/Admin"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const BlogArchive = lazy(() => import("./pages/BlogArchive"));
+const ProjectCaseStudy = lazy(() => import("./pages/ProjectCaseStudy"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 // Theme and tracking component
 const AppBootstrap = () => {
@@ -71,6 +74,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <AppBootstrap />
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
@@ -79,12 +83,17 @@ const App = () => {
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/project/:repoName" element={<ProjectCaseStudy />} />
+            <Route path="/contact" element={<Contact />} />
+            {/* Legacy/guessable URLs for the projects section (falls back to /github if home has none) */}
+            <Route path="/portfolio" element={<Navigate to="/#project-showcase" replace />} />
+            <Route path="/projects" element={<Navigate to="/#project-showcase" replace />} />
             {/* Dynamic page route - catches any slug */}
             <Route path="/:slug" element={<DynamicPage />} />
             {/* 404 fallback */}
             <Route path="/404" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -46,7 +46,7 @@
         "description": "Skicka ett meddelande till Magnus med namn och e-post; han svarar personligen."
       }
     ],
-    "authenticated": "Dynamiskt registrerade agent-skills; listas via tools/list med giltig nyckel."
+    "authenticated": "Ägarens operatörsagenter styr CMS:et: verktygen visas efter nyckelns behörigheter (read, content, review, settings). Börja med site_overview."
   },
   "documentation": "https://www.froste.eu/llms.txt",
   "contact": "https://www.froste.eu/contact"

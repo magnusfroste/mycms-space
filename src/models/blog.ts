@@ -19,6 +19,7 @@ import {
   deleteBlogCategory,
   subscribeToBlogPosts,
   subscribeToBlogCategories,
+  fetchPublishedPostCount,
 } from '@/data/blog';
 import type {
   BlogPost,
@@ -54,6 +55,13 @@ export const useBlogPosts = (options?: {
   return useQuery({
     queryKey: blogKeys.postsList(options),
     queryFn: () => fetchBlogPosts(options),
+  });
+};
+
+export const usePublishedPostCount = () => {
+  return useQuery({
+    queryKey: [...blogKeys.posts(), 'published-count'] as const,
+    queryFn: fetchPublishedPostCount,
   });
 };
 

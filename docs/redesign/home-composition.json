@@ -1,0 +1,498 @@
+[
+  {
+    "id": "a9bccd31-71a1-49b7-884a-b00f729ef45e",
+    "block_type": "chat-hero",
+    "enabled": true,
+    "order_index": 0,
+    "note": "Studio split hero. Headline from the parallax section, intro from the resume summary. The four old quick actions are kept but disabled; three short ones replace them.",
+    "block_config": {
+      "agent_name": "Magnet",
+      "placeholder": "Paste a job description or ask anything…",
+      "agent_tagline": "How can I help you today?",
+      "quick_actions": [
+        {
+          "id": "studio-qa-work",
+          "icon": "Lightbulb",
+          "label": "What does Magnus work on?",
+          "message": "What does Magnus work on right now?",
+          "enabled": true,
+          "order_index": 0
+        },
+        {
+          "id": "studio-qa-available",
+          "icon": "MessageCircle",
+          "label": "Is he available?",
+          "message": "Is Magnus available for new assignments or roles?",
+          "enabled": true,
+          "order_index": 1
+        },
+        {
+          "id": "studio-qa-fit",
+          "icon": "User",
+          "label": "Check fit for a role",
+          "message": "I have a role or assignment in mind. Can you check how well Magnus fits it? I will paste the description.",
+          "enabled": true,
+          "order_index": 2
+        },
+        {
+          "id": "a2dd7a51-ed77-4cf3-a4ed-500de9fbb715",
+          "icon": "Lightbulb",
+          "label": "Learn more",
+          "enabled": false,
+          "message": "Tell me more about yourself",
+          "order_index": 1
+        },
+        {
+          "id": "add97552-f6a9-417c-9aab-8e21c4301c60",
+          "icon": "Rocket",
+          "label": "I have an Idea!",
+          "enabled": false,
+          "message": "I have an business idea and need execution power, how can Magnus help? ",
+          "order_index": 2
+        },
+        {
+          "id": "3672b0e9-67da-461f-8c80-8d4eca5c0d9c",
+          "icon": "User",
+          "label": "Magnus resume",
+          "enabled": false,
+          "message": "Show Magnus resume",
+          "order_index": 2
+        },
+        {
+          "id": "830c55d8-59b4-420e-babf-be5af7697a4b",
+          "icon": "MessageCircle",
+          "label": "Send Telegram",
+          "enabled": false,
+          "message": "I want to contact Magnus on Telegram",
+          "order_index": 3
+        }
+      ],
+      "section_theme": "default",
+      "welcome_badge": "Welcome! I'm Magnus Froste's AI agent and digital twin.",
+      "animation_style": "falling-stars",
+      "enable_animations": true,
+      "show_quick_actions": true,
+      "headline": "Think big, start small, scale fast.",
+      "intro": "I'm Magnus Froste, a product and business development leader with 20+ years at the interface of customers, product and business. From spearheading startups to optimizing at enterprise scale.",
+      "availability_text": "Available · product leadership, AI strategy, business development",
+      "show_availability": true,
+      "primary_cta_text": "Start a conversation",
+      "primary_cta_url": "/contact",
+      "secondary_cta_text": "See selected work",
+      "secondary_cta_url": "#work",
+      "card_title": "Ask Magnet, my AI twin",
+      "card_subtitle": "Answers from my CV, projects and writing",
+      "card_button_text": "Ask"
+    }
+  },
+  {
+    "id": "921740d9-967f-44d5-a5ad-2413966e9dc0",
+    "block_type": "expertise-grid",
+    "enabled": true,
+    "order_index": 1,
+    "note": "'How I can help': the three skills from about-split as numbered cards. The six old items are kept but disabled.",
+    "block_config": {
+      "items": [
+        {
+          "id": "studio-svc-1",
+          "icon": "Monitor",
+          "title": "Technology leadership",
+          "description": "Proven track record as CTO and leading teams.",
+          "enabled": true,
+          "order_index": 1
+        },
+        {
+          "id": "studio-svc-2",
+          "icon": "Rocket",
+          "title": "Innovation catalyst",
+          "description": "20+ years of innovating new products and services, and of product management.",
+          "enabled": true,
+          "order_index": 2
+        },
+        {
+          "id": "studio-svc-3",
+          "icon": "Brain",
+          "title": "Senior product manager",
+          "description": "Generative AI specialist with wide experience developing AI agents.",
+          "enabled": true,
+          "order_index": 3
+        },
+        {
+          "id": "ea8417d2-f48d-43b9-833f-d524a604bcdc",
+          "icon": "Brain",
+          "title": "AI Integration",
+          "enabled": false,
+          "description": "Helping organizations leverage AI to transform their operations and create competitive advantages.",
+          "order_index": 11
+        },
+        {
+          "id": "2e05dfc4-9b67-4287-9e16-5b4d9592d08b",
+          "icon": "Rocket",
+          "title": "Digital Strategy",
+          "enabled": false,
+          "description": "Crafting comprehensive digital transformation strategies that drive measurable business outcomes.",
+          "order_index": 12
+        },
+        {
+          "id": "4fa38470-4337-4d0e-80b8-e5a7709bc536",
+          "icon": "Lightbulb",
+          "title": "Innovation Consulting",
+          "enabled": false,
+          "description": "Guiding teams through the innovation process from ideation to successful market implementation.",
+          "order_index": 13
+        },
+        {
+          "id": "0abaa4ae-28d8-4159-814b-24a095e235c9",
+          "icon": "Monitor",
+          "title": "Technology Leadership",
+          "enabled": false,
+          "description": "Proven track record as CTO leading teams and implementing cutting-edge technology solutions.",
+          "order_index": 14
+        },
+        {
+          "id": "55f77b71-4d51-417f-831b-494246752b23",
+          "icon": "Target",
+          "title": "Product Development",
+          "enabled": false,
+          "description": "Turning complex ideas into tangible solutions that deliver real business value.",
+          "order_index": 15
+        },
+        {
+          "id": "04527664-88e4-4587-97bd-128495f3247f",
+          "icon": "Sparkles",
+          "title": "Generative AI",
+          "enabled": false,
+          "description": "Specialist in AI Agents, RAG solutions, local AI deployments, and generative AI applications.",
+          "order_index": 16
+        }
+      ],
+      "section_theme": "gradient",
+      "title": "How I can help",
+      "subtitle": "Interim roles, advisory or hands-on building, wherever product, business and AI meet.",
+      "columns": 3,
+      "anchor_id": "services"
+    }
+  },
+  {
+    "id": "fbe50a33-b1d8-4d20-94cc-78866de6c835",
+    "block_type": "github",
+    "enabled": true,
+    "order_index": 2,
+    "note": "Compact list of six hand-picked repos (selectedRepos; remove it to fall back to featured order) with 'All N projects' linking to /github.",
+    "block_config": {
+      "title": "Selected work",
+      "layout": "list",
+      "sortBy": "pushed",
+      "maxRepos": 6,
+      "subtitle": "Things I have built recently, mostly open source.",
+      "username": "",
+      "showStats": false,
+      "showTopics": false,
+      "showProfile": true,
+      "showLanguages": true,
+      "showWhyItMatters": false,
+      "showProblemStatement": false,
+      "selectedRepos": [
+        "flowwink",
+        "clawable",
+        "private-ai-portal",
+        "soundspace",
+        "siliconsoap",
+        "garageai"
+      ],
+      "allProjectsUrl": "/github",
+      "showAllProjectsLink": true,
+      "anchor_id": "work"
+    }
+  },
+  {
+    "id": "67be8822-722b-4e52-8bbd-09a06cd96a07",
+    "block_type": "blog",
+    "enabled": true,
+    "order_index": 3,
+    "note": "Three latest posts as dense rows with mono dates and an 'All N posts' archive link.",
+    "block_config": {
+      "section_theme": "default",
+      "heading": "Writing",
+      "subheading": "Essays on Sweden's AI strategy and digital sovereignty. In Swedish.",
+      "layout": "compact-list",
+      "display_mode": "latest",
+      "posts_count": 3,
+      "show_excerpt": false,
+      "anchor_id": "writing"
+    }
+  },
+  {
+    "id": null,
+    "block_type": "cta-banner",
+    "enabled": true,
+    "order_index": 4,
+    "note": "NEW block (insert, id is null). Dark contact band. Add a reply-time promise to the subtitle only if it is true (the mockup's '[2 working days]' is a placeholder).",
+    "block_config": {
+      "title": "Have an assignment or a role in mind?",
+      "subtitle": "Tell me what you are working on and I will get back to you.",
+      "button_text": "Contact me",
+      "button_url": "/contact",
+      "secondary_button_text": "Ask Magnet first",
+      "secondary_button_url": "/chat",
+      "style": "dark",
+      "anchor_id": "contact"
+    }
+  },
+  {
+    "id": "6df6fb28-5f4d-4999-9884-4c5cc294509d",
+    "block_type": "parallax-section",
+    "enabled": false,
+    "order_index": 5,
+    "note": "Disabled: its headline moved to the hero.",
+    "block_config": {
+      "title": "Think Big, Start Small and Scale Fast",
+      "height": "lg",
+      "content": "The \"Action Over Analysis\" Philosophy\nToo many great ideas die in the planning phase. We spend months building roadmaps for a terrain we haven't even stepped foot on yet. I believe the only way to validate a product is to build it, ship it, and break it.\n\n\n\n\n\nHow I Work:\nStart with a hypothesis, not a Gantt chart.\n\nCreate value immediately. If it doesn't solve a problem today, it won't solve it in six months.\n\nEmbrace the unknown. The best features are often discovered after you start coding, not before.\n\nI don't sell plans. I deliver momentum.",
+      "text_color": "dark",
+      "background_image": "https://jcsjqnjvnqqghiaawhcl.supabase.co/storage/v1/object/public/about-me-images/editor-1769990369534.jpeg"
+    }
+  },
+  {
+    "id": "78fbde32-be8e-4202-8d54-de30d930fbea",
+    "block_type": "about-split",
+    "enabled": false,
+    "order_index": 6,
+    "note": "Disabled: intro moved to the hero, skills moved to 'How I can help'. The portrait image variant is not used.",
+    "block_config": {
+      "name": "Magnus Froste",
+      "skills": [
+        {
+          "icon": "Monitor",
+          "title": "Technology Leadership",
+          "description": "Proven track record as CTO and leading teams."
+        },
+        {
+          "icon": "Rocket",
+          "title": "Innovation Catalyst",
+          "description": "20+ years of experience from innovating new product & services and product management"
+        },
+        {
+          "icon": "Brain",
+          "title": "Senior Product Manager",
+          "description": "Generative AI specialist with a wide range of experience developing AI Agent"
+        }
+      ],
+      "image_url": "https://jcsjqnjvnqqghiaawhcl.supabase.co/storage/v1/object/public/about-me-images/editor-1770137418706.png",
+      "image_path": "editor-1769652243381.png",
+      "intro_text": "As a seasoned technology leader and innovator, I've dedicated my career to helping organizations navigate the rapidly evolving tech landscape. My passion lies in identifying transformative opportunities at the intersection of business and technology.",
+      "section_theme": "default",
+      "additional_text": "With extensive experience in business and product development, I excel at turning complex ideas into tangible solutions. My approach combines strategic thinking with hands-on technical expertise, ensuring that innovation translates directly into business value."
+    }
+  },
+  {
+    "id": "b486028f-e165-4976-9d3e-50ec964ac27a",
+    "block_type": "cv-agent",
+    "enabled": false,
+    "order_index": 7,
+    "note": "Disabled: the 'Check fit for a role' chip in the hero card starts the same conversation in /chat.",
+    "block_config": {
+      "title": "Is Magnus the Right Fit?",
+      "features": [
+        "Skill Match",
+        "Tailored CV",
+        "Cover Letter"
+      ],
+      "subtitle": "Paste a job description and let Magnet analyze the match, generate a tailored CV, and write a cover letter — in seconds.",
+      "badge_text": "AI-Powered",
+      "button_text": "Analyze Match",
+      "placeholder": "Paste the job description here..."
+    }
+  },
+  {
+    "id": "44e0b70b-6c66-4712-a79b-a259be549dd2",
+    "block_type": "skills-bar",
+    "enabled": false,
+    "order_index": 8,
+    "note": "Disabled: too detailed for the landing page; the CV and Magnet cover it.",
+    "block_config": {
+      "title": "Skills & Expertise",
+      "layout": "bars",
+      "skills": [
+        {
+          "id": "skill-1",
+          "name": "Generative AI (LLMs, RAG)",
+          "level": 90,
+          "enabled": true,
+          "category": "AI & Data"
+        },
+        {
+          "id": "skill-2",
+          "name": "Computer Vision & MLOps",
+          "level": 85,
+          "enabled": true,
+          "category": "AI & Data"
+        },
+        {
+          "id": "skill-3",
+          "name": "Private AI Models (Mistral)",
+          "level": 80,
+          "enabled": true,
+          "category": "AI & Data"
+        },
+        {
+          "id": "skill-4",
+          "name": "Azure / AWS / GCP",
+          "level": 85,
+          "enabled": true,
+          "category": "Cloud & Infrastructure"
+        },
+        {
+          "id": "skill-5",
+          "name": "SaaS / PaaS / IaaS Strategy",
+          "level": 90,
+          "enabled": true,
+          "category": "Cloud & Infrastructure"
+        },
+        {
+          "id": "skill-6",
+          "name": "5G / IoT / LTE",
+          "level": 80,
+          "enabled": true,
+          "category": "Telecom"
+        },
+        {
+          "id": "skill-7",
+          "name": "WAN / LAN / Security",
+          "level": 85,
+          "enabled": true,
+          "category": "Telecom"
+        },
+        {
+          "id": "skill-8",
+          "name": "Business Modeling & Unit Economics",
+          "level": 95,
+          "enabled": true,
+          "category": "Strategy"
+        },
+        {
+          "id": "skill-9",
+          "name": "Product-Led Growth",
+          "level": 90,
+          "enabled": true,
+          "category": "Growth"
+        },
+        {
+          "id": "skill-10",
+          "name": "Partnership Ecosystems",
+          "level": 90,
+          "enabled": true,
+          "category": "Growth"
+        },
+        {
+          "id": "skill-11",
+          "name": "Cross-functional Leadership",
+          "level": 95,
+          "enabled": true,
+          "category": "Leadership"
+        },
+        {
+          "id": "skill-12",
+          "name": "Agile / Scrum",
+          "level": 85,
+          "enabled": true,
+          "category": "Leadership"
+        }
+      ],
+      "subtitle": "Technical and business competencies",
+      "section_theme": "default"
+    }
+  },
+  {
+    "id": "b0d0b3f9-c324-4c44-927e-4417104a656f",
+    "block_type": "values",
+    "enabled": false,
+    "order_index": 9,
+    "note": "Disabled.",
+    "block_config": {
+      "title": "Core Values",
+      "layout": "grid",
+      "values": [
+        {
+          "id": "val-1",
+          "icon": "Heart",
+          "title": "Customer Focus",
+          "enabled": true,
+          "description": "The customer's problem is the only thing that matters. Nurturing relationships turns users into advocates."
+        },
+        {
+          "id": "val-2",
+          "icon": "Users",
+          "title": "Collaboration",
+          "enabled": true,
+          "description": "Success requires effective communication. Influencing others is more important than commanding them."
+        },
+        {
+          "id": "val-3",
+          "icon": "Rocket",
+          "title": "Drive for Results",
+          "enabled": true,
+          "description": "Don't wait for things to happen—make them happen. Educate and inspire when engagement is low."
+        },
+        {
+          "id": "val-4",
+          "icon": "RefreshCw",
+          "title": "Adaptability",
+          "enabled": true,
+          "description": "Agility is key in uncertain environments. Preparation is never wasted, even when directions shift."
+        }
+      ],
+      "subtitle": "The principles that guide my work",
+      "section_theme": "dark"
+    }
+  },
+  {
+    "id": "09b30121-8e42-4468-ae59-818fe0b180df",
+    "block_type": "featured-carousel",
+    "enabled": false,
+    "order_index": 10,
+    "note": "Disabled: generic awards/speaker cards; re-enable when there are real, verifiable items.",
+    "block_config": {
+      "items": [
+        {
+          "id": "cb309177-4e7b-43d7-94fc-5635bf9e9c85",
+          "title": "Tech Innovator Award",
+          "enabled": true,
+          "image_url": "https://jcsjqnjvnqqghiaawhcl.supabase.co/storage/v1/object/public/featured-images/editor-1769652357822.png",
+          "image_path": "editor-1769652357822.png",
+          "description": "Recognized for outstanding contributions to AI integration in business.",
+          "order_index": 1
+        },
+        {
+          "id": "a8763b36-8894-4bd9-bbe5-ef402587d2a2",
+          "title": "Industry Speaker",
+          "enabled": true,
+          "image_url": "https://jcsjqnjvnqqghiaawhcl.supabase.co/storage/v1/object/public/featured-images/editor-1769652334830.png",
+          "image_path": "editor-1769652334830.png",
+          "description": "Featured speaker at major technology and innovation conferences.",
+          "order_index": 2
+        },
+        {
+          "id": "2c8fd996-f90a-4571-8820-92053854c531",
+          "title": "Startup Advisor",
+          "enabled": true,
+          "image_url": "https://jcsjqnjvnqqghiaawhcl.supabase.co/storage/v1/object/public/featured-images/editor-1769652344132.png",
+          "image_path": "editor-1769652344132.png",
+          "description": "Advising emerging tech companies on strategy and AI implementation.",
+          "order_index": 3
+        }
+      ],
+      "section_theme": "default"
+    }
+  },
+  {
+    "id": "1df5b9c4-738c-457e-ba23-1d8477e99fde",
+    "block_type": "contact-form",
+    "enabled": false,
+    "order_index": 11,
+    "note": "Disabled on home: the contact band links to /contact, which renders the form (Contact.tsx reads this block's config only if it is returned).",
+    "block_config": {
+      "section_theme": "gradient"
+    }
+  }
+]

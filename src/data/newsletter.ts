@@ -9,7 +9,7 @@ export interface NewsletterSubscriber {
   id: string;
   email: string;
   name: string | null;
-  status: 'active' | 'unsubscribed' | 'bounced';
+  status: 'pending' | 'active' | 'unsubscribed' | 'bounced';
   subscribed_at: string;
   unsubscribed_at: string | null;
   created_at: string;
@@ -72,7 +72,7 @@ export const createSubscriber = async (
   const now = new Date().toISOString();
   const { error } = await supabase
     .from('newsletter_subscribers')
-    .insert({ ...input, id });
+    .insert({ ...input, id, status: 'pending' });
 
   if (error) {
     console.error('Error creating subscriber:', error);
@@ -83,7 +83,7 @@ export const createSubscriber = async (
     id,
     email: input.email,
     name: (input as { name?: string | null }).name ?? null,
-    status: 'active',
+    status: 'pending',
     subscribed_at: now,
     unsubscribed_at: null,
     created_at: now,

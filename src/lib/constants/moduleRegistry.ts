@@ -1,402 +1,204 @@
 // ============================================
 // Module Registry
-// Metadata for all available modules
-// Maps modules to sidebar items & display info
+// What each module adds, where it is managed in the admin, how far an
+// operator can reach it through MCP, and which admin entries it hides when off.
 // ============================================
 
 import type { ModuleType } from '@/types/modules';
 
-export type ModuleStatus = 'installed' | 'coming_soon';
+export type ModuleGroup = 'core' | 'content' | 'agents';
 
-export interface ModuleChangelogEntry {
-  version: string;
-  date: string;
-  changes: string[];
-}
+/** How much of the module an operator can manage through MCP. */
+export type McpCoverage = 'full' | 'part' | 'no' | 'na';
 
 export interface ModuleRegistryEntry {
-  type: ModuleType | string;
+  type: ModuleType;
   name: string;
+  /** One sentence: what the module adds to the site. */
   description: string;
-  longDescription?: string;
-  icon: string;
-  category: 'core' | 'content' | 'integrations' | 'tools';
+  group: ModuleGroup;
+  /**
+   * Admin entries hidden when the module is off: sidebar view ids
+   * (e.g. 'blog') or inner tabs ('site-settings:webhooks').
+   */
   sidebarItems: string[];
+  /** Core modules cannot be switched off. */
   locked?: boolean;
   defaultEnabled: boolean;
-  status: ModuleStatus;
-  version: string;
-  author?: string;
-  tags?: string[];
-  dependencies?: string[]; // other module types this depends on
-  configTab?: string; // admin tab to link to for configuration
-  changelog?: ModuleChangelogEntry[];
+  /** Where the module is managed in the admin. */
+  admin: { label: string; view: string; section?: string };
+  mcp: McpCoverage;
+  dependencies?: ModuleType[];
 }
 
 export const moduleRegistry: ModuleRegistryEntry[] = [
-  // Core — always on
-  // Core — always on
+  // Core — the site does not work without these
+  {
+    type: 'resume',
+    name: 'Knowledge base',
+    description: 'Profile and markdown documents that ground the chat and the CV tools.',
+    group: 'core',
+    sidebarItems: [],
+    locked: true,
+    defaultEnabled: true,
+    admin: { label: 'Knowledge base', view: 'knowledge' },
+    mcp: 'full',
+    dependencies: ['ai'],
+  },
   {
     type: 'header',
     name: 'Header',
-    description: 'Site header with logo and navigation',
-    longDescription: 'Configurable site header with logo, navigation links, and responsive mobile menu. Supports sticky positioning and transparent overlay on hero sections.',
-    icon: 'PanelTop',
-    category: 'core',
-    sidebarItems: ['navigation'],
+    description: 'Logo, navigation links and the mobile menu.',
+    group: 'core',
+    sidebarItems: [],
     locked: true,
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['layout', 'navigation'],
-    configTab: 'navigation',
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with logo, nav links and mobile menu'] },
-    ],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'navigation' },
+    mcp: 'full',
   },
   {
     type: 'footer',
     name: 'Footer',
-    description: 'Site footer with social links and copyright',
-    longDescription: 'Customizable footer with dynamic copyright year, social media links, and configurable layout.',
-    icon: 'PanelBottom',
-    category: 'core',
+    description: 'Social links and copyright at the bottom of every page.',
+    group: 'core',
     sidebarItems: [],
     locked: true,
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['layout', 'social'],
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release'] },
-    ],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'appearance' },
+    mcp: 'full',
   },
   {
     type: 'branding',
-    name: 'Branding',
-    description: 'Theme, colors and visual identity',
-    longDescription: 'Control the visual identity of your site. Choose from curated themes (Elegant, Grok, Sana, Terminal) that affect typography, colors and overall feel.',
-    icon: 'Palette',
-    category: 'core',
-    sidebarItems: ['branding'],
+    name: 'Appearance',
+    description: 'Colours, fonts and dark mode of the public site.',
+    group: 'core',
+    sidebarItems: [],
     locked: true,
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['theme', 'design'],
-    configTab: 'branding',
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with 4 theme presets'] },
-    ],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'appearance' },
+    mcp: 'full',
   },
   {
     type: 'seo',
     name: 'SEO & AIEO',
-    description: 'Search engine optimization and AI engine optimization',
-    longDescription: 'Manage meta tags, Open Graph images, sitemaps, robots.txt and Google Analytics. Includes AI Engine Optimization (AIEO) for LLM discoverability via llms.txt.',
-    icon: 'Search',
-    category: 'core',
-    sidebarItems: ['seo-module'],
+    description: 'Titles, sitemap, llms.txt and structured data.',
+    group: 'core',
+    sidebarItems: [],
     locked: true,
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.1.0',
-    author: 'ClawCMS',
-    tags: ['seo', 'ai', 'search'],
-    configTab: 'seo-module',
-    changelog: [
-      { version: '1.1.0', date: '2025-03-01', changes: ['Added AIEO with llms.txt support'] },
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with meta tags and sitemap'] },
-    ],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'seo' },
+    mcp: 'full',
   },
   {
     type: 'analytics',
     name: 'Analytics',
-    description: 'Page views, project views and chat session tracking',
-    longDescription: 'Built-in analytics dashboard tracking page views, unique visitors, chat sessions and referral sources. No external service required.',
-    icon: 'BarChart3',
-    category: 'core',
-    sidebarItems: ['dashboard'],
+    description: 'Page views, chat sessions and the funnel on Overview.',
+    group: 'core',
+    sidebarItems: [],
     locked: true,
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['analytics', 'tracking'],
-    configTab: 'dashboard',
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with page view tracking'] },
-    ],
+    admin: { label: 'Analytics', view: 'analytics' },
+    mcp: 'part',
   },
 
-  // Content
-  {
-    type: 'projects',
-    name: 'Projects',
-    description: 'Project showcase with categories, layouts and detail pages',
-    longDescription: 'Display projects with multiple layout styles (alternating, grid, carousel, masonry). Supports categories, detail pages with case studies, image galleries and tech stack badges.',
-    icon: 'FolderOpen',
-    category: 'content',
-    sidebarItems: ['projects-module'],
-    defaultEnabled: true,
-    status: 'installed',
-    version: '1.2.0',
-    author: 'ClawCMS',
-    tags: ['portfolio', 'showcase'],
-    configTab: 'projects-module',
-    changelog: [
-      { version: '1.2.0', date: '2025-02-20', changes: ['Added masonry layout', 'Image gallery support'] },
-      { version: '1.1.0', date: '2025-02-01', changes: ['Category filtering', 'Detail page routing'] },
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release'] },
-    ],
-  },
+  // Content — what visitors read
   {
     type: 'blog',
     name: 'Blog',
-    description: 'Blog posts with categories, SEO and scheduling',
-    longDescription: 'Full blogging engine with rich text editing, categories, cover images (Unsplash integration), SEO fields, reading time estimation and post scheduling.',
-    icon: 'PenSquare',
-    category: 'content',
-    sidebarItems: ['blog', 'blog-module'],
+    description: 'Posts with categories, SEO and scheduling.',
+    group: 'content',
+    sidebarItems: ['blog'],
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.3.0',
-    author: 'ClawCMS',
-    tags: ['content', 'publishing'],
-    configTab: 'blog',
-    changelog: [
-      { version: '1.3.0', date: '2025-03-05', changes: ['Post scheduling', 'AI-generated drafts'] },
-      { version: '1.2.0', date: '2025-02-15', changes: ['Category management', 'Unsplash integration'] },
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release'] },
-    ],
+    admin: { label: 'Blog', view: 'blog' },
+    mcp: 'full',
+  },
+  {
+    type: 'projects',
+    name: 'Projects',
+    description: 'Case studies built from your GitHub repositories.',
+    group: 'content',
+    sidebarItems: ['projects'],
+    defaultEnabled: true,
+    admin: { label: 'Projects', view: 'projects' },
+    mcp: 'full',
   },
   {
     type: 'newsletter',
     name: 'Newsletter',
-    description: 'Email newsletter with subscriber management',
-    longDescription: 'Manage newsletter subscribers and send campaigns via Resend. Includes subscriber import/export, campaign analytics and agent-assisted drafting.',
-    icon: 'Mail',
-    category: 'content',
+    description: 'Subscribers and campaigns, sent with Resend.',
+    group: 'content',
     sidebarItems: ['newsletter'],
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['email', 'marketing'],
-    configTab: 'newsletter',
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with Resend integration'] },
-    ],
-  },
-  {
-    type: 'resume',
-    name: 'Resume',
-    description: 'Professional resume with experience, education and skills',
-    longDescription: 'Structured resume management with categories for experience, education, certifications and skills. Supports date ranges, tags and ordering. Powers the CV Agent tool.',
-    icon: 'BookUser',
-    category: 'content',
-    sidebarItems: ['resume'],
-    defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['cv', 'career'],
-    configTab: 'resume',
-    dependencies: ['ai'],
-    changelog: [
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release'] },
-    ],
+    admin: { label: 'Newsletter', view: 'newsletter' },
+    mcp: 'full',
   },
 
-  // Integrations
+  // Agents & connections — how the site talks to people and other systems
   {
     type: 'ai',
-    name: 'AI Chat',
-    description: 'AI-powered chat with multiple provider support and tool calling',
-    longDescription: 'Agentic AI chat supporting multiple providers (OpenAI, Gemini, n8n, self-hosted). Features tool calling, visitor context, admin co-pilot mode and configurable personality.',
-    icon: 'Bot',
-    category: 'integrations',
-    sidebarItems: ['chat', 'chat-settings', 'chat-history'],
+    name: 'Magnet chat',
+    description: 'The AI twin on the site, with tools for CV match and project deep dives.',
+    group: 'agents',
+    sidebarItems: ['magnet', 'conversations'],
     defaultEnabled: true,
-    status: 'installed',
-    version: '2.0.0',
-    author: 'ClawCMS',
-    tags: ['ai', 'chat', 'agent'],
-    configTab: 'chat-settings',
-    changelog: [
-      { version: '2.0.0', date: '2025-03-01', changes: ['Multi-provider architecture', 'Tool calling for all providers', 'Admin co-pilot mode'] },
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with n8n webhook support'] },
-    ],
+    admin: { label: 'Magnet', view: 'magnet' },
+    mcp: 'na',
   },
   {
     type: 'github',
     name: 'GitHub',
-    description: 'Display and manage GitHub repositories',
-    longDescription: 'Sync and display GitHub repositories with AI-enriched descriptions. Supports multiple layouts, topic filtering, star/fork counts and repository image galleries.',
-    icon: 'Github',
-    category: 'integrations',
-    sidebarItems: ['github-repos'],
+    description: 'Syncs repositories into Projects every night.',
+    group: 'agents',
+    sidebarItems: [],
     defaultEnabled: true,
-    status: 'installed',
-    version: '1.1.0',
-    author: 'ClawCMS',
-    tags: ['github', 'repos', 'code'],
-    configTab: 'github-repos',
-    changelog: [
-      { version: '1.1.0', date: '2025-02-10', changes: ['AI-enriched descriptions', 'Image galleries'] },
-      { version: '1.0.0', date: '2025-01-15', changes: ['Initial release with repo sync'] },
-    ],
+    admin: { label: 'Integrations', view: 'integrations' },
+    mcp: 'part',
   },
   {
     type: 'webhooks',
     name: 'Webhooks',
-    description: 'Outgoing webhook notifications for system events',
-    longDescription: 'Configure outgoing webhooks for system events like contact form submissions, newsletter signups, blog publications and chat sessions. Integrates with any HTTP endpoint.',
-    icon: 'Webhook',
-    category: 'integrations',
-    sidebarItems: ['webhooks'],
+    description: 'Sends events such as new contact messages to other services.',
+    group: 'agents',
+    sidebarItems: ['site-settings:webhooks'],
     defaultEnabled: false,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['automation', 'events'],
-    configTab: 'webhooks',
-    changelog: [
-      { version: '1.0.0', date: '2025-02-01', changes: ['Initial release with 4 event types'] },
-    ],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'webhooks' },
+    mcp: 'part',
   },
-
-  // Tools
   {
     type: 'chrome_extension',
-    name: 'Chrome Extension',
-    description: 'Browser extension bridge for content capture',
-    longDescription: 'Connect a Chrome extension to capture content from LinkedIn, GitHub and other sites. Includes auto-reconnect, domain allowlisting and real-time status monitoring.',
-    icon: 'Globe',
-    category: 'tools',
-    sidebarItems: ['chrome-extension'],
+    name: 'Chrome extension',
+    description: 'Captures pages from your browser into the agent.',
+    group: 'agents',
+    sidebarItems: ['site-settings:chrome-extension'],
     defaultEnabled: false,
-    status: 'installed',
-    version: '0.9.0',
-    author: 'ClawCMS',
-    tags: ['browser', 'capture'],
-    configTab: 'chrome-extension',
-    changelog: [
-      { version: '0.9.0', date: '2025-03-08', changes: ['Auto-reconnect mechanism', 'Domain allowlisting'] },
-    ],
-  },
-
-  // Coming Soon
-  {
-    type: 'forms',
-    name: 'Forms Builder',
-    description: 'Drag-and-drop form builder with conditional logic and submissions',
-    longDescription: 'Build custom forms with a visual editor. Support for text, select, checkbox, file upload fields with conditional visibility rules and submission webhooks.',
-    icon: 'ClipboardList',
-    category: 'content',
-    sidebarItems: [],
-    defaultEnabled: false,
-    status: 'coming_soon',
-    version: '—',
-    author: 'ClawCMS',
-    tags: ['forms', 'input'],
-  },
-  {
-    type: 'e_commerce',
-    name: 'E-Commerce',
-    description: 'Product catalog, cart and checkout with Stripe integration',
-    longDescription: 'Full e-commerce solution with product catalog, shopping cart, Stripe checkout and order management.',
-    icon: 'ShoppingCart',
-    category: 'content',
-    sidebarItems: [],
-    defaultEnabled: false,
-    status: 'coming_soon',
-    version: '—',
-    author: 'ClawCMS',
-    tags: ['shop', 'payments'],
-  },
-  {
-    type: 'multi_language',
-    name: 'Multi-Language',
-    description: 'i18n support with automatic AI translation and locale routing',
-    longDescription: 'Internationalization with AI-powered automatic translation, locale-based routing and language switcher component.',
-    icon: 'Languages',
-    category: 'tools',
-    sidebarItems: [],
-    defaultEnabled: false,
-    status: 'coming_soon',
-    version: '—',
-    author: 'ClawCMS',
-    tags: ['i18n', 'translation'],
-  },
-  {
-    type: 'a2a_federation',
-    name: 'A2A Federation',
-    description: 'Agent-to-agent communication and federated agent discovery',
-    longDescription: 'Enable your AI agent to discover and communicate with other agents using the A2A protocol. Supports capability negotiation, task delegation via federation skills, and an Agent Card endpoint for discoverability.',
-    icon: 'Network',
-    category: 'integrations',
-    sidebarItems: [],
-    defaultEnabled: true,
-    status: 'installed',
-    version: '1.0.0',
-    author: 'ClawCMS',
-    tags: ['agents', 'federation'],
-    changelog: [
-      { version: '1.0.0', date: '2025-03-08', changes: ['A2A negotiate endpoint', 'Outbound delegation via federation skills', 'Agent Card (/.well-known/agent.json)'] },
-    ],
-  },
-  {
-    type: 'crm',
-    name: 'CRM',
-    description: 'Contact management, pipelines and lead tracking',
-    longDescription: 'Lightweight CRM with contact management, deal pipelines, activity tracking and integration with the chat and contact form modules.',
-    icon: 'Users',
-    category: 'tools',
-    sidebarItems: [],
-    defaultEnabled: false,
-    status: 'coming_soon',
-    version: '—',
-    author: 'ClawCMS',
-    tags: ['sales', 'contacts'],
+    admin: { label: 'Site settings', view: 'site-settings', section: 'chrome-extension' },
+    mcp: 'no',
   },
 ];
 
-// Only installed modules (for sidebar filtering etc.)
-export const installedModules = moduleRegistry.filter((m) => m.status === 'installed');
-
-// Quick lookup by module type
-export const moduleRegistryMap = new Map(
-  moduleRegistry.map((m) => [m.type, m])
-);
-
-// Get all sidebar item IDs that should be hidden when their module is disabled
-export const getHiddenSidebarItems = (
-  modules: Array<{ module_type: string; enabled: boolean | null }>
-): Set<string> => {
-  const hidden = new Set<string>();
-
-  for (const entry of installedModules) {
-    if (entry.locked) continue;
-
-    const dbModule = modules.find((m) => m.module_type === entry.type);
-    const isEnabled = dbModule ? (dbModule.enabled ?? true) : entry.defaultEnabled;
-
-    if (!isEnabled) {
-      entry.sidebarItems.forEach((id) => hidden.add(id));
-    }
-  }
-
-  return hidden;
+export const moduleGroupLabels: Record<ModuleGroup, { title: string; hint: string }> = {
+  core: { title: 'Core', hint: 'The site does not work without these.' },
+  content: { title: 'Content', hint: 'What visitors read.' },
+  agents: { title: 'Agents & connections', hint: 'How the site talks to people and other systems.' },
 };
 
-// Category labels
-export const moduleCategoryLabels: Record<string, string> = {
-  core: 'Core',
-  content: 'Content',
-  integrations: 'Integrations',
-  tools: 'Tools',
+/** Whether a module is on, falling back to its default when it has no row yet. */
+export const isModuleEnabled = (
+  entry: ModuleRegistryEntry,
+  modules: Array<{ module_type: string; enabled: boolean | null }>,
+): boolean => {
+  if (entry.locked) return true;
+  const dbModule = modules.find((m) => m.module_type === entry.type);
+  return dbModule ? (dbModule.enabled ?? true) : entry.defaultEnabled;
+};
+
+// Admin entries that should be hidden because their module is off
+export const getHiddenSidebarItems = (
+  modules: Array<{ module_type: string; enabled: boolean | null }>,
+): Set<string> => {
+  const hidden = new Set<string>();
+  for (const entry of moduleRegistry) {
+    if (!isModuleEnabled(entry, modules)) entry.sidebarItems.forEach((id) => hidden.add(id));
+  }
+  return hidden;
 };

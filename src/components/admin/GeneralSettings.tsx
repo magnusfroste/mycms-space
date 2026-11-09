@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { Settings2, Bot, Key, Copy, RefreshCw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Bot, Key, Copy, RefreshCw, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -149,22 +149,10 @@ const ApiTokensCard: React.FC = () => {
           API Tokens
         </CardTitle>
         <CardDescription>
-          Keys for external agents, Chrome extension, and integrations
+          Keys for the Chrome extension and signal integrations. External agents connect via MCP keys under Operators &amp; Autopilot.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* A2A Token */}
-        <TokenRow
-          label="A2A API Key"
-          description="Agent-to-agent communication"
-          tokenKey="a2a_api_key"
-          tokenConfig={config}
-          moduleId={moduleId}
-          onUpdated={invalidate}
-        />
-
-        <div className="border-t border-border" />
-
         {/* Signal Ingest Token */}
         <TokenRow
           label="Signal Ingest Token"
@@ -179,30 +167,6 @@ const ApiTokensCard: React.FC = () => {
         <div className="rounded-lg bg-muted/50 p-4 space-y-3">
           <p className="text-sm font-medium">🔗 Endpoints</p>
           
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Discovery (public)</Label>
-            <div className="flex gap-2 items-center">
-              <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
-                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-card`}
-              </code>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-card`); toast.success('Copied'); }}>
-                <Copy className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">A2A Negotiate</Label>
-            <div className="flex gap-2 items-center">
-              <code className="text-xs flex-1 bg-background rounded p-2 border overflow-x-auto">
-                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-negotiate`}
-              </code>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/a2a-negotiate`); toast.success('Copied'); }}>
-                <Copy className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Signal Ingest</Label>
             <div className="flex gap-2 items-center">
@@ -261,11 +225,10 @@ const GeneralSettings: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings2 className="h-8 w-8 text-primary" />
+      <div className="flex items-center gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Settings</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-base font-semibold">Settings</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             Global admin settings
           </p>
         </div>

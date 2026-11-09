@@ -1,81 +1,51 @@
 // ============================================
-// Markdown Content Component
-// Unified markdown rendering using react-markdown
+// Markdown Content Component (lazy)
+// Thin wrapper that code-splits the markdown pipeline
+// (react-markdown + remark/rehype + parse5, ~250 KB) out of the
+// main bundle. While the chunk loads, a plain-text approximation of
+// the content is rendered so text is visible immediately and layout
+// shift is minimal.
 // ============================================
 
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkBreaks from 'remark-breaks';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import {
-  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from '@/components/ui/table';
+import React, { Suspense, lazy } from 'react';
 import { cn } from '@/lib/utils';
+import type { MarkdownContentProps } from './MarkdownRenderer';
+import { loadMarkdownRenderer } from './markdownLoader';
 
-interface MarkdownContentProps {
-  content: string;
-  className?: string;
-  compact?: boolean;
-}
+const MarkdownRenderer = lazy(loadMarkdownRenderer);
 
-// Preprocess content to preserve blank lines as visible spacing
-// Double newline (\n\n) in markdown = paragraph break, we convert to extra spacing
-const preprocessContent = (text: string): string => {
-  // Convert 2+ consecutive newlines to paragraph + spacer for extra visual spacing
-  // This makes a single blank line in the editor create visible space
-  return text.replace(/\n\n+/g, '\n\n&nbsp;\n\n');
-};
+// Very small markdown -> plain text approximation for the fallback
+const toPlainText = (text: string): string =>
+  text
+    .replace(/<[^>]+>/g, '')                    // html tags
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')       // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')    // links -> text
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '') // headings, quotes, list markers
+    .replace(/(\*\*|__|\*|_|~~|`)/g, '')        // emphasis / code markers
+    .replace(/^\s*\|?[\s:-]+\|[\s|:-]*$/gm, '') // table separator rows
+    .trim();
 
-const MarkdownContent: React.FC<MarkdownContentProps> = ({
-  content,
-  className,
-  compact = false,
-}) => {
-  if (!content) return null;
-
-  const processedContent = preprocessContent(content);
+const MarkdownContent: React.FC<MarkdownContentProps> = (props) => {
+  if (!props.content) return null;
 
   return (
-    <div
-      className={cn(
-        'prose prose-sm dark:prose-invert max-w-none',
-        // Base typography
-        'prose-headings:font-semibold prose-headings:tracking-tight',
-        'prose-p:leading-relaxed prose-p:mb-4',
-        'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
-        // Lists
-        'prose-ul:my-2 prose-ol:my-2',
-        'prose-li:my-0.5',
-        // Code
-        'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:font-mono prose-code:text-sm',
-        'prose-pre:bg-muted prose-pre:border prose-pre:border-border',
-        // Blockquotes
-        'prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:py-1 prose-blockquote:not-italic',
-        // Strong & emphasis
-        'prose-strong:font-semibold prose-strong:text-foreground',
-        'prose-em:text-muted-foreground',
-        // Compact mode for chat/small areas
-        compact && 'text-sm prose-p:my-1 prose-headings:my-2',
-        className
-      )}
+    <Suspense
+      fallback={
+        <div
+          className={cn(
+            'prose prose-sm dark:prose-invert max-w-none whitespace-pre-line',
+            props.compact && 'text-sm',
+            props.className
+          )}
+        >
+          {toPlainText(props.content)}
+        </div>
+      }
     >
-      <ReactMarkdown 
-        remarkPlugins={[remarkBreaks, remarkGfm]} 
-        rehypePlugins={[rehypeRaw]}
-        components={{
-          table: ({ children }) => <Table>{children}</Table>,
-          thead: ({ children }) => <TableHeader>{children}</TableHeader>,
-          tbody: ({ children }) => <TableBody>{children}</TableBody>,
-          tr: ({ children }) => <TableRow>{children}</TableRow>,
-          th: ({ children }) => <TableHead>{children}</TableHead>,
-          td: ({ children }) => <TableCell>{children}</TableCell>,
-        }}
-      >
-        {processedContent}
-      </ReactMarkdown>
-    </div>
+      <MarkdownRenderer {...props} />
+    </Suspense>
   );
 };
 
+export type { MarkdownContentProps };
 export default MarkdownContent;

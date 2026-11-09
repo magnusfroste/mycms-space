@@ -3,6 +3,8 @@
 // Magnet tool definitions and artifact handling
 // ============================================
 
+import { KNOWLEDGE_TOOLS } from "./knowledge-tools.ts";
+
 export interface ToolDefinition {
   type: "function";
   function: {
@@ -514,23 +516,6 @@ export const getVisitorInsightsTool: ToolDefinition = {
   },
 };
 
-export const requestMusicTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "request_music",
-    description: "Generate a music track by delegating to the SoundSpace AI agent. Call this tool IMMEDIATELY when a user wants music, a song, a track, background audio, or any audio generation. Provide a detailed prompt describing genre, mood, tempo, and instruments. The result includes a playable audio URL.",
-    parameters: {
-      type: "object",
-      properties: {
-        prompt: { type: "string", description: "Description of the desired music (genre, mood, tempo, instruments, etc.)" },
-        duration: { type: "number", description: "Track duration in seconds (30-300). Default 120." },
-        context: { type: "string", description: "Additional context about what the music is for (e.g. 'background for a portfolio site', 'relaxing café vibe')" },
-      },
-      required: ["prompt"],
-    },
-  },
-};
-
 /** Hardcoded public tools — used as FALLBACK only when DB is unavailable */
 export const publicToolsFallback: Record<string, ToolDefinition> = {
   generate_tailored_cv: cvAgentTool,
@@ -538,7 +523,6 @@ export const publicToolsFallback: Record<string, ToolDefinition> = {
   project_deep_dive: projectDeepDiveTool,
   check_availability: availabilityCheckerTool,
   get_visitor_insights: getVisitorInsightsTool,
-  request_music: requestMusicTool,
 };
 
 /** @deprecated Use publicToolsFallback. Kept for backwards compat */
@@ -559,89 +543,17 @@ export const getSiteStatsTool: ToolDefinition = {
   },
 };
 
-export const resumeLookupTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "resume_lookup",
-    description: "Query the structured resume knowledge base. Use to find specific experience, skills, education, or certifications. Useful when answering questions about qualifications or preparing proposals.",
-    parameters: {
-      type: "object",
-      properties: {
-        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary", "all"], description: "Category to query (or 'all')" },
-        search_tags: { type: "array", items: { type: "string" }, description: "Optional tags to filter by" },
-      },
-    },
-  },
-};
-
-export const addResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "add_resume_entry",
-    description: "Add a new entry to the resume knowledge base. Use when admin asks to add experience, skills, education, certifications, or languages.",
-    parameters: {
-      type: "object",
-      properties: {
-        category: { type: "string", enum: ["experience", "education", "certification", "skill", "language", "summary"], description: "Entry category" },
-        title: { type: "string", description: "Title/role/skill name" },
-        subtitle: { type: "string", description: "Company, institution, or issuer" },
-        description: { type: "string", description: "Detailed description in markdown" },
-        start_date: { type: "string", description: "Start date (YYYY-MM-DD)" },
-        end_date: { type: "string", description: "End date (YYYY-MM-DD), omit if current" },
-        is_current: { type: "boolean", description: "Whether this is a current/ongoing entry" },
-        tags: { type: "array", items: { type: "string" }, description: "Relevant tags" },
-        metadata: { type: "object", description: "Extra data (e.g. { level: 85 } for skills)" },
-      },
-      required: ["category", "title"],
-    },
-  },
-};
-
-export const updateResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "update_resume_entry",
-    description: "Update an existing resume entry. Use when admin asks to edit, correct, or modify experience/skills/education details.",
-    parameters: {
-      type: "object",
-      properties: {
-        entry_id: { type: "string", description: "ID of the entry to update (use resume_lookup first to find it)" },
-        title: { type: "string" },
-        subtitle: { type: "string" },
-        description: { type: "string", description: "Updated description in markdown" },
-        start_date: { type: "string" },
-        end_date: { type: "string" },
-        is_current: { type: "boolean" },
-        tags: { type: "array", items: { type: "string" } },
-        metadata: { type: "object" },
-        enabled: { type: "boolean" },
-      },
-      required: ["entry_id"],
-    },
-  },
-};
-
-export const enrichResumeEntryTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "enrich_resume_entry",
-    description: "Enrich/expand a resume entry's description with more detail, better wording, or additional context. Use when admin asks to make an entry more detailed, professional, or comprehensive. Fetches the current entry, rewrites the description, and saves it.",
-    parameters: {
-      type: "object",
-      properties: {
-        entry_id: { type: "string", description: "ID of the entry to enrich (use resume_lookup first)" },
-        instructions: { type: "string", description: "How to improve: 'more technical detail', 'add metrics', 'make more concise', etc." },
-        new_description: { type: "string", description: "The enriched/rewritten description in markdown" },
-        new_tags: { type: "array", items: { type: "string" }, description: "Updated tags if relevant" },
-      },
-      required: ["entry_id", "new_description"],
-    },
-  },
-};
-
-// ============================================
-// File Manager Tools
-// ============================================
+// Knowledge base — same tools and rules as the MCP server (kb_delete stays
+// in the admin UI so the chat agent can't remove whole documents).
+const IN_APP_KB_TOOLS = ['kb_list', 'kb_get', 'kb_upsert', 'kb_append'];
+const kbTools: Record<string, ToolDefinition> = Object.fromEntries(
+  KNOWLEDGE_TOOLS
+    .filter((t) => IN_APP_KB_TOOLS.includes(t.name))
+    .map((t) => [t.name, {
+      type: "function" as const,
+      function: { name: t.name, description: t.description, parameters: t.inputSchema },
+    }]),
+);
 
 export const fileListTool: ToolDefinition = {
   type: "function",
@@ -752,11 +664,8 @@ export const adminTools: Record<string, ToolDefinition> = {
   automation_list: automationListTool,
   // Reflection
   reflect: reflectTool,
-  // Resume
-  resume_lookup: resumeLookupTool,
-  add_resume_entry: addResumeEntryTool,
-  update_resume_entry: updateResumeEntryTool,
-  enrich_resume_entry: enrichResumeEntryTool,
+  // Knowledge base (grounds the chat)
+  ...kbTools,
   // Browser
   browser_scrape: browserScrapeTool,
   // File Manager
@@ -779,7 +688,6 @@ export const toolDescriptions: Record<string, string> = {
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
-  request_music: "**request_music** — Generate music by delegating to the SoundSpace AI agent via A2A. **ALWAYS call this tool immediately** when a user asks for music, a track, a song, or audio generation. Do NOT describe or explain SoundSpace — just call the tool with a descriptive prompt.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
   run_research: "**run_research** — Research a topic using web sources.",
@@ -800,10 +708,10 @@ export const toolDescriptions: Record<string, string> = {
   automation_create: "**automation_create** — Create an automation (cron/signal/event trigger).",
   automation_list: "**automation_list** — List all automations.",
   reflect: "**reflect** — Analyze performance, error rates, and auto-persist learnings.",
-  resume_lookup: "**resume_lookup** — Query the structured resume knowledge base by category or tags.",
-  add_resume_entry: "**add_resume_entry** — Add a new entry (experience, skill, education, etc.) to the resume knowledge base.",
-  update_resume_entry: "**update_resume_entry** — Update an existing resume entry's fields.",
-  enrich_resume_entry: "**enrich_resume_entry** — Enrich/rewrite a resume entry's description with better detail or wording.",
+  kb_list: "**kb_list** — List the knowledge base documents (the source the public chat is grounded on).",
+  kb_get: "**kb_get** — Read a knowledge base document in full before changing it.",
+  kb_upsert: "**kb_upsert** — Create or rewrite a knowledge base document (markdown prose). Read it with kb_get first.",
+  kb_append: "**kb_append** — Append a section (e.g. a new assignment) to a knowledge base document.",
   browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
   file_list: "**file_list** — List files in a storage bucket. Use to browse uploaded documents, images, and CMS files.",
   file_read: "**file_read** — Read the text content of a file from storage (.md, .txt, .json, .csv).",
@@ -818,7 +726,7 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'objective_update_progress', 'objective_complete',
   'automation_create', 'automation_list',
   'reflect',
-  'resume_lookup', 'add_resume_entry', 'update_resume_entry', 'enrich_resume_entry',
+  'kb_list', 'kb_get', 'kb_upsert', 'kb_append',
   'browser_scrape',
   'file_list', 'file_read', 'file_write', 'file_delete',
 ];
@@ -926,7 +834,7 @@ export async function getToolInstructionsAsync(enabledTools?: string[], mode?: s
     return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
   }
   
-  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
 /** Sync fallback */
@@ -940,7 +848,7 @@ export function getToolInstructions(enabledTools?: string[], mode?: string): str
   if (mode === 'admin') {
     return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
   }
-  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\n**IMPORTANT**: When a user asks to create, generate, or make music/audio/tracks/songs, IMMEDIATELY call the request_music tool with a detailed prompt. Do not explain what SoundSpace is or ask follow-up questions — just generate.\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
+  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
 
 // ============================================
@@ -955,7 +863,6 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     project_deep_dive: (args) => ({ type: "project-deep-dive", title: (args.project_name as string) || "Project Deep Dive" }),
     check_availability: () => ({ type: "availability", title: "Availability" }),
     get_visitor_insights: (args) => ({ type: "visitor-profile", title: (args.summary as string) || "Visitor Profile" }),
-    request_music: (args) => ({ type: "music-player", title: (args.prompt as string)?.slice(0, 50) || "Generated Music" }),
     research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
     draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
     run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),

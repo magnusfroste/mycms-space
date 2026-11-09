@@ -36,7 +36,6 @@
 
 ### Edge Functions (Deno)
 - `ai-chat` - Universal AI chat handler
-- `page-builder-chat` - AI page builder assistant
 - `enhance-text` - AI text enhancement
 - `firecrawl-scrape` - Web scraping
 - `send-newsletter` - Email campaigns

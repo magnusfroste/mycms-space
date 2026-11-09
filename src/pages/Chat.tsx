@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatInterface } from "@/components/chat";
@@ -17,7 +17,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
+import SEOHead from "@/components/common/SEOHead";
 import { useChromeExtensionModule } from "@/models/modules";
+import { useIsStudio } from "@/hooks/useCurrentTheme";
 
 interface Message {
   id: string;
@@ -40,6 +42,11 @@ const Chat = () => {
   const [resetTrigger, setResetTrigger] = React.useState(0);
 
   const hasInitialMessages = Boolean(location.state?.messages?.length);
+  const isStudio = useIsStudio();
+  // Studio shows a short intro above the input until the conversation starts
+  const [hasMessages, setHasMessages] = React.useState(hasInitialMessages);
+  const handleMessagesChange = React.useCallback((msgs: Message[]) => setHasMessages(msgs.length > 0), []);
+  const showIntro = isStudio && !hasMessages;
   const [contextReady, setContextReady] = React.useState(!hasInitialMessages);
 
   React.useEffect(() => {
@@ -59,6 +66,10 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEOHead
+        title="Chat with Magnet"
+        description="Ask Magnet, Magnus Froste's AI agent, about his experience, projects and availability."
+      />
       {/* Grok-inspired minimal header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background">
         <div className="container mx-auto px-4 h-12 flex items-center justify-between">
@@ -89,6 +100,28 @@ const Chat = () => {
       </header>
 
       <main className="flex-1 flex flex-col overflow-hidden">
+        {showIntro ? (
+          <div className="mx-auto w-full max-w-3xl px-6 pb-2 pt-12 md:pt-20">
+            <span
+              aria-hidden="true"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-[15px] font-bold text-accent"
+            >
+              M
+            </span>
+            <h1 className="mt-4 text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground sm:text-[32px]">
+              Ask Magnet, Magnus' AI twin
+            </h1>
+            <p className="mt-2 max-w-[560px] text-[15px] leading-[1.55] text-muted-foreground">
+              Answers from his CV, projects and writing. Paste a job description to check the fit, or{" "}
+              <Link to="/contact" className="studio-link font-medium">
+                contact Magnus directly
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          <h1 className="sr-only">Chat with Magnet, Magnus Froste's AI agent</h1>
+        )}
         {hasInitialMessages && !contextReady ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-3 text-muted-foreground">
@@ -105,6 +138,7 @@ const Chat = () => {
             initialMessages={initialMessages}
             initialSessionId={initialSessionId}
             resetTrigger={resetTrigger}
+            onMessagesChange={handleMessagesChange}
             showQuickActions={true}
             siteContext={enrichedContext}
             integration={configuredIntegration}

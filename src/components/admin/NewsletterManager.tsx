@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Mail, Send, Trash2, Users, FileText, Plus, Loader2 } from 'lucide-react';
+import { Mail, Send, Trash2, Users, FileText, Plus, Loader2, Check } from 'lucide-react';
 import {
   useSubscribers,
   useCampaigns,
@@ -35,15 +35,19 @@ import {
   useUpdateCampaign,
   useDeleteCampaign,
   useDeleteSubscriber,
+  useUpdateSubscriberStatus,
   useSendNewsletter,
   useSubscribersSubscription,
   useCampaignsSubscription,
   type NewsletterCampaign,
   type CreateCampaignInput,
 } from '@/models/newsletter';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
+import { underlineTabs } from '@/components/admin/shell/primitives';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/20 text-green-400',
+  pending: 'bg-blue-500/20 text-blue-400',
   unsubscribed: 'bg-yellow-500/20 text-yellow-400',
   bounced: 'bg-red-500/20 text-red-400',
   draft: 'bg-muted text-muted-foreground',
@@ -69,6 +73,7 @@ export default function NewsletterManager() {
   const updateCampaign = useUpdateCampaign();
   const deleteCampaign = useDeleteCampaign();
   const deleteSubscriber = useDeleteSubscriber();
+  const updateSubscriberStatus = useUpdateSubscriberStatus();
   const sendNewsletter = useSendNewsletter();
 
   const [formData, setFormData] = useState<CreateCampaignInput>({
@@ -165,26 +170,23 @@ export default function NewsletterManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Newsletter</h2>
-          <p className="text-muted-foreground">Manage subscribers and send newsletters</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="gap-2">
-            <Users className="h-4 w-4" />
-            {activeSubscribers} active subscribers
-          </Badge>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Newsletter"
+        description="Subscribers and campaigns, sent with Resend. Autopilot drafts campaigns; you decide when they go out."
+        actions={
+          <span className="inline-flex h-[26px] items-center rounded-full bg-muted px-2.5 font-mono text-[12.5px] font-medium text-foreground/80">
+            {activeSubscribers} active
+          </span>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="campaigns" className="gap-2">
+        <TabsList className={underlineTabs.list}>
+          <TabsTrigger value="campaigns" className={`${underlineTabs.trigger} gap-2`}>
             <FileText className="h-4 w-4" />
             Campaigns
           </TabsTrigger>
-          <TabsTrigger value="subscribers" className="gap-2">
+          <TabsTrigger value="subscribers" className={`${underlineTabs.trigger} gap-2`}>
             <Users className="h-4 w-4" />
             Subscribers
           </TabsTrigger>
@@ -381,6 +383,18 @@ export default function NewsletterManager() {
                           {format(new Date(subscriber.subscribed_at), 'yyyy-MM-dd')}
                         </TableCell>
                         <TableCell className="text-right">
+                          {subscriber.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Activate subscriber"
+                              onClick={() =>
+                                updateSubscriberStatus.mutate({ id: subscriber.id, status: 'active' })
+                              }
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"

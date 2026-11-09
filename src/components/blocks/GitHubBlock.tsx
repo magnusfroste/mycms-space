@@ -28,12 +28,18 @@ import {
   ShowcaseHeroLayout,
   MinimalListLayout,
 } from './GitHubBlockLayouts';
+import { Link } from 'react-router-dom';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import GitHubStudio, { WorkList, orderRepos } from './studio/GitHubStudio';
 
 interface GitHubBlockProps {
   config: Record<string, unknown>;
+  /** Use 'h1' when this block is the main heading of the page */
+  headingLevel?: 'h1' | 'h2';
 }
 
-const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
+const GitHubBlockClassic: React.FC<GitHubBlockProps> = ({ config: rawConfig, headingLevel = 'h2' }) => {
+  const Heading = headingLevel;
   const blockConfig = rawConfig as unknown as GitHubBlockConfig;
   const { config: moduleConfig } = useGitHubModule();
   const { data: repos = [], isLoading, error } = useEnabledGitHubRepos();
@@ -56,17 +62,21 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
 
   // Featured repos always first (in their order), then shuffle the rest for variety
   const shuffledRepos = useMemo(() => {
+    // A hand-picked or compact list keeps a stable order
+    if (blockConfig.selectedRepos?.length || layout === 'list') return orderRepos(repos, blockConfig.selectedRepos);
     const featured = repos.filter((r) => (r as any).featured);
     const rest = repos.filter((r) => !(r as any).featured);
     const shuffledRest = rest.length <= maxRepos ? rest : [...rest].sort(() => Math.random() - 0.5);
     return [...featured, ...shuffledRest];
-  }, [repos, maxRepos]);
+  }, [repos, maxRepos, layout, blockConfig.selectedRepos]);
 
   const [visibleCount, setVisibleCount] = useState(maxRepos);
   const scrollTargetRef = useRef<HTMLDivElement>(null);
   const prevVisibleRef = useRef(maxRepos);
   const displayRepos = shuffledRepos.slice(0, visibleCount);
-  const hasMore = visibleCount < shuffledRepos.length;
+  // The compact list is a fixed selection that links to the full projects page instead
+  const isCompactList = layout === 'list';
+  const hasMore = !isCompactList && visibleCount < shuffledRepos.length;
 
   const handleShowMore = useCallback(() => {
     prevVisibleRef.current = visibleCount;
@@ -120,8 +130,9 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
         return <ShowcaseHeroLayout {...layoutProps} />;
       case 'minimal-list':
         return <MinimalListLayout {...layoutProps} />;
-      case 'grid':
       case 'list':
+        return <WorkList repos={displayRepos} showLanguages={showLanguages} />;
+      case 'grid':
       case 'compact':
       default:
         return <ClassicGridLayout {...layoutProps} />;
@@ -137,9 +148,9 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
             Open Source
           </span>
           {title && (
-            <h2 className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <Heading className="section-title animate-fade-in" style={{ animationDelay: '0.1s' }}>
               {title}
-            </h2>
+            </Heading>
           )}
           {subtitle && (
             <p className="section-subtitle mt-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -187,8 +198,17 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
           </div>
         )}
 
+        {/* Compact list: link to the full projects page */}
+        {!isLoading && isCompactList && (blockConfig.showAllProjectsLink ?? true) && shuffledRepos.length > displayRepos.length && (
+          <div className="text-center mt-8">
+            <Link to={blockConfig.allProjectsUrl || '/github'} className="inline-flex items-center gap-2 text-primary font-medium hover:underline">
+              {blockConfig.allProjectsText || `All ${shuffledRepos.length} projects`} →
+            </Link>
+          </div>
+        )}
+
         {/* View All Link */}
-        {moduleConfig?.username && (
+        {!isCompactList && moduleConfig?.username && (
           <div className="text-center mt-8">
             <a
               href={`https://github.com/${moduleConfig.username}`}
@@ -203,6 +223,15 @@ const GitHubBlock: React.FC<GitHubBlockProps> = ({ config: rawConfig }) => {
         )}
       </div>
     </section>
+  );
+};
+
+const GitHubBlock: React.FC<GitHubBlockProps> = (props) => {
+  const isStudio = useIsStudio();
+  return isStudio ? (
+    <GitHubStudio config={props.config as unknown as GitHubBlockConfig} headingLevel={props.headingLevel} />
+  ) : (
+    <GitHubBlockClassic {...props} />
   );
 };
 

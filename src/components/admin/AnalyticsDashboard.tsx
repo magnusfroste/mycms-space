@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAnalyticsSummary } from '@/models/analytics';
 import { Eye, Users, FolderOpen, MessageSquare, TrendingUp, BarChart3 } from 'lucide-react';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 interface StatCardProps {
   title: string;
@@ -52,11 +53,10 @@ export const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
-          <p className="text-muted-foreground">Overview of visitor statistics and engagement</p>
-        </div>
+      <AdminPageHeader
+        title="Analytics"
+        description="Visits, pages and chat sessions, tracked on the site itself. No external service involved."
+        actions={
         <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select period" />
@@ -67,7 +67,8 @@ export const AnalyticsDashboard = () => {
             <SelectItem value="90">Last 90 days</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+        }
+      />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

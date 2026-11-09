@@ -147,11 +147,10 @@ export async function callProfileTool(
   ctx: { anonymous: boolean },
 ): Promise<string> {
   if (name === "get_profile") {
-    const [autopilot, seo, resumeMod, current] = await Promise.all([
+    const [autopilot, seo, resumeMod] = await Promise.all([
       supabase.from("modules").select("module_config").eq("module_type", "autopilot").maybeSingle(),
       supabase.from("modules").select("module_config").eq("module_type", "seo").maybeSingle(),
       supabase.from("modules").select("module_config").eq("module_type", "resume").maybeSingle(),
-      supabase.from("resume_entries").select("title, subtitle, description").eq("enabled", true).eq("is_current", true).order("order_index"),
     ]);
     const brief = autopilot.data?.module_config?.editor_brief || {};
     const seoCfg = seo.data?.module_config || {};
@@ -166,14 +165,13 @@ export async function callProfileTool(
       audience: brief.audience || null,
       offering: brief.offering || null,
       core_themes: (brief.themes || []).map((t: { name: string; angle: string }) => ({ name: t.name, angle: t.angle })),
-      current_roles: current.data || [],
       links: {
         website: seoCfg.site_url || "https://www.froste.eu",
         linkedin: seoCfg.linkedin_url || null,
         github: "https://github.com/magnusfroste",
         blog: `${seoCfg.site_url || "https://www.froste.eu"}/blog`,
       },
-      next_steps: "Use get_resume for the full CV, search_projects for relevant work, analyze_job_fit for a role, and contact_magnus to reach him.",
+      next_steps: "Use kb_list / kb_get for the full profile (roles, projects, history), search_projects for relevant work, analyze_job_fit for a role, and contact_magnus to reach him.",
     }, null, 2);
   }
 

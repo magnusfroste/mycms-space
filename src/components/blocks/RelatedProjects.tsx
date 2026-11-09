@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { Star, GitFork } from 'lucide-react';
 import TechBadge from '@/components/common/TechBadge';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
+import OptimizedImage from '@/components/common/OptimizedImage';
+import { stripMarkdown } from '@/lib/utils/markdown';
 
 interface RelatedProjectsProps {
   currentRepoName: string;
@@ -43,11 +45,14 @@ const RelatedProjects: React.FC<RelatedProjectsProps> = ({ currentRepoName }) =>
             >
               {thumb && (
                 <div className="aspect-video bg-muted overflow-hidden p-2">
-                  <img
+                  <OptimizedImage
                     src={thumb}
                     alt={title}
                     className="w-full h-full object-contain transition-transform group-hover:scale-[1.03]"
-                    loading="lazy"
+                    displayWidth={640}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    width={640}
+                    height={360}
                   />
                 </div>
               )}
@@ -57,7 +62,7 @@ const RelatedProjects: React.FC<RelatedProjectsProps> = ({ currentRepoName }) =>
                 </h3>
                 {repo.enriched_description && (
                   <p className="text-sm text-muted-foreground line-clamp-2">
-                    {repo.enriched_description}
+                    {stripMarkdown(repo.enriched_description)}
                   </p>
                 )}
                 <div className="flex items-center gap-3 pt-1">

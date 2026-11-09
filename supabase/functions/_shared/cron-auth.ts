@@ -17,8 +17,25 @@ export async function isTrustedCaller(req: Request): Promise<boolean> {
   if (!token) return false;
   if (token === serviceKey) return true;
 
+  return isAdminToken(admin, token);
+}
+
+// True only for a signed-in admin user (JWT in Authorization header).
+// Does not accept the cron secret or the service role key.
+export async function isAdminRequest(req: Request): Promise<boolean> {
+  const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+  return isAdminToken(admin, token);
+}
+
+// deno-lint-ignore no-explicit-any
+async function isAdminToken(admin: any, token: string): Promise<boolean> {
   const { data: userData } = await admin.auth.getUser(token);
-  if (!userData.user) return false;
+  if (!userData?.user) return false;
   const { data: adminRow } = await admin
     .from("admin_users")
     .select("user_id")

@@ -15,18 +15,21 @@ import MarkdownContent from '@/components/common/MarkdownContent';
 import TechBadge from '@/components/common/TechBadge';
 import { useGitHubRepoByName } from '@/models/githubRepoByName';
 import RelatedProjects from '@/components/blocks/RelatedProjects';
+import NotFound from './NotFound';
+import { stripMarkdown } from '@/lib/utils/markdown';
+import { preloadMarkdown } from '@/components/common/markdownLoader';
+import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import ProjectCaseStudyStudio from '@/components/studio/pages/ProjectCaseStudyStudio';
+
+// Fetch the markdown chunk in parallel with the post/project data
+preloadMarkdown();
 
 const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
   const navigate = useNavigate();
   const { data: repo, isLoading, error } = useGitHubRepoByName(repoName);
-
-  // 404 redirect
-  React.useEffect(() => {
-    if (!isLoading && !repo && !error) {
-      navigate('/404', { replace: true });
-    }
-  }, [isLoading, repo, error, navigate]);
+  const isStudio = useIsStudio();
 
   if (isLoading) {
     return (
@@ -46,6 +49,8 @@ const ProjectCaseStudy = () => {
     );
   }
 
+  // Unknown repo: render 404 in place (keep the requested URL)
+  if (!repo && !error) return <NotFound />;
   if (!repo) return null;
 
   const title = repo.enriched_title || repo.name;
@@ -58,11 +63,16 @@ const ProjectCaseStudy = () => {
     <div className="min-h-screen flex flex-col">
       <SEOHead
         title={title}
-        description={description || `Project: ${title}`}
+        description={stripMarkdown(description) || `Project: ${title}`}
         ogImage={mainImage}
       />
       <Header />
 
+      {isStudio ? (
+        <main className="flex-1">
+          <ProjectCaseStudyStudio repo={repo} />
+        </main>
+      ) : (
       <main className="flex-1">
         <article className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
           {/* Back link */}
@@ -98,19 +108,25 @@ const ProjectCaseStudy = () => {
 
           {/* Description */}
           {description && (
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-              {description}
-            </p>
+            <MarkdownContent
+              content={description}
+              compact
+              className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed"
+            />
           )}
 
           {/* Hero Image */}
           {mainImage && (
             <div className="aspect-video rounded-xl overflow-hidden bg-muted mb-12">
-              <img
+              <OptimizedImage
                 src={mainImage}
                 alt={title}
                 className="w-full h-full object-cover"
-                loading="eager"
+                priority
+                displayWidth={1280}
+                sizes="(min-width: 1024px) 1024px, 100vw"
+                width={1280}
+                height={720}
               />
             </div>
           )}
@@ -122,9 +138,7 @@ const ProjectCaseStudy = () => {
                 The Problem
               </h2>
               <div className="p-6 rounded-xl bg-muted/50 border-l-4 border-primary">
-                <p className="text-foreground leading-relaxed">
-                  {repo.problem_statement}
-                </p>
+                <MarkdownContent content={repo.problem_statement} compact className="text-base text-foreground leading-relaxed" />
               </div>
             </section>
           )}
@@ -136,9 +150,7 @@ const ProjectCaseStudy = () => {
                 Why It Matters
               </h2>
               <div className="p-6 rounded-xl bg-primary/5 border-l-4 border-primary/50">
-                <p className="text-foreground leading-relaxed">
-                  {repo.why_it_matters}
-                </p>
+                <MarkdownContent content={repo.why_it_matters} compact className="text-base text-foreground leading-relaxed" />
               </div>
             </section>
           )}
@@ -181,11 +193,14 @@ const ProjectCaseStudy = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 {additionalImages.map((img) => (
                   <div key={img.id} className="rounded-xl overflow-hidden bg-muted aspect-video">
-                    <img
+                    <OptimizedImage
                       src={img.image_url}
                       alt={img.alt_text || title}
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      displayWidth={640}
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      width={640}
+                      height={360}
                     />
                   </div>
                 ))}
@@ -215,6 +230,7 @@ const ProjectCaseStudy = () => {
           <RelatedProjects currentRepoName={repo.name} />
         </article>
       </main>
+      )}
 
       <Footer />
     </div>

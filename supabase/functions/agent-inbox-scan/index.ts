@@ -38,6 +38,16 @@ interface GmailConfig {
   scan_days: number;
 }
 
+// A revoked or expired Google grant cannot heal by retrying. Mark the
+// connection so scans stop (no daily failed task) until the owner reconnects;
+// gmail-oauth-callback writes a fresh config, which clears the flag.
+class NeedsReconnect extends Error {}
+
+async function gmailNeedsReconnect(supabase: ReturnType<typeof getSupabase>): Promise<boolean> {
+  const { data } = await supabase.from('modules').select('module_config').eq('module_type', 'gmail_signals').maybeSingle();
+  return (data?.module_config as Record<string, unknown> | null)?.needs_reconnect === true;
+}
+
 async function getValidToken(supabase: ReturnType<typeof getSupabase>): Promise<{ token: string; config: GmailConfig }> {
   const { data } = await supabase
     .from('modules')
@@ -69,7 +79,15 @@ async function getValidToken(supabase: ReturnType<typeof getSupabase>): Promise<
     });
 
     const tokens = await res.json();
-    if (!res.ok) throw new Error(`Token refresh failed: ${tokens.error}`);
+    if (!res.ok) {
+      if (tokens.error === 'invalid_grant') {
+        await supabase.from('modules')
+          .update({ module_config: { ...config, needs_reconnect: true } as any })
+          .eq('id', data.id);
+        throw new NeedsReconnect('Gmail access was revoked or expired (invalid_grant). Reconnect Gmail in admin → Integrations.');
+      }
+      throw new Error(`Token refresh failed: ${tokens.error}`);
+    }
 
     config.access_token = tokens.access_token;
     config.expires_at = Date.now() + (tokens.expires_in * 1000);
@@ -207,6 +225,12 @@ Deno.serve(async (req) => {
     const action = body.action || 'scan';
 
     if (action === 'scan') {
+      if (await gmailNeedsReconnect(supabase)) {
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: 'gmail_needs_reconnect' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
       // Create task
       const taskId = crypto.randomUUID();
       await supabase.from('agent_tasks').insert({
