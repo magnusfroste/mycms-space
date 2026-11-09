@@ -3,8 +3,22 @@
  * Maps to agent_skills, agent_memory, agent_activity, agent_objectives, agent_automations tables
  */
 
-export type AgentScope = 'internal' | 'external' | 'both';
-export type AgentSkillCategory = 'content' | 'crm' | 'communication' | 'automation' | 'search' | 'analytics';
+export type AgentScope = 'internal' | 'public' | 'both';
+/** Categories in use in agent_skills (the column is free text; no CHECK constraint). */
+export const AGENT_SKILL_CATEGORIES = [
+  { value: 'content', label: 'Content' },
+  { value: 'portfolio', label: 'Portfolio' },
+  { value: 'knowledge', label: 'Knowledge' },
+  { value: 'engagement', label: 'Engagement' },
+  { value: 'communication', label: 'Communication' },
+  { value: 'crm', label: 'CRM' },
+  { value: 'automation', label: 'Automation' },
+  { value: 'integration', label: 'Integration' },
+  { value: 'search', label: 'Search' },
+  { value: 'analytics', label: 'Analytics' },
+  { value: 'internal', label: 'Internal' },
+] as const;
+export type AgentSkillCategory = (typeof AGENT_SKILL_CATEGORIES)[number]['value'];
 export type AgentActivityStatus = 'success' | 'failed' | 'pending_approval' | 'approved' | 'rejected';
 export type AgentObjectiveStatus = 'active' | 'completed' | 'paused' | 'failed';
 export type AutomationTriggerType = 'cron' | 'event' | 'signal';

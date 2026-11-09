@@ -14,14 +14,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Trash2 } from 'lucide-react';
-import type { AgentSkill } from '@/types/agent';
+import { AGENT_SKILL_CATEGORIES, type AgentSkill, type AgentSkillCategory } from '@/types/agent';
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
   description: z.string().optional(),
   instructions: z.string().optional(),
-  category: z.enum(['content', 'crm', 'communication', 'automation', 'search', 'analytics']),
-  scope: z.enum(['internal', 'external', 'both']),
+  category: z.enum(AGENT_SKILL_CATEGORIES.map((c) => c.value) as [AgentSkillCategory, ...AgentSkillCategory[]]),
+  scope: z.enum(['internal', 'public', 'both']),
   handler: z.string().min(1, 'Required'),
   requires_approval: z.boolean(),
   enabled: z.boolean(),
@@ -128,12 +128,9 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
               <Select value={form.watch('category')} onValueChange={(v: any) => form.setValue('category', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="content">Content</SelectItem>
-                  <SelectItem value="crm">CRM</SelectItem>
-                  <SelectItem value="communication">Communication</SelectItem>
-                  <SelectItem value="automation">Automation</SelectItem>
-                  <SelectItem value="search">Search</SelectItem>
-                  <SelectItem value="analytics">Analytics</SelectItem>
+                  {AGENT_SKILL_CATEGORIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -143,7 +140,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="internal">Internal</SelectItem>
-                  <SelectItem value="external">External</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
                   <SelectItem value="both">Both</SelectItem>
                 </SelectContent>
               </Select>

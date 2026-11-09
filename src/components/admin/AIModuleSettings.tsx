@@ -96,7 +96,7 @@ const AIModuleSettings: React.FC = () => {
   
   // Fetch pages, blog posts, and GitHub repos for selection
   const { data: pages = [] } = usePages();
-  const { data: blogPosts = [] } = useBlogPosts();
+  const { data: blogPosts = [] } = useBlogPosts({ limit: 1000 });
   const { data: githubRepos = [] } = useEnabledGitHubRepos();
 
   const handleToggle = (enabled: boolean) => {

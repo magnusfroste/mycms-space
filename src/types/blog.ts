@@ -4,7 +4,7 @@
 // ============================================
 
 // Blog Post Status
-export type BlogPostStatus = 'draft' | 'published' | 'scheduled';
+export type BlogPostStatus = 'draft' | 'published' | 'scheduled' | 'archived';
 
 // Blog Post
 export interface BlogPost {
