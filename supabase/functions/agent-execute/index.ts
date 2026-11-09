@@ -102,7 +102,10 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify(args),
       });
-      result = await response.json();
+      result = await response.json().catch(() => ({ error: `${fnName} returned HTTP ${response.status}` }));
+      if (!response.ok && !(result as Record<string, unknown>)?.error) {
+        result = { error: `${fnName} returned HTTP ${response.status}` };
+      }
     } else if (handler.startsWith('module:')) {
       const moduleName = handler.replace('module:', '');
       result = await executeModuleAction(supabase, moduleName, skill.name, args);
@@ -113,12 +116,14 @@ Deno.serve(async (req) => {
       result = { error: `Unknown handler type: ${handler}` };
     }
 
-    // 5. Log activity
+    // 5. Log activity — a handler that answers { error } failed, even if the HTTP call worked.
+    const resultError = (result as Record<string, unknown> | null)?.error;
     const activityId = await logActivity(supabase, {
       agent: agent_type, skill_id: skill.id, skill_name: skill.name,
       input: args, output: result as Record<string, unknown>,
-      status: 'success', conversation_id,
+      status: resultError ? 'failed' : 'success', conversation_id,
       duration_ms: Date.now() - startTime,
+      ...(resultError ? { error_message: String(resultError).slice(0, 500) } : {}),
     });
 
     // 6. Auto-track objective progress
@@ -126,7 +131,7 @@ Deno.serve(async (req) => {
       await trackObjectiveProgress(supabase, skill.name, activityId);
     }
 
-    return new Response(JSON.stringify({ status: 'success', result }), {
+    return new Response(JSON.stringify({ status: resultError ? 'failed' : 'success', result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

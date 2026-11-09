@@ -606,8 +606,9 @@ const GitHubReposManager: React.FC = () => {
     try {
       const result = await syncMutation.mutateAsync(username);
       toast.success(`${result.synced} repos synced, ${result.new} new`);
+      if (result.warning) toast.warning(result.warning, { duration: 10000 });
     } catch (error) {
-      toast.error('Sync failed');
+      toast.error('Sync failed', { description: error instanceof Error ? error.message : undefined });
     }
   }, [moduleConfig?.username, syncMutation]);
 
