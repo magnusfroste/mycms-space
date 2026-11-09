@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { useFooterModule } from '@/models/modules';
 import { cn } from '@/lib/utils';
 import type { SocialLink } from '@/types/modules';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import FooterStudio from '@/components/studio/FooterStudio';
 
 const SOCIAL_ICONS: Record<SocialLink['platform'], React.ElementType> = {
   github: Github,
@@ -21,6 +23,7 @@ const SOCIAL_ICONS: Record<SocialLink['platform'], React.ElementType> = {
 
 const Footer = () => {
   const { config: footerConfig, isLoading } = useFooterModule();
+  const isStudio = useIsStudio();
 
   const getCopyrightText = () => {
     const text = footerConfig?.copyright_text || '© {year} Magnus Froste. All rights reserved.';
@@ -29,6 +32,10 @@ const Footer = () => {
 
   const socialLinks = footerConfig?.social_links || [];
   const showSocialLinks = footerConfig?.show_social_links !== false;
+
+  if (isStudio) {
+    return <FooterStudio copyright={getCopyrightText()} socialLinks={showSocialLinks ? socialLinks : []} />;
+  }
 
   return (
     <footer className="relative overflow-hidden">

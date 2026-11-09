@@ -1470,3 +1470,170 @@
   // Defined in @layer base above
 }
 */
+
+/* === Studio: public site === */
+/* Quiet, dense public pages under [data-theme="studio"]: solid background,
+   no gradients, glass, glow, parallax or hover lifts; hairline borders,
+   Inter with mono numbers. Component-level layouts live in
+   src/components/studio and the *Studio variants of the blocks. */
+
+:root[data-theme="studio"] body {
+  background: hsl(var(--background));
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+[data-theme="studio"] ::selection {
+  background: hsl(var(--accent) / 0.18);
+}
+
+/* Links in running UI copy (e.g. "All projects →") */
+.studio-link {
+  color: hsl(var(--accent));
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+.studio-link:hover {
+  text-decoration: underline;
+}
+
+/* Section rhythm: ~72–88px */
+[data-theme="studio"] .section-container {
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+[data-theme="studio"] .section-container-sm {
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
+}
+@media (min-width: 768px) {
+  [data-theme="studio"] .section-container {
+    padding-top: 5.5rem;
+    padding-bottom: 5.5rem;
+  }
+  [data-theme="studio"] .section-container-sm {
+    padding-top: 4.5rem;
+    padding-bottom: 4.5rem;
+  }
+}
+
+/* Decorative dividers between blocks are replaced by section borders */
+[data-theme="studio"] .section-divider-fade,
+[data-theme="studio"] .section-divider-gradient {
+  display: none;
+}
+
+/* Headings: solid colour, ~32px section titles */
+[data-theme="studio"] .section-title,
+[data-theme="studio"] .section-title-gradient {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: hsl(var(--foreground));
+  font-size: 1.625rem;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+@media (min-width: 640px) {
+  [data-theme="studio"] .section-title,
+  [data-theme="studio"] .section-title-gradient {
+    font-size: 2rem;
+  }
+}
+[data-theme="studio"] .section-subtitle {
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 36rem;
+}
+[data-theme="studio"] .gradient-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: hsl(var(--foreground));
+}
+
+/* Eyebrow labels ("SERVICES", "BLOG" ...) become small mono accents */
+[data-theme="studio"] main span.uppercase.tracking-widest {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: hsl(var(--accent));
+  margin-bottom: 0.75rem;
+}
+
+/* Cards: hairline border, no glow, no lift */
+[data-theme="studio"] .glass-card,
+[data-theme="studio"] .elevated-card,
+[data-theme="studio"] .glow-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: none !important;
+  transform: none !important;
+}
+[data-theme="studio"] .glass-card:hover,
+[data-theme="studio"] .elevated-card:hover,
+[data-theme="studio"] .glow-card:hover {
+  border-color: hsl(var(--foreground) / 0.18);
+}
+[data-theme="studio"] .glow-card::before {
+  display: none !important;
+}
+
+/* Buttons: solid near-black, no gradient or shadow */
+[data-theme="studio"] .btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: none !important;
+  transform: none !important;
+  border-radius: 9999px;
+}
+[data-theme="studio"] .btn-primary:hover {
+  background: hsl(var(--primary) / 0.88);
+}
+[data-theme="studio"] .btn-secondary {
+  background: hsl(var(--background));
+  border-radius: 9999px;
+  transform: none !important;
+}
+
+[data-theme="studio"] .input-field {
+  background: hsl(var(--background));
+  border-radius: 0.625rem;
+}
+[data-theme="studio"] .input-field:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
+}
+
+/* Decorative orbs, blurs, floating shapes and parallax layers are off */
+[data-theme="studio"] .hero-parallax-orb,
+[data-theme="studio"] main [class~="blur"],
+[data-theme="studio"] main [class~="blur-xl"],
+[data-theme="studio"] main [class~="blur-2xl"],
+[data-theme="studio"] main [class~="blur-3xl"],
+[data-theme="studio"] main [class*="blur-["],
+[data-theme="studio"] main .animate-float {
+  display: none !important;
+}
+
+/* Hover lifts and big hover shadows are off */
+[data-theme="studio"] main .hover\:-translate-y-1:hover,
+[data-theme="studio"] main .hover\:-translate-y-2:hover,
+[data-theme="studio"] main .hover\:scale-105:hover,
+[data-theme="studio"] main .group:hover .group-hover\:scale-110,
+[data-theme="studio"] main .group:hover .group-hover\:scale-105 {
+  --tw-translate-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+}
+[data-theme="studio"] main .hover\:shadow-xl:hover,
+[data-theme="studio"] main .hover\:shadow-2xl:hover,
+[data-theme="studio"] main .hover\:shadow-glow:hover,
+[data-theme="studio"] main .hover\:shadow-glow-lg:hover,
+[data-theme="studio"] main .shadow-glow,
+[data-theme="studio"] main .shadow-2xl {
+  box-shadow: var(--shadow-sm) !important;
+}

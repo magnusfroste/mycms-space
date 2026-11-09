@@ -12,6 +12,8 @@ import { useHeaderModule } from "@/models/modules";
 import { cn } from "@/lib/utils";
 import ColorModeToggle from "@/components/ColorModeToggle";
 import { scrollToAnchor, getAnchorFallbackRoute } from "@/lib/utils/anchors";
+import { useIsStudio } from "@/hooks/useCurrentTheme";
+import HeaderStudio from "@/components/studio/HeaderStudio";
 
 // Contact is always shown as a CTA button, so hide DB nav links that duplicate it
 const isContactLink = (link: { label: string; url: string }) =>
@@ -31,6 +33,7 @@ const Header = () => {
   const navLinks = (user ? allNavLinks : allNavLinks.filter((l) => !l.url.startsWith('/admin')))
     .filter((l) => !isContactLink(l));
   const { config: headerConfig, isLoading } = useHeaderModule();
+  const isStudio = useIsStudio();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -56,6 +59,10 @@ const Header = () => {
       console.error("Error stopping speech:", error);
     }
   };
+
+  if (isStudio) {
+    return <HeaderStudio navLinks={navLinks} headerConfig={headerConfig} onNavigate={stopSpeech} />;
+  }
 
   const renderNavLink = (link: { label: string; url: string; is_external: boolean }, isMobile = false) => {
     const baseClasses = isMobile 
