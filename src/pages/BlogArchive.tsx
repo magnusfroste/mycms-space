@@ -17,14 +17,19 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/common/SEOHead';
 import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import BlogArchiveStudio from '@/components/studio/pages/BlogArchiveStudio';
 
 const BlogArchive = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const isStudio = useIsStudio();
   const { data: posts = [], isLoading: postsLoading } = useBlogPosts({
     status: 'published',
     categorySlug: selectedCategory || undefined,
+    // The data layer defaults to 10 posts; the archive lists them all
+    limit: 500,
   });
   const { data: categories = [] } = useBlogCategories();
 
@@ -34,6 +39,30 @@ const BlogArchive = () => {
       post.title.toLowerCase().includes(search.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isStudio) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <SEOHead
+          title="Blog"
+          description="Thoughts, ideas, and insights on technology, design, AI, and innovation."
+        />
+        <Header />
+        <main className="flex-1">
+          <BlogArchiveStudio
+            posts={filteredPosts}
+            isLoading={postsLoading}
+            categories={categories}
+            search={search}
+            onSearchChange={setSearch}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

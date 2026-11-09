@@ -20,6 +20,11 @@ export interface MarkdownContentProps {
   content: string;
   className?: string;
   compact?: boolean;
+  /**
+   * Render blank lines as extra spacer paragraphs (default true). Long-form
+   * article layouts with their own paragraph rhythm turn this off.
+   */
+  blankLineSpacers?: boolean;
 }
 
 // Preprocess content to preserve blank lines as visible spacing
@@ -45,10 +50,11 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   content,
   className,
   compact = false,
+  blankLineSpacers = true,
 }) => {
   if (!content) return null;
 
-  const processedContent = preprocessContent(content);
+  const processedContent = blankLineSpacers ? preprocessContent(content) : content;
 
   return (
     <div

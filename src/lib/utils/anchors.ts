@@ -6,8 +6,9 @@
 // ============================================
 
 const ANCHOR_ALIASES: Record<string, string[]> = {
-  projects: ['project-showcase', 'projects', 'portfolio', 'github', 'featured-carousel', 'featured'],
-  contact: ['contact-form', 'contact'],
+  projects: ['project-showcase', 'projects', 'portfolio', 'github', 'work', 'featured-carousel', 'featured'],
+  writing: ['blog', 'writing', 'posts'],
+  contact: ['contact-form', 'contact', 'cta-banner'],
   about: ['about-split', 'about'],
   expertise: ['expertise-grid', 'expertise', 'services'],
 };
@@ -15,6 +16,7 @@ const ANCHOR_ALIASES: Record<string, string[]> = {
 /** Fallback route when an anchor group has no section on the current page. */
 const ANCHOR_FALLBACK_ROUTES: Record<string, string> = {
   projects: '/github',
+  writing: '/blog',
   contact: '/contact',
 };
 

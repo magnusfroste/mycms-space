@@ -19,6 +19,8 @@ import NotFound from './NotFound';
 import { stripMarkdown } from '@/lib/utils/markdown';
 import { preloadMarkdown } from '@/components/common/markdownLoader';
 import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import ProjectCaseStudyStudio from '@/components/studio/pages/ProjectCaseStudyStudio';
 
 // Fetch the markdown chunk in parallel with the post/project data
 preloadMarkdown();
@@ -27,6 +29,7 @@ const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
   const navigate = useNavigate();
   const { data: repo, isLoading, error } = useGitHubRepoByName(repoName);
+  const isStudio = useIsStudio();
 
   if (isLoading) {
     return (
@@ -65,6 +68,11 @@ const ProjectCaseStudy = () => {
       />
       <Header />
 
+      {isStudio ? (
+        <main className="flex-1">
+          <ProjectCaseStudyStudio repo={repo} />
+        </main>
+      ) : (
       <main className="flex-1">
         <article className="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
           {/* Back link */}
@@ -222,6 +230,7 @@ const ProjectCaseStudy = () => {
           <RelatedProjects currentRepoName={repo.name} />
         </article>
       </main>
+      )}
 
       <Footer />
     </div>

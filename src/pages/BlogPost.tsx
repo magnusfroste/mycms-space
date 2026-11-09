@@ -19,6 +19,8 @@ import SEOHead from '@/components/common/SEOHead';
 import { buildCanonicalUrl } from '@/lib/utils/seo';
 import { preloadMarkdown } from '@/components/common/markdownLoader';
 import OptimizedImage from '@/components/common/OptimizedImage';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import BlogPostStudio from '@/components/studio/pages/BlogPostStudio';
 
 // Fetch the markdown chunk in parallel with the post/project data
 preloadMarkdown();
@@ -26,11 +28,12 @@ preloadMarkdown();
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading, error } = useBlogPostBySlug(slug || '');
-  const { data: relatedPosts = [] } = useBlogPosts({ status: 'published', limit: 3 });
+  const { data: relatedPosts = [] } = useBlogPosts({ status: 'published', limit: 4 });
   const { data: seoModule } = useSEOModule();
+  const isStudio = useIsStudio();
 
   // Filter out current post from related
-  const otherPosts = relatedPosts.filter((p) => p.slug !== slug).slice(0, 2);
+  const otherPosts = relatedPosts.filter((p) => p.slug !== slug).slice(0, isStudio ? 3 : 2);
   const articleJsonLd = post ? {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -120,6 +123,11 @@ const BlogPost = () => {
         jsonLd={articleJsonLd}
       />
       <Header />
+      {isStudio ? (
+        <main className="flex-1">
+          <BlogPostStudio post={post} otherPosts={otherPosts} />
+        </main>
+      ) : (
       <main className="flex-1">
         <article className="container max-w-3xl mx-auto px-4 py-16">
           {/* Back Link */}
@@ -221,6 +229,7 @@ const BlogPost = () => {
           )}
         </article>
       </main>
+      )}
       <Footer />
     </div>
   );

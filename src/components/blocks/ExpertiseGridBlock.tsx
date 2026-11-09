@@ -9,12 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/constants/iconMaps';
 import { cn } from '@/lib/utils';
 import type { ExpertiseGridBlockConfig } from '@/types/blockConfigs';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import ServiceCardsStudio from './studio/ServiceCardsStudio';
 
 interface ExpertiseGridBlockProps {
   config: Record<string, unknown>;
 }
 
-const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
+const ExpertiseGridClassic: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
   const typedConfig = config as ExpertiseGridBlockConfig;
   
   const title = typedConfig.title || 'What I Do';
@@ -137,6 +139,27 @@ const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
       </div>
     </section>
   );
+};
+
+// Studio: numbered hairline cards on a faint band ("How I can help")
+const ExpertiseGridStudio: React.FC<ExpertiseGridBlockProps> = ({ config }) => {
+  const typedConfig = config as ExpertiseGridBlockConfig;
+  const items = (typedConfig.items || [])
+    .filter((item) => item.enabled)
+    .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  return (
+    <ServiceCardsStudio
+      title={typedConfig.title || 'What I do'}
+      subtitle={typedConfig.subtitle}
+      columns={typedConfig.columns === 2 ? 2 : 3}
+      items={items}
+    />
+  );
+};
+
+const ExpertiseGridBlock: React.FC<ExpertiseGridBlockProps> = (props) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <ExpertiseGridStudio {...props} /> : <ExpertiseGridClassic {...props} />;
 };
 
 export default ExpertiseGridBlock;

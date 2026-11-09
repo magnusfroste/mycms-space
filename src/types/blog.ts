@@ -90,7 +90,8 @@ export interface UpdateBlogCategoryInput extends Partial<CreateBlogCategoryInput
 // Blog Block Config (for page_blocks)
 export interface BlogBlockConfig {
   display_mode?: 'latest' | 'featured' | 'category' | 'selected';
-  layout?: 'grid' | 'list' | 'cards' | 'magazine';
+  /** 'compact-list': dense rows (date in mono + title), e.g. 3 latest posts on the home page */
+  layout?: 'grid' | 'list' | 'cards' | 'magazine' | 'compact-list';
   posts_count?: number;
   show_excerpt?: boolean;
   show_reading_time?: boolean;
@@ -100,6 +101,8 @@ export interface BlogBlockConfig {
   selected_post_ids?: string[];
   heading?: string;
   subheading?: string;
+  /** Text of the archive link; defaults to "All N posts" */
+  view_all_text?: string;
 }
 
 // Default blog block config
