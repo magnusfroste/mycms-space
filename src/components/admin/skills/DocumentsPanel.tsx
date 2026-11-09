@@ -118,7 +118,12 @@ export default function DocumentsPanel() {
     setPreviewContent(null);
 
     if (file.mimeType?.startsWith('image/')) {
-      setPreviewContent(null); // Image uses URL directly
+      setPreviewContent(null);
+      // agent-documents is private: a public URL doesn't load, use a short-lived signed one.
+      if (file.bucket === 'agent-documents') {
+        const { data } = await supabase.storage.from(file.bucket).createSignedUrl(file.path, 600);
+        if (data?.signedUrl) setPreviewFile({ ...file, publicUrl: data.signedUrl });
+      }
       return;
     }
 
