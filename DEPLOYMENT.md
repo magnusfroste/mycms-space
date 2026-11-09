@@ -93,6 +93,17 @@ Files in the repo, and what to know about them:
 | `setup.sh`, `deploy.sh` | Interactive helpers. They write `VITE_SUPABASE_ANON_KEY`; rename it to `VITE_SUPABASE_PUBLISHABLE_KEY`. `setup.sh` can deploy all functions and push migrations with the Supabase CLI. |
 | `vercel.json` | Rewrites `/mcp`, `/sitemap.xml`, `/blog/:slug` and `/project/:repoName` to Supabase functions (MCP, dynamic sitemap, OG pages) and everything else to `index.html`. The URLs are hard-coded to froste.eu's Supabase project, and these rewrites only apply on Vercel, not on Lovable or Docker. |
 
+## Lockfiles
+
+Two lockfiles, one per package manager, both kept in sync with `package.json`:
+
+- `bun.lock` — used by Lovable, which updates it itself when dependencies change.
+- `package-lock.json` — used by npm: the Dockerfile, `deploy.sh`, `setup.sh` and Vercel.
+
+When you add or remove a dependency locally, use `npm install` / `npm uninstall`
+and let Lovable refresh `bun.lock` on its next sync (or run `bun install`).
+The old binary `bun.lockb` is gone; Bun ≥ 1.2 uses the text `bun.lock`.
+
 ## Troubleshooting
 
 - **Function change not live** — it was not deployed; ask Lovable to deploy

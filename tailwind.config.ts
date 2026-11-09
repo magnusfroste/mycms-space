@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssTypography from "@tailwindcss/typography";
 
 export default {
   darkMode: ["class"],
@@ -19,6 +20,55 @@ export default {
       },
     },
     extend: {
+      // Markdown (prose) follows the theme tokens, so it works in every theme
+      // and in dark mode without prose-invert colours of its own.
+      typography: () => {
+        const vars = {
+          "--tw-prose-body": "hsl(var(--foreground) / 0.88)",
+          "--tw-prose-headings": "hsl(var(--foreground))",
+          "--tw-prose-lead": "hsl(var(--muted-foreground))",
+          "--tw-prose-links": "hsl(var(--accent))",
+          "--tw-prose-bold": "hsl(var(--foreground))",
+          "--tw-prose-counters": "hsl(var(--muted-foreground))",
+          "--tw-prose-bullets": "hsl(var(--muted-foreground))",
+          "--tw-prose-hr": "hsl(var(--border))",
+          "--tw-prose-quotes": "hsl(var(--foreground))",
+          "--tw-prose-quote-borders": "hsl(var(--border))",
+          "--tw-prose-captions": "hsl(var(--muted-foreground))",
+          "--tw-prose-kbd": "hsl(var(--foreground))",
+          "--tw-prose-code": "hsl(var(--foreground))",
+          "--tw-prose-pre-code": "hsl(var(--foreground))",
+          "--tw-prose-pre-bg": "hsl(var(--muted))",
+          "--tw-prose-th-borders": "hsl(var(--border))",
+          "--tw-prose-td-borders": "hsl(var(--border))",
+        };
+        const invert = Object.fromEntries(
+          Object.entries(vars).map(([k, v]) => [k.replace("--tw-prose-", "--tw-prose-invert-"), v]),
+        );
+        return {
+          DEFAULT: {
+            css: {
+              ...vars,
+              ...invert,
+              maxWidth: "none",
+              "code::before": { content: '""' },
+              "code::after": { content: '""' },
+              // No typographic quote marks around blockquotes.
+              "blockquote p:first-of-type::before": { content: "none" },
+              "blockquote p:last-of-type::after": { content: "none" },
+              // Images inside a paragraph (README badges) sit in a row, as on GitHub.
+              "p img": { display: "inline-block", marginTop: "0.25em", marginBottom: "0.25em", marginRight: "0.25em" },
+            },
+          },
+          // prose-sm sets its own image margins; keep inline images (badges) tight there too.
+          sm: {
+            css: {
+              "p img": { marginTop: "0.25em", marginBottom: "0.25em" },
+            },
+          },
+        };
+      },
+
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -221,5 +271,5 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [tailwindcssAnimate, tailwindcssTypography],
 } satisfies Config;
