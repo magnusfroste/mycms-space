@@ -72,7 +72,8 @@ const BlogManager = ({ section }: { section?: string }) => {
     }
   }, [searchParams, setSearchParams]);
 
-  const { data: posts = [], isLoading: postsLoading } = useBlogPosts();
+  // fetchBlogPosts defaults to 10 rows; the admin list needs every post
+  const { data: posts = [], isLoading: postsLoading } = useBlogPosts({ limit: 1000 });
   const { data: categories = [], isLoading: categoriesLoading } = useBlogCategories(true);
   const deletePost = useDeleteBlogPost();
   const deleteCategory = useDeleteBlogCategory();

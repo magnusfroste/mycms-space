@@ -136,7 +136,8 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
         author_name: authorName,
         reading_time_minutes: readingTime,
         status: finalStatus,
-        published_at: finalStatus === 'published' ? new Date().toISOString() : undefined,
+        // Keep the original publish date when re-saving an already published post
+        published_at: finalStatus === 'published' ? (post?.published_at || new Date().toISOString()) : undefined,
         scheduled_for: finalStatus === 'scheduled' && scheduledFor ? scheduledFor.toISOString() : undefined,
         featured,
         seo_title: seoTitle || undefined,
@@ -380,6 +381,7 @@ const BlogPostEditor = ({ postId, onClose }: BlogPostEditorProps) => {
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="published">Published</SelectItem>
                     <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

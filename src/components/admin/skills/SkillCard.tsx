@@ -1,22 +1,17 @@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import type { AgentSkill, AgentScope, AgentSkillCategory } from '@/types/agent';
+import { AGENT_SKILL_CATEGORIES, type AgentSkill, type AgentScope } from '@/types/agent';
 
 const SCOPE_COLORS: Record<AgentScope, string> = {
   internal: 'bg-blue-500/10 text-blue-600 border-blue-200',
-  external: 'bg-green-500/10 text-green-600 border-green-200',
+  public: 'bg-green-500/10 text-green-600 border-green-200',
   both: 'bg-purple-500/10 text-purple-600 border-purple-200',
 };
 
-const CATEGORY_LABELS: Record<AgentSkillCategory, string> = {
-  content: 'Content',
-  crm: 'CRM',
-  communication: 'Communication',
-  automation: 'Automation',
-  search: 'Search',
-  analytics: 'Analytics',
-};
+const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+  AGENT_SKILL_CATEGORIES.map((c) => [c.value, c.label]),
+);
 
 function handlerLabel(handler: string) {
   const [type] = handler.split(':');

@@ -83,7 +83,7 @@ export default function McpPanel() {
         description="Enabled skills with scope public, both or external are offered to operators with the content scope, next to the built-in CMS tools."
       >
         {exposedSkills.length === 0 ? (
-          <p className="px-[18px] py-6 text-[13px] text-muted-foreground">No skills are exposed. Set a skill's scope to external or both in the Skills tab.</p>
+          <p className="px-[18px] py-6 text-[13px] text-muted-foreground">No skills are exposed. Set a skill's scope to public or both in the Skills tab.</p>
         ) : (
           <div className="grid gap-2 p-4 sm:grid-cols-2">
             {exposedSkills.map((s) => (
