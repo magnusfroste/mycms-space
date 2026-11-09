@@ -174,7 +174,7 @@ export default function OverviewView() {
         title="Overview"
         description={`${greeting()}. Here is how ${host} is doing ${labels.phrase}.`}
         actions={
-          <Segmented<Period>
+          <Segmented
             label="Period"
             value={period}
             onChange={setPeriod}
