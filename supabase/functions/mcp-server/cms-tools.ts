@@ -36,6 +36,8 @@ const SECRET_MODULES = new Set(["api_tokens", "gmail_signals"]);
 const LOCKED_FOR_MCP_UPDATE = new Set(["api_tokens", "gmail_signals", "webhooks"]);
 // Keys in the ai module that choose where requests (and API keys) go.
 const AI_PROVIDER_KEYS = new Set(["integration", "active_integration", "webhook_url", "admin_ai_config", "admin_ai_provider"]);
+// Block types the site can render (src/components/blocks/BlockRenderer.tsx).
+const BLOCK_TYPES = ["chat-hero", "expertise-grid", "github", "blog", "cta-banner", "text-section", "contact-form"];
 const MEDIA_BUCKETS = ["blog-images", "featured-images", "about-me-images", "project-images", "cms-files"];
 const MAX_TEXT = 200_000;
 
@@ -182,13 +184,13 @@ const TOOLS: CmsTool[] = [
   {
     name: "block_types",
     scope: "read",
-    description: "List the block types in use with one example config each, so you know which fields a block takes before adding or editing one.",
+    description: "List the block types the site can render, with an example config from a live block where one exists, so you know which fields a block takes before adding or editing one.",
     inputSchema: obj(),
     run: async (sb) => {
       const { data } = await sb.from("page_blocks").select("block_type, block_config").order("updated_at", { ascending: false });
       const seen: Record<string, unknown> = {};
       for (const b of data || []) if (!(b.block_type in seen)) seen[b.block_type] = b.block_config;
-      return Object.entries(seen).map(([block_type, example_config]) => ({ block_type, example_config }));
+      return BLOCK_TYPES.map((block_type) => ({ block_type, example_config: seen[block_type] ?? null }));
     },
   },
   {
@@ -473,7 +475,7 @@ const TOOLS: CmsTool[] = [
     run: async (sb, a, ctx) => {
       const page = need(a, "page_slug", 90);
       const type = need(a, "block_type", 60);
-      if (!/^[a-z0-9-]+$/.test(type)) throw new Error("block_type must be lowercase letters, digits and dashes.");
+      if (!BLOCK_TYPES.includes(type)) return { error: `Unknown block type '${type}'. Use one of: ${BLOCK_TYPES.join(", ")}.` };
       const config = a.config === undefined ? {} : a.config;
       if (!isPlainObject(config)) throw new Error("config must be an object.");
       const { data: blocks } = await sb.from("page_blocks").select("id, order_index").eq("page_slug", page).order("order_index");
