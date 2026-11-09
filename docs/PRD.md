@@ -1,313 +1,98 @@
-# mycms.space - Product Requirements Document (PRD)
-
-**Version:** 1.0  
-**Last Updated:** 2025-02-03  
-**Status:** Active Development
-
----
-
-## 📋 Product Vision & Mission
-
-### Vision
-**Everyone deserves to present themselves beautifully online.**
-
-mycms.space is an AI-native personal CMS that empowers individuals to create and manage their digital presence with intelligent assistance. We're building the future of personal websites where AI agents help you create, manage, and enhance your content.
-
-### Mission
-- **Democratize beautiful web presence** - Make professional websites accessible to everyone
-- **AI-first approach** - Integrate agentic AI capabilities at the core
-- **Self-hosting freedom** - Give users full control of their data and infrastructure
-- **Developer-friendly** - Clean architecture that's easy to understand and extend
-
----
-
-## 🎯 Product Overview
-
-mycms.space is a self-hosted, block-based CMS with AI-native features. It combines:
-
-- **Block-based page builder** - Compose pages with 20+ reusable blocks
-- **AI chat assistant** - Intelligent agent that knows your content
-- **Blog platform** - Full-featured blog with Markdown support
-- **Project portfolio** - Showcase your work beautifully
-- **Multi-provider AI** - n8n, OpenAI, Gemini, Lovable AI support
-- **Analytics** - Track visitors and engagement
-- **Newsletter** - Email campaigns via Resend
-- **Dynamic pages** - Create unlimited custom pages
-
----
-
-## ✨ Current Features
-
-### 1. Content Management
-
-#### Block-Based Page Builder
-**Status:** ✅ Implemented
-
-The core of mycms.space is a flexible block system where all content is stored as JSONB in PostgreSQL.
-
-**Available Blocks (20+):**
-- `HeroBlock` - Hero sections with animations
-- `AboutSplitBlock` - About sections with image/text split
-- `ProjectShowcaseBlock` - Project portfolio display
-- `BlogBlock` - Blog post listings
-- `ExpertiseGridBlock` - Services/expertise grid
-- `FeaturedCarouselBlock` - Featured content carousel
-- `TestimonialCarouselBlock` - Customer testimonials
-- `StatsCounterBlock` - Animated statistics
-- `ContactFormBlock` - Contact forms
-- `NewsletterSubscribeBlock` - Newsletter signup
-- `ChatWidgetBlock` - AI chat widget
-- `CtaBannerBlock` - Call-to-action banners
-- `BentoGridBlock` - Modern bento-style layouts
-- `MarqueeBlock` - Scrolling content
-- `ParallaxSectionBlock` - Parallax effects
-- `VideoHeroBlock` - Video backgrounds
-- `ImageTextBlock` - Image + text combinations
-- `TextSectionBlock` - Rich text sections
-- `SectionDivider` - Visual separators
-- `SpacerBlock` - Spacing control
-
-**Key Features:**
-- Drag-and-drop reordering
-- Real-time preview
-- JSONB storage (no migrations needed for new fields)
-- Version history (automatic via triggers)
-- Per-block configuration
-- Responsive by default
-
-#### Dynamic Pages
-**Status:** ✅ Implemented
-
-Create unlimited custom pages with unique slugs:
-- `/about` - About page
-- `/services` - Services page
-- `/contact` - Contact page
-- Any custom slug you want
-
-Each page can have its own set of blocks, SEO settings, and configuration.
-
-#### Blog Platform
-**Status:** ✅ Implemented
-
-Full-featured blog with:
-- Markdown editor with live preview
-- Cover images with automatic optimization
-- Categories and tags
-- Reading time calculation
-- SEO optimization
-- RSS feed (planned)
-- Archive page with filtering
-- Individual blog post pages
-- Draft/published status
-
-### 2. AI Integration System
-
-#### Multi-Provider AI Chat
-**Status:** ✅ Implemented
-
-Universal AI chat system supporting multiple providers:
-
-**Supported Providers:**
-1. **n8n Webhook** ⭐ (Primary)
-   - Full workflow control
-   - Multi-channel notifications (Telegram, WhatsApp, Email)
-   - Appointment booking integration
-   - Custom business logic
-   - Receives full conversation history + site context
-   
-2. **Lovable AI**
-   - Built-in, no API key needed
-   - Gemini 2.5 Flash/Pro models
-   - GPT-5 Mini/Full models
-   
-3. **OpenAI Direct**
-   - GPT-4o, GPT-4o-mini, GPT-4 Turbo
-   - Direct API integration
-   
-4. **Google Gemini Direct**
-   - Gemini 1.5 Flash/Pro
-   - Gemini 2.0 Flash
-
-**AI Chat Features:**
-- Conversation history (stored in browser)
-- Site context injection (pages + blogs)
-- Configurable system prompts
-- Session management
-- Quick actions
-- Multi-turn conversations
-- Provider switching on-the-fly
-
-#### n8n Integration (Flagship Feature)
-**Status:** ✅ Fully Implemented
-
-The n8n integration is our most powerful feature, enabling:
-
-**What n8n Receives:**
-```json
-{
-  "messages": [
-    { "role": "user", "content": "..." },
-    { "role": "assistant", "content": "..." }
-  ],
-  "sessionId": "unique-session-id",
-  "systemPrompt": "Your custom AI personality",
-  "siteContext": {
-    "pages": [...],
-    "blogs": [...]
-  }
-}
-```
-
-**Use Cases:**
-- **Contact Management** - Visitor wants to contact you → n8n sends Telegram/WhatsApp/Email
-- **Appointment Booking** - AI schedules meetings via n8n workflows
-- **Lead Qualification** - Intelligent routing based on conversation
-- **Multi-channel Notifications** - Get notified everywhere
-- **Custom Workflows** - Unlimited automation possibilities
-
-**Example n8n Workflow:**
-1. Receive webhook from chat
-2. Process with AI (OpenAI/Anthropic/local LLM)
-3. If visitor wants contact → Send Telegram notification
-4. If booking request → Create calendar event
-5. Send email confirmation
-6. Log to CRM
-
-### 3. Admin Dashboard
-
-**Status:** ✅ Implemented
-
-Comprehensive admin interface at `/admin`:
-
-**Sections:**
-- **Dashboard** - Analytics overview
-- **Page Builder** - Visual block editor
-- **Classic Builder** - Code-based page editing
-- **Blog Manager** - Create/edit blog posts
-- **Projects** - Portfolio management
-- **Navigation** - Menu configuration
-- **AI Settings** - Configure AI chat
-- **Integrations** - Connect external services
-- **SEO** - Meta tags and optimization
-- **Analytics** - Visitor tracking
-- **Newsletter** - Email campaigns
-- **Messages** - Contact form submissions
-- **History** - Version control
-
-**Features:**
-- Supabase authentication
-- Real-time updates
-- Responsive design
-- Dark/light mode
-- Keyboard shortcuts
-- Auto-save (planned)
-
-### 4. Analytics & Tracking
-
-**Status:** ✅ Implemented
-
-Built-in analytics system:
-- Page view tracking
-- Project demo clicks
-- Chat session tracking
-- Referrer tracking
-- User agent detection
-- Google Analytics integration
-- Custom event tracking
-
-### 5. Newsletter System
-
-**Status:** ✅ Implemented
-
-Email marketing via Resend:
-- Subscriber management
-- Campaign creation
-- Template system
-- Send tracking
-- Unsubscribe handling
-
-### 6. Utility Integrations
-
-#### Firecrawl
-**Status:** ✅ Connected via Lovable Connector
-
-Web scraping and content extraction:
-- Scrape any URL
-- Web search with content extraction
-- Site mapping
-- Recursive crawling
-
-#### Resend
-**Status:** ✅ Implemented
-
-Email delivery:
-- Newsletter campaigns
-- Transactional emails
-- Domain verification
-- Delivery tracking
-
----
-
-## 🎯 User Personas
-
-### Primary: Individual Professionals
-- Freelancers, consultants, small business owners
-- Need a professional online presence
-- Want AI assistance but maintain control
-- Value self-hosting and data ownership
-
-### Secondary: Developers
-- Want to customize and extend
-- Appreciate clean architecture
-- Need deployment flexibility
-- Value open source
-
----
-
-## 📊 Success Metrics
-
-### User Engagement
-- Daily active users (DAU)
-- Pages created per user
-- Blog posts published
-- Chat sessions initiated
-
-### Technical
-- Page load time < 2s
-- 99.9% uptime
-- < 100ms API response time
-- 99% test coverage
-
-### Business
-- User satisfaction (NPS)
-- Feature adoption rate
-- Community contributions
-- GitHub stars
-
----
-
-## 🚀 Future Roadmap
-
-See [ROADMAP.md](./ROADMAP.md) for detailed roadmap.
-
----
-
-## 📞 Support & Community
-
-### Getting Help
-- Read this documentation
-- Check existing issues on GitHub
-- Ask in discussions
-- Contact maintainers
-
-### Reporting Bugs
-1. Check if already reported
-2. Create detailed issue with:
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Environment details
-   - Screenshots/logs if applicable
-
----
-
-*Last updated: February 2026*
+# Product requirements
+
+## Purpose
+
+A personal CMS for **froste.eu**, the site of Magnus Froste, consultant.
+
+**North star:** clients and recruiters find Magnus and get in touch.
+Measured as inquiries per month (contact messages), shown first in the admin
+Overview and in the MCP tool `site_overview`.
+
+## Users
+
+| User | Needs |
+|---|---|
+| **Visitor** — potential client or recruiter | Understand quickly what Magnus does, see proof (projects, writing), check availability and fit, and make contact. |
+| **Visitor's agent** — an AI assistant researching Magnus | Read the public profile and projects in a structured way, check job fit, leave a message (open MCP tools, `llms.txt`). |
+| **Operator** — Magnus or an external agent acting for him | Keep content current and decide on proposals, without having to live in an admin UI. |
+
+## Principles
+
+1. **Agents operate, the owner decides.** External agents can do almost
+   everything in the CMS through MCP, limited by key scopes. Keys and secrets
+   stay with the owner.
+2. **Autopilot proposes, never publishes.** Internal automation fills a review
+   queue that is capped and expires.
+3. **One source for the profile.** The knowledge base (markdown documents,
+   public or private) grounds the chat, the MCP profile tools and the CV
+   tools.
+4. **Private by default.** Visitors and anonymous agents see only published,
+   public content. Personal data stays out of public documents.
+5. **Content is data.** Pages are ordered blocks in the database; there is no
+   visual builder.
+
+## Scope
+
+### Public site
+
+- Landing page built from blocks: chat hero with Magnet, how-I-can-help
+  cards, projects, latest posts, call to action.
+- `/chat` — full-page conversation with Magnet with starting suggestions.
+- `/contact` — contact form; messages land in the admin inbox.
+- `/blog` and posts; `/project/:repo` case studies from GitHub repos
+  enriched by AI; other CMS pages by slug (e.g. `/github`).
+- SEO: per-page meta, OG pages for posts and projects, dynamic sitemap,
+  `llms.txt`, `mcp.json`.
+- Visitor analytics (page views, chat sessions) and optional Google
+  Analytics.
+
+### Magnet (public chat)
+
+- Grounded in the profile header and public knowledge base documents.
+- Public tools from skills (e.g. tailored CV, project deep dive,
+  availability).
+- Provider and prompt set by the owner; visitors cannot change them.
+- Voice input/output and document upload (rate limited).
+
+### Operators
+
+- MCP server with scoped keys: read, content, review, settings.
+- Tools for overview, blog, pages and blocks, projects, inbox,
+  conversations, analytics, knowledge base, newsletter, review queue,
+  settings, modules, navigation and automations.
+- Every call logged; owner sees calls per operator.
+
+### Autopilot
+
+- Scheduled loop with skills, automations (cron/signal/event) and
+  objectives.
+- Research, blog and newsletter drafts, signals from Gmail and the Chrome
+  extension.
+- Guardrails: at most `max_waiting_reviews` waiting items, drafts expire
+  after `draft_expiry_days`.
+
+### Admin
+
+- Overview with the north star, a visitor → chat → inquiry funnel and what
+  needs attention.
+- Review queue, Operators & Autopilot, Magnet settings.
+- Content: knowledge base (versions, public/private), blog, projects, pages
+  (block outline + JSON), media, newsletter.
+- Audience: inbox, conversations, analytics.
+- Platform: integrations, modules, site settings, activity log with restore.
+
+## Non-goals
+
+- Agent-to-agent federation (A2A) or a network of sites.
+- A drag-and-drop page builder.
+- Multi-tenant hosting; this is one person's site.
+- Autopilot publishing or sending anything without an operator decision.
+
+## Success measures
+
+- Inquiries per month (north star) and the funnel visitors → chat →
+  inquiry.
+- Review queue stays small and is decided on (no pile-up of proposals).
+- Knowledge base kept current (`site_overview` flags it after 30 days without
+  change).
+- No personal data or private content readable by visitors.

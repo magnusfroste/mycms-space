@@ -1,395 +1,147 @@
-# mycms.chat
+# mycms — personal CMS for froste.eu
 
-**Your AI-Powered Digital Presence — Self-Hosted, Federated, Agentic**
+The site and back office of **Magnus Froste**, consultant, at
+[www.froste.eu](https://www.froste.eu).
 
-mycms.chat is an open-source, self-hostable CMS that transforms your online presence into an intelligent digital assistant. Built with agentic AI at its core, it represents you 24/7, engaging visitors, generating content, and connecting with other digital agents across the web.
+**North star:** clients and recruiters find Magnus and get in touch.
+Everything here — the landing page, the AI chat, the knowledge base, the
+agents — exists to turn visits into inquiries.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## How it works
 
----
+Three agent roles share one Supabase backend:
 
-## 🌟 Vision: The Agentic Web
+| Role | What it does |
+|---|---|
+| **Operator** | External agents (Hermes, Claude, ChatGPT …) — or Magnus in the admin — run the CMS through the **MCP server** with scoped API keys: `read`, `content`, `review`, `settings`. Keys and secrets are admin-only. |
+| **Autopilot** | The internal loop: skills, automations and objectives. It researches and drafts, but only **proposes** into a review queue — it never publishes on its own. Guardrails cap the queue (`max_waiting_reviews`) and expire old drafts (`draft_expiry_days`). |
+| **Magnet** | The public AI chat. Grounded in the profile header and the **public** knowledge base documents; read-only towards the CMS. |
 
-In the future, everyone will have a **digital twin** — an AI agent that represents them online, knows their expertise, and can interact on their behalf. mycms.chat is building that future today.
+The profile lives in a **knowledge base**: markdown documents, public or
+private, versioned, editable through `kb_*` tools. Public documents refuse
+email addresses and phone numbers on agent writes.
 
-### What Makes This Different?
+Pages are **ordered blocks stored as data**. There is no visual page
+builder: operators edit blocks through MCP, and the admin has a block outline
+with a JSON editor. Block types: `chat-hero`, `text-section`,
+`expertise-grid`, `github`, `blog`, `cta-banner`, `contact-form`.
 
-| Traditional CMS | mycms.chat |
-|-----------------|------------|
-| Static content | Living, breathing digital presence |
-| Manual updates | AI-assisted content generation |
-| Isolated websites | Federated network of agents |
-| Read-only visitors | Interactive conversations |
-| One-way communication | Agent-to-agent collaboration |
+More: [docs/AGENTS.md](docs/AGENTS.md) · [docs/MCP.md](docs/MCP.md) ·
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-### The Network Effect
+## Public site
 
-When multiple people deploy mycms.chat instances:
-- **Agents can discover each other** via standardized Agent Cards
-- **Visitors get referrals** ("Let me connect you with an expert on that topic")
-- **Content propagates** across the network
-- **Collective intelligence** emerges from individual agents
+Studio theme. Routes:
 
----
+- `/` — landing page from blocks (chat hero, how I can help, projects, blog,
+  call to action)
+- `/chat` — full-page chat with Magnet
+- `/contact` — contact form
+- `/blog`, `/blog/:slug` — blog
+- `/project/:repoName` — project case study from a synced GitHub repo
+- `/:slug` — other CMS pages, e.g. `/github`
+- everything else — 404
 
-## 🚀 Roadmap: From Personal CMS to Digital Agent Network
+## Admin (`/admin`)
 
-### Phase 1: Personal Digital Assistant ✅ (Current)
-- [x] AI chat widget on landing page
-- [x] Contextual knowledge from site content
-- [x] Configurable AI persona (system prompt)
-- [x] Tool integration via n8n (email, search, etc.)
-- [x] Block-based page builder
-- [x] Blog with Markdown support
-- [x] Project portfolio
-- [x] Newsletter system
+| Group | Views |
+|---|---|
+| — | Overview (north star, funnel, needs attention) · Review queue |
+| Agents | Operators & Autopilot · Magnet (public chat) |
+| Content | Knowledge base · Blog · Projects · Pages · Media · Newsletter |
+| Audience | Inbox · Conversations · Analytics |
+| Platform | Integrations · Modules · Site settings · Activity log |
 
-### Phase 2: Content AI Pipeline 🚧 (Next)
-- [ ] **Multi-channel content generation**
-  - Generate LinkedIn posts from blog content
-  - Create Twitter/X threads
-  - Draft newsletter editions
-  - Auto-summarize for different audiences
-- [ ] **Scheduled publishing**
-  - Queue content for optimal times
-  - Cross-platform coordination
-- [ ] **Tone & style adaptation**
-  - Match owner's voice
-  - Adapt for each platform
+Plus **Ask Magnet** (admin chat) and ⌘K search in the top bar.
 
-### Phase 3: Agent Identity & Discovery 📋 (Planned)
-- [x] **MCP server** (`/mcp.json`)
-  - Profile, knowledge base and projects as MCP tools
-  - Agents can maintain the knowledge base with an API key
-- [ ] **Agent Registry**
-  - Optional public directory
-  - Searchable by expertise
-- [ ] **Verification**
-  - Link to social profiles
-  - Domain ownership proof
+## MCP quick start (operators)
 
-### Phase 4: Federation & Collaboration 🔮 (Future)
-- [ ] **Referral network**
-  - "I don't know, but X does"
-  - Credit and attribution
-- [ ] **Shared knowledge graphs**
-  - Opt-in knowledge sharing
-  - Privacy-preserving queries
+1. Endpoint: `<SUPABASE_URL>/functions/v1/mcp-server` (streamable HTTP,
+   JSON-RPC). The admin sidebar shows it with a copy button.
+2. Create a key: admin → **Operators & Autopilot** → **Connect an agent**.
+   Pick scopes; the key is shown once.
+3. Add to the agent's MCP config:
 
----
+   ```json
+   {
+     "mcpServers": {
+       "mycms": {
+         "url": "<SUPABASE_URL>/functions/v1/mcp-server",
+         "headers": { "Authorization": "Bearer <YOUR_MCP_KEY>" }
+       }
+     }
+   }
+   ```
 
-## 🏗️ Architecture
+4. Start with the `site_overview` tool.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     MYCMS.CHAT INSTANCE                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐           │
-│  │   Resume    │   │    Blog     │   │  Projects   │           │
-│  │   /CV       │   │   Posts     │   │  Portfolio  │           │
-│  └──────┬──────┘   └──────┬──────┘   └──────┬──────┘           │
-│         │                 │                 │                   │
-│         └────────────┬────┴────────────────┘                   │
-│                      ▼                                          │
-│              ┌───────────────┐                                  │
-│              │  Site Context │  ◄─── Knowledge Base             │
-│              └───────┬───────┘                                  │
-│                      ▼                                          │
-│              ┌───────────────┐      ┌───────────────┐          │
-│              │  AI Agent     │◄────►│    Tools      │          │
-│              │  (Magnet)     │      │  (n8n/MCP)    │          │
-│              └───────┬───────┘      └───────────────┘          │
-│                      │                                          │
-│         ┌────────────┼────────────┐                            │
-│         ▼            ▼            ▼                            │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────┐                   │
-│  │  Chat    │ │ Content  │ │   MCP        │                   │
-│  │  Widget  │ │ Generator│ │   Server     │                   │
-│  └──────────┘ └──────────┘ └──────────────┘                   │
-│                                    │                            │
-└────────────────────────────────────┼────────────────────────────┘
-                                     │
-                                     ▼
-                    ┌────────────────────────────────┐
-                    │    FEDERATED AGENT NETWORK     │
-                    │                                │
-                    │  ┌──────┐  ┌──────┐  ┌──────┐ │
-                    │  │Agent │◄►│Agent │◄►│Agent │ │
-                    │  │  A   │  │  B   │  │  C   │ │
-                    │  └──────┘  └──────┘  └──────┘ │
-                    └────────────────────────────────┘
-```
+Tools by scope:
 
-### Data-Model-View Pattern
+| Scope | Tools |
+|---|---|
+| none (anonymous) | `get_profile`, `get_resume`, `kb_list`, `kb_get`, `list_projects`, `get_project`, `search_projects`, `analyze_job_fit`, `generate_tailored_cv`, `contact_magnus` |
+| `read` | `site_overview`, `blog_list`, `blog_get`, `pages_list`, `page_get`, `block_types`, `projects_list`, `inbox_list`, `conversations_list`, `conversation_get`, `analytics_summary`, `review_queue_list`, `autopilot_status`, `settings_get`, `modules_list`, `nav_list`, `newsletter_overview`, `media_list`, `activity_log` (+ private knowledge base documents) |
+| `content` | `kb_upsert`, `kb_append`, `kb_delete`, `blog_upsert`, `page_block_update`, `page_block_add`, `page_block_move`, `page_block_delete`, `project_update`, `inbox_mark`, `newsletter_draft` (+ public agent skills) |
+| `review` | `review_decide`, `blog_publish`, `newsletter_send` |
+| `settings` | `settings_update`, `module_toggle`, `nav_update`, `automation_update` (+ internal agent skills) |
 
-```
-src/
-├── data/          # Pure Supabase API calls
-├── models/        # React Query hooks + business logic
-├── components/    # UI components (View layer)
-├── types/         # TypeScript definitions
-└── hooks/         # Custom React hooks
-```
+Legacy key scopes still work: `tools:call` = all, `tools:read` = `read`.
+Details in [docs/MCP.md](docs/MCP.md).
 
----
+## Tech stack
 
-## ✨ Features
+- React 18 · TypeScript · Vite · Tailwind CSS · shadcn/ui · TanStack Query
+- Supabase: Postgres with RLS, Auth, Storage, Edge Functions (Deno), pg_cron
+- AI: OpenAI, Gemini, Lovable AI gateway, any OpenAI-compatible endpoint, or
+  an n8n webhook — chosen in the admin
+- Integrations: GitHub, Gmail, Resend, Firecrawl, Unsplash, a Chrome
+  extension for signals
 
-### Core CMS
-- 🎨 **Block-based page builder** — Compose pages with reusable, configurable blocks
-- 📝 **Blog with Markdown** — Write and publish with rich formatting
-- 🎯 **Project portfolio** — Showcase your work beautifully
-- 📊 **Analytics tracking** — Understand your audience (internal + GA4)
-- 🌓 **Dark/light mode** — Automatic theme switching
-- 📱 **Fully responsive** — Perfect on all devices
-
-### AI-Native Features
-- 🤖 **Conversational AI assistant** — Represents you to visitors
-- 🧠 **Contextual knowledge** — Learns from your content
-- ✨ **Text enhancement** — AI-powered content improvement
-- 📰 **Newsletter automation** — AI-assisted communications
-- 🔧 **Tool integration** — Connect to external services via n8n
-
-### Self-Hosting Ready
-- 🐳 **Docker support** — One command deployment
-- ⚡ **EasyPanel integration** — VCS-based auto-deployment
-- 🔐 **Secrets management** — Secure API key storage
-- 🌐 **Multiple hosting options** — Vercel, Netlify, Render, VPS
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18** + **TypeScript** — Modern, type-safe UI
-- **Vite** — Lightning-fast builds
-- **TanStack Query** — Smart data fetching
-- **shadcn/ui** + **Tailwind CSS** — Beautiful, customizable design
-- **React Router** — Client-side routing
-
-### Backend
-- **Supabase** — Database, Auth, Storage, Realtime
-- **Edge Functions** — Serverless AI processing
-- **PostgreSQL** — Reliable data storage
-
-### AI Options
-| Provider | Self-Hosted | Cloud | Notes |
-|----------|-------------|-------|-------|
-| **Lovable AI** | ❌ | ✅ | Zero-config, recommended for Lovable Cloud |
-| **OpenAI** | ❌ | ✅ | GPT-4, GPT-5 via API |
-| **OpenRouter** | ❌ | ✅ | Multi-model gateway |
-| **n8n + Ollama** | ✅ | ❌ | Fully local AI processing |
-| **Ollama Direct** | ✅ | ❌ | Run LLMs locally (planned) |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Node.js** 18+ or **Bun** 1.0+
-- **Git**
-- **Supabase** account (or self-hosted)
-
-### Installation
+## Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/mycms-chat.git
-cd mycms-chat
-
-# Install dependencies
 npm install
-
-# Run interactive setup
-./setup.sh
-
-# Start development server
-npm run dev
+npm run dev       # local dev server
+npm run build     # production build to dist/
+npm run lint
 ```
 
-Visit `http://localhost:5173`
+The app needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+(in `.env`). There is no test suite.
 
----
+## Deployment
 
-## 📦 Deployment Options
+Production runs on Lovable, synced with `main` on GitHub. Edge functions are
+**not** deployed by the sync — ask Lovable to deploy changed functions.
+Migrations are in `supabase/migrations/`. See [DEPLOYMENT.md](DEPLOYMENT.md),
+including the state of the self-hosting files.
 
-### 1. Railway (Recommended for Cloud Deployment)
+## Security in short
 
-Railway provides the best balance of ease-of-use and features:
+- Visitors can only read published, public content (blocks only on
+  published pages); everything else is admin-only through RLS.
+- Scheduled and agent functions accept only pg_cron (cron secret), the
+  service role or a signed-in admin.
+- Public AI endpoints are rate limited per IP; the public chat ignores any
+  provider or prompt sent by the browser.
+- MCP keys are hashed, scoped, revocable and every call is logged.
 
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
+## Repository layout
 
-# Login
-railway login
-
-# Initialize project
-railway init
-
-# Set environment variables
-railway variables set VITE_SUPABASE_URL=https://your-project.supabase.co
-railway variables set VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
-
-# Deploy
-railway up
+```
+src/                     React app (pages, components, data → models → views)
+supabase/functions/      edge functions (mcp-server, ai-chat, agent-*, …)
+supabase/migrations/     database schema and policies
+public/                  llms.txt, mcp.json, robots.txt, sitemap.xml
+chrome-extension/        signal capture extension
+docs/                    PRD, architecture, agents, MCP, roadmap, redesign sketches
 ```
 
-**Why Railway?**
-- Automatic HTTPS
-- Built-in CI/CD
-- Preview deployments
-- Can host frontend + database
-- GitHub integration
-- Real-time logs and metrics
+## Docs
 
-**Recommended Setup:**
-- Frontend on Railway
-- Supabase Cloud for database/backend
-
-### 2. Docker (Recommended for Self-Hosting)
-
-```bash
-# Build and run
-docker build -t mycms-chat:latest .
-docker run -d \
-  --name mycms-chat \
-  -p 80:80 \
-  -e VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-  -e VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
-  mycms-chat:latest
-```
-
-### EasyPanel (VCS Integration)
-
-1. Create application from Git repository
-2. Add environment variables
-3. Deploy — auto-updates on every push
-
-### Cloud Platforms
-
-- **Vercel**: `vercel --prod`
-- **Netlify**: `netlify deploy --prod`
-- **Render**: Connect GitHub, auto-detect Vite
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
-
----
-
-## 🔧 AI Configuration
-
-### Option 1: n8n Webhooks (Flexible, Self-Hostable)
-
-Connect to an n8n workflow for full control over AI processing:
-
-1. Deploy n8n (self-hosted or cloud)
-2. Create a webhook workflow with AI processing
-3. Configure webhook URL in Admin → AI Settings
-
-**Advantages:**
-- Run Ollama locally for 100% offline AI
-- Complex multi-step workflows
-- Integration with 500+ services
-
-### Option 2: Direct AI Providers
-
-Configure API keys in Supabase secrets:
-
-```bash
-supabase secrets set OPENAI_API_KEY=sk-...
-supabase secrets set GEMINI_API_KEY=...
-```
-
-### Option 3: Lovable AI (Cloud Only)
-
-If using Lovable Cloud, AI is pre-configured with no additional setup.
-
----
-
-## 🤖 Agent Access: MCP
-
-External agents (Hermes, Claude, ChatGPT, …) work with the CMS through one interface: the **MCP server** (`supabase/functions/mcp-server`, manifest at `/mcp.json`).
-
-- **Open without a key:** profile, knowledge base (public documents), projects, job-fit analysis.
-- **With an API key** (Admin → Agency → MCP Server): write to the knowledge base (`kb_upsert`, `kb_append`) and run the site's agent skills.
-
-There is no separate agent-to-agent (A2A) protocol: anything an agent needs is exposed as MCP tools.
-
----
-
-## 🔒 Security
-
-- **Row Level Security (RLS)** — Database-level access control
-- **Edge Functions** — API keys never exposed to client
-- **Supabase Secrets** — Encrypted storage for sensitive data
-- **CORS headers** — Controlled API access
-
----
-
-## 📚 Documentation
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Detailed architecture guide
-- [`DEPLOYMENT.md`](DEPLOYMENT.md) — Comprehensive deployment instructions
-- API Documentation — Coming soon
-- Agent Card Specification — Coming soon
-
----
-
-## 🎯 Inspiration & Related Projects
-
-This project draws inspiration from:
-
-- **[claude_life_assistant](https://github.com/lout33/claude_life_assistant)** — Symbiotic AI agent with persistent memory
-- **[MCP](https://modelcontextprotocol.io/)** — Anthropic's Model Context Protocol
-- **[IndieWeb](https://indieweb.org/)** — Decentralized personal web movement
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Priority Areas
-
-- 🔥 Content AI pipeline (multi-channel generation)
-- 🔥 Agent Card implementation
-- 🔥 Local AI (Ollama) integration
-- 📝 Documentation improvements
-- 🎨 New block types
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
-**TL;DR:** You can use this project for anything, including commercial purposes. Just keep the license notice.
-
----
-
-## 🙏 Acknowledgments
-
-- Built with [shadcn/ui](https://ui.shadcn.com/)
-- Powered by [Supabase](https://supabase.com)
-- Icons by [Lucide](https://lucide.dev)
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/mycms-chat/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/mycms-chat/discussions)
-- **Website**: [mycms.chat](https://mycms.chat)
-
----
-
-**Made with ❤️ for the Agentic Web**
-
-*Your digital presence should work for you — even while you sleep.*
+- [docs/PRD.md](docs/PRD.md) — purpose, users, scope, non-goals
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system, data, security, what was removed
+- [docs/AGENTS.md](docs/AGENTS.md) — Operator, Autopilot, Magnet, knowledge base
+- [docs/MCP.md](docs/MCP.md) — operator guide for the MCP server
+- [docs/ROADMAP.md](docs/ROADMAP.md) — done and next
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Lovable, secrets, self-hosting
