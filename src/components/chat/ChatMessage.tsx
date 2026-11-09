@@ -81,7 +81,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, voiceEnabled, isPlay
       {/* Answer typography (ChatGPT-like rhythm). Set with !important descendant
           selectors so the shared prose/theme resets can't flatten it. */}
       <div className="chat-answer w-full text-left text-[15px] leading-[1.75] text-foreground [&_p]:!my-3 [&_p]:!leading-[1.75] [&_ul]:!my-3 [&_ul]:!list-disc [&_ul]:!pl-6 [&_ol]:!my-3 [&_ol]:!list-decimal [&_ol]:!pl-6 [&_li]:!my-1.5 [&_li]:!pl-1 [&_li::marker]:text-muted-foreground [&_h1]:!mb-2 [&_h1]:!mt-6 [&_h2]:!mb-2 [&_h2]:!mt-6 [&_h3]:!mb-2 [&_h3]:!mt-5 [&_.prose>*:first-child]:!mt-0 [&_.prose>*:last-child]:!mb-0">
-        <MarkdownContent content={message.text} blankLineSpacers={false} />
+        <MarkdownContent content={message.text} blankLineSpacers={false} className="text-[15px] leading-[1.75]" />
       </div>
 
       {message.artifacts?.map((artifact, index) => (
