@@ -11,6 +11,9 @@
 // 5. Kvalitetsgrind: källkrav, längd, inga påhittade länkar, ingen
 //    mall-titel, inte för likt tidigare titlar, granskning ≥ 7/10.
 //    Ett revisionsförsök; annars sparas inget utkast.
+// 6. Publicering: med auto_publish i autopilot-modulen publiceras ett utkast
+//    som klarar alla mekaniska krav och får minst auto_publish_min_score
+//    (standard 8) direkt. Övriga hamnar i granskningskön som tidigare.
 // ============================================
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -42,6 +45,16 @@ export interface EditorDeps {
   saveDraft: (draft: DraftToSave) => Promise<{ postId: string; slug: string; coverImageUrl: string | null }>;
 }
 
+async function autoPublishPolicy(supabase: Supabase): Promise<{ enabled: boolean; minScore: number }> {
+  const { data } = await supabase.from("modules").select("module_config").eq("module_type", "autopilot").maybeSingle();
+  const c = (data?.module_config || {}) as Record<string, unknown>;
+  const n = Number(c.auto_publish_min_score);
+  return {
+    enabled: c.auto_publish === true,
+    minScore: Number.isFinite(n) ? Math.max(MIN_REVIEW_SCORE, Math.min(10, Math.floor(n))) : DEFAULT_AUTO_PUBLISH_SCORE,
+  };
+}
+
 interface Source {
   n: number;
   title: string;
@@ -54,6 +67,7 @@ const MIN_SOURCES = 3;
 const MIN_WORDS = 700;
 const MAX_WORDS = 1800;
 const MIN_REVIEW_SCORE = 7;
+const DEFAULT_AUTO_PUBLISH_SCORE = 8;
 const FAST_MODEL = "google/gemini-3-flash-preview";
 const WRITER_MODEL = "google/gemini-2.5-pro";
 
@@ -241,6 +255,12 @@ async function research(pick: TopicPick, news: Array<{ title: string; url: strin
 
   const seen = new Set<string>();
   const merged = [...newsFull, ...deep.flat()].filter((s) => s.text && (seen.has(s.url) ? false : (seen.add(s.url), true)));
+
+  // Too thin? Broaden once: the topic itself and the thesis, without a time filter.
+  if (merged.length < MIN_SOURCES) {
+    const extra = await Promise.all([pick.topic, pick.thesis].filter(Boolean).map((q) => search(q, { limit: 5, chars: 2500 })));
+    for (const s of extra.flat()) if (s.text && !seen.has(s.url)) { seen.add(s.url); merged.push(s); }
+  }
   return merged.slice(0, 10).map((s, i) => ({ n: i + 1, title: s.title, url: s.url, text: s.text }));
 }
 
@@ -350,6 +370,7 @@ interface Review { score: number; issues: string[] }
 async function review(draft: DraftToSave, pick: TopicPick, brief: EditorBrief): Promise<Review> {
   const raw = await chat(
     `Du är en sträng redaktör. Bedöm utkastet 1–10 där 7 betyder "publicerbart efter lätt redigering".
+Dagens datum är ${new Date().toISOString().slice(0, 10)}. Källorna kommer från en riktig webbsökning: datum fram till idag är inte påhittade.
 Kriterier: (1) en tydlig, icke-uppenbar tes, (2) konkreta fakta och exempel istället för allmänna påståenden, (3) relevans för författarens profil och målgrupp, (4) originalitet – inte AI-mall, inte metaforkedjor, (5) språk och struktur.
 Svara ENBART med JSON: {"score": <heltal 1-10>, "issues": ["konkreta, åtgärdbara brister"]}`,
     `Författarprofil: ${brief.positioning}\nMålgrupp: ${brief.audience}\nAvsedd tes: ${pick.thesis}\n\n# ${draft.title}\n\n${draft.content}`,
@@ -411,13 +432,24 @@ export async function handleEditorDraft(
     }
 
     const saved = await deps.saveDraft(draft);
+    const policy = await autoPublishPolicy(supabase);
+    const publish = policy.enabled && rev.score >= policy.minScore;
+    if (publish) {
+      const { error } = await supabase.from("blog_posts")
+        .update({ status: "published", published_at: new Date().toISOString() })
+        .eq("id", saved.postId);
+      if (error) throw error;
+    }
     await supabase.from("agent_tasks").update({
-      status: "needs_review",
+      status: publish ? "completed" : "needs_review",
       completed_at: new Date().toISOString(),
-      output_data: { ...log, blog_post_id: saved.postId, title: draft.title, slug: saved.slug, review_score: rev.score, cover_image_url: saved.coverImageUrl },
+      output_data: {
+        ...log, blog_post_id: saved.postId, title: draft.title, slug: saved.slug, review_score: rev.score, cover_image_url: saved.coverImageUrl,
+        ...(publish ? { decision: "auto_published", decided_by: "autopilot", decision_note: `Score ${rev.score} ≥ ${policy.minScore}` } : {}),
+      },
     }).eq("id", taskId);
 
-    return { success: true, taskId, postId: saved.postId, title: draft.title, reviewScore: rev.score };
+    return { success: true, taskId, postId: saved.postId, title: draft.title, reviewScore: rev.score, published: publish };
   } catch (e) {
     await supabase.from("agent_tasks").update({
       status: "failed",

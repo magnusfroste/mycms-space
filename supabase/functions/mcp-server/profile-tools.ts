@@ -1,12 +1,16 @@
 // ============================================
 // Profile tools for external agents (anonymous-friendly)
 //
-// get_profile          – who Magnus is: positioning, themes, current role, links
+// get_profile          – who the site owner is: positioning, themes, current role, links
 // analyze_job_fit      – score a job/assignment against the CV (AI)
 // generate_tailored_cv – match analysis + tailored CV + cover letter (AI),
 //                        same schema as the site's CV agent block
-// contact_magnus       – leave a message; lands in contact_messages and
+// contact_owner        – leave a message; lands in contact_messages and
 //                        triggers the same contact_received signal as the site form
+//                        (contact_magnus is kept as an unlisted alias)
+//
+// Descriptions use the owner's name from the resume module, so the same server
+// works for any install of the CMS.
 //
 // AI tools and contact are rate limited for anonymous callers.
 // ============================================
@@ -22,15 +26,38 @@ const MAX_JOB_TEXT = 15_000;
 const ANON_AI_CALLS_PER_HOUR = 20;
 const ANON_CONTACTS_PER_HOUR = 5;
 
-export const PROFILE_TOOLS = [
+export interface Owner {
+  name: string;
+  first: string;
+  siteUrl: string | null;
+  siteTitle: string | null;
+  github: string | null;
+}
+
+/** Owner name and links from the resume, seo and github modules. */
+export async function loadOwner(supabase: Supabase): Promise<Owner> {
+  const { data } = await supabase.from("modules").select("module_type, module_config").in("module_type", ["resume", "seo", "github"]);
+  const cfg = (t: string) => ((data || []).find((m: { module_type: string }) => m.module_type === t)?.module_config || {}) as Record<string, string>;
+  const res = cfg("resume"), seo = cfg("seo"), gh = cfg("github");
+  const name = (res.owner_name || seo.site_title || "the site owner").trim();
+  return {
+    name,
+    first: name.split(/\s+/)[0],
+    siteUrl: seo.site_url || null,
+    siteTitle: seo.site_title || null,
+    github: gh.username ? `https://github.com/${gh.username}` : null,
+  };
+}
+
+export const profileTools = (o: Owner) => [
   {
     name: "get_profile",
-    description: "Get Magnus Froste's professional profile: positioning, target audience, what he offers, core themes, current roles, availability and links. Start here to understand who Magnus is.",
+    description: `Get ${o.name}'s professional profile: positioning, target audience, offering, core themes, current roles, availability and links. Start here to understand who ${o.first} is.`,
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "analyze_job_fit",
-    description: "Analyze how well Magnus fits a job description or consulting assignment. Returns an overall score 0-100, a one-line summary, skill-by-skill match, strengths, gaps and a recommendation. Faster and cheaper than generate_tailored_cv.",
+    description: `Analyze how well ${o.first} fits a job description or consulting assignment. Returns an overall score 0-100, a one-line summary, skill-by-skill match, strengths, gaps and a recommendation. Faster and cheaper than generate_tailored_cv.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -42,7 +69,7 @@ export const PROFILE_TOOLS = [
   },
   {
     name: "generate_tailored_cv",
-    description: "Generate a match analysis, a CV tailored to the job and a cover letter, all in markdown. Same output as the CV agent on www.froste.eu.",
+    description: "Generate a match analysis, a CV tailored to the job and a cover letter, all in markdown. Same output as the CV agent on the website.",
     inputSchema: {
       type: "object",
       properties: {
@@ -53,8 +80,8 @@ export const PROFILE_TOOLS = [
     },
   },
   {
-    name: "contact_magnus",
-    description: "Send a message to Magnus on behalf of a person, e.g. an assignment request after analyze_job_fit. Requires the sender's real name and email. Magnus answers personally.",
+    name: "contact_owner",
+    description: `Send a message to ${o.first} on behalf of a person, e.g. an assignment request after analyze_job_fit. Requires the sender's real name and email. ${o.first} answers personally.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -68,7 +95,9 @@ export const PROFILE_TOOLS = [
   },
 ];
 
-export const PROFILE_TOOL_NAMES = new Set(PROFILE_TOOLS.map((t) => t.name));
+const CONTACT_TOOLS = new Set(["contact_owner", "contact_magnus"]);
+export const PROFILE_TOOL_NAMES = new Set(["get_profile", "analyze_job_fit", "generate_tailored_cv", ...CONTACT_TOOLS]);
+
 
 // ---------- helpers ----------
 
@@ -124,14 +153,14 @@ const jobFitTool = {
         match_analysis: cvProps.match_analysis,
         strengths: { type: "array", items: { type: "string" }, description: "Concrete strengths backed by the CV." },
         gaps: { type: "array", items: { type: "string" }, description: "Honest gaps or risks." },
-        recommendation: { type: "string", description: "One short paragraph: should they talk to Magnus, and about what?" },
+        recommendation: { type: "string", description: "One short paragraph: should they talk to the candidate, and about what?" },
       },
       required: ["overall_score", "summary", "match_analysis", "strengths", "gaps", "recommendation"],
     },
   },
 };
 
-const ANALYST_SYSTEM = (resume: string) => `You assess how well Magnus Froste fits a role or consulting assignment.
+const ANALYST_SYSTEM = (resume: string, owner: Owner) => `You assess how well ${owner.name} fits a role or consulting assignment.
 Base every claim strictly on the profile below. Never invent experience, employers, certifications or dates. Be honest about gaps.
 Skill levels are 0-10. The overall score is 0-100.
 
@@ -146,6 +175,7 @@ export async function callProfileTool(
   args: Record<string, unknown>,
   ctx: { anonymous: boolean },
 ): Promise<string> {
+  const owner = await loadOwner(supabase);
   if (name === "get_profile") {
     const [autopilot, seo, resumeMod] = await Promise.all([
       supabase.from("modules").select("module_config").eq("module_type", "autopilot").maybeSingle(),
@@ -156,7 +186,7 @@ export async function callProfileTool(
     const seoCfg = seo.data?.module_config || {};
     const res = resumeMod.data?.module_config || {};
     return JSON.stringify({
-      name: res.owner_name || "Magnus Froste",
+      name: owner.name,
       title: res.owner_title || seoCfg.site_description || null,
       summary: res.owner_summary || null,
       location: res.owner_location || null,
@@ -166,37 +196,37 @@ export async function callProfileTool(
       offering: brief.offering || null,
       core_themes: (brief.themes || []).map((t: { name: string; angle: string }) => ({ name: t.name, angle: t.angle })),
       links: {
-        website: seoCfg.site_url || "https://www.froste.eu",
+        website: owner.siteUrl,
         linkedin: seoCfg.linkedin_url || null,
-        github: "https://github.com/magnusfroste",
-        blog: `${seoCfg.site_url || "https://www.froste.eu"}/blog`,
+        github: owner.github,
+        blog: owner.siteUrl ? `${owner.siteUrl.replace(/\/$/, "")}/blog` : null,
       },
-      next_steps: "Use kb_list / kb_get for the full profile (roles, projects, history), search_projects for relevant work, analyze_job_fit for a role, and contact_magnus to reach him.",
+      next_steps: `Use kb_list / kb_get for the full profile (roles, projects, history), search_projects for relevant work, analyze_job_fit for a role, and contact_owner to reach ${owner.first}.`,
     }, null, 2);
   }
 
   if (name === "analyze_job_fit" || name === "generate_tailored_cv") {
     if (ctx.anonymous && (await anonCallsLastHour(supabase, ["analyze_job_fit", "generate_tailored_cv"])) >= ANON_AI_CALLS_PER_HOUR) {
-      return JSON.stringify({ error: "Rate limit reached for anonymous AI tools. Try again later or ask Magnus for an API key." });
+      return JSON.stringify({ error: `Rate limit reached for anonymous AI tools. Try again later or ask ${owner.first} for an API key.` });
     }
     const job = jobText(args);
     const resume = await loadResumeContext();
     if (!resume) throw new Error("Profile data is unavailable right now.");
-    const system = `${ANALYST_SYSTEM(resume)}\n\n${languageRule(args)}`;
+    const system = `${ANALYST_SYSTEM(resume, owner)}\n\n${languageRule(args)}`;
 
     if (name === "analyze_job_fit") {
       const result = await forcedToolCall(system, `JOB DESCRIPTION:\n${job}`, jobFitTool);
       return JSON.stringify(result, null, 2);
     }
     const result = await forcedToolCall(
-      `${system}\nThe tailored CV must only reorder, select and phrase real experience from the profile. The cover letter is written by Magnus in first person.`,
+      `${system}\nThe tailored CV must only reorder, select and phrase real experience from the profile. The cover letter is written by ${owner.first} in first person.`,
       `JOB DESCRIPTION:\n${job}`,
       cvAgentTool,
     );
     return JSON.stringify(result, null, 2);
   }
 
-  if (name === "contact_magnus") {
+  if (CONTACT_TOOLS.has(name)) {
     const contactName = String(args.name || "").trim().slice(0, 120);
     const email = String(args.email || "").trim().slice(0, 200);
     const message = String(args.message || "").trim().slice(0, 5_000);
@@ -204,8 +234,8 @@ export async function callProfileTool(
     if (!contactName || !message) throw new Error("name and message are required.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error("A valid email address is required.");
 
-    if (ctx.anonymous && (await anonCallsLastHour(supabase, ["contact_magnus"])) >= ANON_CONTACTS_PER_HOUR) {
-      return JSON.stringify({ error: "Too many messages right now. Please try again later or use the form on www.froste.eu/contact." });
+    if (ctx.anonymous && (await anonCallsLastHour(supabase, [...CONTACT_TOOLS])) >= ANON_CONTACTS_PER_HOUR) {
+      return JSON.stringify({ error: `Too many messages right now. Please try again later${owner.siteUrl ? ` or use the contact form on ${owner.siteUrl}` : ""}.` });
     }
 
     const { error } = await supabase.from("contact_messages").insert({
@@ -215,7 +245,7 @@ export async function callProfileTool(
       message,
     });
     if (error) throw error;
-    return JSON.stringify({ status: "sent", note: "The message was delivered to Magnus. He replies personally by email." });
+    return JSON.stringify({ status: "sent", note: `The message was delivered to ${owner.first}, who replies personally by email.` });
   }
 
   throw new Error(`Unknown profile tool: ${name}`);

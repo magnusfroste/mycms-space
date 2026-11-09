@@ -163,9 +163,20 @@ export function useAutopilotStats() {
   });
 }
 
-export type AutopilotGuardrails = { max_waiting_reviews: number; draft_expiry_days: number };
+export type AutopilotGuardrails = {
+  max_waiting_reviews: number;
+  draft_expiry_days: number;
+  /** Publish blog drafts that score at least auto_publish_min_score without review. */
+  auto_publish: boolean;
+  auto_publish_min_score: number;
+};
 
-const GUARDRAIL_DEFAULTS: AutopilotGuardrails = { max_waiting_reviews: 5, draft_expiry_days: 14 };
+const GUARDRAIL_DEFAULTS: AutopilotGuardrails = {
+  max_waiting_reviews: 5,
+  draft_expiry_days: 14,
+  auto_publish: false,
+  auto_publish_min_score: 8,
+};
 
 /** Guardrails live in modules.autopilot.module_config (read by agent-autopilot/guardrails.ts). */
 export function useAutopilotGuardrails() {
@@ -185,6 +196,8 @@ export function useAutopilotGuardrails() {
         guardrails: {
           max_waiting_reviews: Number(c.max_waiting_reviews) || GUARDRAIL_DEFAULTS.max_waiting_reviews,
           draft_expiry_days: Number(c.draft_expiry_days) || GUARDRAIL_DEFAULTS.draft_expiry_days,
+          auto_publish: c.auto_publish === true,
+          auto_publish_min_score: Number(c.auto_publish_min_score) || GUARDRAIL_DEFAULTS.auto_publish_min_score,
         } as AutopilotGuardrails,
       };
     },
