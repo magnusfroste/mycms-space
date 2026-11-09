@@ -49,17 +49,7 @@ export {
 
 export type { PageBlock, CreatePageBlockInput, UpdatePageBlockInput } from './pageBlocks';
 
-// Block Content (unified JSONB access)
-export {
-  useBlockContent,
-  useBlockByType,
-  useUpdateBlockConfig,
-  useReplaceBlockConfig,
-  useBlockContentSubscription,
-  blockContentKeys,
-  getTypedConfig,
-} from './blockContent';
-
+// Block config types
 export type {
   BlockConfigType,
   ConfigForBlockType,
