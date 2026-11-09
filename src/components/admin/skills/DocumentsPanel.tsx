@@ -1,5 +1,5 @@
 // ============================================
-// Documents Panel for Agency Dashboard
+// Documents Panel for Autopilot
 // Shows files from cms-files + agent-documents buckets
 // ============================================
 
