@@ -999,10 +999,9 @@
      Utility Animations
      ───────────────────────────────────────── */
 
-  .animate-in {
-    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    opacity: 0;
-  }
+  /* (A custom .animate-in class used to live here. It clashed with the
+     tailwindcss-animate utility of the same name and left shadcn sheets,
+     dialogs and popovers at opacity 0 after their enter animation.) */
 
   @keyframes fadeInUp {
     from {
