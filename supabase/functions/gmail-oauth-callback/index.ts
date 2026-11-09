@@ -215,6 +215,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           connected: data?.enabled && config.connected,
+          needs_reconnect: config.needs_reconnect === true,
           email: config.email || null,
           connected_at: config.connected_at || null,
           filter_senders: config.filter_senders || [],
