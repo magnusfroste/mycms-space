@@ -6,10 +6,10 @@
 // ============================================
 
 const ANCHOR_ALIASES: Record<string, string[]> = {
-  projects: ['project-showcase', 'projects', 'portfolio', 'github', 'work', 'featured-carousel', 'featured'],
+  projects: ['projects', 'portfolio', 'github', 'work'],
   writing: ['blog', 'writing', 'posts'],
   contact: ['contact-form', 'contact', 'cta-banner'],
-  about: ['about-split', 'about'],
+  about: ['about', 'services', 'expertise-grid'],
   expertise: ['expertise-grid', 'expertise', 'services'],
 };
 

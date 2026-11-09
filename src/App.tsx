@@ -15,7 +15,6 @@ import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 // Route-level code splitting: only the home page is in the main bundle
 const DynamicPage = lazy(() => import("./pages/DynamicPage"));
 const Chat = lazy(() => import("./pages/Chat"));
-const BlockDemo = lazy(() => import("./pages/BlockDemo"));
 const Admin = lazy(() => import("./pages/Admin"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const BlogArchive = lazy(() => import("./pages/BlogArchive"));
@@ -78,7 +77,6 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/demo" element={<BlockDemo />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
