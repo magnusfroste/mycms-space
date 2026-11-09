@@ -4,8 +4,7 @@
 // ============================================
 
 import React, { useRef, useEffect, useState } from "react";
-import { ArrowUp, Paperclip, X, FileText, Mic, Square } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowUp, Plus, X, FileText, Mic, Square } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceRecorder } from "@/hooks/useVoice";
 import ChatCommandMenu from "./ChatCommandMenu";
@@ -18,6 +17,9 @@ interface ChatInputProps {
   placeholder: string;
   isLoading: boolean;
   fullPage: boolean;
+  /** "docked": pinned under the conversation; "inline": part of the page (empty state, widgets). */
+  variant?: "docked" | "inline";
+  footer?: React.ReactNode;
   voiceEnabled?: boolean;
   commands?: QuickActionConfig[];
   onCommandSelect?: (message: string) => void;
@@ -100,6 +102,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   isLoading,
   fullPage,
+  variant,
+  footer,
   voiceEnabled = false,
   commands = [],
   onCommandSelect,
@@ -200,9 +204,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const docked = (variant ?? (fullPage ? "docked" : "inline")) === "docked";
+  const canSend = (!!value.trim() || !!attachedFile) && !isLoading && !isReadingFile;
+
   return (
-    <div className={fullPage ? "shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-3 sm:p-4" : "mt-4"}>
-      <div className="relative max-w-3xl mx-auto">
+    <div className={docked ? "shrink-0 bg-background px-3 pb-3 pt-1 sm:px-4" : ""}>
+      <div className="relative mx-auto max-w-3xl">
         {/* @ command menu */}
         <ChatCommandMenu
           query={commandQuery}
@@ -211,16 +218,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
           onDismiss={() => setCommandMenuOpen(false)}
           visible={commandMenuOpen}
         />
-        <div className="relative bg-card border border-border rounded-2xl shadow-sm transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15">
-          {/* Attached file pill — inside the input area */}
+        <div className="relative rounded-[28px] border border-border bg-background shadow-[0_1px_6px_-1px_hsl(var(--foreground)/0.08)] transition-shadow focus-within:shadow-[0_2px_12px_-2px_hsl(var(--foreground)/0.14)]">
           {attachedFile && (
-            <div className="px-3 pt-3 pb-0">
-              <div className="inline-flex items-center gap-2 text-xs bg-background/80 border border-border/50 rounded-lg px-2.5 py-1.5 text-muted-foreground">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-primary/70" />
-                <span className="truncate max-w-[180px] font-medium">{attachedFile.name}</span>
+            <div className="px-4 pt-3">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="max-w-[200px] truncate font-medium text-foreground">{attachedFile.name}</span>
                 <button
+                  type="button"
                   onClick={() => setAttachedFile(null)}
-                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted hover:text-foreground transition-colors"
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted hover:text-foreground"
                   aria-label="Remove file"
                 >
                   <X className="h-3 w-3" />
@@ -229,7 +236,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
             </div>
           )}
 
+          <label className="sr-only" htmlFor="chat-composer">Message</label>
           <textarea
+            id="chat-composer"
             ref={textareaRef}
             value={value}
             onChange={(e) => {
@@ -238,69 +247,60 @@ const ChatInput: React.FC<ChatInputProps> = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="w-full px-4 resize-none text-sm min-h-[44px] max-h-[200px] overflow-y-auto bg-transparent py-3 text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="block min-h-[52px] max-h-[220px] w-full resize-none overflow-y-auto bg-transparent px-5 pb-1 pt-4 text-[15px] leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none"
             rows={1}
             disabled={isLoading || isReadingFile}
             autoFocus
           />
 
-          {/* Bottom toolbar */}
-          <div className="flex items-center justify-between px-2 pb-2">
-            <div className="flex items-center gap-0.5">
+          <div className="flex items-center justify-between px-2.5 pb-2.5">
+            <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isReadingFile}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30"
-                aria-label="Attach file"
-                type="button"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                aria-label="Attach a file (PDF, Markdown or text)"
+                title="Attach a file"
               >
-                <Paperclip className="h-4 w-4" />
+                <Plus className="h-5 w-5" />
               </button>
-
-              {voiceEnabled && (
-                <button
-                  onClick={toggleRecording}
-                  disabled={isLoading}
-                  className={`relative p-1.5 rounded-lg transition-colors disabled:opacity-30 ${
-                    isRecording
-                      ? "text-destructive"
-                      : "text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60"
-                  }`}
-                  aria-label={isRecording ? "Stop recording" : "Voice input"}
-                  type="button"
-                >
-                  {isRecording && (
-                    <>
-                      <span className="absolute inset-0 rounded-lg bg-destructive/10 animate-pulse" />
-                      <span className="absolute -inset-1 rounded-xl border border-destructive/30 animate-[ping_1.5s_ease-in-out_infinite] opacity-40" />
-                    </>
-                  )}
-                  <span className="relative">
-                    {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
-                  </span>
-                </button>
-              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_TYPES.join(",")}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPTED_TYPES.join(",")}
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-
-            <Button
-              onClick={handleSend}
-              disabled={(!value.trim() && !attachedFile) || isLoading || isReadingFile}
-              size="icon"
-              className="h-9 w-9 rounded-xl shrink-0 disabled:opacity-50"
-              aria-label="Send message"
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1.5">
+              {voiceEnabled && (
+                <button
+                  type="button"
+                  onClick={toggleRecording}
+                  disabled={isLoading}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-colors disabled:opacity-30 ${
+                    isRecording ? "bg-destructive/10 text-destructive" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  aria-label={isRecording ? "Stop recording" : "Voice input"}
+                >
+                  {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-[18px] w-[18px]" />}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!canSend}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:bg-muted-foreground/25 disabled:text-background"
+                aria-label="Send message"
+              >
+                <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.25} />
+              </button>
+            </div>
           </div>
         </div>
+        {footer && <div className="pt-2 text-center text-xs text-muted-foreground">{footer}</div>}
       </div>
     </div>
   );
