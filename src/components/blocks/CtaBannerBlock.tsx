@@ -8,12 +8,18 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { useIsStudio } from '@/hooks/useCurrentTheme';
+import SmartLink from '@/components/studio/SmartLink';
+import { StudioContainer } from '@/components/studio/StudioSection';
 
 interface CtaBannerBlockConfig {
   title?: string;
   subtitle?: string;
   button_text?: string;
   button_url?: string;
+  /** Optional second, outlined button (e.g. "Ask Magnet first" → /chat) */
+  secondary_button_text?: string;
+  secondary_button_url?: string;
   style?: 'default' | 'gradient' | 'dark';
 }
 
@@ -21,7 +27,7 @@ interface CtaBannerBlockProps {
   config: Record<string, unknown>;
 }
 
-const CtaBannerBlock: React.FC<CtaBannerBlockProps> = ({ config }) => {
+const CtaBannerClassic: React.FC<CtaBannerBlockProps> = ({ config }) => {
   const typedConfig = config as CtaBannerBlockConfig;
   const {
     title = 'Ready to get started?',
@@ -129,6 +135,54 @@ const CtaBannerBlock: React.FC<CtaBannerBlockProps> = ({ config }) => {
       </div>
     </section>
   );
+};
+
+// Studio: a dark contact band (title + one line on the left, two pill buttons on the right)
+const CtaBannerStudio: React.FC<CtaBannerBlockProps> = ({ config }) => {
+  const {
+    title = 'Ready to get started?',
+    subtitle,
+    button_text = 'Get Started',
+    button_url = '/contact',
+    secondary_button_text,
+    secondary_button_url = '/chat',
+  } = config as CtaBannerBlockConfig;
+  const headingId = React.useId();
+  const pill =
+    'inline-flex h-12 items-center rounded-full px-[22px] text-[15px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+
+  return (
+    <section aria-labelledby={headingId}>
+      <StudioContainer className="pb-16 pt-4 md:pb-20">
+        <div className="flex flex-wrap items-center justify-between gap-8 rounded-3xl border border-transparent bg-[hsl(240_15%_5%)] p-8 text-white dark:border-border dark:bg-card sm:p-12 md:gap-10 md:p-14">
+          <div className="min-w-0 flex-[1_1_420px]">
+            <h2 id={headingId} className="text-[28px] font-semibold leading-[1.1] tracking-[-0.02em] text-white sm:text-[36px]">
+              {title}
+            </h2>
+            {subtitle && <p className="mt-3.5 text-[16px] leading-[1.55] text-[hsl(240_8%_80%)]">{subtitle}</p>}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <SmartLink href={button_url || '/contact'} className={cn(pill, 'bg-white text-[hsl(240_15%_5%)] hover:bg-white/90')}>
+              {button_text}
+            </SmartLink>
+            {secondary_button_text && (
+              <SmartLink
+                href={secondary_button_url || '/chat'}
+                className={cn(pill, 'border border-[hsl(240_8%_25%)] text-white hover:border-[hsl(240_8%_40%)] hover:bg-white/5')}
+              >
+                {secondary_button_text}
+              </SmartLink>
+            )}
+          </div>
+        </div>
+      </StudioContainer>
+    </section>
+  );
+};
+
+const CtaBannerBlock: React.FC<CtaBannerBlockProps> = (props) => {
+  const isStudio = useIsStudio();
+  return isStudio ? <CtaBannerStudio {...props} /> : <CtaBannerClassic {...props} />;
 };
 
 export default CtaBannerBlock;

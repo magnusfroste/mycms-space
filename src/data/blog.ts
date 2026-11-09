@@ -131,6 +131,16 @@ export const fetchBlogPosts = async (options?: {
   return (data || []) as BlogPost[];
 };
 
+// Number of published posts (head request, no rows transferred)
+export const fetchPublishedPostCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('blog_posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published');
+  if (error) throw error;
+  return count ?? 0;
+};
+
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
   const { data, error } = await supabase
     .from('blog_posts')

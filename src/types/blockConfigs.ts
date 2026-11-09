@@ -18,6 +18,9 @@ export interface HeroBlockConfig {
 // About Split Block Config
 export interface AboutSplitBlockConfig {
   name?: string;
+  /** Section heading (studio theme); defaults to "Who I am" */
+  title?: string;
+  subtitle?: string;
   intro_text?: string;
   additional_text?: string;
   image_url?: string;
@@ -167,6 +170,9 @@ export interface CtaBannerBlockConfig {
   subtitle?: string;
   button_text?: string;
   button_url?: string;
+  /** Optional second, outlined button (studio contact band) */
+  secondary_button_text?: string;
+  secondary_button_url?: string;
   style?: 'gradient' | 'solid' | 'outline';
 }
 
@@ -303,6 +309,22 @@ export interface ChatHeroBlockConfig {
   enable_sound?: boolean;      // keystroke sound, default false
   /** @deprecated Use agentic greeting instead */
   greeting_messages?: string[];
+  // Studio theme: split hero (headline + intro + CTAs) with the chat as a card beside it
+  /** Hero H1; falls back to agent_name */
+  headline?: string;
+  /** One-paragraph introduction under the headline */
+  intro?: string;
+  /** Text of the availability pill; falls back to the resume module's availability */
+  availability_text?: string;
+  show_availability?: boolean;
+  primary_cta_text?: string;
+  primary_cta_url?: string;
+  secondary_cta_text?: string;
+  secondary_cta_url?: string;
+  /** Chat card heading, e.g. "Ask Magnet, my AI twin" */
+  card_title?: string;
+  card_subtitle?: string;
+  card_button_text?: string;
 }
 
 // CV Agent Block Config

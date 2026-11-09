@@ -66,6 +66,12 @@ export interface GitHubBlockConfig {
   showImages?: boolean;
   showProblemStatement?: boolean;
   showWhyItMatters?: boolean;
+  /** Repo names to show, in this order (e.g. a hand-picked "Selected work"); default: featured first */
+  selectedRepos?: string[];
+  /** 'list' layout: target of the "All projects" link (default /github) */
+  allProjectsUrl?: string;
+  allProjectsText?: string;
+  showAllProjectsLink?: boolean;
 }
 
 // GitHub Module Config (for module settings)
