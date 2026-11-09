@@ -309,6 +309,14 @@ function SignalPreview({ task }: { task: AgentTask }) {
   );
 }
 
+/** Read-only preview of what a task produced, picked by task type. */
+export function TaskPreview({ task }: { task: AgentTask }) {
+  if (task.task_type === 'signal') return <SignalPreview task={task} />;
+  if (task.task_type === 'research') return <ResearchPreview task={task} />;
+  if (task.task_type === 'scout') return <ScoutPreview task={task} />;
+  return <ReadOnlyPreview task={task} />;
+}
+
 interface TaskHistoryItemProps {
   task: AgentTask;
   onPublish: (task: AgentTask) => void;
@@ -389,15 +397,7 @@ export default function TaskHistoryItem({ task, onPublish, isPublishing }: TaskH
       {expanded && canExpand && (
         <div className="px-3 pb-3 pl-10 border-t bg-muted/30">
           <div className="pt-3">
-            {task.task_type === 'signal' ? (
-              <SignalPreview task={task} />
-            ) : task.task_type === 'research' ? (
-              <ResearchPreview task={task} />
-            ) : task.task_type === 'scout' ? (
-              <ScoutPreview task={task} />
-            ) : (
-              <ReadOnlyPreview task={task} />
-            )}
+            <TaskPreview task={task} />
           </div>
         </div>
       )}
