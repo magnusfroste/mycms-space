@@ -97,7 +97,7 @@ export const SettingsHistory = () => {
       <div className="flex items-center gap-3">
         <History className="h-6 w-6 text-primary" />
         <div>
-          <h2 className="text-2xl font-semibold">Version History</h2>
+          <h2 className="text-base font-semibold">Version History</h2>
           <p className="text-sm text-muted-foreground">
             All changes are saved automatically. Restore to previous versions with one click.
           </p>

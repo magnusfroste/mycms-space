@@ -57,6 +57,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'date' | 'name' | 'size';
@@ -293,15 +294,11 @@ const MediaHub: React.FC = () => {
         onChange={(e) => e.target.files && handleUpload(e.target.files)}
       />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Media Hub</h2>
-          <p className="text-muted-foreground">
-            Manage all uploaded files across your site
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="Media"
+        description="Every image and file uploaded to the site, by you or an agent."
+        actions={
+        <>
           <Select value={uploadBucket} onValueChange={(v) => setUploadBucket(v as StorageBucket)}>
             <SelectTrigger className="w-36 h-9 text-xs">
               <SelectValue />
@@ -329,8 +326,9 @@ const MediaHub: React.FC = () => {
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
             Refresh
           </Button>
-        </div>
-      </div>
+        </>
+        }
+      />
 
       {/* Drag overlay */}
       {dragOver && (

@@ -778,8 +778,7 @@ const GitHubReposManager: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Github className="h-5 w-5" />
+          <h3 className="text-base font-semibold">
             GitHub Repositories
           </h3>
           <p className="text-sm text-muted-foreground">

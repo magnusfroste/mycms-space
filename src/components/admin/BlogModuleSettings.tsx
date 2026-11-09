@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useModule, useUpdateModule } from '@/models/modules';
-import { BookOpen, Save, Loader2 } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import type { BlogModuleConfig } from '@/types/modules';
 
 const BlogModuleSettings = () => {
@@ -68,11 +68,10 @@ const BlogModuleSettings = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold flex items-center gap-2">
-          <BookOpen className="h-6 w-6" />
+        <h2 className="text-base font-semibold">
           Blog Settings
         </h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
           Configure global settings for your blog.
         </p>
       </div>

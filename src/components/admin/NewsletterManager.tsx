@@ -42,6 +42,8 @@ import {
   type NewsletterCampaign,
   type CreateCampaignInput,
 } from '@/models/newsletter';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
+import { underlineTabs } from '@/components/admin/shell/primitives';
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/20 text-green-400',
@@ -168,26 +170,23 @@ export default function NewsletterManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Newsletter</h2>
-          <p className="text-muted-foreground">Manage subscribers and send newsletters</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Badge variant="outline" className="gap-2">
-            <Users className="h-4 w-4" />
-            {activeSubscribers} active subscribers
-          </Badge>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Newsletter"
+        description="Subscribers and campaigns, sent with Resend. Autopilot drafts campaigns; you decide when they go out."
+        actions={
+          <span className="inline-flex h-[26px] items-center rounded-full bg-muted px-2.5 font-mono text-[12.5px] font-medium text-foreground/80">
+            {activeSubscribers} active
+          </span>
+        }
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="campaigns" className="gap-2">
+        <TabsList className={underlineTabs.list}>
+          <TabsTrigger value="campaigns" className={`${underlineTabs.trigger} gap-2`}>
             <FileText className="h-4 w-4" />
             Campaigns
           </TabsTrigger>
-          <TabsTrigger value="subscribers" className="gap-2">
+          <TabsTrigger value="subscribers" className={`${underlineTabs.trigger} gap-2`}>
             <Users className="h-4 w-4" />
             Subscribers
           </TabsTrigger>

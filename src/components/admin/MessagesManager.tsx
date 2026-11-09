@@ -10,7 +10,6 @@ import {
   useContactMessagesSubscription 
 } from '@/models/contactMessages';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -39,6 +38,7 @@ import { Mail, MailOpen, Trash2, Clock, User, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import type { ContactMessage } from '@/data/contactMessages';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 const MessagesManager: React.FC = () => {
   const { data: messages, isLoading } = useContactMessages();
@@ -80,19 +80,17 @@ const MessagesManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Messages</h2>
-          <p className="text-muted-foreground">
-            Manage contact requests from visitors
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <Badge variant="default" className="text-sm">
-            {unreadCount} unread
-          </Badge>
-        )}
-      </div>
+      <AdminPageHeader
+        title="Inbox"
+        description="Inquiries sent through the contact form. This is the number the whole site exists to move."
+        actions={
+          unreadCount > 0 ? (
+            <span className="inline-flex h-[26px] items-center rounded-full bg-warning-soft px-2.5 text-[12.5px] font-medium text-warning">
+              {unreadCount} unread
+            </span>
+          ) : undefined
+        }
+      />
 
       {messages?.length === 0 ? (
         <Card>

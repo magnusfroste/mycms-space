@@ -164,10 +164,9 @@ const BrandingSettings: React.FC = () => {
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Palette className="h-8 w-8 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">Branding</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-base font-semibold">Branding</h2>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
             Choose your visual identity and theme
           </p>
         </div>

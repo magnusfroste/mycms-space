@@ -3,7 +3,7 @@
 // ============================================
 
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Globe, Github, Linkedin, Twitter, Instagram, Youtube, Link } from 'lucide-react';
+import { Save, Plus, Trash2, Github, Linkedin, Twitter, Instagram, Youtube, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -132,11 +132,10 @@ export default function GlobalBlocksSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Globe className="h-6 w-6" />
+        <h1 className="text-base font-semibold">
           Global Blocks
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
           Manage header and footer displayed on all pages
         </p>
       </div>

@@ -13,8 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import MarkdownContent from '@/components/common/MarkdownContent';
 import ProfileCard from '@/components/admin/ProfileCard';
-import { BookOpen, History, Lock, Globe, Plus, Save, Trash2, RotateCcw, Eye, Pencil } from 'lucide-react';
+import { History, Lock, Globe, Plus, Save, Trash2, RotateCcw, Eye, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
+import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 
 /** Same cap as the MCP tools (kb_upsert / kb_append). */
 const MAX_DOC_CHARS = 60_000;
@@ -269,16 +270,11 @@ function KnowledgeBaseEditor() {
 
 export default function KnowledgeBaseManager() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-start gap-3">
-        <BookOpen className="mt-1 h-5 w-5 text-muted-foreground" />
-        <div>
-          <h2 className="text-xl font-semibold">Knowledge base</h2>
-          <p className="text-sm text-muted-foreground">
-            Your experience as plain markdown prose. The chat, the CV tools and any agent connected via MCP read it — and Magnet (admin chat) or an MCP agent can update it with kb_upsert / kb_append.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Knowledge base"
+        description="Your experience as plain markdown. Magnet, the CV tools and every MCP operator answer from it — and operators can update it with kb_upsert / kb_append."
+      />
       <ProfileCard />
       <KnowledgeBaseEditor />
     </div>
