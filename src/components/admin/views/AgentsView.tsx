@@ -11,6 +11,7 @@ import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
 import { SectionTabs } from '@/components/admin/shell/SectionTabs';
 import { Panel } from '@/components/admin/shell/primitives';
 import { OperatorsPanel } from '@/components/admin/agents/OperatorsPanel';
+import { OAuthConnectionsPanel } from '@/components/admin/agents/OAuthConnectionsPanel';
 import { AutopilotPanel } from '@/components/admin/agents/AutopilotPanel';
 import { SkillsPanel } from '@/components/admin/skills/SkillsPanel';
 import { ObjectivesPanel } from '@/components/admin/skills/ObjectivesPanel';
@@ -117,6 +118,7 @@ export default function AgentsView({ section }: { section?: string }) {
       </section>
 
       <OperatorsPanel />
+      <OAuthConnectionsPanel />
       <AutopilotPanel />
 
       <Panel

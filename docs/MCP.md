@@ -60,7 +60,45 @@ Client notes:
 | Hermes Agent | `mcp_servers` in `~/.hermes/config.yaml`: `url` plus `headers: { Authorization: "Bearer <key>" }`. |
 | Claude Code | `claude mcp add --transport http mycms <url> --header "Authorization: Bearer <key>"` |
 | Cursor, Windsurf, Claude Desktop (via config file) | The JSON above. |
-| Claude.ai / ChatGPT connectors | These connect with OAuth or without auth, not with a static key. Without a key they get the public tools; the CMS tools need a client that can send the header. |
+| Claude.ai / ChatGPT custom connectors | Use the OAuth connector URL below. |
+
+## OAuth (custom connectors)
+
+Claude, ChatGPT and other apps that only connect with a sign-in use
+
+```
+<SUPABASE_URL>/functions/v1/mcp-server/oauth
+```
+
+Admin → Agents → **Connectors (OAuth)** shows the URL with a copy button.
+
+Flow:
+
+1. The app calls the URL without a token and gets `401` with
+   `WWW-Authenticate: Bearer resource_metadata="…/mcp-server/.well-known/oauth-protected-resource/oauth", scope="email"`.
+2. The protected-resource metadata names Supabase Auth
+   (`<SUPABASE_URL>/auth/v1`) as the authorization server. Supabase serves its
+   metadata at `/.well-known/oauth-authorization-server/auth/v1`, registers the
+   app (dynamic client registration) and sends the admin to
+   `/oauth/consent?authorization_id=…` on the site.
+3. On the consent page the admin signs in, picks scopes (read, content,
+   review, settings) and allows. The choice is stored in `mcp_oauth_grants`.
+4. The app gets a Supabase access token (a JWT with a `client_id` claim) and
+   calls the MCP server with it. The server checks the token with Supabase,
+   that the user is an admin and that the grant is not revoked, and applies
+   the grant's scopes exactly like an API key's.
+
+Revoking in admin marks the grant revoked (the server refuses the token at
+once) and deletes Supabase's consent, so the next connect asks again.
+
+OAuth tokens never count as admin outside MCP: `is_admin()` returns false for
+a JWT with a `client_id` claim, and so does the edge functions' admin check.
+A connected app cannot use its token against the REST API directly.
+
+Supabase setup (once per project): Authentication → OAuth Server → enable,
+authorization path `/oauth/consent`, allow dynamic client registration. The
+Site URL must be the site's address. `supabase/config.toml` has the same
+values for the CLI.
 
 ## Run it for your own site
 

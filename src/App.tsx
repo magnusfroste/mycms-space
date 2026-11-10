@@ -16,6 +16,7 @@ import GoogleAnalytics from "@/components/common/GoogleAnalytics";
 const DynamicPage = lazy(() => import("./pages/DynamicPage"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Admin = lazy(() => import("./pages/Admin"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const BlogArchive = lazy(() => import("./pages/BlogArchive"));
 const ProjectCaseStudy = lazy(() => import("./pages/ProjectCaseStudy"));
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/blog" element={<BlogArchive />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/project/:repoName" element={<ProjectCaseStudy />} />
