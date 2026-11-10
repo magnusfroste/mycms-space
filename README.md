@@ -75,6 +75,10 @@ Plus **Ask Magnet** (admin chat) and ⌘K search in the top bar.
 
 4. Start with the `site_overview` tool.
 
+Claude, ChatGPT and other custom connectors that sign in instead of using a
+key: add `<SUPABASE_URL>/functions/v1/mcp-server/oauth` and approve the
+connection on the site. See [OAuth](docs/MCP.md#oauth-custom-connectors).
+
 Tools by scope:
 
 | Scope | Tools |

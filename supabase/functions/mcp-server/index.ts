@@ -11,12 +11,78 @@ import { PROFILE_TOOL_NAMES, callProfileTool, loadOwner, profileTools, type Owne
 import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
 import { loadResumeContext } from "../_shared/ai-context.ts";
 import { CMS_TOOL_NAMES, callCmsTool, cmsToolsFor, effectiveScopes } from "./cms-tools.ts";
+import { jwtClaims } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, mcp-session-id',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, mcp-session-id, mcp-protocol-version',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Expose-Headers': 'WWW-Authenticate, Mcp-Session-Id',
 };
+
+// ---- OAuth (Claude / ChatGPT custom connectors and other OAuth MCP clients)
+// Connector URL: <SUPABASE_URL>/functions/v1/mcp-server/oauth. Without a token
+// that path answers 401 with a pointer to the protected-resource metadata,
+// which names Supabase Auth's OAuth 2.1 server as the authorization server.
+// The base path stays open for anonymous visitors and API keys.
+const OAUTH_SUFFIX = '/oauth';
+const PRM_PATH = '/.well-known/oauth-protected-resource';
+
+/** Path after the function name, e.g. "", "/oauth", "/.well-known/…". */
+function subPath(req: Request): string {
+  const p = new URL(req.url).pathname.replace(/\/+$/, '');
+  const i = p.indexOf('/mcp-server');
+  return i >= 0 ? p.slice(i + '/mcp-server'.length) : p;
+}
+
+function oauthUrls(supabaseUrl: string) {
+  const base = `${supabaseUrl}/functions/v1/mcp-server`;
+  return {
+    resource: `${base}${OAUTH_SUFFIX}`,
+    metadata: `${base}${PRM_PATH}${OAUTH_SUFFIX}`,
+    issuer: `${supabaseUrl}/auth/v1`,
+  };
+}
+
+function oauthChallenge(supabaseUrl: string, error?: string, description?: string): Response {
+  const { metadata } = oauthUrls(supabaseUrl);
+  const parts = [`resource_metadata="${metadata}"`, 'scope="email"'];
+  if (error) parts.push(`error="${error}"`);
+  if (description) parts.push(`error_description="${description.replace(/"/g, "'")}"`);
+  return new Response(JSON.stringify(jsonRpcError(null, -32001, description || 'Authentication required')), {
+    status: error === 'insufficient_scope' ? 403 : 401,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', 'WWW-Authenticate': `Bearer ${parts.join(', ')}` },
+  });
+}
+
+/** Validates a Supabase OAuth access token and returns the grant as a key-like object. */
+async function oauthPrincipal(supabase: any, token: string): Promise<{ key?: any; error?: string; status?: string }> {
+  const claims = jwtClaims(token);
+  const clientId = typeof claims?.client_id === 'string' ? claims.client_id : '';
+  if (!clientId) return { error: 'Not an OAuth access token. Use an MCP API key or connect via OAuth.', status: 'invalid_token' };
+  const { data: userData, error } = await supabase.auth.getUser(token);
+  if (error || !userData?.user) return { error: 'Token is invalid or expired', status: 'invalid_token' };
+  const userId = userData.user.id;
+  const [{ data: admin }, { data: grant }] = await Promise.all([
+    supabase.from('admin_users').select('user_id').eq('user_id', userId).maybeSingle(),
+    supabase.from('mcp_oauth_grants').select('*').eq('client_id', clientId).maybeSingle(),
+  ]);
+  if (!admin) return { error: 'Only the site admin can connect an agent', status: 'insufficient_scope' };
+  if (!grant || grant.revoked || grant.user_id !== userId) {
+    return { error: 'This connection was revoked or never approved. Reconnect from the agent and approve it again.', status: 'insufficient_scope' };
+  }
+  supabase.from('mcp_oauth_grants').update({ last_used_at: new Date().toISOString(), use_count: (grant.use_count || 0) + 1 })
+    .eq('client_id', clientId).then(() => {});
+  return {
+    key: {
+      id: null,
+      name: `oauth:${grant.client_name || clientId}`,
+      scopes: grant.scopes,
+      cmsScopes: effectiveScopes(grant.scopes),
+      oauth: true,
+    },
+  };
+}
 
 // Newest first. The server answers with the client's version when it is listed,
 // otherwise with the newest one (spec: lifecycle / version negotiation).
@@ -57,6 +123,23 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
+  const path = subPath(req);
+  const oauthMode = path === OAUTH_SUFFIX;
+
+  // ---- OAuth protected-resource metadata (RFC 9728)
+  if (req.method === 'GET' && path.startsWith(PRM_PATH)) {
+    const { resource, issuer } = oauthUrls(supabaseUrl);
+    return new Response(JSON.stringify({
+      resource,
+      authorization_servers: [issuer],
+      scopes_supported: ['email'],
+      bearer_methods_supported: ['header'],
+      resource_name: SERVER_NAME,
+    }, null, 2), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+  if (path && !oauthMode) {
+    return new Response('Not found', { status: 404, headers: corsHeaders });
+  }
 
   // ---- GET with Accept: text/event-stream = a client asking for a server-push
   // stream. This server never pushes, so per spec it answers 405.
@@ -89,7 +172,14 @@ Deno.serve(async (req) => {
 
   let apiKey: any;
 
-  if (!token) {
+  if (!token && oauthMode && req.method === 'POST') {
+    return oauthChallenge(supabaseUrl);
+  } else if (token && token.split('.').length === 3) {
+    // JWT = OAuth access token from Supabase Auth (MCP API keys are not JWTs)
+    const p = await oauthPrincipal(supabase, token);
+    if (!p.key) return oauthChallenge(supabaseUrl, p.status, p.error);
+    apiKey = p.key;
+  } else if (!token) {
     // Anonymous read-only access — built-in tools only, no skill execution
     apiKey = {
       id: null,

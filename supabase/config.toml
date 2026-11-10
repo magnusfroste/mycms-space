@@ -32,3 +32,13 @@ verify_jwt = false
 
 [functions.agent-daily-report]
 verify_jwt = false
+
+[functions.mcp-server]
+verify_jwt = false
+
+# OAuth 2.1 server for MCP connectors (Claude, ChatGPT …). Hosted projects:
+# Authentication → OAuth Server in the dashboard, same values.
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = true

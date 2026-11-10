@@ -34,6 +34,9 @@ export async function isAdminRequest(req: Request): Promise<boolean> {
 
 // deno-lint-ignore no-explicit-any
 async function isAdminToken(admin: any, token: string): Promise<boolean> {
+  // OAuth access tokens (MCP connectors) carry a client_id claim. They only
+  // work through the MCP server's scopes, never as an admin session.
+  if (jwtClaims(token)?.client_id) return false;
   const { data: userData } = await admin.auth.getUser(token);
   if (!userData?.user) return false;
   const { data: adminRow } = await admin
@@ -42,6 +45,18 @@ async function isAdminToken(admin: any, token: string): Promise<boolean> {
     .eq("user_id", userData.user.id)
     .maybeSingle();
   return Boolean(adminRow);
+}
+
+/** Decodes a JWT payload without verifying it (verify separately with getUser). */
+export function jwtClaims(token: string): Record<string, unknown> | null {
+  const part = token.split(".")[1];
+  if (!part) return null;
+  try {
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=");
+    return JSON.parse(atob(b64));
+  } catch {
+    return null;
+  }
 }
 
 export function forbidden(corsHeaders: Record<string, string>): Response {
