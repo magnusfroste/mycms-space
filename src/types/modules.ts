@@ -21,10 +21,10 @@ export interface Module<T extends ModuleConfigType = ModuleConfigType> {
 // Extensible integration system for AI providers
 // ============================================
 
-export type AIIntegrationType = 'n8n' | 'openai' | 'gemini' | 'custom' | 'lovable';
+export type AIIntegrationType = 'garageai' | 'n8n' | 'openai' | 'gemini' | 'custom' | 'lovable';
 
 // Admin AI Provider type (subset - no n8n tool calls)
-export type AdminAIProvider = 'lovable' | 'openai' | 'gemini';
+export type AdminAIProvider = 'garageai' | 'lovable' | 'openai' | 'gemini';
 
 // Admin AI Config
 export interface AdminAIConfig {
@@ -66,6 +66,12 @@ export interface CustomIntegration extends AIIntegrationBase {
   api_key_env?: string; // env var name for API key (optional)
 }
 
+// GarageAI — private, self-hosted inference (key: GARAGEAI_API_KEY)
+export interface GarageAIIntegration extends AIIntegrationBase {
+  type: 'garageai';
+  model: string;
+}
+
 // Lovable AI Integration (built-in)
 export interface LovableIntegration extends AIIntegrationBase {
   type: 'lovable';
@@ -78,6 +84,7 @@ export type AIIntegration =
   | OpenAIIntegration 
   | GeminiIntegration 
   | CustomIntegration
+  | GarageAIIntegration
   | LovableIntegration;
 
 // Integration metadata for UI
@@ -266,6 +273,11 @@ export const defaultUtilityIntegrations: Record<UtilityIntegrationType, UtilityI
 
 // Default integration configs
 export const defaultIntegrations: Record<AIIntegrationType, AIIntegration> = {
+  garageai: {
+    type: 'garageai',
+    enabled: false,
+    model: 'garageai/auto',
+  },
   n8n: {
     type: 'n8n',
     enabled: false,

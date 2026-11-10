@@ -47,9 +47,10 @@ existing at that time an admin; add new admins by inserting their
 
 | Secret | Used for |
 |---|---|
+| `GARAGEAI_API_KEY` | GarageAI (private, no per-token cost). When set, all platform AI (Autopilot, CV tools, planning, topic tags) uses it; Magnet and admin tools use it when GarageAI is the chosen provider. `GARAGEAI_MODEL` overrides `garageai/auto`. |
 | `OPENAI_API_KEY` | OpenAI provider, text-to-speech, Whisper |
 | `GEMINI_API_KEY` | Gemini provider |
-| `LOVABLE_API_KEY` | Lovable AI gateway provider |
+| `LOVABLE_API_KEY` | Lovable AI gateway: fallback for platform AI without `GARAGEAI_API_KEY`, and always for blog cover images and PDF parsing |
 | `CUSTOM_AI_API_KEY` (or another `*API_KEY`) | Custom OpenAI-compatible endpoint |
 | `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL` | Newsletter, notifications, daily report |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Gmail connection |

@@ -4,7 +4,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "./guardrails.ts";
@@ -134,8 +134,7 @@ async function researchTopic(topic: string, sources: string[]): Promise<string> 
 // ============================================
 
 async function generateContent(prompt: string, systemPrompt: string): Promise<string> {
-  const config = { provider: 'lovable' as const };
-  const { url, apiKey, model } = resolveProvider(config);
+  const { url, apiKey, model } = resolveDefaultAI();
 
   const data = await callOpenAICompatible({
     url,

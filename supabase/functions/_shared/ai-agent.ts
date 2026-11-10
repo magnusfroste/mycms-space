@@ -13,7 +13,7 @@ import { callKnowledgeTool } from "./knowledge-tools.ts";
 // Types
 // ============================================
 
-export type AgentProvider = 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
+export type AgentProvider = 'garageai' | 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
 
 export interface AgentConfig {
   provider: AgentProvider;
@@ -144,6 +144,13 @@ async function callN8n(params: {
 // ============================================
 
 export const providerEndpoints: Record<string, { url: string; envKey: string; defaultModel: string }> = {
+  // Private, self-hosted inference (no per-token cost). garageai/auto routes
+  // each request to a suitable model on the GarageAI network.
+  garageai: {
+    url: "https://api.garageai.eu/v1/chat/completions",
+    envKey: "GARAGEAI_API_KEY",
+    defaultModel: "garageai/auto",
+  },
   lovable: {
     url: "https://ai.gateway.lovable.dev/v1/chat/completions",
     envKey: "LOVABLE_API_KEY",
@@ -529,6 +536,21 @@ async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, un
 // ============================================
 // Provider Resolution
 // ============================================
+
+/**
+ * The provider for the platform's own AI work (Autopilot, CV tools, planning,
+ * topic suggestions). GarageAI when GARAGEAI_API_KEY is set, otherwise the
+ * Lovable gateway. `lovableModel` is only used on the Lovable fallback; on
+ * GarageAI the model is GARAGEAI_MODEL or garageai/auto.
+ */
+export function resolveDefaultAI(lovableModel?: string): { url: string; apiKey: string; model: string; provider: AgentProvider } {
+  if (Deno.env.get("GARAGEAI_API_KEY")) {
+    const r = resolveProvider({ provider: "garageai", model: Deno.env.get("GARAGEAI_MODEL") || undefined });
+    return { ...r, provider: "garageai" };
+  }
+  const r = resolveProvider({ provider: "lovable", model: lovableModel });
+  return { ...r, provider: "lovable" };
+}
 
 export function resolveProvider(config: AgentConfig): { url: string; apiKey: string; model: string } {
   if (config.provider === 'custom') {

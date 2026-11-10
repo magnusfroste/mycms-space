@@ -4,7 +4,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
@@ -178,8 +178,7 @@ async function analyzeSignals(signals: EmailSignal[], email: string): Promise<st
     `From: ${s.from}\nSubject: ${s.subject}\nSnippet: ${s.snippet}\nDate: ${s.date}`
   ).join('\n\n---\n\n');
 
-  const config = { provider: 'lovable' as const };
-  const { url, apiKey, model } = resolveProvider(config);
+  const { url, apiKey, model } = resolveDefaultAI();
 
   const data = await callOpenAICompatible({
     url,
@@ -247,7 +246,7 @@ Deno.serve(async (req) => {
 
         // Extract topics for potential blog drafts
         const topicsPrompt = await callOpenAICompatible({
-          ...resolveProvider({ provider: 'lovable' as const }),
+          ...resolveDefaultAI(),
           messages: [
             {
               role: 'system',

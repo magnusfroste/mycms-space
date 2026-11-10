@@ -5,7 +5,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "../_shared/ai-context.ts";
-import { resolveProvider, callOpenAICompatible } from "../_shared/ai-agent.ts";
+import { resolveDefaultAI, resolveProvider, callOpenAICompatible } from "../_shared/ai-agent.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
@@ -281,7 +281,7 @@ async function decomposeObjectiveIntoPlan(
 
   const skillList = (skills || []).map((s: any) => `- ${s.name}: ${s.description} (${s.handler})`).join('\n');
 
-  const { url, apiKey, model } = resolveProvider({ provider: 'lovable' as const });
+  const { url, apiKey, model } = resolveDefaultAI();
   const data = await callOpenAICompatible({
     url, apiKey, model,
     messages: [
@@ -682,14 +682,17 @@ Deno.serve(async (req) => {
       .select('module_config').eq('module_type', 'ai').maybeSingle();
     const aiConfig = (aiModule?.module_config as any) || {};
     const provider = aiConfig.active_integration || 'lovable';
+    // integration holds the settings of the active provider (flat object)
+    const integ = aiConfig.integration?.type === provider ? aiConfig.integration : {};
 
-    const { url, apiKey, model } = resolveProvider({
-      provider,
-      model: aiConfig.integration?.[provider]?.model,
-      webhookUrl: aiConfig.webhook_url,
-      baseUrl: aiConfig.integration?.[provider]?.base_url,
-      apiKeyEnv: aiConfig.integration?.[provider]?.api_key_env,
-    });
+    const { url, apiKey, model } = provider === 'n8n'
+      ? resolveDefaultAI()
+      : resolveProvider({
+        provider,
+        model: integ.model,
+        baseUrl: integ.base_url,
+        apiKeyEnv: integ.api_key_env,
+      });
 
     // 3. Load skills as tools
     const { data: skills } = await supabase.from('agent_skills')
