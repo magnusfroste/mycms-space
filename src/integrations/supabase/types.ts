@@ -869,6 +869,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_oauth_grants: {
+        Row: {
+          client_id: string
+          client_name: string | null
+          created_at: string
+          last_used_at: string | null
+          revoked: boolean
+          scopes: string[]
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          client_name?: string | null
+          created_at?: string
+          last_used_at?: string | null
+          revoked?: boolean
+          scopes?: string[]
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string | null
+          created_at?: string
+          last_used_at?: string | null
+          revoked?: boolean
+          scopes?: string[]
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           created_at: string | null
