@@ -1292,6 +1292,14 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_valid_cron_secret: { Args: { p_secret: string }; Returns: boolean }
+      oauth_request_info: {
+        Args: { p_authorization_id: string }
+        Returns: {
+          client_created_at: string
+          redirect_uri: string
+          registration_type: string
+        }[]
+      }
       update_chat_session: {
         Args: { p_id: string; p_message_count: number }
         Returns: undefined
