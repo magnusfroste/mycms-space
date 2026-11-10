@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Login } from '@/components/admin/Login';
 import SEOHead from '@/components/common/SEOHead';
+import { FramedNotice, isFramed } from '@/components/common/FrameGuard';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +38,23 @@ type Details = {
 // mcp_oauth_grants is not in the generated types yet
 const grants = () => supabase.from('mcp_oauth_grants' as never);
 
+// Where well-known MCP clients send the authorization code. Anything else is
+// shown with a warning: anyone can register a client and call it "Claude".
+const KNOWN_HOSTS = /(^|\.)(claude\.ai|anthropic\.com|chatgpt\.com|openai\.com)$/;
+const LOCAL_HOSTS = /^(localhost|127\.0\.0\.1|\[::1\])$/;
+
+type Destination = { host: string; known: boolean; local: boolean } | null;
+
+const destinationOf = (uri: string | null | undefined): Destination => {
+  if (!uri) return null;
+  try {
+    const host = new URL(uri).hostname;
+    return { host, known: KNOWN_HOSTS.test(host), local: LOCAL_HOSTS.test(host) };
+  } catch {
+    return { host: uri, known: false, local: false };
+  }
+};
+
 export default function OAuthConsent() {
   const [params] = useSearchParams();
   const authorizationId = params.get('authorization_id') || '';
@@ -45,6 +63,8 @@ export default function OAuthConsent() {
   const [error, setError] = useState('');
   const [scopes, setScopes] = useState<string[]>(DEFAULT_SCOPES);
   const [busy, setBusy] = useState(false);
+  const [dest, setDest] = useState<Destination>(null);
+  const framed = isFramed();
 
   useEffect(() => {
     if (!user || !authorizationId) return;
@@ -69,6 +89,11 @@ export default function OAuthConsent() {
         return;
       }
       const d = data as Details;
+      const { data: info } = await supabase.rpc('oauth_request_info' as never, { p_authorization_id: authorizationId } as never);
+      const rows = info as unknown as Array<{ redirect_uri?: string }> | null;
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (cancelled) return;
+      setDest(destinationOf(row?.redirect_uri || d.redirect_uri));
       setDetails(d);
       const { data: existing } = await grants().select('scopes').eq('client_id' as never, d.client.client_id as never).maybeSingle();
       const prev = (existing as { scopes?: string[] } | null)?.scopes;
@@ -108,6 +133,7 @@ export default function OAuthConsent() {
     }
   };
 
+  if (framed) return <FramedNotice />;
   if (loading) return <div className="min-h-screen bg-background" />;
   if (!user) return <Login />;
 
@@ -119,11 +145,7 @@ export default function OAuthConsent() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-            {details?.client.logo_uri ? (
-              <img src={details.client.logo_uri} alt="" className="h-6 w-6 rounded" />
-            ) : (
-              <Bot className="h-5 w-5 text-muted-foreground" />
-            )}
+            <Bot className="h-5 w-5 text-muted-foreground" />
           </div>
           <CardTitle className="text-xl">{details ? `${name} wants to operate this site` : 'Connect an agent'}</CardTitle>
           <CardDescription>
@@ -148,11 +170,22 @@ export default function OAuthConsent() {
                   </span>
                 </label>
               ))}
-              {details.client.client_uri && (
-                <p className="text-xs text-muted-foreground">
-                  Client: <span className="font-mono">{details.client.client_uri}</span>
+              <div
+                className={`rounded-lg border p-3 text-xs ${
+                  dest?.known ? 'border-border text-muted-foreground' : 'border-amber-500/50 bg-amber-500/10 text-foreground'
+                }`}
+              >
+                <p>
+                  Access goes to: <span className="font-mono font-semibold">{dest?.host || 'unknown'}</span>
                 </p>
-              )}
+                {!dest?.known && (
+                  <p className="mt-1">
+                    {dest?.local
+                      ? 'An app on your own computer (Claude Code, Cursor, Hermes …). Allow only if you just started the connection there.'
+                      : 'Not Claude or ChatGPT. The name above is chosen by the app itself; allow only if you know where this address belongs.'}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

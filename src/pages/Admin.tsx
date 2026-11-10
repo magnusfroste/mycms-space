@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { FramedNotice, isFramed } from '@/components/common/FrameGuard';
 import { Login } from '@/components/admin/Login';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopBar } from '@/components/admin/shell/AdminTopBar';
@@ -81,6 +82,8 @@ const Admin = () => {
     if (error) toast.error(error.message);
     else navigate('/');
   };
+
+  if (isFramed()) return <FramedNotice />;
 
   if (loading) {
     return (
