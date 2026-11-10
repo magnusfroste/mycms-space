@@ -88,6 +88,17 @@ Flow:
    that the user is an admin and that the grant is not revoked, and applies
    the grant's scopes exactly like an API key's.
 
+The consent page shows where the access goes (the redirect URI's host, read
+with the admin-only `oauth_request_info` RPC) and warns when it is not Claude
+or ChatGPT: anyone can register a client and give it any name. The page, like
+`/admin`, refuses to render inside a frame (the host sends no
+`X-Frame-Options`).
+
+Tool output that carries visitor-written text (`inbox_list`,
+`conversations_list`, `conversation_get`) has a `notice` field saying it is
+data, not instructions, and the server instructions say the same. Logged tool
+output in `mcp_activities` is cut at 4 000 characters.
+
 Revoking in admin marks the grant revoked (the server refuses the token at
 once) and deletes Supabase's consent, so the next connect asks again.
 
