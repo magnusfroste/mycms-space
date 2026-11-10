@@ -47,11 +47,17 @@ export const orderRepos = (repos: GitHubRepoWithImages[], selected?: string[]) =
   return [...picked, ...featured, ...rest];
 };
 
+// The date on a card is when the project started (GitHub creation date), not
+// the last push: active repos are pushed weekly, so "last push" made every
+// project look brand new. The last update is in the tooltip.
 const repoDate = (repo: GitHubRepoWithImages) => {
-  const raw = repo.pushed_at || repo.created_at_github;
+  const raw = repo.created_at_github || repo.pushed_at;
   if (!raw) return null;
   const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? null : { label: format(date, 'MMM yyyy'), iso: raw };
+  if (Number.isNaN(date.getTime())) return null;
+  const pushed = repo.pushed_at ? new Date(repo.pushed_at) : null;
+  const title = `Started ${format(date, 'MMM yyyy')}${pushed && !Number.isNaN(pushed.getTime()) ? ` · updated ${format(pushed, 'd MMM yyyy')}` : ''}`;
+  return { label: format(date, 'MMM yyyy'), iso: raw, title };
 };
 
 const LanguageTag: React.FC<{ name: string }> = ({ name }) => (
@@ -78,7 +84,7 @@ export const WorkList: React.FC<{ repos: GitHubRepoWithImages[]; showLanguages: 
             <span className="flex shrink-0 items-center gap-4 md:gap-5">
               {showLanguages && repo.language && <LanguageTag name={repo.language} />}
               {date && (
-                <time dateTime={date.iso} className="font-mono text-[12.5px] text-muted-foreground md:w-[72px] md:text-right">
+                <time dateTime={date.iso} title={date.title} className="font-mono text-[12.5px] text-muted-foreground md:w-[72px] md:text-right">
                   {date.label}
                 </time>
               )}
@@ -137,7 +143,7 @@ const WorkCards: React.FC<{ repos: GitHubRepoWithImages[]; showLanguages: boolea
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="min-w-0 text-[16px] font-semibold leading-snug text-foreground">{name}</h3>
                 {date && (
-                  <time dateTime={date.iso} className="shrink-0 font-mono text-[12px] text-muted-foreground">
+                  <time dateTime={date.iso} title={date.title} className="shrink-0 font-mono text-[12px] text-muted-foreground">
                     {date.label}
                   </time>
                 )}
