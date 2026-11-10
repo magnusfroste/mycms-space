@@ -30,7 +30,8 @@ const ProjectCaseStudyStudio: React.FC<{ repo: GitHubRepoWithImages }> = ({ repo
   const mainImage = repo.images?.[0]?.image_url;
   const gallery = repo.images?.slice(1) || [];
   const topics = repo.topics || [];
-  const updated = repo.pushed_at ? format(new Date(repo.pushed_at), 'MMM yyyy') : null;
+  const started = repo.created_at_github ? format(new Date(repo.created_at_github), 'MMM yyyy') : null;
+  const updated = repo.pushed_at ? format(new Date(repo.pushed_at), 'd MMM yyyy') : null;
 
   const related = useMemo(
     () => repos.filter((r) => r.name !== repo.name && r.featured).slice(0, 3),
@@ -54,6 +55,7 @@ const ProjectCaseStudyStudio: React.FC<{ repo: GitHubRepoWithImages }> = ({ repo
             )}
             <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[12.5px] text-muted-foreground">
               {repo.language && <span className="rounded border border-border px-1.5 py-px">{repo.language}</span>}
+              {started && <span>Started {started}</span>}
               {updated && <span>Updated {updated}</span>}
               {repo.stars > 0 && (
                 <>
