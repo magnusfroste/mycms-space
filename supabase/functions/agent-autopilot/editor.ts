@@ -17,7 +17,7 @@
 // ============================================
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
 type Supabase = SupabaseClient;
@@ -74,10 +74,11 @@ const WRITER_MODEL = "google/gemini-2.5-pro";
 // ---------- model helpers ----------
 
 async function chat(system: string, user: string, model: string): Promise<string> {
-  const { url, apiKey } = resolveProvider({ provider: "lovable" });
+  // GarageAI (private, free) when configured; the Gemini names apply to the Lovable fallback.
+  const ai = resolveDefaultAI(model);
   try {
     const data = await callOpenAICompatible({
-      url, apiKey, model,
+      url: ai.url, apiKey: ai.apiKey, model: ai.model,
       messages: [{ role: "system", content: system }, { role: "user", content: user }],
     });
     return data.choices?.[0]?.message?.content || "";

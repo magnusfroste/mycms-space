@@ -6,6 +6,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveDefaultAI } from "../_shared/ai-agent.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -221,23 +222,25 @@ serve(async (req) => {
 
       const context = contextParts.join("\n\n");
 
-      // Call Lovable AI
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) {
+      // Platform AI: GarageAI when configured, else the Lovable gateway
+      let ai: { url: string; apiKey: string; model: string };
+      try {
+        ai = resolveDefaultAI("google/gemini-2.5-flash");
+      } catch (e) {
         return new Response(
-          JSON.stringify({ error: "LOVABLE_API_KEY not configured" }),
+          JSON.stringify({ error: (e as Error).message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiResponse = await fetch(ai.url, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Authorization": `Bearer ${ai.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: ai.model,
           messages: [
             {
               role: "system",

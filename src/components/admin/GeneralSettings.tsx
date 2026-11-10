@@ -203,7 +203,7 @@ const GeneralSettings: React.FC = () => {
           ...config, 
           admin_ai_provider: value,
           admin_ai_config: {
-            model: value === 'openai' ? 'gpt-4o' : value === 'gemini' ? 'gemini-1.5-flash' : 'google/gemini-2.5-flash'
+            model: value === 'garageai' ? 'garageai/auto' : value === 'openai' ? 'gpt-4o' : value === 'gemini' ? 'gemini-1.5-flash' : 'google/gemini-2.5-flash'
           }
         } 
       },
@@ -261,6 +261,9 @@ const GeneralSettings: React.FC = () => {
                 <SelectValue placeholder="Select provider" />
               </SelectTrigger>
               <SelectContent className="bg-popover border z-50">
+                <SelectItem value="garageai">
+                  <span className="font-medium">GarageAI (private, free)</span>
+                </SelectItem>
                 <SelectItem value="lovable">
                   <span className="font-medium">Lovable AI</span>
                 </SelectItem>
@@ -277,12 +280,14 @@ const GeneralSettings: React.FC = () => {
           <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 space-y-1">
             <p className="text-sm font-medium">
               Admin tools use: <span className="text-primary">
-                {config?.admin_ai_provider === 'openai' ? 'OpenAI' : 
+ {config?.admin_ai_provider === 'garageai' ? 'GarageAI' :
+                 config?.admin_ai_provider === 'openai' ? 'OpenAI' : 
                  config?.admin_ai_provider === 'gemini' ? 'Google Gemini' : 'Lovable AI'}
               </span>
             </p>
             <p className="text-xs text-muted-foreground">
               Used by Prompt Enhancer, Text Actions, and Page Builder.
+              {config?.admin_ai_provider === 'garageai' && ' Requires GARAGEAI_API_KEY secret.'}
               {config?.admin_ai_provider === 'openai' && ' Requires OPENAI_API_KEY secret.'}
               {config?.admin_ai_provider === 'gemini' && ' Requires GEMINI_API_KEY secret.'}
             </p>

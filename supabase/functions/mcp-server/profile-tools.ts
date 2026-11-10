@@ -15,7 +15,7 @@
 // AI tools and contact are rate limited for anonymous callers.
 // ============================================
 
-import { callOpenAICompatible, resolveProvider } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { cvAgentTool } from "../_shared/ai-tools.ts";
 import { loadResumeContext } from "../_shared/ai-context.ts";
 
@@ -126,7 +126,7 @@ function languageRule(args: Record<string, unknown>): string {
 }
 
 async function forcedToolCall(system: string, user: string, tool: typeof cvAgentTool): Promise<Record<string, unknown>> {
-  const { url, apiKey, model } = resolveProvider({ provider: "lovable" });
+  const { url, apiKey, model } = resolveDefaultAI();
   const data = await callOpenAICompatible({
     url, apiKey, model,
     messages: [{ role: "system", content: system }, { role: "user", content: user }],

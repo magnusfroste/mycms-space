@@ -23,8 +23,8 @@ export interface AICompletionOptions {
 }
 
 export interface AIProviderConfig {
-  active_integration: 'lovable' | 'openai' | 'gemini' | 'n8n';
-  admin_ai_provider?: 'lovable' | 'openai' | 'gemini';
+  active_integration: 'garageai' | 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
+  admin_ai_provider?: 'garageai' | 'lovable' | 'openai' | 'gemini';
   admin_ai_config?: {
     model?: string;
   };
@@ -76,6 +76,7 @@ export async function getAIModuleConfig(): Promise<AIProviderConfig | null> {
 export function getActiveProviderName(config: AIProviderConfig | null): string {
   if (!config) return 'Lovable AI';
   switch (config.active_integration) {
+    case 'garageai': return 'GarageAI';
     case 'openai': return 'OpenAI';
     case 'gemini': return 'Google Gemini';
     case 'n8n': return 'n8n Webhook';
@@ -155,7 +156,7 @@ export async function getAICompletion(
 ): Promise<ProviderResult> {
   const config = configOverride ?? await getAIModuleConfig();
   const provider = config?.active_integration || 'lovable';
-  const model = config?.integration?.model || 'google/gemini-3-flash-preview';
+  const model = config?.integration?.model || providerEndpoints[provider]?.defaultModel || 'google/gemini-3-flash-preview';
   
   console.log(`Chat AI Provider: ${provider}, Model: ${model}`);
   return callProvider(provider, options, model, config?.integration?.webhook_url);
@@ -167,7 +168,7 @@ export async function getAdminAICompletion(
 ): Promise<ProviderResult> {
   const config = configOverride ?? await getAIModuleConfig();
   const provider = config?.admin_ai_provider || 'lovable';
-  const model = config?.admin_ai_config?.model || 'google/gemini-2.5-flash';
+  const model = config?.admin_ai_config?.model || providerEndpoints[provider]?.defaultModel || 'google/gemini-2.5-flash';
   
   console.log(`Admin AI Provider: ${provider}, Model: ${model}`);
   return callProvider(provider, options, model);

@@ -23,6 +23,7 @@ import type {
   N8nIntegration,
   OpenAIIntegration,
   GeminiIntegration,
+  GarageAIIntegration,
   CustomIntegration,
   AIModuleConfig,
   GitHubModuleConfig,
@@ -34,7 +35,7 @@ import { Chip, Eyebrow, StatusPill, toneClasses, underlineTabs, type Tone } from
 import { useGmailStatus, gmailStatusKey } from './integrations/useGmailStatus';
 import { cn } from '@/lib/utils';
 
-type IntegrationId = 'openai' | 'gemini' | 'custom' | 'n8n' | 'github' | 'gmail' | 'resend' | 'firecrawl' | 'unsplash';
+type IntegrationId = 'garageai' | 'openai' | 'gemini' | 'custom' | 'n8n' | 'github' | 'gmail' | 'resend' | 'firecrawl' | 'unsplash';
 type Group = 'ai' | 'source' | 'tool';
 
 interface IntegrationInfo {
@@ -50,6 +51,13 @@ interface IntegrationInfo {
 }
 
 const integrations: IntegrationInfo[] = [
+  {
+    id: 'garageai', group: 'ai', name: 'GarageAI', mono: 'GA',
+    what: 'Private, self-hosted models. No per-token cost.',
+    powers: 'chat · autopilot · cv tools · admin tools',
+    usedBy: ['Magnet chat', 'Autopilot drafts', 'CV tools', 'Admin AI tools'],
+    secret: 'GARAGEAI_API_KEY', docs: 'https://garageai.eu',
+  },
   {
     id: 'openai', group: 'ai', name: 'OpenAI', mono: 'AI',
     what: 'GPT models answer visitors and write drafts.',
@@ -210,6 +218,7 @@ const IntegrationsManager: React.FC = () => {
 
   const statusOf = useCallback((id: IntegrationId): Status => {
     switch (id) {
+      case 'garageai':
       case 'openai':
       case 'gemini':
       case 'custom':
@@ -222,7 +231,7 @@ const IntegrationsManager: React.FC = () => {
           return { label: 'Configured', tone: 'neutral' };
         }
         if (id === 'n8n' && config?.webhook_url) return { label: 'Configured', tone: 'neutral' };
-        return { label: id === 'openai' || id === 'gemini' ? 'Available' : 'Not set up', tone: 'neutral' };
+        return { label: id === 'openai' || id === 'gemini' || id === 'garageai' ? 'Available' : 'Not set up', tone: 'neutral' };
       }
       case 'github':
         if (githubModule?.enabled && githubConfig?.username) {
@@ -264,7 +273,7 @@ const IntegrationsManager: React.FC = () => {
   const fallbackSelected =
     integrations.find((i) => ['warning', 'danger'].includes(statusOf(i.id).tone))?.id ??
     integrations.find((i) => i.id === activeIntegration)?.id ??
-    'openai';
+    'garageai';
   const current = integrations.find((i) => i.id === (selected ?? fallbackSelected))!;
   const currentStatus = statusOf(current.id);
 
@@ -288,6 +297,13 @@ const IntegrationsManager: React.FC = () => {
             config={integrationConfigFor<N8nIntegration>('n8n')}
             legacyWebhookUrl={config?.webhook_url}
             onUpdate={(field, value) => handleIntegrationFieldUpdate('n8n', field, value)}
+          />
+        );
+      case 'garageai':
+        return (
+          <GarageAIConfig
+            config={integrationConfigFor<GarageAIIntegration>('garageai')}
+            onUpdate={(field, value) => handleIntegrationFieldUpdate('garageai', field, value)}
           />
         );
       case 'openai':
@@ -612,6 +628,23 @@ const GeminiConfig: React.FC<{ config: GeminiIntegration; onUpdate: (field: stri
       <option value="gemini-1.5-pro">Gemini 1.5 Pro (powerful)</option>
       <option value="gemini-2.0-flash">Gemini 2.0 Flash (latest)</option>
     </select>
+  </div>
+);
+
+const GarageAIConfig: React.FC<{ config: GarageAIIntegration; onUpdate: (field: string, value: string) => void }> = ({ config, onUpdate }) => (
+  <div className="space-y-2">
+    <Label htmlFor="garageai_model">Model</Label>
+    <Input
+      id="garageai_model"
+      defaultValue={config.model || 'garageai/auto'}
+      onBlur={(e) => onUpdate('model', e.target.value || 'garageai/auto')}
+      placeholder="garageai/auto"
+      className="font-mono"
+    />
+    <p className="text-xs text-muted-foreground">
+      garageai/auto picks a model per request. Autopilot, CV tools and planning also use GarageAI whenever the
+      GARAGEAI_API_KEY secret is set. Cover images and PDF parsing still use the Lovable gateway.
+    </p>
   </div>
 );
 
