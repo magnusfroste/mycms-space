@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useColorMode } from '@/hooks/useColorMode';
+import { useHeaderModule } from '@/models/modules';
 import { cn } from '@/lib/utils';
 import { adminNavGroups, findNavGroupLabel, findNavItem, type AdminViewId } from './nav';
 import { adminHref } from './primitives';
@@ -34,10 +35,14 @@ interface AdminTopBarProps {
   onSignOut: () => void;
 }
 
-const siteHost = typeof window !== 'undefined' ? window.location.host : '';
+// Same wordmark as the public header (header module logo_text), so the admin
+// reads as part of the site; the host without "www." is the fallback.
+const siteHost = typeof window !== 'undefined' ? window.location.host.replace(/^www\./, '') : '';
 
 export function AdminTopBar({ user, activeView, onSignOut }: AdminTopBarProps) {
   const navigate = useNavigate();
+  const { config: headerConfig } = useHeaderModule();
+  const wordmark = headerConfig?.logo_text || siteHost || 'Admin';
   const [searchOpen, setSearchOpen] = useState(false);
   const { isMobile, toggleSidebar } = useSidebar();
   const { mode, toggle: toggleColorMode } = useColorMode();
@@ -81,11 +86,11 @@ export function AdminTopBar({ user, activeView, onSignOut }: AdminTopBarProps) {
         </button>
       )}
 
-      <Link to={adminHref('overview')} className="flex shrink-0 items-center gap-2.5 text-foreground">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary text-[13px] font-bold text-primary-foreground">
-          {(siteHost[0] || 'a').toLowerCase()}
-        </span>
-        <span className="hidden text-sm font-semibold sm:inline">{siteHost || 'Admin'}</span>
+      <Link
+        to={adminHref('overview')}
+        className="shrink-0 text-[15px] font-bold tracking-[-0.01em] text-foreground"
+      >
+        {wordmark}
       </Link>
 
       <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-sm md:flex">
