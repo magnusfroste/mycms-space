@@ -267,6 +267,25 @@ async function research(pick: TopicPick, news: Array<{ title: string; url: strin
 
 // ---------- 4. writing ----------
 
+/**
+ * What the author's own projects actually are, from the GitHub sync
+ * (enriched title + description). The writer may describe a project only
+ * with these facts, and the reviewer checks against the same list — the
+ * model otherwise invents features (e.g. calling a handbook a sandbox tool).
+ */
+async function projectFacts(supabase: Supabase): Promise<string> {
+  const { data } = await supabase.from("github_repos")
+    .select("name, enriched_title, enriched_description, description")
+    .eq("enabled", true)
+    .order("featured", { ascending: false })
+    .order("order_index")
+    .limit(40);
+  return (data || []).map((r: { name: string; enriched_title: string | null; enriched_description: string | null; description: string | null }) => {
+    const text = (r.enriched_description || r.description || "").replace(/\s+/g, " ").slice(0, 260);
+    return `- ${r.enriched_title || r.name} (${r.name}): ${text}`;
+  }).join("\n");
+}
+
 async function voiceSamples(supabase: Supabase): Promise<string> {
   const { data } = await supabase.from("blog_posts").select("title, content").eq("status", "published").order("published_at", { ascending: false }).limit(2);
   return (data || []).map((p) => `### ${p.title}\n${(p.content || "").slice(0, 1200)}`).join("\n\n");
@@ -285,6 +304,7 @@ Redaktionella regler:
 - Ta upp det starkaste motargumentet och bemöt det.
 - Skriv aldrig ut etiketter som "Tes:" eller "Slutsats:" i löptexten – tesen ska framgå av texten.
 - Påstå bara erfarenheter, roller och projekt som står i profilen ovan eller i trovärdighetsraden. Hitta inte på anekdoter, siffror eller händelser. Nämns ett eget projekt ska läsaren få veta i en bisats vad det är.
+- Egna projekt får bara beskrivas med fakta ur listan FÖRFATTARENS PROJEKT. Tillskriv aldrig ett projekt funktioner, arkitektur eller resultat som inte står där. Passar inget projekt poängen, nämn inget.
 - 900–1400 ord. Mellanrubriker (##) där de hjälper läsaren.
 - Avsluta med en konkret slutsats eller handlingsråd riktat till läsaren. Koppla gärna till författarens arbete (${brief.offering}) som erfarenhet, aldrig som erbjudande eller uppmaning att höra av sig.
 
@@ -300,10 +320,13 @@ excerpt: [max 160 tecken]
 seo_description: [max 160 tecken]
 seo_keywords: [kommaseparerade]`;
 
-function writerPrompt(pick: TopicPick, sources: Source[], samples: string, titles: string[], feedback?: string): string {
+function writerPrompt(pick: TopicPick, sources: Source[], samples: string, titles: string[], projects: string, feedback?: string): string {
   return `ÄMNE: ${pick.topic}
 TES: ${pick.thesis}
 FÖRFATTARENS TROVÄRDIGHET: ${pick.why_this_author}
+
+FÖRFATTARENS PROJEKT (de enda tillåtna beskrivningarna av egna projekt):
+${projects}
 
 KÄLLOR (använd endast dessa URL:er):
 ${sources.map((s) => `[${s.n}] ${s.title} – ${s.url}\n${s.text.replace(/\s+/g, " ").slice(0, 1800)}`).join("\n\n")}
@@ -368,13 +391,14 @@ function mechanicalChecks(draft: DraftToSave, sources: Source[], titles: string[
 
 interface Review { score: number; issues: string[] }
 
-async function review(draft: DraftToSave, pick: TopicPick, brief: EditorBrief): Promise<Review> {
+async function review(draft: DraftToSave, pick: TopicPick, brief: EditorBrief, projects: string): Promise<Review> {
   const raw = await chat(
     `Du är en sträng redaktör. Bedöm utkastet 1–10 där 7 betyder "publicerbart efter lätt redigering".
 Dagens datum är ${new Date().toISOString().slice(0, 10)}. Källorna kommer från en riktig webbsökning: datum fram till idag är inte påhittade.
+Kontrollera särskilt varje påstående om författarens egna projekt mot projektlistan nedan. Ett påhittat eller felaktigt påstående om ett eget projekt (funktion, arkitektur, resultat) är ett allvarligt fel: ange det som brist och sätt högst 4.
 Kriterier: (1) en tydlig, icke-uppenbar tes, (2) konkreta fakta och exempel istället för allmänna påståenden, (3) relevans för författarens profil och målgrupp, (4) originalitet – inte AI-mall, inte metaforkedjor, (5) språk och struktur.
 Svara ENBART med JSON: {"score": <heltal 1-10>, "issues": ["konkreta, åtgärdbara brister"]}`,
-    `Författarprofil: ${brief.positioning}\nMålgrupp: ${brief.audience}\nAvsedd tes: ${pick.thesis}\n\n# ${draft.title}\n\n${draft.content}`,
+    `Författarprofil: ${brief.positioning}\nMålgrupp: ${brief.audience}\nAvsedd tes: ${pick.thesis}\n\nFÖRFATTARENS PROJEKT:\n${projects}\n\n# ${draft.title}\n\n${draft.content}`,
     WRITER_MODEL,
   );
   const r = parseJson<Review>(raw);
@@ -406,19 +430,19 @@ export async function handleEditorDraft(
     log.sources = sources.map((s) => ({ n: s.n, title: s.title, url: s.url }));
     if (sources.length < MIN_SOURCES) throw new Error(`För lite research: ${sources.length} källor`);
 
-    const samples = await voiceSamples(supabase);
+    const [samples, projects] = await Promise.all([voiceSamples(supabase), projectFacts(supabase)]);
     const system = WRITER_SYSTEM(brief);
 
-    let draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles), WRITER_MODEL));
+    let draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects), WRITER_MODEL));
     let issues = mechanicalChecks(draft, sources, titles);
-    let rev = issues.length ? { score: 0, issues: [] as string[] } : await review(draft, pick, brief);
+    let rev = issues.length ? { score: 0, issues: [] as string[] } : await review(draft, pick, brief, projects);
     const attempts: Array<{ issues: string[]; score: number }> = [{ issues: [...issues, ...rev.issues], score: rev.score }];
 
     if (issues.length || rev.score < MIN_REVIEW_SCORE) {
       const feedback = [...issues, ...rev.issues].map((i) => `- ${i}`).join("\n");
-      draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, feedback), WRITER_MODEL));
+      draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects, feedback), WRITER_MODEL));
       issues = mechanicalChecks(draft, sources, titles);
-      rev = issues.length ? { score: 0, issues: [] } : await review(draft, pick, brief);
+      rev = issues.length ? { score: 0, issues: [] } : await review(draft, pick, brief, projects);
       attempts.push({ issues: [...issues, ...rev.issues], score: rev.score });
     }
     log.attempts = attempts;
