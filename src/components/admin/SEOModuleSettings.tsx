@@ -164,7 +164,7 @@ const SEOModuleSettings = () => {
                 id="default_og_image"
                 value={config.default_og_image}
                 onChange={(e) => setConfig({ ...config, default_og_image: e.target.value })}
-                placeholder="/og-image.png"
+                placeholder="/og.png"
               />
               <p className="text-xs text-muted-foreground">
                 Image shown when sharing pages without a specific image. Recommended: 1200x630px

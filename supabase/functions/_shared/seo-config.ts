@@ -18,7 +18,7 @@ const FALLBACK: SEOConfig = {
   site_description:
     "Innovation Strategist and AI integration expert with 20+ years experience in product development, business growth, and technological advancement.",
   site_url: "https://www.froste.eu",
-  default_og_image: "/og-image.png",
+  default_og_image: "/og.png",
   twitter_handle: "",
   linkedin_url: "",
   google_analytics_id: "",

@@ -648,7 +648,7 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     title_template: '%s | Magnus Froste',
     site_description: 'Innovation Strategist and Agentic AI Expert',
     site_url: 'https://www.froste.eu',
-    default_og_image: '/og-image.png',
+    default_og_image: '/og.png',
     twitter_handle: '@magnusfroste',
     linkedin_url: 'https://linkedin.com/in/magnusfroste',
     google_analytics_id: '',
