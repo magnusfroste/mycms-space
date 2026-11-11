@@ -41,6 +41,11 @@ const ChatHeroStudio: React.FC<ChatHeroStudioProps> = ({ config }) => {
       ? `Available · ${resume.availability_note}`
       : '');
   const showAvailability = (c.show_availability ?? true) && !!availabilityText && isAvailable;
+  // On phones the label keeps one line: everything after the first comma
+  // ("…, AI strategy, business development") shows from the sm breakpoint.
+  const cut = availabilityText.indexOf(', ');
+  const availabilityShort = cut > 0 ? availabilityText.slice(0, cut) : availabilityText;
+  const availabilityRest = cut > 0 ? availabilityText.slice(cut) : '';
 
   const primaryText = c.primary_cta_text || 'Start a conversation';
   const primaryUrl = c.primary_cta_url || '/contact';
@@ -89,7 +94,10 @@ const ChatHeroStudio: React.FC<ChatHeroStudioProps> = ({ config }) => {
           {showAvailability && (
             <span className="inline-flex min-h-[30px] items-center gap-2 rounded-full bg-success-soft px-3 py-1 text-[13px] font-medium leading-tight text-success">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-success" aria-hidden="true" />
-              {availabilityText}
+              <span>
+                {availabilityShort}
+                {availabilityRest && <span className="hidden sm:inline">{availabilityRest}</span>}
+              </span>
             </span>
           )}
           <h1
