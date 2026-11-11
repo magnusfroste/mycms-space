@@ -208,8 +208,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = (!!value.trim() || !!attachedFile) && !isLoading && !isReadingFile;
 
   return (
-    <div className={docked ? "shrink-0 bg-background px-3 pb-3 pt-1 sm:px-4" : ""}>
-      <div className="relative mx-auto max-w-3xl">
+    <div className={docked ? "shrink-0 bg-background pb-3 pt-1" : ""}>
+      {/* Docked: same column as the messages (max-w-3xl, px-4/6), so the composer lines up with the text */}
+      <div className={docked ? "relative mx-auto max-w-3xl px-4 sm:px-6" : "relative mx-auto max-w-3xl"}>
         {/* @ command menu */}
         <ChatCommandMenu
           query={commandQuery}

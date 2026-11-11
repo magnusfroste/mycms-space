@@ -1,8 +1,8 @@
 import React from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, SquarePen } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { SquarePen } from "lucide-react";
 import { ChatInterface } from "@/components/chat";
-import { useAIModule } from "@/models/modules";
+import { useAIModule, useHeaderModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { useVisitorInsights, formatVisitorInsightsForAI } from "@/hooks/useVisitorInsights";
 import {
@@ -34,7 +34,7 @@ interface Message {
 }
 
 const Chat = () => {
-  const navigate = useNavigate();
+  const { config: headerConfig } = useHeaderModule();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
   const { config: extConfig } = useChromeExtensionModule();
@@ -75,18 +75,18 @@ const Chat = () => {
         description="Ask Magnet, Magnus Froste's AI agent, about his experience, projects and availability."
       />
       <header className="flex h-14 shrink-0 items-center justify-between px-3 sm:px-4">
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Back to froste.eu"
-            title="Back to froste.eu"
+        {/* Same wordmark as the site header and the admin: "froste.eu / Magnet" */}
+        <div className="flex min-w-0 items-center gap-2 pl-1">
+          <Link
+            to="/"
+            className="shrink-0 text-[15px] font-bold tracking-[-0.01em] text-foreground"
+            title="Back to the site"
           >
-            <ArrowLeft className="h-[18px] w-[18px]" />
-          </button>
-          <span className="px-1.5 text-[17px] font-semibold tracking-[-0.01em] text-foreground">Magnet</span>
-          <span className="hidden text-[13px] text-muted-foreground sm:inline">· Magnus Froste's AI twin</span>
+            {headerConfig?.logo_text || "froste.eu"}
+          </Link>
+          <span className="text-border" aria-hidden="true">/</span>
+          <span className="truncate text-[15px] font-medium text-foreground">Magnet</span>
+          <span className="hidden truncate text-[13px] text-muted-foreground md:inline">· Magnus Froste's AI twin</span>
         </div>
         <div className="flex items-center gap-1.5">
           <button
@@ -102,7 +102,7 @@ const Chat = () => {
             to="/contact"
             className="inline-flex h-9 items-center rounded-full bg-foreground px-4 text-[13.5px] font-medium text-background transition-opacity hover:opacity-85"
           >
-            Contact Magnus
+            Contact<span className="hidden sm:inline">&nbsp;Magnus</span>
           </Link>
         </div>
       </header>

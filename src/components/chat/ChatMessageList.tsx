@@ -68,8 +68,6 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       }
     >
       <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 pb-6 pt-6 sm:px-6">
-        {/* Spacer keeps a short conversation near the composer */}
-        <div className="flex-1" />
         {hasMessages && (
           <div className="space-y-7">
             {messages.map((message) => (
