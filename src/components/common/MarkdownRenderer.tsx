@@ -90,6 +90,10 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           tr: ({ children }) => <TableRow>{children}</TableRow>,
           th: ({ children }) => <TableHead>{children}</TableHead>,
           td: ({ children }) => <TableCell>{children}</TableCell>,
+          // Markdown is always rendered inside a page that has its own <h1>
+          // (project READMEs, blog posts, chat answers), so a "# Heading" in
+          // the content becomes <h2> — one h1 per page for SEO and screen readers.
+          h1: ({ children, node, ...props }) => <h2 {...props}>{children}</h2>,
         }}
       >
         {processedContent}
