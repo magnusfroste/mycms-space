@@ -48,7 +48,10 @@ export const optimizedImageUrl = (
   const w = Math.min(Math.round(width), MAX_WIDTH);
   const transformed = url.replace(OBJECT_PATH, RENDER_PATH);
   const sep = transformed.includes('?') ? '&' : '?';
-  return `${transformed}${sep}width=${w}&quality=${quality}`;
+  // resize=contain keeps the aspect ratio. With width alone, Supabase keeps the
+  // original height and crops the sides (a 1920x1012 screenshot became a
+  // 640x1012 strip from the middle).
+  return `${transformed}${sep}width=${w}&quality=${quality}&resize=contain`;
 };
 
 /** Build a `srcset` string for the given widths, or undefined if not transformable. */
