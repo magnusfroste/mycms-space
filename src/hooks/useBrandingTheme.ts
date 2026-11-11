@@ -17,6 +17,8 @@ type ThemeId = BrandingModuleConfig['theme'];
 
 const THEME_IDS: readonly ThemeId[] = ['elegant', 'grok', 'sana', 'terminal', 'studio'];
 const PREVIEW_STORAGE_KEY = 'branding-theme-preview';
+// Read by the inline script in index.html to set the theme before first paint.
+const SAVED_STORAGE_KEY = 'branding-theme';
 
 const isThemeId = (value: string | null): value is ThemeId =>
   value !== null && (THEME_IDS as readonly string[]).includes(value);
@@ -70,6 +72,11 @@ export const useBrandingTheme = () => {
 
     if (isLoading || !module) return;
     applyTheme(savedTheme);
+    try {
+      localStorage.setItem(SAVED_STORAGE_KEY, savedTheme);
+    } catch {
+      // storage unavailable: the theme still applies, only the first paint may differ
+    }
   }, [isAdminRoute, previewTheme, savedTheme, module, isLoading]);
 
   return {

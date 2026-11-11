@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Apply the theme before first paint (no flash of the old design).
+         The saved theme is cached by useBrandingTheme; admin is always studio. -->
+    <script>
+      (function () {
+        var theme = 'studio';
+        try {
+          var path = location.pathname;
+          if (path.indexOf('/admin') !== 0 && path.indexOf('/oauth') !== 0) {
+            theme = sessionStorage.getItem('branding-theme-preview') || localStorage.getItem('branding-theme') || 'studio';
+          }
+        } catch (e) {}
+        if (theme !== 'elegant') document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <title>Magnus Froste – Innovation Strategist & Agentic AI Expert</title>
     <meta name="description" content="Magnus Froste, Innovation Strategist and AI integration expert with 20+ years experience in product development, business growth, and technological advancement." />
     <meta name="author" content="Magnus Froste" />
