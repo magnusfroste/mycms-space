@@ -353,9 +353,11 @@ async function handleMethod(
       const { data: skills } = skillScopes.length
         ? await supabase
           .from('agent_skills')
-          .select('name, description, tool_definition, scope, category')
+          .select('name, description, tool_definition, scope, category, handler')
           .eq('enabled', true)
           .in('scope', skillScopes)
+          // Artifact skills render in the visitor chat; MCP has get_profile / list_projects / analyze_job_fit.
+          .not('handler', 'like', 'builtin:%')
           .order('category')
         : { data: [] };
 
@@ -364,7 +366,8 @@ async function handleMethod(
         return {
           name: s.name,
           description: `[skill] ${def.description || s.description || ''}`,
-          inputSchema: def.parameters || { type: 'object', properties: {} },
+          // tool_definition is either an OpenAI function or a bare JSON schema.
+          inputSchema: def.parameters || (def.type === 'object' ? def : { type: 'object', properties: {} }),
         };
       });
 
