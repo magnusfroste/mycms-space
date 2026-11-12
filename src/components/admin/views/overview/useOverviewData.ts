@@ -83,6 +83,14 @@ export function useOverviewData(period: Period) {
 
       const pageCounts: Record<string, number> = {};
       for (const v of viewsNow) pageCounts[v.page_slug] = (pageCounts[v.page_slug] ?? 0) + 1;
+      // A 404 is logged twice: as the requested path and as "404:<path>".
+      // Keep only the 404 entry so a broken address is not listed as a page.
+      for (const [slug, n] of Object.entries(pageCounts)) {
+        if (!slug.startsWith('404:')) continue;
+        const plain = slug.slice(4).replace(/^\//, '') || 'home';
+        if (pageCounts[plain]) pageCounts[plain] = Math.max(0, pageCounts[plain] - n);
+        if (!pageCounts[plain]) delete pageCounts[plain];
+      }
       const topPages = Object.entries(pageCounts)
         .map(([slug, count]) => ({ slug, views: count }))
         .sort((a, b) => b.views - a.views)
@@ -126,7 +134,7 @@ export function useOverviewStatus() {
         supabase
           .from('page_views')
           .select('id', head)
-          .eq('page_slug', '404')
+          .like('page_slug', '404%')
           .gte('created_at', new Date(Date.now() - 7 * DAY).toISOString()),
       ]);
       return {
