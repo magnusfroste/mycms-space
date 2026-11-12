@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/common/SEOHead";
 import { Button } from "@/components/ui/button";
+import { trackPageView } from "@/models/analytics";
 
 /**
  * 404 page. Rendered in place (the requested URL is kept) with the
@@ -13,11 +14,17 @@ import { Button } from "@/components/ui/button";
 const NotFound = () => {
   const location = useLocation();
 
+  const logged = useRef<string | null>(null);
+
   useEffect(() => {
-    console.warn(
-      "404: User attempted to access non-existent route:",
-      location.pathname
-    );
+    const path = location.pathname;
+    if (logged.current === path) return;
+    logged.current = path;
+    console.warn("404: User attempted to access non-existent route:", path);
+    // Logged as "404:<path>" so the admin overview and MCP analytics can
+    // list which addresses are broken.
+    // "/404" itself is already logged as "404" by the page tracker.
+    if (path !== "/404") trackPageView(`404:${path.slice(0, 300)}`).catch(() => {});
   }, [location.pathname]);
 
   return (

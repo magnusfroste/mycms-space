@@ -371,8 +371,10 @@ export default function OverviewView() {
               </thead>
               <tbody>
                 {(data?.topPages ?? []).map((p) => {
-                  const broken = p.slug === '404';
-                  const path = broken ? '404' : p.slug === 'home' || p.slug === '' ? '/' : `/${p.slug.replace(/^\//, '')}`;
+                  const broken = p.slug === '404' || p.slug.startsWith('404:');
+                  const path = broken
+                    ? `404 ${p.slug.slice(4) || ''}`.trim()
+                    : p.slug === 'home' || p.slug === '' ? '/' : `/${p.slug.replace(/^\//, '')}`;
                   return (
                     <tr key={p.slug} className={t.row}>
                       <td className={`${t.td} py-2.5 font-mono text-[12.5px]`}>{path}</td>

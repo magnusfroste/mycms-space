@@ -102,7 +102,7 @@ const TOOLS: CmsTool[] = [
         sb.from("agent_tasks").select("id", head).eq("status", "failed").gte("created_at", daysAgo(7)),
         sb.from("knowledge_docs").select("updated_at").order("updated_at", { ascending: false }).limit(1),
         sb.from("blog_posts").select("id", head).eq("status", "draft"),
-        sb.from("page_views").select("id", head).eq("page_slug", "404").gte("created_at", daysAgo(7)),
+        sb.from("page_views").select("id", head).like("page_slug", "404%").gte("created_at", daysAgo(7)),
       ]);
       const visitors7 = new Set((views7.data || []).map((r: { visitor_id: string }) => r.visitor_id)).size;
       const chatSessions7 = new Set((chats7.data || []).map((r: { session_id: string }) => r.session_id)).size;
@@ -257,7 +257,7 @@ const TOOLS: CmsTool[] = [
   {
     name: "analytics_summary",
     scope: "read",
-    description: "Traffic for the last N days: visitors, page views, top pages, top referrers, 404 hits.",
+    description: "Traffic for the last N days: visitors, page views, top pages, top referrers, 404 hits and the broken addresses behind them (not_found).",
     inputSchema: obj({ days: { type: "number", description: "Default 7, max 90." } }),
     run: async (sb, a) => {
       const days = int(a.days, 7, 1, 90);
@@ -272,12 +272,28 @@ const TOOLS: CmsTool[] = [
           refs[host] = (refs[host] || 0) + 1;
         }
       }
+      // A 404 is logged as the requested path and as "404:<path>"; move it out of top_pages.
+      const notFound: Record<string, number> = {};
+      let hits404 = 0;
+      for (const [slug, n] of Object.entries(pages)) {
+        if (slug !== "404" && !slug.startsWith("404:")) continue;
+        hits404 += n;
+        delete pages[slug];
+        const path = slug.slice(4) || "(legacy /404 redirect)";
+        notFound[path] = n;
+        const plain = slug.slice(4).replace(/^\//, "") || "home";
+        if (slug.startsWith("404:") && pages[plain]) {
+          pages[plain] -= n;
+          if (pages[plain] <= 0) delete pages[plain];
+        }
+      }
       const top = (o: Record<string, number>) => Object.entries(o).sort((x, y) => y[1] - x[1]).slice(0, 10).map(([k, n]) => ({ key: k, count: n }));
       return {
         days,
         page_views: data?.length || 0,
         visitors: new Set((data || []).map((v: { visitor_id: string }) => v.visitor_id)).size,
-        page_404_hits: pages["404"] || 0,
+        page_404_hits: hits404,
+        not_found: top(notFound),
         top_pages: top(pages),
         top_referrers: top(refs),
       };
