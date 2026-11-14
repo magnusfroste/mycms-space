@@ -159,6 +159,9 @@ function cleanAnalysis(text: string): string | null {
     .replace(/<\|?(tool_call|tool_calls|function_call|im_start|im_end|python_tag)[^>]*>[\s\S]*?(<\/?\|?\1[^>]*>|$)/gi, '')
     .replace(/<\/?\|?(tool_call|tool_calls|function_call|tool_response|im_start|im_end)\|?>/gi, '')
     .replace(/\[TOOL_CALLS\][\s\S]*$/g, '')
+    // XML-style tool calls (invoke / parameter / *_calls blocks, DSML)
+    .replace(/<\/?[^<>\n]{0,24}?(invoke|parameter|function_calls|tool_calls|calls|dsml)\b[^>]*>/gi, '')
+    .replace(/[｜|]\s*DSML\s*[｜|]/gi, '')
     .replace(/\{\s*"name"\s*:\s*"[\w.-]+"\s*,\s*"(arguments|parameters)"\s*:[\s\S]*?\}\s*\}/g, '')
     .trim();
   const words = cleaned.split(/\s+/).filter((w) => /[a-zåäö]{2,}/i.test(w)).length;
