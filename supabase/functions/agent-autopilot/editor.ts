@@ -129,22 +129,18 @@ async function search(query: string, opts: { tbs?: string; limit?: number; chars
 // ---------- 1. profile brief ----------
 
 async function buildBrief(supabase: Supabase): Promise<EditorBrief> {
-  const [resume, repos, seo, posts] = await Promise.all([
-    supabase.from("resume_entries").select("category, title, subtitle, description, tags, is_current").eq("enabled", true).order("order_index"),
+  const [repos, seo, posts] = await Promise.all([
     supabase.from("github_repos").select("name, enriched_title, enriched_description, why_it_matters, topics, stars, pushed_at").eq("enabled", true).order("pushed_at", { ascending: false }).limit(20),
     supabase.from("modules").select("module_config").eq("module_type", "seo").maybeSingle(),
     supabase.from("blog_posts").select("title, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(15),
   ]);
 
-  const resumeText = (resume.data || []).map((r) =>
-    `- [${r.category}${r.is_current ? ", nuvarande" : ""}] ${r.title}${r.subtitle ? ` – ${r.subtitle}` : ""}: ${(r.description || "").slice(0, 300)} ${r.tags?.length ? `(${r.tags.join(", ")})` : ""}`
-  ).join("\n");
   const repoText = (repos.data || []).map((r) =>
     `- ${r.enriched_title || r.name}: ${(r.enriched_description || "").slice(0, 200)} ${r.why_it_matters ? `| Varför: ${r.why_it_matters.slice(0, 150)}` : ""}`
   ).join("\n");
   const seoCfg = (seo.data?.module_config || {}) as Record<string, string>;
   const postText = (posts.data || []).map((p) => `- ${p.title}`).join("\n");
-  // The public knowledge base is the richest profile source when it exists.
+  // The public knowledge base is the profile source.
   const kbText = (await loadKnowledgeBase({ includePrivate: false }))?.slice(0, 40_000) || "";
 
   const raw = await chat(
@@ -160,7 +156,7 @@ Ge 4–6 teman. Teman ska täcka personens faktiska expertis och projekt – int
     `SEO-profil: ${seoCfg.site_title || ""} – ${seoCfg.site_description || ""}
 
 CV / kunskapsbas:
-${kbText || resumeText}
+${kbText}
 
 Egna projekt (GitHub):
 ${repoText}

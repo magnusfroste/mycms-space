@@ -340,7 +340,7 @@ const KNOWLEDGE_MAX_CHARS = 200_000;
 /**
  * Load the knowledge base (markdown documents maintained by the owner or by agents via MCP).
  * Public documents only, unless includePrivate is set (admin chat, authenticated agents).
- * Returns null when the knowledge base is empty, so callers can fall back to resume_entries.
+ * Returns null when the knowledge base is empty, so callers can fall back to page blocks.
  */
 export async function loadKnowledgeBase(opts: { includePrivate?: boolean } = {}): Promise<string | null> {
   const supabase = getSupabaseClient();
@@ -401,9 +401,9 @@ export async function loadProfileHeader(): Promise<string | null> {
 }
 
 /**
- * Load the owner's profile: profile header + knowledge base. The legacy
- * sources (resume_entries, page blocks) are only used while the knowledge
- * base has no documents at all.
+ * Load the owner's profile: profile header + knowledge base. The page
+ * blocks are only used while the knowledge base has no documents at all
+ * (a fresh install).
  */
 export async function loadResumeContext(opts: { includePrivate?: boolean } = {}): Promise<string | null> {
   try {
@@ -417,82 +417,6 @@ export async function loadResumeContext(opts: { includePrivate?: boolean } = {})
     ]);
     if (kb || (kbCount ?? 0) > 0) {
       return [header, kb].filter(Boolean).join('\n\n---\n\n') || null;
-    }
-
-    // Try structured resume_entries first
-    const { data: entries, error: entriesError } = await supabase
-      .from('resume_entries')
-      .select('*')
-      .eq('enabled', true)
-      .order('category')
-      .order('order_index');
-
-    // Load resume module config for profile summary
-    const { data: moduleData } = await supabase
-      .from('modules')
-      .select('module_config')
-      .eq('module_type', 'resume')
-      .maybeSingle();
-
-    const config = moduleData?.module_config as Record<string, unknown> | null;
-
-    // If we have structured entries, use them
-    if (!entriesError && entries?.length) {
-      const sections: string[] = [];
-
-      // Profile header
-      if (config) {
-        const profileParts: string[] = [];
-        if (config.owner_name) profileParts.push(`# ${config.owner_name}`);
-        if (config.owner_title) profileParts.push(`**${config.owner_title}**`);
-        if (config.owner_summary) profileParts.push(config.owner_summary as string);
-        if (config.owner_location) profileParts.push(`Location: ${config.owner_location}`);
-        if (config.owner_availability) profileParts.push(`Availability: ${config.owner_availability}${config.availability_note ? ` — ${config.availability_note}` : ''}`);
-        if (profileParts.length) sections.push(profileParts.join('\n'));
-      }
-
-      // Group by category
-      const grouped: Record<string, typeof entries> = {};
-      for (const entry of entries) {
-        const cat = entry.category as string;
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(entry);
-      }
-
-      const categoryLabels: Record<string, string> = {
-        summary: 'Professional Summary',
-        experience: 'Experience',
-        education: 'Education',
-        certification: 'Certifications',
-        skill: 'Skills',
-        language: 'Languages',
-      };
-
-      for (const [cat, items] of Object.entries(grouped)) {
-        const label = categoryLabels[cat] || cat;
-        const lines: string[] = [`\n## ${label}`];
-
-        for (const item of items) {
-          const meta = item.metadata as Record<string, unknown> || {};
-          if (cat === 'experience' || cat === 'education') {
-            lines.push(`### ${item.title}${item.subtitle ? ` — ${item.subtitle}` : ''}`);
-            if (item.start_date) lines.push(`${item.start_date} — ${item.is_current ? 'Present' : item.end_date || ''}`);
-            if (item.description) lines.push(item.description as string);
-          } else if (cat === 'skill' || cat === 'language') {
-            const level = meta.level ? ` (${meta.level}%)` : '';
-            lines.push(`- ${item.title}${level}${item.subtitle ? ` — ${item.subtitle}` : ''}`);
-          } else {
-            lines.push(`- **${item.title}**${item.description ? `: ${item.description}` : ''}`);
-          }
-          if ((item.tags as string[])?.length) {
-            lines.push(`  Tags: ${(item.tags as string[]).join(', ')}`);
-          }
-        }
-        sections.push(lines.join('\n'));
-      }
-
-      console.log(`[AI Context] Loaded structured resume: ${entries.length} entries`);
-      return sections.join('\n\n');
     }
 
     // Fallback: scrape page blocks (legacy)

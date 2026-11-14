@@ -198,9 +198,6 @@ async function executeModuleAction(
     }
     case 'weekly_digest':
       return await weeklyDigest(supabase);
-    case 'resume':
-      // Retired: the profile lives in the knowledge base (kb_* tools).
-      return { error: 'The resume module is retired. Use kb_list / kb_get / kb_upsert / kb_append instead.' };
     default:
       return { error: `Unknown module: ${moduleName}` };
   }
