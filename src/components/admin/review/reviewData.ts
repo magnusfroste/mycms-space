@@ -1,6 +1,7 @@
 // ============================================
-// Review queue data: agent_tasks waiting for review (status 'needs_review')
-// plus skill calls waiting for approval (agent_activity 'pending_approval').
+// Review queue data: everything that waits for a decision is an agent_tasks
+// row with status 'needs_review' — Autopilot drafts and skill calls that need
+// approval (task_type 'skill_call') alike.
 // ============================================
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -33,6 +34,7 @@ export const taskTypeLabels: Record<string, string> = {
   x_thread: 'X thread',
   multichannel_draft: 'Multichannel brief',
   signal: 'Signal',
+  skill_call: 'Skill call',
 };
 
 export const taskTypeLabel = (type: string) =>
@@ -83,11 +85,8 @@ export function useReviewCount() {
   return useQuery({
     queryKey: reviewKeys.count,
     queryFn: async () => {
-      const [tasks, approvals] = await Promise.all([
-        supabase.from('agent_tasks').select('id', { count: 'exact', head: true }).eq('status', 'needs_review'),
-        supabase.from('agent_activity').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval'),
-      ]);
-      return (tasks.count ?? 0) + (approvals.count ?? 0);
+      const { count } = await supabase.from('agent_tasks').select('id', { count: 'exact', head: true }).eq('status', 'needs_review');
+      return count ?? 0;
     },
     refetchInterval: 60_000,
   });
@@ -109,22 +108,6 @@ export function useReviewTasks() {
   });
 }
 
-export function usePendingApprovals() {
-  return useQuery({
-    queryKey: ['agent-activity', { status: 'pending_approval' }],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('agent_activity')
-        .select('*')
-        .eq('status', 'pending_approval')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return (data ?? []) as unknown as AgentActivity[];
-    },
-  });
-}
-
 const invalidateReview = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: ['review-queue'] });
   qc.invalidateQueries({ queryKey: ['agent-tasks'] });
@@ -142,6 +125,16 @@ async function decideTasks(tasks: AgentTask[], decision: 'approve' | 'reject', n
   const approve = decision === 'approve';
   for (const task of tasks) {
     const out = task.output_data || {};
+    if (task.task_type === 'skill_call' && approve) {
+      // Approving a skill call runs it; agent-execute records the result and closes the task.
+      const skill = (task.input_data || {}).skill as string;
+      const { data, error } = await supabase.functions.invoke('agent-execute', {
+        body: { skill_name: skill, approved_task_id: task.id, arguments: {}, agent_type: 'magnet' },
+      });
+      if (error) throw error;
+      if ((data as { error?: string } | null)?.error) throw new Error((data as { error: string }).error);
+      continue;
+    }
     if (task.task_type === 'blog_draft') {
       const postId = out.blog_post_id as string | undefined;
       const slug = out.slug as string | undefined;
@@ -173,28 +166,6 @@ export function useDecideTasks() {
   return useMutation({
     mutationFn: ({ tasks, decision, note }: { tasks: AgentTask[]; decision: 'approve' | 'reject'; note?: string }) =>
       decideTasks(tasks, decision, note),
-    onSuccess: () => invalidateReview(qc),
-  });
-}
-
-/** Approve or reject a skill call that asked for permission (same logic as the old Approvals tab). */
-export function useResolveApproval() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ activity, approved }: { activity: AgentActivity; approved: boolean }) => {
-      const { error } = await supabase
-        .from('agent_activity')
-        .update({ status: approved ? 'approved' : 'rejected' } as never)
-        .eq('id', activity.id);
-      if (error) throw error;
-      if (approved) {
-        const input = (activity.input ?? {}) as Record<string, unknown>;
-        const args = (input.arguments as Record<string, unknown>) || input;
-        await supabase.functions.invoke('agent-execute', {
-          body: { skill_name: activity.skill_name, arguments: args, agent_type: 'magnet' },
-        });
-      }
-    },
     onSuccess: () => invalidateReview(qc),
   });
 }

@@ -31,9 +31,16 @@ its own: drafts go into the **review queue** (`agent_tasks` with status
 Building blocks (all in Supabase, editable in the admin and via MCP
 `settings`):
 
-- **Skills** (`agent_skills`) — named tools with a JSON tool definition, a
-  handler and a scope (`public`, `both`, `external`, `internal`). Skills
-  marked `requires_approval` wait for permission in the review queue.
+- **Skills** — defined in code, in `supabase/functions/_shared/skills.ts`
+  (handler, scope, approval rule, parameters). The `agent_skills` table only
+  says whether a skill is enabled, and holds skills added at runtime, which
+  must use a handler `agent-execute` can run (`isRunnable`). Drafting skills
+  (`draft_blog_post`, `draft_newsletter`, `draft_all_channels`) run through
+  Autopilot's pipeline, so their drafts land in the review queue like any
+  other Autopilot work. A skill marked `requires_approval` becomes a review
+  item of type `skill_call` and runs when it is approved (admin or
+  `review_decide`). There is one queue: `agent_tasks` with status
+  `needs_review`.
 - **Automations** (`agent_automations`) — run a skill on a trigger (cron
   schedule, event or signal). Health, last run and errors are shown in the
   admin.
@@ -46,7 +53,7 @@ Edge functions:
 | Function | Role |
 |---|---|
 | `magnet-heartbeat` | The scheduled loop: reflect → signals → objectives → automations → act → heal → remember. Runs due automations through `agent-execute`. |
-| `agent-execute` | Runs one skill (edge, module or db handler) and logs it in `agent_activity`. |
+| `agent-execute` | Runs one skill (edge, db, module or autopilot handler) and logs it in `agent_activity`; queues `skill_call` review items and runs them once approved. |
 | `agent-autopilot` | Research, blog drafts, newsletter drafts, source scouting, multichannel drafts. Uses Firecrawl for web research. |
 | `agent-inbox-scan` | Reads Gmail, extracts signals with AI. Stops (instead of failing daily) when the Google grant has expired, until the owner reconnects. |
 | `agent-daily-report` | Emails a summary of the last 24 hours. |
@@ -133,3 +140,16 @@ document (roles, assignments, projects …).
 The old `resume_entries` table is kept as an archive. It is not publicly
 readable and is used only as a fallback by the server when the knowledge base
 has no documents at all.
+
+## Tests
+
+- `npm test` — unit tests (vitest) for the skill registry, traffic periods
+  and paging, the research-output check and plan step status
+  (`supabase/functions/_shared/__tests__`).
+- `npm run test:mcp` — smoke test against a live MCP server: calls the read
+  tools and checks the answers. Needs `MCP_KEY` (a key with the `read`
+  scope; add `settings` to also check the Autopilot skills) and optionally
+  `MCP_URL`.
+- CI (`.github/workflows/ci.yml`) runs lint, type check, unit tests and the
+  build on every push and pull request, and the MCP smoke test daily when the
+  repository secret `MCP_SMOKE_KEY` is set.

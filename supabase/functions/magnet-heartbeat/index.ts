@@ -4,6 +4,8 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { operatorSkills, toolDefinition } from "../_shared/skills.ts";
+import { stepStatus, planComplete, openSteps } from "../_shared/plan-steps.ts";
 import { loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "../_shared/ai-context.ts";
 import { resolveDefaultAI, resolveProvider, callOpenAICompatible } from "../_shared/ai-agent.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
@@ -275,11 +277,11 @@ async function decomposeObjectiveIntoPlan(
   supabase: any,
 ): Promise<{ steps: any[]; total_steps: number }> {
   // Load available skills to inform step generation
-  const { data: skills } = await supabase.from('agent_skills')
-    .select('name, description, category, handler')
-    .eq('enabled', true);
+  const { data: skillRows } = await supabase.from('agent_skills')
+    .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
+  const skills = operatorSkills(skillRows || []);
 
-  const skillList = (skills || []).map((s: any) => `- ${s.name}: ${s.description} (${s.handler})`).join('\n');
+  const skillList = skills.map((s) => `- ${s.name}: ${s.description}${s.requires_approval ? ' (needs admin approval)' : ''}`).join('\n');
 
   const { url, apiKey, model } = resolveDefaultAI();
   const data = await callOpenAICompatible({
@@ -374,7 +376,7 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
       const nextStep = plan.steps.find((s: any) => s.status === 'pending');
       if (!nextStep) {
         // Steps waiting on admin approval or a manual action are not done.
-        const open = plan.steps.filter((s: any) => !['done', 'skipped'].includes(s.status));
+        const open = openSteps(plan.steps);
         if (open.length) {
           return {
             status: 'waiting', message: `${open.length} step(s) wait for admin approval or a manual action.`,
@@ -418,16 +420,13 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
 
       // Update step status. A skill that waits for approval, or a step with no
       // skill, has not produced anything yet, so it is not done.
-      const awaiting = result?.status === 'pending_approval';
-      const manual = !nextStep.skill_name;
-      const skipped = result?.result?.status === 'skipped' || result?.status === 'skipped';
-      const success = !awaiting && !manual && !result.error && result.status !== 'failed';
-      nextStep.status = awaiting ? 'awaiting_approval' : manual ? 'manual' : skipped ? 'skipped' : success ? 'done' : 'failed';
+      nextStep.status = stepStatus(result, !!nextStep.skill_name);
+      const success = nextStep.status === 'done' || nextStep.status === 'skipped';
       nextStep.result = result;
       nextStep.completed_at = new Date().toISOString();
 
       // Check if all steps are done
-      const allDone = plan.steps.every((s: any) => ['done', 'skipped'].includes(s.status));
+      const allDone = planComplete(plan.steps);
       const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
       plan.completed = allDone;
       plan.has_failures = anyFailed;
@@ -560,25 +559,7 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
       .select('*').eq('id', automation_id).maybeSingle();
     if (fetchErr || !auto) return { status: 'error', error: fetchErr?.message || 'Automation not found' };
 
-    // Check if the linked skill requires approval
-    if (auto.skill_name) {
-      const { data: skill } = await supabase.from('agent_skills')
-        .select('requires_approval').eq('name', auto.skill_name).maybeSingle();
-      if (skill?.requires_approval) {
-        // Log as pending_approval instead of executing
-        await supabase.from('agent_activity').insert({
-          agent: 'magnet', skill_name: auto.skill_name,
-          input: { automation_id, arguments: auto.skill_arguments },
-          output: { reason: 'Skill requires admin approval before execution' },
-          status: 'pending_approval',
-        });
-        // Send email notification to admin
-        const { notifyPendingApproval } = await import("../_shared/notify-approval.ts");
-        await notifyPendingApproval(auto.skill_name, 'Automation-triggered skill requires admin approval.');
-        return { status: 'pending_approval', skill: auto.skill_name, message: 'This skill requires admin approval. Logged for review.' };
-      }
-    }
-
+    // Approval is handled by agent-execute: a skill that needs it lands in the review queue.
     // Delegate skill execution to agent-execute
     let skillResult: any;
     try {
@@ -708,18 +689,14 @@ Deno.serve(async (req) => {
       });
 
     // 3. Load skills as tools
-    const { data: skills } = await supabase.from('agent_skills')
-      .select('name, tool_definition, scope')
-      .eq('enabled', true).in('scope', ['internal', 'both']);
-
-    const skillTools = (skills || [])
-      .filter((s: any) => s.tool_definition?.function)
-      .map((s: any) => s.tool_definition);
+    const { data: skillRows } = await supabase.from('agent_skills')
+      .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
+    const skillTools = operatorSkills(skillRows || []).map(toolDefinition);
 
     const builtInTools = [
       { type: 'function', function: { name: 'decompose_objective', description: 'Break an objective into 3-7 ordered steps using AI planning. Each step maps to an available skill. Use this when an objective has no plan yet.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID to decompose' } }, required: ['objective_id'] } } },
       { type: 'function', function: { name: 'advance_plan', description: 'Execute the next pending step(s) in an objective\'s plan with automatic chaining. By default (chain=true), up to 4 consecutive steps are executed in one call — stopping on failure, manual steps, or completion. Set chain=false to execute only one step. This is the PRIMARY tool for plan execution — prefer it over calling advance_plan multiple times.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID whose plan to advance' }, chain: { type: 'boolean', description: 'Auto-chain consecutive steps (default: true). Set false to execute only one step.' } }, required: ['objective_id'] } } },
-      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval will be logged for review instead of executed.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
+      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval land in the review queue instead of running.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
       { type: 'function', function: { name: 'signal_acknowledge', description: 'Mark a pending signal task as processed after taking action.', parameters: { type: 'object', properties: { task_id: { type: 'string', description: 'The signal task UUID' }, output: { type: 'object', description: 'Optional result data' } }, required: ['task_id'] } } },
       { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
       { type: 'function', function: { name: 'objective_update_progress', description: 'Update progress on an objective.', parameters: { type: 'object', properties: { objective_id: { type: 'string' }, progress: { type: 'object' } }, required: ['objective_id', 'progress'] } } },

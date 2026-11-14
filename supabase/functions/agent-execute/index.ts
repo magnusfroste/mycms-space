@@ -6,6 +6,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
+import { resolveSkills, isRunnable } from "../_shared/skills.ts";
+import { fetchRows, periodDays, isNotFoundSlug } from "../_shared/analytics.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +20,8 @@ interface ExecuteRequest {
   arguments: Record<string, unknown>;
   agent_type: 'magnet' | 'chat';
   conversation_id?: string;
+  /** Run a call that waited in the review queue (agent_tasks 'skill_call') and was approved. */
+  approved_task_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -35,7 +39,8 @@ Deno.serve(async (req) => {
 
   try {
     const body: ExecuteRequest = await req.json();
-    const { skill_id, skill_name, arguments: args, agent_type, conversation_id } = body;
+    const { skill_id, skill_name, agent_type, conversation_id, approved_task_id } = body;
+    let args = (body.arguments || {}) as Record<string, unknown>;
 
     if (!skill_id && !skill_name) {
       return new Response(JSON.stringify({ error: 'skill_id or skill_name required' }), {
@@ -43,17 +48,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1. Look up the skill
-    let query = supabase.from('agent_skills').select('*').eq('enabled', true);
-    if (skill_id) query = query.eq('id', skill_id);
-    else if (skill_name) query = query.eq('name', skill_name);
-
-    const { data: skill, error: skillError } = await query.limit(1).single();
-    if (skillError || !skill) {
-      return new Response(JSON.stringify({ error: `Skill not found: ${skill_id || skill_name}` }), {
+    // 1. Look up the skill: the registry (code) decides handler, scope and
+    // approval; the agent_skills row only says whether it is enabled.
+    let rowQuery = supabase.from('agent_skills').select('*');
+    rowQuery = skill_id ? rowQuery.eq('id', skill_id) : rowQuery.eq('name', skill_name!);
+    const { data: rows } = await rowQuery.limit(1);
+    const name = rows?.[0]?.name ?? (skill_id ? null : skill_name);
+    const resolved = name ? resolveSkills(rows || []).find((s) => s.name === name) : undefined;
+    if (!resolved || !resolved.enabled) {
+      return new Response(JSON.stringify({ error: `Skill not found or disabled: ${skill_id || skill_name}` }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const skill = { ...resolved, id: resolved.id ?? null };
 
     // 2. Validate scope
     if (agent_type === 'chat' && skill.scope === 'internal') {
@@ -68,44 +75,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3a. A newsletter with no subscribers reaches nobody: skip it before it
-    // lands in the approval queue.
-    if (skill.handler === 'module:newsletter') {
-      const { count: subscribers } = await supabase.from('newsletter_subscribers')
-        .select('id', { count: 'exact', head: true }).eq('status', 'active');
-      if (!subscribers) {
-        const result = { status: 'skipped', reason: 'no_active_subscribers', message: 'There are no active subscribers, so no newsletter is drafted. Grow the list first (signup CTAs on blog posts).' };
-        return new Response(JSON.stringify({ status: 'skipped', result }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // 3. Approval. A skill that needs approval becomes a review-queue item
+    // (agent_tasks 'skill_call'); it runs when the item is approved, which
+    // calls back here with approved_task_id.
+    let approvedTask: { id: string; output_data: Record<string, unknown> | null } | null = null;
+    if (approved_task_id) {
+      const { data: task } = await supabase.from('agent_tasks').select('id, task_type, status, input_data, output_data')
+        .eq('id', approved_task_id).maybeSingle();
+      if (!task || task.task_type !== 'skill_call' || task.status !== 'needs_review' || (task.input_data as any)?.skill !== skill.name) {
+        return new Response(JSON.stringify({ error: 'No review item for this skill call is waiting.' }), {
+          status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-    }
-
-    // 3. Check requires_approval
-    if (skill.requires_approval) {
+      approvedTask = task;
+      args = ((task.input_data as any)?.arguments || {}) as Record<string, unknown>;
+    } else if (skill.requires_approval) {
+      const { data: task, error: taskError } = await supabase.from('agent_tasks').insert({
+        task_type: 'skill_call',
+        status: 'needs_review',
+        input_data: { skill: skill.name, arguments: args, requested_by: agent_type, conversation_id: conversation_id || null },
+        output_data: { title: `${skill.name}`, summary: skill.description },
+      }).select('id').single();
+      if (taskError) throw new Error(`Could not queue for review: ${taskError.message}`);
       await logActivity(supabase, {
         agent: agent_type, skill_id: skill.id, skill_name: skill.name,
-        input: args, output: {}, status: 'pending_approval',
+        input: args, output: { review_task_id: task.id }, status: 'pending_approval',
         conversation_id, duration_ms: Date.now() - startTime,
       });
-      // Send email notification to admin
       const { notifyPendingApproval } = await import("../_shared/notify-approval.ts");
-      await notifyPendingApproval(skill.name, `Action '${skill.name}' requires admin approval.`);
+      await notifyPendingApproval(skill.name, `Action '${skill.name}' waits in the review queue.`);
       return new Response(JSON.stringify({
-        status: 'pending_approval',
-        skill: skill.name,
-        message: `Action '${skill.name}' requires admin approval.`,
-        input: args,
-      }), {
-        status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        status: 'pending_review', skill: skill.name, task_id: task.id,
+        message: `'${skill.name}' waits in the review queue (review_queue_list) and runs when approved.`,
+      }), { status: 202, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // 4. Route to handler
     let result: unknown;
     const handler = skill.handler as string;
 
-    if (handler.startsWith('edge:')) {
+    if (!isRunnable(handler)) {
+      result = { error: `Handler '${handler}' cannot run here.` };
+    } else if (handler.startsWith('edge:')) {
       const fnName = handler.replace('edge:', '');
       const response = await fetch(`${supabaseUrl}/functions/v1/${fnName}`, {
         method: 'POST',
@@ -120,36 +131,19 @@ Deno.serve(async (req) => {
         result = { error: `${fnName} returned HTTP ${response.status}` };
       }
     } else if (handler.startsWith('module:')) {
-      const moduleName = handler.replace('module:', '');
-      result = await executeModuleAction(supabase, moduleName, skill.name, args);
+      result = await executeModuleAction(supabase, handler.replace('module:', ''), skill.name, args);
     } else if (handler.startsWith('db:')) {
-      const table = handler.replace('db:', '');
-      result = await executeDbAction(supabase, table, skill.name, args);
-    } else if (handler === 'autopilot:research') {
-      const topic = String((args as any).topic || '').trim().slice(0, 300);
-      if (!topic) {
-        result = { error: 'topic is required' };
-      } else {
-        const response = await fetch(`${supabaseUrl}/functions/v1/agent-autopilot`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-          body: JSON.stringify({ action: 'research', topic }),
-        });
-        const body = await response.json().catch(() => ({}));
-        result = response.ok && body?.analysis
-          ? { topic, task_id: body.taskId, analysis: body.analysis }
-          : { error: body?.error || `agent-autopilot returned HTTP ${response.status}` };
-      }
+      result = await executeDbAction(supabase, handler.replace('db:', ''), skill.name, args);
+    } else if (handler.startsWith('autopilot:')) {
+      result = await runAutopilot(supabaseUrl, serviceKey, handler.replace('autopilot:', ''), args);
     } else if (handler === 'builtin:get_visitor_insights') {
       result = {
         status: 'no_data',
         message: 'Visitor insights exist only inside a visitor chat session. For site traffic use analyze_analytics.',
       };
-    } else if (handler.startsWith('builtin:')) {
+    } else {
       // Artifact skills are filled in by Magnet and rendered in the visitor chat; there is nothing to run here.
       result = { error: `'${skill.name}' renders in the visitor chat only. Over MCP use get_profile, list_projects, get_project or analyze_job_fit.` };
-    } else {
-      result = { error: `Unknown handler type: ${handler}` };
     }
 
     // 5. Log activity — a handler that answers { error } failed, even if the HTTP call worked.
@@ -162,12 +156,21 @@ Deno.serve(async (req) => {
       ...(resultError ? { error_message: String(resultError).slice(0, 500) } : {}),
     });
 
+    if (approvedTask) {
+      await supabase.from('agent_tasks').update({
+        status: resultError ? 'failed' : 'completed',
+        completed_at: new Date().toISOString(),
+        output_data: { ...(approvedTask.output_data || {}), decision: 'approve', result },
+      }).eq('id', approvedTask.id);
+    }
+
     // 6. Auto-track objective progress
     if (activityId) {
       await trackObjectiveProgress(supabase, skill.name, activityId);
     }
 
-    return new Response(JSON.stringify({ status: resultError ? 'failed' : 'success', result }), {
+    const skipped = (result as Record<string, unknown> | null)?.status === 'skipped';
+    return new Response(JSON.stringify({ status: resultError ? 'failed' : skipped ? 'skipped' : 'success', result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
@@ -190,30 +193,6 @@ async function executeModuleAction(
   args: Record<string, unknown>,
 ): Promise<unknown> {
   switch (moduleName) {
-    case 'blog': {
-      const { title, content, excerpt, seo_keywords } = args as any;
-      const slug = (title as string).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const { data, error } = await supabase.from('blog_posts').insert({
-        title, slug, content: content || '', excerpt: excerpt || '',
-        status: 'draft', source: 'magnet',
-        seo_keywords: seo_keywords || [],
-      }).select('id, slug, title, status').single();
-      if (error) throw new Error(`Blog insert failed: ${error.message}`);
-      return { blog_post_id: data.id, slug: data.slug, title: data.title, status: 'draft' };
-    }
-    case 'newsletter': {
-      const { count: subscribers } = await supabase.from('newsletter_subscribers')
-        .select('id', { count: 'exact', head: true }).eq('status', 'active');
-      if (!subscribers) {
-        return { status: 'skipped', reason: 'no_active_subscribers', message: 'There are no active subscribers, so no newsletter is drafted. Grow the list first (signup CTAs on blog posts).' };
-      }
-      const { subject, content } = args as any;
-      const { data, error } = await supabase.from('newsletter_campaigns').insert({
-        subject, content, status: 'draft', agent_notes: 'Created by Magnet',
-      }).select('id, subject, status').single();
-      if (error) throw new Error(`Newsletter insert failed: ${error.message}`);
-      return { campaign_id: data.id, subject: data.subject, status: 'draft' };
-    }
     case 'weekly_digest':
       return await weeklyDigest(supabase);
     default:
@@ -268,39 +247,13 @@ async function executeDbAction(
 // Reports
 // ============================================
 
-/** PostgREST returns at most 1000 rows per request; page through to get them all. */
-async function fetchRows<T = any>(query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>, max = 100_000): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; from < max; from += 1000) {
-    const { data, error } = await query(from, from + 999);
-    if (error) throw new Error(error.message || String(error));
-    rows.push(...(data || []));
-    if (!data || data.length < 1000) break;
-  }
-  return rows;
-}
-
-/** Period → days. Accepts today, week, month, 7d, 30d, last_7_days, last_30_days, or { days }. */
-function periodDays(period: unknown, days: unknown): { label: string; since: Date } {
-  const now = new Date();
-  const n = Number(days);
-  if (Number.isFinite(n) && n > 0) return { label: `last_${Math.min(Math.round(n), 365)}_days`, since: new Date(now.getTime() - Math.min(n, 365) * 86_400_000) };
-  const p = String(period || 'week').toLowerCase().trim();
-  if (p === 'today') { const d = new Date(now); d.setUTCHours(0, 0, 0, 0); return { label: 'today', since: d }; }
-  const m = p.match(/(\d+)/);
-  if (m) { const d = Math.min(Number(m[1]), 365); return { label: `last_${d}_days`, since: new Date(now.getTime() - d * 86_400_000) }; }
-  if (p.startsWith('month')) return { label: 'last_30_days', since: new Date(now.getTime() - 30 * 86_400_000) };
-  if (p.startsWith('year')) return { label: 'last_365_days', since: new Date(now.getTime() - 365 * 86_400_000) };
-  return { label: 'last_7_days', since: new Date(now.getTime() - 7 * 86_400_000) };
-}
-
 async function analyzeTraffic(supabase: any, args: Record<string, unknown>): Promise<unknown> {
   const { label, since } = periodDays(args.period, args.days);
   const filter = String(args.filter || args.page || '').replace(/^\//, '').trim().toLowerCase();
   const rows = await fetchRows<{ page_slug: string; visitor_id: string; referrer: string | null }>((f, t) =>
     supabase.from('page_views').select('page_slug, visitor_id, referrer')
       .gte('created_at', since.toISOString()).order('created_at').range(f, t));
-  const isNotFound = (slug: string) => slug === '404' || slug.startsWith('404:');
+  const isNotFound = isNotFoundSlug;
   const notFound = rows.filter((r) => isNotFound(r.page_slug));
   let views = rows.filter((r) => !isNotFound(r.page_slug));
   if (filter) views = views.filter((r) => r.page_slug === filter || r.page_slug.startsWith(`${filter}/`));
@@ -375,6 +328,34 @@ async function weeklyDigest(supabase: any): Promise<unknown> {
     inquiries: inquiries.count ?? 0,
     posts_published: (posts.data || []).map((p: any) => ({ title: p.title, slug: p.slug, published_at: p.published_at })),
     active_subscribers: subs.count ?? 0,
+  };
+}
+
+// ============================================
+// Autopilot (drafting and research go through its pipeline and review queue)
+// ============================================
+
+async function runAutopilot(url: string, serviceKey: string, action: string, args: Record<string, unknown>): Promise<unknown> {
+  const topic = typeof args.topic === 'string' ? args.topic.trim().slice(0, 300) : undefined;
+  if ((action === 'research' || action === 'multichannel_draft') && !topic) return { error: 'topic is required' };
+  const channels = Array.isArray(args.channels) ? args.channels.map(String).slice(0, 6) : undefined;
+  const response = await fetch(`${url}/functions/v1/agent-autopilot`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+    body: JSON.stringify({ action, ...(topic ? { topic } : {}), ...(channels ? { channels } : {}) }),
+  });
+  const body = await response.json().catch(() => ({})) as Record<string, any>;
+  if (!response.ok || body.success === false && !body.rejected) {
+    return { error: body.error || `agent-autopilot returned HTTP ${response.status}` };
+  }
+  if (body.skipped) return { status: 'skipped', reason: body.reason, ...(body.waiting !== undefined ? { waiting: body.waiting } : {}) };
+  if (action === 'research') return { topic, task_id: body.taskId, analysis: body.analysis };
+  if (body.rejected) return { error: `The reviewer rejected the draft '${body.title}' after ${body.attempts} attempt(s).`, task_id: body.taskId };
+  return {
+    status: body.published ? 'published' : 'in_review_queue',
+    task_id: body.taskId ?? null, batch_id: body.batchId ?? null,
+    title: body.title ?? body.subject ?? null, review_score: body.reviewScore ?? null,
+    note: body.published ? 'Published by the auto-publish policy.' : 'Waits in the review queue (review_queue_list).',
   };
 }
 
