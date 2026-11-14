@@ -1,9 +1,9 @@
 # Magnus Froste - Portfolio & Expertise
 
-> Innovation Strategist and Agentic AI expert. Portfolio, blog, GitHub projects, and an agentic MCP server exposing skills + project data to AI assistants.
+> AI strategist and builder: agentic AI, sovereign self-hosted AI and rapid prototypes. Portfolio, blog, GitHub projects, and an agentic MCP server exposing skills + project data to AI assistants.
 
 ## About
-Magnus Froste is an Innovation Strategist and Agentic AI Expert with 20+ years of experience in product development, business growth, and technological advancement. He helps companies leverage cutting-edge technology to drive innovation and sustainable growth.
+Magnus Froste is a product and business development leader with 20+ years at the interface of customers, product and technology, from telecom operators (Telia, IP-Only) to AI startups. Today he works on AI strategy and agentic AI: he shapes the business case and builds the working prototype, with data sovereignty built in (your data, your control).
 
 ## Services
 - Innovation Strategy Consulting
