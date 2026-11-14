@@ -68,6 +68,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 3a. A newsletter with no subscribers reaches nobody: skip it before it
+    // lands in the approval queue.
+    if (skill.handler === 'module:newsletter') {
+      const { count: subscribers } = await supabase.from('newsletter_subscribers')
+        .select('id', { count: 'exact', head: true }).eq('status', 'active');
+      if (!subscribers) {
+        const result = { status: 'skipped', reason: 'no_active_subscribers', message: 'There are no active subscribers, so no newsletter is drafted. Grow the list first (signup CTAs on blog posts).' };
+        return new Response(JSON.stringify({ status: 'skipped', result }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // 3. Check requires_approval
     if (skill.requires_approval) {
       await logActivity(supabase, {
@@ -189,6 +202,11 @@ async function executeModuleAction(
       return { blog_post_id: data.id, slug: data.slug, title: data.title, status: 'draft' };
     }
     case 'newsletter': {
+      const { count: subscribers } = await supabase.from('newsletter_subscribers')
+        .select('id', { count: 'exact', head: true }).eq('status', 'active');
+      if (!subscribers) {
+        return { status: 'skipped', reason: 'no_active_subscribers', message: 'There are no active subscribers, so no newsletter is drafted. Grow the list first (signup CTAs on blog posts).' };
+      }
       const { subject, content } = args as any;
       const { data, error } = await supabase.from('newsletter_campaigns').insert({
         subject, content, status: 'draft', agent_notes: 'Created by Magnet',
@@ -239,29 +257,8 @@ async function executeDbAction(
         })),
       };
     }
-    case 'page_views': {
-      const { period = 'week' } = args as any;
-      const now = new Date();
-      const since = new Date(now);
-      switch (period) {
-        case 'today': since.setHours(0, 0, 0, 0); break;
-        case 'week': since.setDate(now.getDate() - 7); break;
-        case 'month': since.setMonth(now.getMonth() - 1); break;
-      }
-      const { data, error } = await supabase.from('page_views')
-        .select('page_slug, created_at')
-        .gte('created_at', since.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(500);
-      if (error) throw new Error(`Analytics query failed: ${error.message}`);
-      const views = data || [];
-      const uniqueSlugs = [...new Set(views.map((v: any) => v.page_slug))];
-      const topPages = uniqueSlugs.map(slug => ({
-        slug,
-        views: views.filter((v: any) => v.page_slug === slug).length,
-      })).sort((a, b) => b.views - a.views).slice(0, 10);
-      return { period, total_views: views.length, unique_pages: uniqueSlugs.length, top_pages: topPages };
-    }
+    case 'page_views':
+      return await analyzeTraffic(supabase, args);
     default:
       return { error: `Unknown table handler: ${table}` };
   }
@@ -270,6 +267,56 @@ async function executeDbAction(
 // ============================================
 // Reports
 // ============================================
+
+/** PostgREST returns at most 1000 rows per request; page through to get them all. */
+async function fetchRows<T = any>(query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>, max = 100_000): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; from < max; from += 1000) {
+    const { data, error } = await query(from, from + 999);
+    if (error) throw new Error(error.message || String(error));
+    rows.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return rows;
+}
+
+/** Period → days. Accepts today, week, month, 7d, 30d, last_7_days, last_30_days, or { days }. */
+function periodDays(period: unknown, days: unknown): { label: string; since: Date } {
+  const now = new Date();
+  const n = Number(days);
+  if (Number.isFinite(n) && n > 0) return { label: `last_${Math.min(Math.round(n), 365)}_days`, since: new Date(now.getTime() - Math.min(n, 365) * 86_400_000) };
+  const p = String(period || 'week').toLowerCase().trim();
+  if (p === 'today') { const d = new Date(now); d.setUTCHours(0, 0, 0, 0); return { label: 'today', since: d }; }
+  const m = p.match(/(\d+)/);
+  if (m) { const d = Math.min(Number(m[1]), 365); return { label: `last_${d}_days`, since: new Date(now.getTime() - d * 86_400_000) }; }
+  if (p.startsWith('month')) return { label: 'last_30_days', since: new Date(now.getTime() - 30 * 86_400_000) };
+  if (p.startsWith('year')) return { label: 'last_365_days', since: new Date(now.getTime() - 365 * 86_400_000) };
+  return { label: 'last_7_days', since: new Date(now.getTime() - 7 * 86_400_000) };
+}
+
+async function analyzeTraffic(supabase: any, args: Record<string, unknown>): Promise<unknown> {
+  const { label, since } = periodDays(args.period, args.days);
+  const filter = String(args.filter || args.page || '').replace(/^\//, '').trim().toLowerCase();
+  const rows = await fetchRows<{ page_slug: string; visitor_id: string; referrer: string | null }>((f, t) =>
+    supabase.from('page_views').select('page_slug, visitor_id, referrer')
+      .gte('created_at', since.toISOString()).order('created_at').range(f, t));
+  const isNotFound = (slug: string) => slug === '404' || slug.startsWith('404:');
+  const notFound = rows.filter((r) => isNotFound(r.page_slug));
+  let views = rows.filter((r) => !isNotFound(r.page_slug));
+  if (filter) views = views.filter((r) => r.page_slug === filter || r.page_slug.startsWith(`${filter}/`));
+  const count = (list: string[]) => Object.entries(list.reduce((acc: Record<string, number>, k) => (acc[k] = (acc[k] || 0) + 1, acc), {}))
+    .sort((x, y) => y[1] - x[1]).slice(0, 10).map(([key, n]) => ({ key, count: n }));
+  const host = (r: string) => { try { return new URL(r).host; } catch { return r; } };
+  return {
+    period: label, since: since.toISOString(), filter: filter || null,
+    total_views: views.length,
+    visitors: new Set(views.map((v) => v.visitor_id)).size,
+    unique_pages: new Set(views.map((v) => v.page_slug)).size,
+    top_pages: count(views.map((v) => v.page_slug)),
+    top_referrers: count(views.filter((v) => v.referrer).map((v) => host(v.referrer!))),
+    page_404_hits: filter ? undefined : notFound.length,
+  };
+}
 
 async function auditPageSeo(supabase: any, slug: string): Promise<unknown> {
   const clean = slug.replace(/^\//, '') || 'home';
@@ -311,8 +358,8 @@ async function weeklyDigest(supabase: any): Promise<unknown> {
   const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const head = { count: 'exact', head: true };
   const [views, chats, inquiries, posts, subs] = await Promise.all([
-    supabase.from('page_views').select('visitor_id, page_slug').gte('created_at', since).limit(50000),
-    supabase.from('chat_messages').select('session_id').gte('created_at', since).limit(50000),
+    fetchRows((f, t) => supabase.from('page_views').select('visitor_id, page_slug').gte('created_at', since).order('created_at').range(f, t)).then((data) => ({ data })),
+    fetchRows((f, t) => supabase.from('chat_messages').select('session_id').gte('created_at', since).order('created_at').range(f, t)).then((data) => ({ data })),
     supabase.from('contact_messages').select('id', head).gte('created_at', since),
     supabase.from('blog_posts').select('title, slug, published_at').eq('status', 'published').gte('published_at', since),
     supabase.from('newsletter_subscribers').select('id', head).eq('status', 'active'),

@@ -373,6 +373,15 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
       // Find next pending step
       const nextStep = plan.steps.find((s: any) => s.status === 'pending');
       if (!nextStep) {
+        // Steps waiting on admin approval or a manual action are not done.
+        const open = plan.steps.filter((s: any) => !['done', 'skipped'].includes(s.status));
+        if (open.length) {
+          return {
+            status: 'waiting', message: `${open.length} step(s) wait for admin approval or a manual action.`,
+            waiting_steps: open.map((s: any) => ({ step: s.description, skill: s.skill_name, status: s.status })),
+            chain_results: chainResults,
+          };
+        }
         // All done — mark objective completed if not already
         if (!plan.completed) {
           plan.completed = true;
@@ -407,14 +416,18 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
         }
       }
 
-      // Update step status
-      const success = !result.error && result.status !== 'failed';
-      nextStep.status = success ? 'done' : 'failed';
+      // Update step status. A skill that waits for approval, or a step with no
+      // skill, has not produced anything yet, so it is not done.
+      const awaiting = result?.status === 'pending_approval';
+      const manual = !nextStep.skill_name;
+      const skipped = result?.result?.status === 'skipped' || result?.status === 'skipped';
+      const success = !awaiting && !manual && !result.error && result.status !== 'failed';
+      nextStep.status = awaiting ? 'awaiting_approval' : manual ? 'manual' : skipped ? 'skipped' : success ? 'done' : 'failed';
       nextStep.result = result;
       nextStep.completed_at = new Date().toISOString();
 
       // Check if all steps are done
-      const allDone = plan.steps.every((s: any) => s.status === 'done');
+      const allDone = plan.steps.every((s: any) => ['done', 'skipped'].includes(s.status));
       const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
       plan.completed = allDone;
       plan.has_failures = anyFailed;
@@ -429,12 +442,12 @@ async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKe
       const stepResult = {
         step: nextStep.description,
         skill: nextStep.skill_name,
-        status: success ? 'done' : 'failed',
+        status: nextStep.status,
         remaining_steps: remaining,
       };
       chainResults.push(stepResult);
 
-      console.log(`[heartbeat] Chain step ${depth + 1}: ${nextStep.skill_name || 'manual'} → ${success ? 'done' : 'failed'} (${remaining} remaining)`);
+      console.log(`[heartbeat] Chain step ${depth + 1}: ${nextStep.skill_name || 'manual'} → ${nextStep.status} (${remaining} remaining)`);
 
       // Stop chaining on failure, manual steps, or completion
       if (!success || !nextStep.skill_name || allDone) break;

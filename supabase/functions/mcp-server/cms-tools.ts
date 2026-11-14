@@ -61,6 +61,18 @@ function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/[åä]/g, "a").replace(/ö/g, "o").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90);
 }
 const daysAgo = (d: number) => new Date(Date.now() - d * 86400_000).toISOString();
+
+/** PostgREST returns at most 1000 rows per request; page through to get them all. */
+async function fetchRows<T = any>(query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>, max = 100_000): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; from < max; from += 1000) {
+    const { data, error } = await query(from, from + 999);
+    if (error) throw new Error(error.message || String(error));
+    rows.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  return rows;
+}
 const json = (v: unknown) => JSON.stringify(v, null, 2);
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
@@ -96,10 +108,10 @@ const TOOLS: CmsTool[] = [
         sb.from("contact_messages").select("id", head).gte("created_at", month.toISOString()),
         sb.from("contact_messages").select("id", head).gte("created_at", prevMonth.toISOString()).lt("created_at", month.toISOString()),
         sb.from("contact_messages").select("id", head).eq("is_read", false),
-        sb.from("page_views").select("visitor_id").gte("created_at", daysAgo(7)).limit(20000),
-        sb.from("chat_messages").select("session_id").gte("created_at", daysAgo(7)).limit(20000),
-        sb.from("agent_tasks").select("task_type").eq("status", "needs_review").limit(5000),
-        sb.from("agent_tasks").select("id", head).eq("status", "failed").gte("created_at", daysAgo(7)),
+        fetchRows((f, t) => sb.from("page_views").select("visitor_id").gte("created_at", daysAgo(7)).order("created_at").range(f, t)).then((data) => ({ data })),
+        fetchRows((f, t) => sb.from("chat_messages").select("session_id").gte("created_at", daysAgo(7)).order("created_at").range(f, t)).then((data) => ({ data })),
+        sb.from("agent_tasks").select("task_type").eq("status", "needs_review").limit(1000),
+        sb.from("agent_tasks").select("task_type, created_at, output_data").eq("status", "failed").gte("created_at", daysAgo(7)).order("created_at", { ascending: false }).limit(20),
         sb.from("knowledge_docs").select("updated_at").order("updated_at", { ascending: false }).limit(1),
         sb.from("blog_posts").select("id", head).eq("status", "draft"),
         sb.from("page_views").select("id", head).like("page_slug", "404%").gte("created_at", daysAgo(7)),
@@ -113,12 +125,16 @@ const TOOLS: CmsTool[] = [
       const attention: string[] = [];
       if ((unread.count || 0) > 0) attention.push(`${unread.count} unread inbox message(s) — inbox_list`);
       if ((waiting.data?.length || 0) > 0) attention.push(`${waiting.data!.length} Autopilot item(s) waiting for review — review_queue_list`);
-      if ((failed7.count || 0) > 0) attention.push(`${failed7.count} failed Autopilot run(s) in 7 days — autopilot_status`);
+      const failedRuns = (failed7.data || []).map((t: { task_type: string; created_at: string; output_data: Record<string, unknown> | null }) => ({
+        type: t.task_type, at: t.created_at, error: String(t.output_data?.error ?? "unknown").slice(0, 200),
+      }));
+      if (failedRuns.length) attention.push(`${failedRuns.length} failed Autopilot run(s) in 7 days — see failed_runs`);
       if (kbAgeDays !== null && kbAgeDays > 30) attention.push(`Knowledge base unchanged for ${kbAgeDays} days — kb_list / kb_append`);
       if ((notFound.count || 0) > 0) attention.push(`${notFound.count} visit(s) hit a 404 in 7 days — analytics_summary`);
       return {
         north_star: { inquiries_this_month: inq.count || 0, inquiries_last_month: inqPrev.count || 0 },
-        last_7_days: { visitors: visitors7, chat_conversations: chatSessions7, page_404_hits: notFound.count || 0, failed_autopilot_runs: failed7.count || 0 },
+        last_7_days: { visitors: visitors7, chat_conversations: chatSessions7, page_404_hits: notFound.count || 0, failed_autopilot_runs: failedRuns.length },
+        failed_runs: failedRuns,
         inbox_unread: unread.count || 0,
         review_queue: waitingByType,
         blog_drafts: drafts.count || 0,
@@ -229,9 +245,9 @@ const TOOLS: CmsTool[] = [
     description: "Recent chat conversations visitors had with Magnet: session id, message count, first question, last activity.",
     inputSchema: obj({ days: { type: "number" }, limit: { type: "number" } }),
     run: async (sb, a) => {
-      const { data, error } = await sb.from("chat_messages").select("session_id, role, content, created_at")
-        .gte("created_at", daysAgo(int(a.days, 14, 1, 365))).order("created_at").limit(5000);
-      if (error) throw error;
+      const since = daysAgo(int(a.days, 14, 1, 365));
+      const data = await fetchRows<{ session_id: string; role: string; content: string; created_at: string }>((f, t) =>
+        sb.from("chat_messages").select("session_id, role, content, created_at").gte("created_at", since).order("created_at").range(f, t), 20_000);
       const by: Record<string, { session_id: string; messages: number; first_question: string; last_at: string }> = {};
       for (const m of data || []) {
         const s = by[m.session_id] ||= { session_id: m.session_id, messages: 0, first_question: "", last_at: m.created_at };
@@ -261,8 +277,9 @@ const TOOLS: CmsTool[] = [
     inputSchema: obj({ days: { type: "number", description: "Default 7, max 90." } }),
     run: async (sb, a) => {
       const days = int(a.days, 7, 1, 90);
-      const { data, error } = await sb.from("page_views").select("page_slug, visitor_id, referrer").gte("created_at", daysAgo(days)).limit(50000);
-      if (error) throw error;
+      const since = daysAgo(days);
+      const data = await fetchRows<{ page_slug: string; visitor_id: string; referrer: string | null }>((f, t) =>
+        sb.from("page_views").select("page_slug, visitor_id, referrer").gte("created_at", since).order("created_at").range(f, t));
       const pages: Record<string, number> = {}, refs: Record<string, number> = {};
       for (const v of data || []) {
         pages[v.page_slug] = (pages[v.page_slug] || 0) + 1;
@@ -324,17 +341,20 @@ const TOOLS: CmsTool[] = [
   {
     name: "autopilot_status",
     scope: "read",
-    description: "Autopilot's health: automations (trigger, last run, run count, last error), queue size, failed runs and active objectives.",
+    description: "Autopilot's health: automations (trigger, last run, run count, last error), queue size, failed runs with their errors (failed_runs) and active objectives.",
     inputSchema: obj(),
     run: async (sb) => {
       const head = { count: "exact", head: true };
       const [autos, waiting, failed7, objectives] = await Promise.all([
         sb.from("agent_automations").select("id, name, enabled, trigger_type, trigger_config, skill_name, last_triggered_at, run_count, last_error").order("name"),
         sb.from("agent_tasks").select("id", head).eq("status", "needs_review"),
-        sb.from("agent_tasks").select("id", head).eq("status", "failed").gte("created_at", daysAgo(7)),
+        sb.from("agent_tasks").select("task_type, created_at, output_data").eq("status", "failed").gte("created_at", daysAgo(7)).order("created_at", { ascending: false }).limit(20),
         sb.from("agent_objectives").select("id, goal, status, progress").eq("status", "active"),
       ]);
-      return { waiting_for_review: waiting.count || 0, failed_last_7_days: failed7.count || 0, automations: autos.data || [], objectives: objectives.data || [] };
+      const failedRuns = (failed7.data || []).map((t: { task_type: string; created_at: string; output_data: Record<string, unknown> | null }) => ({
+        type: t.task_type, at: t.created_at, error: String(t.output_data?.error ?? "unknown").slice(0, 200),
+      }));
+      return { waiting_for_review: waiting.count || 0, failed_last_7_days: failedRuns.length, failed_runs: failedRuns, automations: autos.data || [], objectives: objectives.data || [] };
     },
   },
   {

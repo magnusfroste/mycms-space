@@ -153,6 +153,18 @@ async function generateContent(prompt: string, systemPrompt: string): Promise<st
 // Action Handlers
 // ============================================
 
+/** Text with tool-call markup removed; null when too little real analysis is left. */
+function cleanAnalysis(text: string): string | null {
+  const cleaned = (text || '')
+    .replace(/<\|?(tool_call|tool_calls|function_call|im_start|im_end|python_tag)[^>]*>[\s\S]*?(<\/?\|?\1[^>]*>|$)/gi, '')
+    .replace(/<\/?\|?(tool_call|tool_calls|function_call|tool_response|im_start|im_end)\|?>/gi, '')
+    .replace(/\[TOOL_CALLS\][\s\S]*$/g, '')
+    .replace(/\{\s*"name"\s*:\s*"[\w.-]+"\s*,\s*"(arguments|parameters)"\s*:[\s\S]*?\}\s*\}/g, '')
+    .trim();
+  const words = cleaned.split(/\s+/).filter((w) => /[a-zåäö]{2,}/i.test(w)).length;
+  return words >= 60 ? cleaned : null;
+}
+
 async function handleResearch(topic: string, sources: string[], supabase: ReturnType<typeof getSupabase>, taskId?: string) {
   // Create or update task
   const id = taskId || crypto.randomUUID();
@@ -170,8 +182,9 @@ async function handleResearch(topic: string, sources: string[], supabase: Return
   try {
     const research = await researchTopic(topic, sources);
     
-    // AI analysis of research
-    const analysis = await generateContent(
+    // AI analysis of research. Some models leak tool-call markup instead of
+    // text; that is retried once and otherwise fails the task.
+    const analyse = () => generateContent(
       `Research results for "${topic}":\n\n${research}`,
       `You are a research analyst. Analyze these search results and create a structured summary with:
 1. Key findings (3-5 bullet points)
@@ -181,6 +194,9 @@ async function handleResearch(topic: string, sources: string[], supabase: Return
 
 Be concise and actionable.`
     );
+    let analysis = cleanAnalysis(await analyse());
+    if (!analysis) analysis = cleanAnalysis(await analyse());
+    if (!analysis) throw new Error('Research analysis was empty or tool-call markup; nothing saved');
 
     await supabase.from('agent_tasks').update({
       status: 'completed',
@@ -288,6 +304,11 @@ async function saveDraftPost(supabase: ReturnType<typeof getSupabase>, draft: Dr
 }
 
 async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>) {
+  // No subscribers, no reader: don't draft newsletters nobody receives.
+  const { count: subscribers } = await supabase.from('newsletter_subscribers')
+    .select('id', { count: 'exact', head: true }).eq('status', 'active');
+  if (!subscribers) return { success: true, skipped: true, reason: 'no_active_subscribers' };
+
   const taskId = crypto.randomUUID();
   await supabase.from('agent_tasks').insert({
     id: taskId,
