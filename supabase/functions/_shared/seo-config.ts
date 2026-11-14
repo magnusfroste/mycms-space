@@ -16,7 +16,7 @@ const FALLBACK: SEOConfig = {
   site_title: "Magnus Froste",
   title_template: "%s | Magnus Froste",
   site_description:
-    "Innovation Strategist and AI integration expert with 20+ years experience in product development, business growth, and technological advancement.",
+    "AI strategist and builder with 20+ years in product and business development. Agentic AI, sovereign self-hosted AI, and working prototypes in days, not months.",
   site_url: "https://www.froste.eu",
   default_og_image: "/og.png",
   twitter_handle: "",
