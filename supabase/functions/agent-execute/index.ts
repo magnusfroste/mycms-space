@@ -285,19 +285,28 @@ async function auditPageSeo(supabase: any, slug: string): Promise<unknown> {
   if (!page) return { error: `No page with slug '${clean}'. Use list_pages.` };
   const { data: blocks } = await supabase.from('page_blocks').select('block_type, enabled')
     .eq('page_slug', page.slug).order('order_index');
-  const title = String(page.title || ''), desc = String(page.description || '');
+  // Same rules as SEOHead: the landing page uses the SEO module's site title and
+  // description; other pages use the title template and their own description.
+  const { data: seo } = await supabase.from('modules').select('module_config').eq('module_type', 'seo').maybeSingle();
+  const cfg = (seo?.module_config || {}) as Record<string, string>;
+  const title = page.is_main_landing
+    ? String(cfg.site_title || '')
+    : String(cfg.title_template || '%s').replace('%s', String(page.title || ''));
+  const ownDesc = page.is_main_landing ? '' : String(page.description || '');
+  const desc = ownDesc || String(cfg.site_description || '');
   const enabledBlocks = (blocks || []).filter((b: any) => b.enabled);
   const issues: string[] = [];
   if (!page.enabled) issues.push('Page is disabled, so it is not published.');
   if (title.length < 10 || title.length > 60) issues.push(`Title is ${title.length} characters; aim for 10–60.`);
   if (!desc) issues.push('Meta description is missing.');
   else if (desc.length < 50 || desc.length > 160) issues.push(`Meta description is ${desc.length} characters; aim for 50–160.`);
+  if (!page.is_main_landing && !ownDesc) issues.push('No own meta description; the site description is used. Set pages.description.');
   if (!enabledBlocks.length) issues.push('Page has no enabled blocks.');
   return {
     slug: page.slug, title, title_length: title.length, description: desc, description_length: desc.length,
+    source: page.is_main_landing ? 'SEO module (site_title, site_description)' : 'pages.title via title_template, pages.description',
     enabled: page.enabled, blocks: enabledBlocks.map((b: any) => b.block_type),
     score: Math.max(0, 100 - issues.length * 20), issues,
-    note: 'The page renders one H1 and sets title, description and OG tags from these fields.',
   };
 }
 
