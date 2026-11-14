@@ -33,8 +33,6 @@ import {
   taskTitle,
   taskTypeLabel,
   useDecideTasks,
-  usePendingApprovals,
-  useResolveApproval,
   useReviewTasks,
   type AgentTask,
 } from '@/components/admin/review/reviewData';
@@ -161,69 +159,6 @@ function ReviewDrawer({
         )}
       </SheetContent>
     </Sheet>
-  );
-}
-
-function SkillApprovals() {
-  const { data: approvals = [] } = usePendingApprovals();
-  const resolve = useResolveApproval();
-  if (approvals.length === 0) return null;
-  return (
-    <Panel
-      title="Skill calls waiting for permission"
-      description="Some skills are marked “requires approval”. Approving runs the skill with the arguments shown."
-    >
-      <ul>
-        {approvals.map((a, i) => {
-          const input = (a.input ?? {}) as Record<string, unknown>;
-          const args = (input.arguments as Record<string, unknown>) || input;
-          return (
-            <li key={a.id} className={cn('flex flex-wrap items-start gap-3 px-[18px] py-3.5', i > 0 && 'border-t border-border/70')}>
-              <div className="min-w-0 flex-1">
-                <p className="font-mono text-[13px] font-medium">{a.skill_name}</p>
-                <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                  {a.agent} · {formatDistanceToNow(new Date(a.created_at), { addSuffix: true })}
-                </p>
-                {Object.keys(args).length > 0 && (
-                  <pre className="mt-2 max-h-28 overflow-auto rounded-md bg-muted p-2 font-mono text-[11px]">
-                    {JSON.stringify(args, null, 2)}
-                  </pre>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="h-8"
-                  disabled={resolve.isPending}
-                  onClick={() =>
-                    resolve.mutate(
-                      { activity: a, approved: true },
-                      { onSuccess: () => toast.success('Approved and run'), onError: (e) => toast.error((e as Error).message) },
-                    )
-                  }
-                >
-                  Approve & run
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8"
-                  disabled={resolve.isPending}
-                  onClick={() =>
-                    resolve.mutate(
-                      { activity: a, approved: false },
-                      { onSuccess: () => toast.success('Rejected'), onError: (e) => toast.error((e as Error).message) },
-                    )
-                  }
-                >
-                  Reject
-                </Button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
   );
 }
 
@@ -392,13 +327,11 @@ export default function ReviewQueueView() {
         )}
       </Panel>
 
-      <SkillApprovals />
-
       <div className="rounded-xl border border-border bg-muted/30 px-[18px] py-4">
         <Eyebrow>How decisions work</Eyebrow>
         <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/80">
           Approving a blog draft publishes it; rejecting archives it. Newsletter drafts are never sent from here — approve
-          them, then send from Newsletter. Operators with the <span className="font-mono text-xs">review</span> scope make the
+          them, then send from Newsletter. A skill call runs when you approve it. Operators with the <span className="font-mono text-xs">review</span> scope make the
           same decisions through MCP (<span className="font-mono text-xs">review_decide</span>), and every decision is
           kept with the task.
         </p>

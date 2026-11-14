@@ -4,6 +4,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { cleanAnalysis } from "../_shared/text-quality.ts";
 import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
@@ -152,21 +153,6 @@ async function generateContent(prompt: string, systemPrompt: string): Promise<st
 // ============================================
 // Action Handlers
 // ============================================
-
-/** Text with tool-call markup removed; null when too little real analysis is left. */
-function cleanAnalysis(text: string): string | null {
-  const cleaned = (text || '')
-    .replace(/<\|?(tool_call|tool_calls|function_call|im_start|im_end|python_tag)[^>]*>[\s\S]*?(<\/?\|?\1[^>]*>|$)/gi, '')
-    .replace(/<\/?\|?(tool_call|tool_calls|function_call|tool_response|im_start|im_end)\|?>/gi, '')
-    .replace(/\[TOOL_CALLS\][\s\S]*$/g, '')
-    // XML-style tool calls (invoke / parameter / *_calls blocks, DSML)
-    .replace(/<\/?[^<>\n]{0,24}?(invoke|parameter|function_calls|tool_calls|calls|dsml)\b[^>]*>/gi, '')
-    .replace(/[｜|]\s*DSML\s*[｜|]/gi, '')
-    .replace(/\{\s*"name"\s*:\s*"[\w.-]+"\s*,\s*"(arguments|parameters)"\s*:[\s\S]*?\}\s*\}/g, '')
-    .trim();
-  const words = cleaned.split(/\s+/).filter((w) => /[a-zåäö]{2,}/i.test(w)).length;
-  return words >= 60 ? cleaned : null;
-}
 
 async function handleResearch(topic: string, sources: string[], supabase: ReturnType<typeof getSupabase>, taskId?: string) {
   // Create or update task

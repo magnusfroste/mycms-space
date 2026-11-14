@@ -104,20 +104,3 @@ export function useActivity(filters?: { status?: string; agent?: string }) {
   });
 }
 
-export function useApproveActivity() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
-      const { error } = await supabase
-        .from('agent_activity')
-        .update({ status: approved ? 'approved' : 'rejected' } as any)
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['agent-activity'] });
-      toast.success('Activity updated');
-    },
-    onError: () => toast.error('Failed to update activity'),
-  });
-}

@@ -5,6 +5,7 @@
 // ============================================
 
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
+import { skillDef, isRunnable } from "./skills.ts";
 import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 import { callKnowledgeTool } from "./knowledge-tools.ts";
@@ -273,10 +274,13 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 
     // --- Skill CRUD ---
     case 'skill_create': {
+      const handler = String(toolArgs.handler || '');
+      if (skillDef(String(toolArgs.name || ''))) return `❌ '${toolArgs.name}' is a built-in skill; use skill_update to enable it or change its instructions.`;
+      if (!isRunnable(handler)) return `❌ Handler '${handler}' cannot run. Use edge:github-repos, edge:enrich-github-repo, edge:send-newsletter, edge:unsplash-search, db:page_views, db:pages, db:contact_messages, module:weekly_digest or autopilot:(research|blog_draft|newsletter_draft|multichannel_draft).`;
       const { data, error } = await supabase.from('agent_skills').insert({
         name: toolArgs.name,
         description: toolArgs.description || '',
-        handler: toolArgs.handler || 'edge:ai-chat',
+        handler,
         category: toolArgs.category || 'automation',
         scope: toolArgs.scope || 'internal',
         requires_approval: toolArgs.requires_approval ?? true,
@@ -293,7 +297,13 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
       for (const [k, v] of Object.entries(rawUpdates || {})) {
         if (safeFields.includes(k)) updates[k] = v;
       }
-      if (!Object.keys(updates).length) return '❌ No valid fields to update';
+      if (skillDef(String(toolArgs.skill_name || ''))) {
+        // Built-in skills: the code owns handler, scope, approval and parameters.
+        for (const k of ['description', 'handler', 'category', 'scope', 'requires_approval', 'tool_definition']) delete updates[k];
+      } else if ('handler' in updates && !isRunnable(String(updates.handler))) {
+        return `❌ Handler '${updates.handler}' cannot run.`;
+      }
+      if (!Object.keys(updates).length) return '❌ No valid fields to update (built-in skills only take enabled and instructions)';
       const { data, error } = await supabase.from('agent_skills')
         .update(updates).eq('name', toolArgs.skill_name).select('id, name').single();
       if (error) return `❌ Skill update failed: ${error.message}`;

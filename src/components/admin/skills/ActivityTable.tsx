@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Check, X, ChevronDown, ChevronRight, List, GitBranch } from 'lucide-react';
+import { ChevronDown, ChevronRight, List, GitBranch } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useActivity, useApproveActivity } from '@/hooks/useSkillHub';
+import { useActivity } from '@/hooks/useSkillHub';
 import { ExecutionTimeline } from './ExecutionTimeline';
 import type { AgentActivityStatus } from '@/types/agent';
 
@@ -31,7 +31,6 @@ export function ActivityTable() {
   };
 
   const { data: activities = [], isLoading } = useActivity(filters);
-  const approve = useApproveActivity();
 
   return (
     <div className="space-y-4">
@@ -98,11 +97,8 @@ export function ActivityTable() {
                     <TableCell className="text-xs text-muted-foreground">{format(new Date(a.created_at), 'MMM d HH:mm')}</TableCell>
                     <TableCell>
                       {a.status === 'pending_approval' && (
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approve.mutate({ id: a.id, approved: true })}><Check className="h-4 w-4 text-primary" /></Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approve.mutate({ id: a.id, approved: false })}><X className="h-4 w-4 text-destructive" /></Button>
-                        </div>
-                      )}
+                          <span className="text-[11px] text-muted-foreground">In review queue</span>
+                        )}
                     </TableCell>
                   </TableRow>
                 );

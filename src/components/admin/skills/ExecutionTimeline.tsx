@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { format, formatDistanceStrict } from 'date-fns';
-import { ChevronDown, ChevronRight, Zap, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Zap, AlertCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useActivity, useApproveActivity } from '@/hooks/useSkillHub';
+import { useActivity } from '@/hooks/useSkillHub';
 import type { AgentActivity, AgentActivityStatus } from '@/types/agent';
 
 const STATUS_DOT: Record<AgentActivityStatus, string> = {
@@ -59,7 +58,6 @@ function groupByConversation(activities: AgentActivity[]): ConversationGroup[] {
 
 export function ExecutionTimeline({ filters }: { filters?: { status?: string; agent?: string } }) {
   const { data: activities = [], isLoading } = useActivity(filters);
-  const approve = useApproveActivity();
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
@@ -136,10 +134,7 @@ export function ExecutionTimeline({ filters }: { filters?: { status?: string; ag
                             </div>
                           </div>
                           {entry.status === 'pending_approval' && (
-                            <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approve.mutate({ id: entry.id, approved: true })}><Check className="h-4 w-4 text-primary" /></Button>
-                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approve.mutate({ id: entry.id, approved: false })}><X className="h-4 w-4 text-destructive" /></Button>
-                            </div>
+                            <span className="shrink-0 text-[11px] text-muted-foreground">In review queue</span>
                           )}
                         </button>
                         {isEntryExpanded && (

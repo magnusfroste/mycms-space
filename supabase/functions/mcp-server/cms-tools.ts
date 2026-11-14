@@ -13,6 +13,8 @@
 // Every call is logged in mcp_activities by the server.
 // ============================================
 
+import { fetchRows } from "../_shared/analytics.ts";
+
 // deno-lint-ignore no-explicit-any
 type Supabase = any;
 type Scope = "read" | "content" | "review" | "settings";
@@ -62,18 +64,17 @@ function slugify(s: string): string {
 }
 const daysAgo = (d: number) => new Date(Date.now() - d * 86400_000).toISOString();
 
-/** PostgREST returns at most 1000 rows per request; page through to get them all. */
-async function fetchRows<T = any>(query: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>, max = 100_000): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; from < max; from += 1000) {
-    const { data, error } = await query(from, from + 999);
-    if (error) throw new Error(error.message || String(error));
-    rows.push(...(data || []));
-    if (!data || data.length < 1000) break;
-  }
-  return rows;
-}
 const json = (v: unknown) => JSON.stringify(v, null, 2);
+
+/** Run a skill call that waited in the review queue; agent-execute closes the task. */
+async function runApprovedSkill(taskId: string, skill: string): Promise<unknown> {
+  const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/agent-execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
+    body: JSON.stringify({ skill_name: skill, approved_task_id: taskId, arguments: {}, agent_type: "magnet" }),
+  });
+  return await resp.json().catch(() => ({ error: `agent-execute returned HTTP ${resp.status}` }));
+}
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
@@ -319,7 +320,7 @@ const TOOLS: CmsTool[] = [
   {
     name: "review_queue_list",
     scope: "read",
-    description: "Work Autopilot has produced that waits for a decision (blog drafts, newsletter drafts …). Decide with review_decide.",
+    description: "Everything that waits for a decision, in one queue: Autopilot drafts (blog, newsletter, social posts) and skill calls that need approval (type skill_call). Decide with review_decide.",
     inputSchema: obj({ task_type: { type: "string" }, limit: { type: "number" } }),
     run: async (sb, a) => {
       let q = sb.from("agent_tasks").select("id, task_type, created_at, input_data, output_data").eq("status", "needs_review")
@@ -334,6 +335,7 @@ const TOOLS: CmsTool[] = [
           title: t.output_data?.title || t.output_data?.subject || t.input_data?.topic || null,
           slug: t.output_data?.slug || null,
           review_score: t.output_data?.review_score ?? null,
+          ...(t.task_type === "skill_call" ? { skill: t.input_data?.skill, arguments: t.input_data?.arguments } : {}),
         })),
       };
     },
@@ -623,7 +625,7 @@ const TOOLS: CmsTool[] = [
   {
     name: "review_decide",
     scope: "review",
-    description: "Approve or reject items in the review queue. Approving a blog draft publishes the post; approving a newsletter draft marks it ready (send with newsletter_send). Rejecting archives the draft.",
+    description: "Approve or reject items in the review queue. Approving a blog draft publishes the post; approving a newsletter draft marks it ready (send with newsletter_send); approving a skill_call runs that skill now. Rejecting archives the draft or drops the call.",
     inputSchema: obj({
       task_ids: { type: "array", items: { type: "string" }, description: "One or more ids from review_queue_list (max 50)." },
       decision: { type: "string", enum: ["approve", "reject"] },
@@ -638,7 +640,14 @@ const TOOLS: CmsTool[] = [
       const results = [];
       for (const t of tasks || []) {
         const out = t.output_data || {};
-        if (t.task_type === "blog_draft" && out.blog_post_id) {
+        if (t.task_type === "skill_call") {
+          // A skill call that asked for approval: approving runs it now.
+          if (approve) {
+            const run = await runApprovedSkill(t.id, String(t.input_data?.skill || ""));
+            results.push({ id: t.id, type: t.task_type, decision: a.decision, skill: t.input_data?.skill, result: run });
+            continue;
+          }
+        } else if (t.task_type === "blog_draft" && out.blog_post_id) {
           await sb.from("blog_posts").update(approve
             ? { status: "published", published_at: new Date().toISOString() }
             : { status: "archived" }).eq("id", out.blog_post_id);

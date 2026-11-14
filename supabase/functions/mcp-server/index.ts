@@ -7,6 +7,7 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { operatorSkills } from "../_shared/skills.ts";
 import { PROFILE_TOOL_NAMES, callProfileTool, loadOwner, profileTools, type Owner } from "./profile-tools.ts";
 import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
 import { loadResumeContext } from "../_shared/ai-context.ts";
@@ -345,31 +346,18 @@ async function handleMethod(
       const scopes = apiKey.cmsScopes as Set<string>;
       if (!scopes.size) throw new Error('This key has no scopes.');
 
-      // Agent skills: public ones need 'content', internal Autopilot skills need 'settings'.
-      const skillScopes = [
-        ...(scopes.has('content') ? ['public', 'both', 'external'] : []),
-        ...(scopes.has('settings') ? ['internal'] : []),
-      ];
-      const { data: skills } = skillScopes.length
-        ? await supabase
-          .from('agent_skills')
-          .select('name, description, tool_definition, scope, category, handler')
-          .eq('enabled', true)
-          .in('scope', skillScopes)
-          // Artifact skills render in the visitor chat; MCP has get_profile / list_projects / analyze_job_fit.
-          .not('handler', 'like', 'builtin:%')
-          .order('category')
-        : { data: [] };
-
-      const skillTools = (skills || []).map((s: any) => {
-        const def = s.tool_definition?.function || s.tool_definition || {};
-        return {
+      // Agent skills (operator-callable, from the code registry; the table
+      // only says which are enabled). Internal Autopilot skills need 'settings'.
+      const { data: skillRows } = await supabase
+        .from('agent_skills')
+        .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
+      const skillTools = scopes.has('settings')
+        ? operatorSkills(skillRows || []).map((s) => ({
           name: s.name,
-          description: `[skill] ${def.description || s.description || ''}`,
-          // tool_definition is either an OpenAI function or a bare JSON schema.
-          inputSchema: def.parameters || (def.type === 'object' ? def : { type: 'object', properties: {} }),
-        };
-      });
+          description: `[skill${s.requires_approval ? ', needs approval' : ''}] ${s.description}`,
+          inputSchema: s.parameters!,
+        }))
+        : [];
 
       const builtins = allBuiltinTools(owner).filter((t) => !KB_WRITE_TOOLS.has(t.name) || scopes.has('content'));
       // Tool names must be unique: many LLM APIs reject a request with duplicate
@@ -421,13 +409,12 @@ async function handleMethod(
 
 
 
-      // Verify the skill exists and is exposed
-      const { data: skill } = await supabase
+      // Verify the skill exists, is enabled and runs server-side
+      const { data: skillRows } = await supabase
         .from('agent_skills')
-        .select('id, name, scope, enabled')
-        .eq('name', name)
-        .eq('enabled', true)
-        .maybeSingle();
+        .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition')
+        .eq('name', name);
+      const skill = operatorSkills(skillRows || []).find((s) => s.name === name);
 
       if (!skill) {
         return {
@@ -435,12 +422,9 @@ async function handleMethod(
           isError: true,
         };
       }
-      const allowed = ['public', 'both', 'external'].includes(skill.scope)
-        ? scopes.has('content')
-        : skill.scope === 'internal' && scopes.has('settings');
-      if (!allowed) {
+      if (!scopes.has('settings')) {
         return {
-          content: [{ type: 'text', text: `Skill '${name}' needs the '${skill.scope === 'internal' ? 'settings' : 'content'}' scope.` }],
+          content: [{ type: 'text', text: `Skill '${name}' needs the 'settings' scope.` }],
           isError: true,
         };
       }
@@ -458,7 +442,7 @@ async function handleMethod(
           skill_name: name,
           arguments: args || {},
           // Internal Autopilot skills only run for keys with the settings scope (checked above).
-          agent_type: skill.scope === 'internal' ? 'magnet' : 'chat',
+          agent_type: 'magnet',
           conversation_id: `mcp-${apiKey.id}`,
         }),
       });

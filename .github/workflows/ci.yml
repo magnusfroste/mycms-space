@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 5 * * *" # daily MCP smoke test against the live site
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.app.json
+      - run: npm test
+      - run: npm run build
+
+  mcp-smoke:
+    # Calls the read tools of the live MCP server. Needs the repository secret
+    # MCP_SMOKE_KEY (an MCP key with the 'read' scope; add 'settings' to also
+    # check the Autopilot skills). Skipped when the secret is not set.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      MCP_KEY: ${{ secrets.MCP_SMOKE_KEY }}
+      MCP_URL: ${{ vars.MCP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: MCP smoke test
+        run: |
+          if [ -z "$MCP_KEY" ]; then echo "MCP_SMOKE_KEY is not set; skipping."; exit 0; fi
+          node scripts/mcp-smoke.mjs
