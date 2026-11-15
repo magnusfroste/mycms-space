@@ -453,6 +453,8 @@ export interface GitHubModuleConfig {
   show_forks: boolean;
   show_languages: boolean;
   show_topics: boolean;
+  /** Old project slugs (renamed or merged repos) → the slug to send visitors to. */
+  project_redirects?: Record<string, string>;
 }
 
 // Branding Module Config
