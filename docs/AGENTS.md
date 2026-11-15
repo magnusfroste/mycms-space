@@ -9,6 +9,33 @@ different powers.
 | **Autopilot** | The internal loop (edge functions on a schedule) | The review queue | No — it proposes, an operator decides |
 | **Magnet** | The public AI chat on the site | Visitors | No — read-only towards the CMS |
 
+## One agent, one core
+
+Magnet (visitor chat and admin chat) and the Autopilot heartbeat are one
+agent. They share one reasoning core, `reason()` in
+`supabase/functions/_shared/agent/reason.ts` (the FlowPilot pattern from
+flowwink), and one toolbox, `buildToolbox(surface)` in `_shared/ai-agent.ts`.
+Each surface gets its own tools and budget:
+
+| Surface | Caller | Tools | Turns |
+|---|---|---|---|
+| `public` | `ai-chat` (visitors) | visitor-chat cards (CV match, portfolio, availability …) | 4 |
+| `admin` | `ai-chat` (signed-in admin) | built-ins (memory, soul, skills, objectives, automations, files, knowledge base), planning, operator skills | 8 |
+| `heartbeat` | `magnet-heartbeat` (cron) | memory, objectives, reflect, site stats, review queue, knowledge base (read), planning, operator skills | 12, 120k tokens, 120 s |
+
+The core's guards: a tool that was not offered is refused, three failed tool
+calls in a row stop the tool round (circuit breaker), the same call with the
+same arguments runs at most twice, each tool call has a timeout, and the run
+stops at its token budget or deadline. It then asks the model for a final
+answer without tools. Planning tools (`decompose_objective`, `advance_plan`,
+`execute_automation`, `propose_objective`, `signal_acknowledge`) live in
+`_shared/agent/planning.ts`. The heartbeat takes a lane lock
+(`try_acquire_agent_lock('heartbeat')`, table `agent_locks`) so only one runs
+at a time; the lock expires by itself after 10 minutes.
+
+Autopilot's pipelines (research, blog draft, newsletter, multichannel) are the
+agent's hands: skills it calls, whose results land in the review queue.
+
 ## Operator
 
 Operators steer the CMS. An external agent connects to the MCP server with
@@ -52,7 +79,7 @@ Edge functions:
 
 | Function | Role |
 |---|---|
-| `magnet-heartbeat` | The scheduled loop: reflect → signals → objectives → automations → act → heal → remember. Runs due automations through `agent-execute`. |
+| `magnet-heartbeat` | The agent's scheduled surface: loads context (signals, objectives, automations, stats, self-healing), then runs the shared core with the `heartbeat` toolbox, a token budget and a lane lock. |
 | `agent-execute` | Runs one skill (edge, db, module or autopilot handler) and logs it in `agent_activity`; queues `skill_call` review items and runs them once approved. |
 | `agent-autopilot` | Research, blog drafts, newsletter drafts, source scouting, multichannel drafts. Uses Firecrawl for web research. |
 | `agent-daily-report` | Emails a summary of the last 24 hours. |

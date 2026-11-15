@@ -5,8 +5,10 @@
 // ============================================
 
 import { buildDynamicPrompt, buildAdminPrompt, loadResumeContext, loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "./ai-context.ts";
-import { skillDef, isRunnable } from "./skills.ts";
-import { getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
+import { skillDef, isRunnable, operatorSkills, toolDefinition } from "./skills.ts";
+import { adminTools, getActiveToolsAsync, getToolInstructionsAsync, parseToolCallResponse } from "./ai-tools.ts";
+import { reason, type Surface, type ToolDefinition as CoreTool, type ToolOutcome, type ExecuteTool } from "./agent/reason.ts";
+import { PLANNING_TOOLS, PLANNING_TOOL_NAMES, executePlanningTool } from "./agent/planning.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 import { callKnowledgeTool } from "./knowledge-tools.ts";
 
@@ -47,7 +49,8 @@ export interface AgentResult {
   artifacts?: Array<{ type: string; title: string; data: unknown }>;
 }
 
-const MAX_TOOL_ITERATIONS = 6;
+/** Model turns per surface: the visitor chat stays short, the heartbeat works longer. */
+const ITERATIONS: Record<Surface, number> = { public: 4, admin: 8, heartbeat: 12 };
 
 // ============================================
 // Generic OpenAI-Compatible Provider
@@ -176,6 +179,7 @@ const BUILT_IN_TOOL_NAMES = [
   'automation_create', 'automation_list',
   'reflect',
   'get_site_stats',
+  'list_review_queue',
   'get_visitor_insights',
   'file_list', 'file_read', 'file_write', 'file_delete',
 ];
@@ -403,6 +407,22 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
         active_automations: automations?.filter((a: any) => a.enabled).length || 0,
         objectives: objectives || [],
         auto_persisted_learnings: learnings.length,
+      });
+    }
+
+    // --- Review queue (read only: decisions are made by a person) ---
+    case 'list_review_queue': {
+      let q = supabase.from('agent_tasks').select('id, task_type, created_at, input_data, output_data, status')
+        .order('created_at', { ascending: false }).limit(30);
+      q = toolArgs.status_filter === 'all' ? q : q.eq('status', 'needs_review');
+      const { data } = await q;
+      return JSON.stringify({
+        count: data?.length || 0,
+        items: (data || []).map((t: any) => ({
+          id: t.id, type: t.task_type, status: t.status, created_at: t.created_at,
+          title: t.output_data?.title || t.output_data?.subject || t.input_data?.topic || t.input_data?.skill || null,
+        })),
+        note: 'Approve or reject in the admin review queue or with the MCP tool review_decide.',
       });
     }
 
@@ -666,10 +686,6 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     } catch { /* objectives optional */ }
   }
 
-  const tools = await getActiveToolsAsync(enabledTools, mode);
-  const offeredToolNames = new Set(tools.map((t) => t.function.name));
-  console.log(`[Agent] ${tools.length} tools, max ${MAX_TOOL_ITERATIONS} iterations`);
-
   let autoArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined;
   // --- Auto-invoke visitor insights on first message (magic moment) ---
   const visitorEnabled = visitorConfig?.enabled !== false; // default true
@@ -755,136 +771,136 @@ export async function runAgent(request: AgentRequest): Promise<AgentResult> {
     }
   }
 
-  // Multi-iteration tool loop
-  const conversationMessages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }> = [
-    { role: "system", content: fullPrompt },
-    ...messages,
-  ];
+  const toolbox = await buildToolbox(mode === 'admin' ? 'admin' : 'public', { enabledTools, siteContext });
+  console.log(`[Agent] ${toolbox.tools.length} tools, max ${ITERATIONS[toolbox.surface]} iterations`);
 
-  let lastArtifacts: Array<{ type: string; title: string; data: unknown }> | undefined = autoArtifacts;
+  const result = await reason([{ role: 'system', content: fullPrompt }, ...messages] as any, {
+    surface: toolbox.surface,
+    callModel: ({ messages: m, tools }) => callOpenAICompatible({
+      url, apiKey, model, messages: m as any, tools: tools as any, toolChoice: tools?.length ? 'auto' : undefined,
+    }),
+    tools: toolbox.tools,
+    executeTool: toolbox.executeTool,
+    maxIterations: ITERATIONS[toolbox.surface],
+    onToolCall: ({ name, ok, iteration }) => console.log(`[Agent] Iteration ${iteration + 1}: Tool ${name} ${ok ? 'ok' : 'failed'}`),
+  });
 
-  for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const toolChoice = "auto";
+  return { output: result.output, artifacts: result.artifacts ?? autoArtifacts };
+}
 
-    const data = await callOpenAICompatible({
-      url,
-      apiKey,
-      model,
-      messages: conversationMessages,
-      tools: tools.length > 0 ? tools : undefined,
-      toolChoice: tools.length > 0 ? toolChoice : undefined,
-    });
+// ============================================
+// Toolbox — the tools each surface may use, and one executor for them all
+// ============================================
 
-    const choice = data.choices?.[0];
-    if (!choice) return { output: "No response from AI." };
+/** The heartbeat works on objectives; it does not change its own soul, skills or files. */
+const HEARTBEAT_BUILTINS = ['save_memory', 'list_memory', 'objective_update_progress', 'objective_complete', 'reflect', 'get_site_stats', 'list_review_queue', 'kb_list', 'kb_get'];
 
-    const msg = choice.message;
+export interface Toolbox {
+  surface: Surface;
+  tools: CoreTool[];
+  executeTool: ExecuteTool;
+}
 
-    // No tool calls → final response
-    if (!msg.tool_calls?.length) {
-      return { output: msg.content || "No response from AI.", artifacts: lastArtifacts };
+/** Tools for a surface: built-ins, planning (admin and heartbeat) and operator skills from the registry. */
+export async function buildToolbox(
+  surface: Surface,
+  opts: { enabledTools?: string[]; siteContext?: SiteContext | null } = {},
+): Promise<Toolbox> {
+  const { createClient } = await import("npm:@supabase/supabase-js@2");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  let tools: CoreTool[];
+  if (surface === 'public') {
+    tools = (await getActiveToolsAsync(opts.enabledTools, 'public')) as CoreTool[];
+  } else {
+    const builtins = surface === 'admin'
+      ? (await getActiveToolsAsync(opts.enabledTools, 'admin')) as CoreTool[]
+      : HEARTBEAT_BUILTINS.map((n) => adminTools[n]).filter(Boolean) as CoreTool[];
+    const { data: rows } = await supabase.from('agent_skills')
+      .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
+    const skills = operatorSkills(rows || []).map((sk) => toolDefinition(sk) as CoreTool);
+    tools = [...builtins, ...PLANNING_TOOLS, ...skills];
+  }
+  const seen = new Set<string>();
+  tools = tools.filter((t) => (seen.has(t.function.name) ? false : (seen.add(t.function.name), true)));
+
+  const executeTool: ExecuteTool = async (name, args, call) => {
+    if (surface !== 'public' && PLANNING_TOOL_NAMES.has(name)) {
+      const r = await executePlanningTool(supabase, supabaseUrl, serviceKey, name, args);
+      return { content: JSON.stringify(r), ok: !(r?.error || r?.status === 'error') };
     }
+    if (isBuiltInTool(name)) {
+      const text = await executeBuiltInTool(name, args, { siteContext: opts.siteContext });
+      const parsed = parseToolCallResponse(call, '');
+      return { content: text, artifacts: parsed.artifacts, ok: !text.startsWith('❌') };
+    }
+    const artifact = await runArtifactTool(name, args, call);
+    if (artifact) return artifact;
+    const text = await executeSkillViaEdge(name, args);
+    let ok = true;
+    try { const j = JSON.parse(text); ok = !(j?.error || j?.status === 'failed'); } catch { /* plain text */ }
+    return { content: text, ok };
+  };
 
-    // Add assistant message with tool_calls to conversation
-    conversationMessages.push(msg as any);
+  return { surface, tools, executeTool };
+}
 
-    // Execute each tool call
-    for (const toolCall of msg.tool_calls) {
-      const toolName = toolCall.function?.name || '';
-      console.log(`[Agent] Iteration ${iteration + 1}: Tool ${toolName}`);
+/**
+ * Visitor-chat artifact tools (CV match, portfolio, availability …): the model
+ * fills in the card; nothing runs server-side except a few touches below.
+ * Returns null for any other tool.
+ */
+async function runArtifactTool(
+  toolName: string,
+  toolArgs: Record<string, unknown>,
+  toolCall: { function?: { name?: string; arguments?: string } },
+): Promise<ToolOutcome | null> {
+  const parsed = parseToolCallResponse(toolCall, '');
+  if (!parsed.artifacts?.length) return null;
+  let artifacts = parsed.artifacts;
+  let result = JSON.stringify(toolArgs);
 
-      let result: string;
-      try {
-        // Only run tools that were offered in this mode — a provider must not
-        // be able to reach admin tools (file_write, kb_upsert …) from public chat.
-        if (!offeredToolNames.has(toolName)) {
-          throw new Error(`Tool not available: ${toolName}`);
-        }
-        const toolArgs = JSON.parse(toolCall.function?.arguments || '{}');
+  if (toolName === 'check_availability') {
+    const profile = await loadAvailabilityProfile();
+    const merged: Record<string, unknown> = {
+      ...profile,
+      ...Object.fromEntries(Object.entries(toolArgs).filter(([, v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length === 0))),
+    };
+    artifacts = artifacts.map((a) => ({ ...a, data: merged }));
+    result = JSON.stringify(merged);
+  }
 
-        if (isBuiltInTool(toolName)) {
-          result = await executeBuiltInTool(toolName, toolArgs, { siteContext });
-          // Check if built-in tool also produces artifacts (e.g. visitor-profile)
-          const parsed = parseToolCallResponse(toolCall, msg.content || '');
-          if (parsed.artifacts?.length) {
-            lastArtifacts = parsed.artifacts;
-          }
-        } else {
-          // Check if this is an artifact-producing tool (public visitor tools)
-          const parsed = parseToolCallResponse(toolCall, msg.content || '');
+  // Auto-save generated CVs and cover letters to file manager
+  if (toolName === 'generate_tailored_cv' && (toolArgs.tailored_cv || toolArgs.cover_letter)) {
+    try {
+      const { createClient } = await import("npm:@supabase/supabase-js@2");
+      const storageClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      const score = toolArgs.overall_score || 0;
+      const folder = `cv-generated/${timestamp}_score-${score}`;
 
-          if (parsed.artifacts?.length) {
-            lastArtifacts = parsed.artifacts;
-            result = JSON.stringify(toolArgs);
-
-            // Availability comes from the owner's profile, not from the model's guess:
-            // fill status/summary/contact when the model left them out, so the card
-            // and the answer agree with what the owner set.
-            if (toolName === 'check_availability') {
-              const profile = await loadAvailabilityProfile();
-              const merged: Record<string, unknown> = {
-                ...profile,
-                ...Object.fromEntries(Object.entries(toolArgs).filter(([, v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length === 0))),
-              };
-              lastArtifacts = parsed.artifacts.map((a) => ({ ...a, data: merged }));
-              result = JSON.stringify(merged);
-            }
-
-            // Auto-save generated CVs and cover letters to file manager
-            if (toolName === 'generate_tailored_cv' && (toolArgs.tailored_cv || toolArgs.cover_letter)) {
-              try {
-                const { createClient } = await import("npm:@supabase/supabase-js@2");
-                const storageClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
-                const score = toolArgs.overall_score || 0;
-                const folder = `cv-generated/${timestamp}_score-${score}`;
-
-                const saves: Promise<unknown>[] = [];
-                if (toolArgs.tailored_cv) {
-                  const cvBlob = new Blob([toolArgs.tailored_cv as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
-                }
-                if (toolArgs.cover_letter) {
-                  const clBlob = new Blob([toolArgs.cover_letter as string], { type: 'text/markdown' });
-                  saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
-                }
-                // Save match summary as JSON
-                const summaryData = { overall_score: score, summary: toolArgs.summary, match_analysis: toolArgs.match_analysis, generated_at: new Date().toISOString() };
-                const summaryBlob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
-                saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
-
-                await Promise.all(saves);
-                console.log(`[Agent] Auto-saved CV artifacts to agent-documents/${folder}`);
-              } catch (saveErr) {
-                console.warn('[Agent] Failed to auto-save CV:', saveErr);
-              }
-            }
-          } else {
-            // Try executing as a registered skill
-            result = await executeSkillViaEdge(toolName, toolArgs);
-          }
-        }
-      } catch (e) {
-        result = JSON.stringify({ error: (e as Error).message });
+      const saves: Promise<unknown>[] = [];
+      if (toolArgs.tailored_cv) {
+        const cvBlob = new Blob([toolArgs.tailored_cv as string], { type: 'text/markdown' });
+        saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cv.md`, cvBlob, { contentType: 'text/markdown', upsert: true }));
       }
+      if (toolArgs.cover_letter) {
+        const clBlob = new Blob([toolArgs.cover_letter as string], { type: 'text/markdown' });
+        saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/cover-letter.md`, clBlob, { contentType: 'text/markdown', upsert: true }));
+      }
+      // Save match summary as JSON
+      const summaryData = { overall_score: score, summary: toolArgs.summary, match_analysis: toolArgs.match_analysis, generated_at: new Date().toISOString() };
+      const summaryBlob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
+      saves.push(storageClient.storage.from('agent-documents').upload(`${folder}/match-summary.json`, summaryBlob, { contentType: 'application/json', upsert: true }));
 
-      // Add tool result to conversation
-      conversationMessages.push({
-        role: "tool",
-        content: result,
-        tool_call_id: toolCall.id || `call_${iteration}_${toolName}`,
-      });
+      await Promise.all(saves);
+      console.log(`[Agent] Auto-saved CV artifacts to agent-documents/${folder}`);
+    } catch (saveErr) {
+      console.warn('[Agent] Failed to auto-save CV:', saveErr);
     }
   }
 
-  // If we exhausted iterations, get a final response without tools
-  const finalData = await callOpenAICompatible({
-    url, apiKey, model,
-    messages: conversationMessages,
-  });
-
-  return {
-    output: finalData.choices?.[0]?.message?.content || "I completed several actions. Check the activity log for details.",
-    artifacts: lastArtifacts,
-  };
+  return { content: result, artifacts };
 }

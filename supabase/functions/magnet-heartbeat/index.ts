@@ -1,13 +1,14 @@
 // ============================================
-// Magnet Heartbeat — Autonomous Agent Loop
-// Scheduled: reflect → signals → objectives → automations → act → heal → remember
+// Magnet Heartbeat — the autonomous surface of the one agent
+// Scheduled: signals → objectives → automations → act → heal → remember.
+// Context and prompt live here; the reasoning loop, tools and guards are the
+// shared core (_shared/agent/reason.ts, buildToolbox('heartbeat')).
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { operatorSkills, toolDefinition } from "../_shared/skills.ts";
-import { stepStatus, planComplete, openSteps } from "../_shared/plan-steps.ts";
-import { loadAgentMemory, formatMemoryForPrompt, upsertMemory } from "../_shared/ai-context.ts";
-import { resolveDefaultAI, resolveProvider, callOpenAICompatible } from "../_shared/ai-agent.ts";
+import { loadAgentMemory, formatMemoryForPrompt } from "../_shared/ai-context.ts";
+import { resolveDefaultAI, resolveProvider, callOpenAICompatible, buildToolbox } from "../_shared/ai-agent.ts";
+import { reason } from "../_shared/agent/reason.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
@@ -15,53 +16,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const MAX_ITERATIONS = 8;
+const MAX_ITERATIONS = 12;
+const TOKEN_BUDGET = 120_000;
+const WALL_CLOCK_MS = 120_000;
+const LOCK_TTL_SECONDS = 600;
 const SELF_HEAL_THRESHOLD = 3; // consecutive failures before auto-disable
-const MAX_CHAIN_DEPTH = 4; // max steps to chain in a single advance_plan call
-
-// ─── Cron helpers ─────────────────────────────────────────────────────────────
-
-function calculateNextRun(cronExpr: string): string | null {
-  try {
-    const parts = cronExpr.trim().split(/\s+/);
-    if (parts.length < 5) return null;
-
-    const now = new Date();
-    // Simple interval estimation from cron pattern
-    const [min, hour, dayOfMonth, , ] = parts;
-
-    if (min === '*' && hour === '*') {
-      // Every minute — next run = now + 1 min
-      return new Date(now.getTime() + 60_000).toISOString();
-    }
-    if (min.startsWith('*/')) {
-      const interval = parseInt(min.slice(2), 10);
-      return new Date(now.getTime() + interval * 60_000).toISOString();
-    }
-    if (hour.startsWith('*/')) {
-      const interval = parseInt(hour.slice(2), 10);
-      return new Date(now.getTime() + interval * 3600_000).toISOString();
-    }
-    if (hour !== '*' && min !== '*') {
-      // Specific time — next occurrence
-      const targetHour = parseInt(hour, 10);
-      const targetMin = parseInt(min, 10);
-      const next = new Date(now);
-      next.setHours(targetHour, targetMin, 0, 0);
-      if (next <= now) next.setDate(next.getDate() + 1);
-      if (dayOfMonth !== '*') {
-        const targetDay = parseInt(dayOfMonth, 10);
-        next.setDate(targetDay);
-        if (next <= now) next.setMonth(next.getMonth() + 1);
-      }
-      return next.toISOString();
-    }
-    // Default: 12 hours from now
-    return new Date(now.getTime() + 12 * 3600_000).toISOString();
-  } catch {
-    return new Date(Date.now() + 12 * 3600_000).toISOString();
-  }
-}
 
 // ─── Context loaders ──────────────────────────────────────────────────────────
 
@@ -270,381 +229,6 @@ async function runSelfHealing(supabase: any): Promise<string> {
   return `\n\n⚠️ Self-healing: Auto-disabled ${toDisable.length} skills due to repeated failures: ${toDisable.join(', ')}`;
 }
 
-// ─── Plan Decomposition via AI ────────────────────────────────────────────────
-
-async function decomposeObjectiveIntoPlan(
-  objective: { id: string; goal: string; constraints: any; success_criteria: any },
-  supabase: any,
-): Promise<{ steps: any[]; total_steps: number }> {
-  // Load available skills to inform step generation
-  const { data: skillRows } = await supabase.from('agent_skills')
-    .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
-  const skills = operatorSkills(skillRows || []);
-
-  const skillList = skills.map((s) => `- ${s.name}: ${s.description}${s.requires_approval ? ' (needs admin approval)' : ''}`).join('\n');
-
-  const { url, apiKey, model } = resolveDefaultAI();
-  const data = await callOpenAICompatible({
-    url, apiKey, model,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a planning agent. Decompose an objective into 3-7 concrete, sequential steps. Each step should map to an available skill or automation when possible.
-
-Available skills:
-${skillList}
-
-Return ONLY a JSON array, no markdown. Each step:
-{"id":"s1","order":1,"description":"What to do","skill_name":"skill_name_or_null","skill_args":{},"status":"pending"}
-
-Rules:
-- Steps should be ordered logically (research before drafting, drafting before publishing)
-- Use actual skill names from the list above when applicable
-- Set skill_args with sensible defaults based on the objective
-- If no skill matches, set skill_name to null (manual step)
-- Keep descriptions short and actionable`,
-      },
-      {
-        role: 'user',
-        content: `Objective: "${objective.goal}"
-Constraints: ${JSON.stringify(objective.constraints || {})}
-Success criteria: ${JSON.stringify(objective.success_criteria || {})}`,
-      },
-    ],
-  });
-
-  const raw = data.choices?.[0]?.message?.content || '[]';
-  const cleaned = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
-  let steps: any[];
-  try {
-    steps = JSON.parse(cleaned);
-    if (!Array.isArray(steps)) steps = [];
-  } catch {
-    steps = [{ id: 's1', order: 1, description: objective.goal, skill_name: null, skill_args: {}, status: 'pending' }];
-  }
-
-  // Ensure all steps have required fields
-  steps = steps.map((s: any, i: number) => ({
-    id: s.id || `s${i + 1}`,
-    order: s.order || i + 1,
-    description: s.description || `Step ${i + 1}`,
-    skill_name: s.skill_name || null,
-    skill_args: s.skill_args || {},
-    status: 'pending',
-  }));
-
-  return { steps, total_steps: steps.length };
-}
-
-// ─── Built-in tool handlers ──────────────────────────────────────────────────
-
-async function handleHeartbeatTool(supabase: any, supabaseUrl: string, serviceKey: string, fnName: string, args: any): Promise<any> {
-  // Decompose objective into multi-step plan
-  if (fnName === 'decompose_objective') {
-    const { objective_id } = args;
-    const { data: obj, error } = await supabase.from('agent_objectives')
-      .select('id, goal, constraints, success_criteria, progress')
-      .eq('id', objective_id).single();
-    if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
-
-    const plan = await decomposeObjectiveIntoPlan(obj, supabase);
-    const progress = (obj.progress as Record<string, any>) || {};
-    progress.plan = { ...plan, current_step: 0, created_at: new Date().toISOString() };
-
-    await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-    return { status: 'planned', objective_id, steps: plan.steps.length, plan: plan.steps };
-  }
-
-  // Advance plan: execute next pending step(s) with optional chaining
-  if (fnName === 'advance_plan') {
-    const { objective_id, chain = true } = args;
-    const maxSteps = chain ? MAX_CHAIN_DEPTH : 1;
-    const chainResults: any[] = [];
-
-    for (let depth = 0; depth < maxSteps; depth++) {
-      // Re-read objective each iteration to get latest state
-      const { data: obj, error } = await supabase.from('agent_objectives')
-        .select('id, goal, progress')
-        .eq('id', objective_id).single();
-      if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
-
-      const progress = (obj.progress as Record<string, any>) || {};
-      const plan = progress.plan;
-      if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.', chain_results: chainResults };
-
-      // Find next pending step
-      const nextStep = plan.steps.find((s: any) => s.status === 'pending');
-      if (!nextStep) {
-        // Steps waiting on admin approval or a manual action are not done.
-        const open = openSteps(plan.steps);
-        if (open.length) {
-          return {
-            status: 'waiting', message: `${open.length} step(s) wait for admin approval or a manual action.`,
-            waiting_steps: open.map((s: any) => ({ step: s.description, skill: s.skill_name, status: s.status })),
-            chain_results: chainResults,
-          };
-        }
-        // All done — mark objective completed if not already
-        if (!plan.completed) {
-          plan.completed = true;
-          progress.plan = plan;
-          progress.last_updated = new Date().toISOString();
-          await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-        }
-        return { status: 'all_done', message: 'All plan steps completed.', chain_results: chainResults };
-      }
-
-      // Mark step as running
-      nextStep.status = 'running';
-      plan.current_step = nextStep.order;
-      await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-
-      // Execute the step's skill
-      let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
-      if (nextStep.skill_name) {
-        try {
-          const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-            body: JSON.stringify({
-              skill_name: nextStep.skill_name,
-              arguments: nextStep.skill_args || {},
-              agent_type: 'magnet',
-            }),
-          });
-          result = await resp.json();
-        } catch (err: any) {
-          result = { error: err.message };
-        }
-      }
-
-      // Update step status. A skill that waits for approval, or a step with no
-      // skill, has not produced anything yet, so it is not done.
-      nextStep.status = stepStatus(result, !!nextStep.skill_name);
-      const success = nextStep.status === 'done' || nextStep.status === 'skipped';
-      nextStep.result = result;
-      nextStep.completed_at = new Date().toISOString();
-
-      // Check if all steps are done
-      const allDone = planComplete(plan.steps);
-      const anyFailed = plan.steps.some((s: any) => s.status === 'failed');
-      plan.completed = allDone;
-      plan.has_failures = anyFailed;
-
-      // Update progress
-      progress.plan = plan;
-      progress.total_runs = (progress.total_runs || 0) + 1;
-      progress.last_updated = new Date().toISOString();
-      await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
-
-      const remaining = plan.steps.filter((s: any) => s.status === 'pending').length;
-      const stepResult = {
-        step: nextStep.description,
-        skill: nextStep.skill_name,
-        status: nextStep.status,
-        remaining_steps: remaining,
-      };
-      chainResults.push(stepResult);
-
-      console.log(`[heartbeat] Chain step ${depth + 1}: ${nextStep.skill_name || 'manual'} → ${nextStep.status} (${remaining} remaining)`);
-
-      // Stop chaining on failure, manual steps, or completion
-      if (!success || !nextStep.skill_name || allDone) break;
-    }
-
-    const lastResult = chainResults[chainResults.length - 1];
-    return {
-      status: chainResults.some(r => r.status === 'failed') ? 'chain_partial' : 'chain_completed',
-      steps_executed: chainResults.length,
-      remaining_steps: lastResult?.remaining_steps ?? 0,
-      plan_completed: chainResults.length > 0 && lastResult?.remaining_steps === 0,
-      chain_results: chainResults,
-    };
-  }
-
-  // Memory write
-  if (fnName === 'memory_write') {
-    const { key, value, category = 'context' } = args;
-    const content = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    await upsertMemory(category, key, content);
-    return { status: 'saved', key };
-  }
-
-  // Objective progress
-  if (fnName === 'objective_update_progress') {
-    const { error } = await supabase.from('agent_objectives')
-      .update({ progress: args.progress }).eq('id', args.objective_id);
-    return error ? { status: 'error', error: error.message } : { status: 'updated' };
-  }
-
-  // Objective complete
-  if (fnName === 'objective_complete') {
-    const { error } = await supabase.from('agent_objectives')
-      .update({ status: 'completed', completed_at: new Date().toISOString() })
-      .eq('id', args.objective_id);
-    return error ? { status: 'error', error: error.message } : { status: 'completed' };
-  }
-
-  // Mark signal as processed
-  if (fnName === 'signal_acknowledge') {
-    const { task_id, output } = args;
-    const { error } = await supabase.from('agent_tasks')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        output_data: output || { acknowledged: true },
-      })
-      .eq('id', task_id);
-    return error ? { status: 'error', error: error.message } : { status: 'acknowledged' };
-  }
-
-  // Reflect
-  if (fnName === 'reflect') {
-    const since = new Date();
-    since.setDate(since.getDate() - 7);
-    const { data: activity } = await supabase.from('agent_activity')
-      .select('skill_name, status, duration_ms, error_message')
-      .gte('created_at', since.toISOString()).limit(100);
-    const stats: Record<string, { count: number; errors: number }> = {};
-    for (const a of (activity || [])) {
-      const n = a.skill_name || 'unknown';
-      if (!stats[n]) stats[n] = { count: 0, errors: 0 };
-      stats[n].count++;
-      if (a.status === 'failed') stats[n].errors++;
-    }
-    const { data: objectives } = await supabase.from('agent_objectives').select('goal, status, progress');
-    return { period: '7 days', total_actions: (activity || []).length, skill_usage: stats, objectives: objectives || [] };
-  }
-
-  // Propose a new objective based on proactive analysis
-  if (fnName === 'propose_objective') {
-    const { goal, constraints, success_criteria, reason } = args;
-    // Check for duplicate active objectives with similar goals
-    const { data: existing } = await supabase.from('agent_objectives')
-      .select('id, goal').eq('status', 'active');
-    const isDuplicate = (existing || []).some((o: any) =>
-      o.goal.toLowerCase().includes(goal.toLowerCase().slice(0, 20)) ||
-      goal.toLowerCase().includes(o.goal.toLowerCase().slice(0, 20))
-    );
-    if (isDuplicate) {
-      return { status: 'skipped', reason: 'Similar objective already active' };
-    }
-
-    const { data: newObj, error } = await supabase.from('agent_objectives')
-      .insert({
-        goal,
-        constraints: constraints || {},
-        success_criteria: success_criteria || {},
-        progress: { proposed_by: 'magnet', reason: reason || 'proactive', proposed_at: new Date().toISOString() },
-        status: 'active',
-      })
-      .select('id').single();
-    if (error) return { status: 'error', error: error.message };
-
-    // Log the proposal
-    await supabase.from('agent_activity').insert({
-      agent: 'magnet', skill_name: 'propose_objective',
-      input: { goal, reason },
-      output: { objective_id: newObj.id },
-      status: 'success',
-    });
-
-    return { status: 'proposed', objective_id: newObj.id, goal };
-  }
-
-  // Execute automation with next_run_at calculation
-  if (fnName === 'execute_automation') {
-    const { automation_id } = args;
-    const { data: auto, error: fetchErr } = await supabase.from('agent_automations')
-      .select('*').eq('id', automation_id).maybeSingle();
-    if (fetchErr || !auto) return { status: 'error', error: fetchErr?.message || 'Automation not found' };
-
-    // Approval is handled by agent-execute: a skill that needs it lands in the review queue.
-    // Delegate skill execution to agent-execute
-    let skillResult: any;
-    try {
-      const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-        body: JSON.stringify({
-          skill_name: auto.skill_name,
-          arguments: auto.skill_arguments || {},
-          agent_type: 'magnet',
-          objective_id: auto.objective_id || undefined,
-        }),
-      });
-      skillResult = await resp.json();
-    } catch (err: any) {
-      skillResult = { error: err.message };
-    }
-
-    // Calculate next_run_at from cron expression
-    let nextRun: string | null = null;
-    if (auto.trigger_type === 'cron' && auto.trigger_config?.cron) {
-      nextRun = calculateNextRun(auto.trigger_config.cron);
-    }
-
-    // Update automation metadata
-    const updatePayload: Record<string, any> = {
-      last_triggered_at: new Date().toISOString(),
-      run_count: (auto.run_count || 0) + 1,
-      last_error: skillResult.error || null,
-    };
-    if (nextRun) updatePayload.next_run_at = nextRun;
-
-    await supabase.from('agent_automations').update(updatePayload).eq('id', automation_id);
-
-    // ── Milestone tracking: auto-update linked objective progress ──
-    if (auto.objective_id && !skillResult.error) {
-      const { data: objective } = await supabase.from('agent_objectives')
-        .select('progress').eq('id', auto.objective_id).maybeSingle();
-      if (objective) {
-        const progress = (objective.progress as Record<string, any>) || {};
-        const key = auto.skill_name || auto.name;
-        const milestone = progress[key] || { runs: 0, last_success: null, streak: 0 };
-        milestone.runs = (milestone.runs || 0) + 1;
-        milestone.last_success = new Date().toISOString();
-        milestone.streak = (milestone.streak || 0) + 1;
-        progress[key] = milestone;
-        progress.total_runs = (progress.total_runs || 0) + 1;
-        progress.last_updated = new Date().toISOString();
-        await supabase.from('agent_objectives').update({ progress }).eq('id', auto.objective_id);
-        console.log(`[heartbeat] Milestone tracked: ${key} run #${milestone.runs} for objective ${auto.objective_id.slice(0, 8)}`);
-      }
-    }
-    // Reset streak on failure
-    if (auto.objective_id && skillResult.error) {
-      const { data: objective } = await supabase.from('agent_objectives')
-        .select('progress').eq('id', auto.objective_id).maybeSingle();
-      if (objective) {
-        const progress = (objective.progress as Record<string, any>) || {};
-        const key = auto.skill_name || auto.name;
-        if (progress[key]) {
-          progress[key].streak = 0;
-          progress[key].last_failure = new Date().toISOString();
-          await supabase.from('agent_objectives').update({ progress }).eq('id', auto.objective_id);
-        }
-      }
-    }
-
-    return {
-      status: skillResult.error ? 'failed' : 'success',
-      automation: auto.name,
-      skill: auto.skill_name,
-      next_run_at: nextRun,
-      result: skillResult,
-    };
-  }
-
-  // Delegate to agent-execute for skill-based tools
-  const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-    body: JSON.stringify({ skill_name: fnName, arguments: args, agent_type: 'magnet' }),
-  });
-  return await response.json();
-}
-
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -657,6 +241,16 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, serviceKey);
   const startTime = Date.now();
+
+  // One heartbeat at a time; the lock expires by itself after LOCK_TTL_SECONDS.
+  const holder = crypto.randomUUID();
+  const { data: locked, error: lockError } = await supabase.rpc('try_acquire_agent_lock', { p_lane: 'heartbeat', p_holder: holder, p_ttl_seconds: LOCK_TTL_SECONDS });
+  if (lockError) console.warn('[heartbeat] Lock unavailable, running without it:', lockError.message);
+  else if (locked !== true) {
+    return new Response(JSON.stringify({ status: 'skipped', reason: 'another heartbeat is running' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 
   try {
     // 1. Gather context + run self-healing in parallel
@@ -688,24 +282,8 @@ Deno.serve(async (req) => {
         apiKeyEnv: integ.api_key_env,
       });
 
-    // 3. Load skills as tools
-    const { data: skillRows } = await supabase.from('agent_skills')
-      .select('id, name, description, handler, scope, category, enabled, requires_approval, tool_definition');
-    const skillTools = operatorSkills(skillRows || []).map(toolDefinition);
-
-    const builtInTools = [
-      { type: 'function', function: { name: 'decompose_objective', description: 'Break an objective into 3-7 ordered steps using AI planning. Each step maps to an available skill. Use this when an objective has no plan yet.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID to decompose' } }, required: ['objective_id'] } } },
-      { type: 'function', function: { name: 'advance_plan', description: 'Execute the next pending step(s) in an objective\'s plan with automatic chaining. By default (chain=true), up to 4 consecutive steps are executed in one call — stopping on failure, manual steps, or completion. Set chain=false to execute only one step. This is the PRIMARY tool for plan execution — prefer it over calling advance_plan multiple times.', parameters: { type: 'object', properties: { objective_id: { type: 'string', description: 'The objective UUID whose plan to advance' }, chain: { type: 'boolean', description: 'Auto-chain consecutive steps (default: true). Set false to execute only one step.' } }, required: ['objective_id'] } } },
-      { type: 'function', function: { name: 'execute_automation', description: 'Execute an enabled automation by ID. Runs its linked skill with preconfigured arguments and updates run metadata. Prioritize objective-linked and DUE (⏰) automations. Skills requiring approval land in the review queue instead of running.', parameters: { type: 'object', properties: { automation_id: { type: 'string', description: 'The automation UUID to execute' } }, required: ['automation_id'] } } },
-      { type: 'function', function: { name: 'signal_acknowledge', description: 'Mark a pending signal task as processed after taking action.', parameters: { type: 'object', properties: { task_id: { type: 'string', description: 'The signal task UUID' }, output: { type: 'object', description: 'Optional result data' } }, required: ['task_id'] } } },
-      { type: 'function', function: { name: 'memory_write', description: 'Save to persistent memory.', parameters: { type: 'object', properties: { key: { type: 'string' }, value: { description: 'Info to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
-      { type: 'function', function: { name: 'objective_update_progress', description: 'Update progress on an objective.', parameters: { type: 'object', properties: { objective_id: { type: 'string' }, progress: { type: 'object' } }, required: ['objective_id', 'progress'] } } },
-      { type: 'function', function: { name: 'objective_complete', description: 'Mark objective as completed.', parameters: { type: 'object', properties: { objective_id: { type: 'string' } }, required: ['objective_id'] } } },
-      { type: 'function', function: { name: 'reflect', description: 'Analyze performance over past 7 days.', parameters: { type: 'object', properties: { focus: { type: 'string', enum: ['errors', 'usage', 'automations', 'objectives'] } } } } },
-      { type: 'function', function: { name: 'propose_objective', description: 'Proactively create a new objective based on signal patterns, site stats, or strategic gaps. Only propose when there is a clear need not covered by existing objectives. Avoids duplicates automatically.', parameters: { type: 'object', properties: { goal: { type: 'string', description: 'The objective goal' }, reason: { type: 'string', description: 'Why this objective is being proposed (e.g. signal pattern, stat trend)' }, constraints: { type: 'object', description: 'Optional constraints' }, success_criteria: { type: 'object', description: 'How to measure success' } }, required: ['goal', 'reason'] } } },
-    ];
-
-    const allTools = [...builtInTools, ...skillTools];
+    // 3. Tools: the heartbeat surface of the shared toolbox
+    const toolbox = await buildToolbox('heartbeat');
 
     const memoryPrompt = agentMemory.length ? formatMemoryForPrompt(agentMemory) : '';
 
@@ -733,7 +311,7 @@ HEARTBEAT PROTOCOL:
 4. ADVANCE — Objectives are pre-sorted by priority score. Advance them IN ORDER (highest score first). Use advance_plan with chain=true to execute multiple steps per objective.
 5. AUTOMATIONS — Check DUE (⏰) automations. Execute them.
 6. REFLECT — Analyze if objectives need plan adjustments.
-7. REMEMBER — Save learnings to memory.
+7. REMEMBER — Save learnings with save_memory.
 8. SUMMARIZE — Brief heartbeat report including plan progress and any new proposals.
 
 PRIORITY SCORING (automatic, shown as [score:N]):
@@ -762,54 +340,28 @@ PROACTIVE REASONING RULES:
 
 CONSTRAINTS:
 - Max ${MAX_ITERATIONS} tool iterations per heartbeat
-- Skills marked requires_approval will be BLOCKED and logged for admin review
+- Drafting skills (draft_blog_post, draft_newsletter, draft_all_channels) put their drafts in the review queue; a skill marked requires_approval waits there too. Waiting for a person is not done.
 - PRIORITIZE: signals > proactive proposals > high-score objectives > DUE automations
 - Self-healing auto-disables skills with ${SELF_HEAL_THRESHOLD}+ consecutive failures
 - Be efficient: use chaining, focus on top 2-3 objectives per heartbeat`;
 
-    // 4. Run agentic loop
-    const messages: any[] = [
+    // 4. Reason with the shared core
+    const run = await reason([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `Heartbeat triggered at ${new Date().toISOString()}. Process signals, review objectives, and advance system health.` },
-    ];
-
-    let finalResponse = '';
-    const actionsExecuted: string[] = [];
-
-    for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const aiData = await callOpenAICompatible({
-        url, apiKey, model, messages,
-        tools: allTools.length > 0 ? allTools : undefined,
-      });
-
-      const choice = aiData.choices?.[0];
-      if (!choice) throw new Error('No AI response');
-      const msg = choice.message;
-
-      if (!msg.tool_calls?.length) {
-        finalResponse = msg.content || 'Heartbeat complete.';
-        break;
-      }
-
-      messages.push(msg);
-
-      for (const tc of msg.tool_calls!) {
-        const fnName = tc.function?.name || '';
-        let fnArgs: any;
-        try { fnArgs = JSON.parse(tc.function?.arguments || '{}'); } catch { fnArgs = {}; }
-        console.log(`[heartbeat] Executing: ${fnName}`);
-        actionsExecuted.push(fnName);
-
-        let result: any;
-        try {
-          result = await handleHeartbeatTool(supabase, supabaseUrl, serviceKey, fnName, fnArgs);
-        } catch (err: any) {
-          result = { error: err.message };
-        }
-
-        messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) });
-      }
-    }
+    ], {
+      surface: 'heartbeat',
+      callModel: ({ messages: m, tools }) => callOpenAICompatible({ url, apiKey, model, messages: m as any, tools: tools as any }),
+      tools: toolbox.tools,
+      executeTool: toolbox.executeTool,
+      maxIterations: MAX_ITERATIONS,
+      tokenBudget: TOKEN_BUDGET,
+      deadlineAt: startTime + WALL_CLOCK_MS,
+      toolTimeoutMs: 90_000,
+      onToolCall: ({ name, ok }) => console.log(`[heartbeat] ${name} → ${ok ? 'ok' : 'failed'}`),
+    });
+    const finalResponse = run.output;
+    const actionsExecuted = run.toolCalls.map((t) => t.name);
 
     const duration = Date.now() - startTime;
 
@@ -817,14 +369,14 @@ CONSTRAINTS:
     await supabase.from('agent_activity').insert({
       agent: 'magnet', skill_name: 'heartbeat',
       input: { trigger: 'scheduled', actions: actionsExecuted },
-      output: { summary: finalResponse.slice(0, 2000) },
+      output: { summary: finalResponse.slice(0, 2000), stop_reason: run.stopReason, iterations: run.iterations, tokens: run.tokensUsed, failed_tools: run.toolCalls.filter((t) => !t.ok).map((t) => t.name) },
       status: 'success', duration_ms: duration,
     });
 
     console.log(`[heartbeat] Complete in ${duration}ms, ${actionsExecuted.length} actions`);
 
     return new Response(JSON.stringify({
-      status: 'ok', duration_ms: duration,
+      status: 'ok', duration_ms: duration, stop_reason: run.stopReason,
       actions: actionsExecuted, summary: finalResponse.slice(0, 500),
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
@@ -839,5 +391,7 @@ CONSTRAINTS:
     return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  } finally {
+    await supabase.rpc('release_agent_lock', { p_lane: 'heartbeat', p_holder: holder });
   }
 });
