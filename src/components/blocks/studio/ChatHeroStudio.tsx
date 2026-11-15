@@ -8,6 +8,7 @@ import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResumeModule } from '@/models/modules';
 import SmartLink from '@/components/studio/SmartLink';
+import PrivateAINote from '@/components/chat/PrivateAINote';
 import { StudioContainer } from '@/components/studio/StudioSection';
 import type { ChatHeroBlockConfig } from '@/types/blockConfigs';
 import type { QuickActionConfig, Message } from '@/components/chat/types';
@@ -180,6 +181,7 @@ const ChatHeroStudio: React.FC<ChatHeroStudioProps> = ({ config }) => {
             >
               {buttonText}
             </button>
+            <PrivateAINote compact />
           </form>
         </aside>
       </StudioContainer>

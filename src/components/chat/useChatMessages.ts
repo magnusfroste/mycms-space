@@ -13,42 +13,6 @@ import type { Message, SiteContext, ChatMessage, ChatArtifact, ChatMode, Visitor
 import type { AIIntegrationType, AIIntegration } from "@/types/modules";
 import { trackChatSession, updateChatSession } from "@/models/analytics";
 
-// ---- Chrome Extension Bridge ----
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chromeRuntime = (window as any).chrome?.runtime;
-
-async function executeClientAction(action: {
-  tool_name: string;
-  tool_args: Record<string, unknown>;
-}, extensionId?: string): Promise<string> {
-  if (!extensionId || !chromeRuntime?.sendMessage) {
-    return JSON.stringify({ error: 'Chrome extension not configured. Set the Extension ID in Settings → Chrome Extension Bridge.' });
-  }
-
-  return new Promise((resolve) => {
-    const messageType = action.tool_args.url ? 'navigate_and_scrape' : 'scrape_active_tab';
-    const payload: Record<string, unknown> = { type: messageType };
-    if (action.tool_args.url) payload.url = action.tool_args.url;
-
-    try {
-      chromeRuntime.sendMessage(extensionId, payload, (response: unknown) => {
-        if (chromeRuntime.lastError) {
-          resolve(JSON.stringify({ error: chromeRuntime.lastError.message || 'Extension not reachable' }));
-          return;
-        }
-        const res = response as { success?: boolean; data?: unknown; error?: string };
-        if (res?.success) {
-          resolve(JSON.stringify(res.data));
-        } else {
-          resolve(JSON.stringify({ error: res?.error || 'Scrape failed' }));
-        }
-      });
-    } catch {
-      resolve(JSON.stringify({ error: 'Failed to communicate with Chrome extension' }));
-    }
-  });
-}
-
 interface UseChatMessagesOptions {
   webhookUrl: string;
   initialMessages?: Message[];
@@ -61,7 +25,6 @@ interface UseChatMessagesOptions {
   integrationConfig?: AIIntegration;
   enabledTools?: string[];
   mode?: ChatMode;
-  extensionId?: string;
   visitorConfig?: VisitorConfig;
   onMessagesChange?: (messages: Message[]) => void;
   onSessionIdChange?: (id: string) => void;
@@ -87,7 +50,6 @@ export const useChatMessages = ({
   integrationConfig,
   enabledTools,
   mode = 'public',
-  extensionId,
   visitorConfig,
   onMessagesChange,
   onSessionIdChange,
@@ -224,73 +186,13 @@ export const useChatMessages = ({
           throw new Error(error.message || "Failed to get AI response");
         }
 
-        // Handle client-side tool execution (e.g. Chrome extension)
-        if (data?.client_action) {
-          const statusMsg = cleanWebhookResponse(data.output || 'Working on it…');
-          const workingMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: statusMsg,
-            isUser: false,
-            status: 'working',
-          };
-          setMessages((prev) => [...prev, workingMessage]);
-
-          // Execute client-side tool
-          const toolResult = await executeClientAction(data.client_action, extensionId);
-
-          // Re-send with the tool result injected into conversation
-          const conversationState = data.client_action.conversation_state || [];
-          // Add tool result to conversation
-          conversationState.push({
-            role: 'tool',
-            content: toolResult,
-            tool_call_id: `client_${data.client_action.tool_name}`,
-          });
-
-          const { data: followUpData, error: followUpError } = await supabase.functions.invoke("ai-chat", {
-            body: {
-              messages: conversationState.filter((m: Record<string, unknown>) => m.role !== 'system'),
-              sessionId: sessionId,
-              systemPrompt: systemPrompt,
-              integration: {
-                type: integration,
-                ...(integrationConfig || {}),
-                webhook_url: integration === 'n8n' ? webhookUrl : undefined,
-              },
-              siteContext: siteContext,
-              enabledTools: enabledTools,
-              mode: mode,
-              _resumeConversation: true,
-            },
-          });
-
-          if (followUpError) throw new Error(followUpError.message);
-
-          const followUpResponse = cleanWebhookResponse(followUpData?.output || "Done.");
-          const followUpArtifacts = followUpData?.artifacts as ChatArtifact[] | undefined;
-          
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              id: (Date.now() + 2).toString(),
-              text: followUpResponse,
-              isUser: false,
-              artifacts: followUpArtifacts,
-              status: 'done',
-            };
-            return updated;
-          });
-          messageCountRef.current += 1;
-          saveChatMessage(sessionId, 'assistant', followUpResponse);
-        } else {
-          const botResponse = cleanWebhookResponse(
-            data?.output || data?.message || "No response"
-          );
-          const artifacts = data?.artifacts as ChatArtifact[] | undefined;
-          addBotMessage(botResponse, artifacts);
-          messageCountRef.current += 1;
-          saveChatMessage(sessionId, 'assistant', botResponse);
-        }
+        const botResponse = cleanWebhookResponse(
+          data?.output || data?.message || "No response"
+        );
+        const artifacts = data?.artifacts as ChatArtifact[] | undefined;
+        addBotMessage(botResponse, artifacts);
+        messageCountRef.current += 1;
+        saveChatMessage(sessionId, 'assistant', botResponse);
 
         // Update analytics with message count
         await updateSessionMessageCount(messageCountRef.current);
@@ -320,7 +222,6 @@ export const useChatMessages = ({
       siteContext,
       enabledTools,
       mode,
-      extensionId,
       addUserMessage,
       addBotMessage,
       ensureChatSessionTracked,

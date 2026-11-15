@@ -112,7 +112,6 @@ export interface ChatInterfaceProps {
   systemPrompt?: string;
   enabledTools?: string[];
   mode?: ChatMode;
-  extensionId?: string;
   voiceEnabled?: boolean;
   ttsVoice?: string;
   visitorConfig?: VisitorConfig;

@@ -4,7 +4,7 @@
 // ============================================
 
 // Available module types
-export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'webhooks' | 'resume' | 'chrome_extension';
+export type ModuleType = 'ai' | 'projects' | 'newsletter' | 'analytics' | 'header' | 'footer' | 'blog' | 'seo' | 'github' | 'branding' | 'resume';
 
 // Base module interface
 export interface Module<T extends ModuleConfigType = ModuleConfigType> {
@@ -178,15 +178,7 @@ export const integrationsMeta: IntegrationMeta[] = [
     docs: 'https://docs.github.com/en/rest',
     category: 'source',
   },
-  {
-    type: 'gmail',
-    name: 'Gmail Signals',
-    description: 'Harvest LinkedIn and newsletter signals from Gmail for content generation',
-    icon: 'Mail',
-    available: true,
-    docs: 'https://developers.google.com/gmail/api',
-    category: 'source',
-  },
+
 ];
 
 // ============================================
@@ -196,10 +188,10 @@ export const integrationsMeta: IntegrationMeta[] = [
 export type UtilityIntegrationType = 'firecrawl' | 'resend' | 'unsplash';
 
 // ============================================
-// Source Integration Types (GitHub, Gmail, etc.)
+// Source Integration Types (GitHub)
 // ============================================
 
-export type SourceIntegrationType = 'github' | 'gmail';
+export type SourceIntegrationType = 'github';
 
 export interface SourceIntegrationBase {
   type: SourceIntegrationType;
@@ -211,24 +203,13 @@ export interface GitHubSourceIntegration extends SourceIntegrationBase {
   username: string;
 }
 
-export interface GmailSourceIntegration extends SourceIntegrationBase {
-  type: 'gmail';
-  email?: string;
-  connected?: boolean;
-  connected_at?: string;
-}
-
-export type SourceIntegration = GitHubSourceIntegration | GmailSourceIntegration;
+export type SourceIntegration = GitHubSourceIntegration;
 
 export const defaultSourceIntegrations: Record<SourceIntegrationType, SourceIntegration> = {
   github: {
     type: 'github',
     enabled: false,
     username: '',
-  },
-  gmail: {
-    type: 'gmail',
-    enabled: false,
   },
 };
 
@@ -486,29 +467,6 @@ export interface BrandingModuleConfig {
   // color_mode?: 'light' | 'dark' | 'system';
 }
 
-// Webhook Event Types
-export type WebhookEventType = 
-  | 'contact.message_received'
-  | 'newsletter.subscriber_added'
-  | 'blog.post_published'
-  | 'chat.session_started';
-
-// Webhook Endpoint Config
-export interface WebhookEndpoint {
-  event_type: WebhookEventType;
-  source_module: string;
-  url: string;
-  enabled: boolean;
-  last_triggered?: string;
-  last_status?: 'success' | 'error';
-  description: string;
-}
-
-// Webhooks Module Config
-export interface WebhooksModuleConfig {
-  endpoints: WebhookEndpoint[];
-}
-
 // Resume Module Config
 export interface ResumeModuleConfig {
   owner_name: string;
@@ -517,14 +475,6 @@ export interface ResumeModuleConfig {
   owner_location?: string;
   owner_availability?: 'available' | 'limited' | 'unavailable';
   availability_note?: string;
-}
-
-// Chrome Extension Module Config
-export interface ChromeExtensionModuleConfig {
-  extension_id: string;
-  auto_connect: boolean;
-  allowed_domains: string[];
-  setup_instructions: string;
 }
 
 // Union type for all configs
@@ -539,9 +489,7 @@ export type ModuleConfigType =
   | SEOModuleConfig
   | GitHubModuleConfig
   | BrandingModuleConfig
-  | WebhooksModuleConfig
-  | ResumeModuleConfig
-  | ChromeExtensionModuleConfig;
+  | ResumeModuleConfig;
 
 // Type-safe mapping
 export interface ModuleTypeConfigMap {
@@ -555,9 +503,7 @@ export interface ModuleTypeConfigMap {
   seo: SEOModuleConfig;
   github: GitHubModuleConfig;
   branding: BrandingModuleConfig;
-  webhooks: WebhooksModuleConfig;
   resume: ResumeModuleConfig;
-  chrome_extension: ChromeExtensionModuleConfig;
 }
 
 // Helper type to get config from module type
@@ -676,44 +622,6 @@ You are Magnet, an agentic AI twin of Magnus Froste. You are innovative, creativ
     owner_title: '',
     owner_summary: '',
     owner_availability: 'available',
-  },
-  chrome_extension: {
-    extension_id: '',
-    auto_connect: true,
-    allowed_domains: ['linkedin.com', 'github.com', 'x.com', 'twitter.com'],
-    setup_instructions: '',
-  },
-  webhooks: {
-    endpoints: [
-      {
-        event_type: 'contact.message_received',
-        source_module: 'contact',
-        url: '',
-        enabled: false,
-        description: 'Triggers when a new contact form message is submitted',
-      },
-      {
-        event_type: 'newsletter.subscriber_added',
-        source_module: 'newsletter',
-        url: '',
-        enabled: false,
-        description: 'Triggers when a new newsletter subscriber signs up',
-      },
-      {
-        event_type: 'blog.post_published',
-        source_module: 'blog',
-        url: '',
-        enabled: false,
-        description: 'Triggers when a blog post is published',
-      },
-      {
-        event_type: 'chat.session_started',
-        source_module: 'chat',
-        url: '',
-        enabled: false,
-        description: 'Triggers when a new chat session is started',
-      },
-    ],
   },
 };
 

@@ -25,13 +25,12 @@ for the MCP tools see [MCP.md](MCP.md).
  │   mcp-server ......... operators' interface (scoped keys)                    │
  │   magnet-heartbeat ─┐                                                        │
  │   agent-autopilot   ├─ Autopilot loop (cron secret / service role / admin)   │
- │   agent-execute     │                                                        │
- │   agent-inbox-scan ─┘                                                        │
+ │   agent-execute ────┘                                                        │
  │   … content helpers, OG pages, sitemap                                       │
  └───────────────┬──────────────────────────────────────────────────────────────┘
                  ▼
   OpenAI · Gemini · Lovable AI gateway · custom OpenAI-compatible · n8n
-  GitHub · Gmail · Resend · Firecrawl · Unsplash
+  GitHub · Resend · Firecrawl · Unsplash
 ```
 
 ## Stack
@@ -131,7 +130,7 @@ links keep working. ⌘K opens a jump-to search.
 | Agents | **Operators & Autopilot** (MCP keys, Autopilot health and guardrails, automations, skills, objectives, runs, documents, MCP server), **Magnet (public chat)** |
 | Content | **Knowledge base**, **Blog**, **Projects**, **Pages**, **Media**, **Newsletter** |
 | Audience | **Inbox**, **Conversations**, **Analytics** |
-| Platform | **Integrations** (AI models, GitHub, Gmail, Resend, Firecrawl, Unsplash), **Modules**, **Site settings** (navigation, appearance, SEO & AIEO, webhooks, Chrome extension, profile & API tokens), **Activity log** |
+| Platform | **Integrations** (AI models, GitHub, Resend, Firecrawl, Unsplash), **Modules**, **Site settings** (navigation, appearance, SEO & AIEO, profile & API tokens), **Activity log** |
 
 **Ask Magnet** in the top bar opens the admin chat. Views of switched-off
 modules are hidden from the sidebar.
@@ -146,11 +145,10 @@ All in `supabase/functions/`. Edge functions are not deployed automatically
 | `ai-chat` | Public (rate limited); admin mode needs `isAdminRequest` |
 | `mcp-server` | Public; Bearer MCP key unlocks scoped CMS tools |
 | `mcp-keys` | Admin only (`isAdminRequest`) |
-| `magnet-heartbeat`, `agent-autopilot`, `agent-execute`, `agent-inbox-scan`, `agent-daily-report` | Trusted callers only (`isTrustedCaller`) |
+| `magnet-heartbeat`, `agent-autopilot`, `agent-execute`, `agent-daily-report` | Trusted callers only (`isTrustedCaller`) |
 | `send-newsletter`, `github-repos`, `enrich-github-repo`, `enhance-text`, `enhance-prompt`, `unsplash-search` | Trusted callers only |
-| `gmail-oauth-callback` | Admin starts the flow; Google's redirect must carry a one-time `state` issued to that admin |
 | `hero-greeting`, `text-to-speech`, `whisper-transcribe`, `parse-document` | Public, rate limited per IP |
-| `signal-ingest` | Chrome extension; token from the `api_tokens` module |
+| `signal-ingest` | Anyone with the signal token from the `api_tokens` module (pages, notes → Autopilot signals) |
 | `og-blog`, `og-project`, `sitemap-dynamic` | Public, read-only |
 
 ## Data
@@ -182,7 +180,7 @@ configured in the database (they carry the cron secret), not in migrations.
   their images, enabled pages and nav links, public knowledge documents;
 - read `page_blocks` that are enabled **and** belong to a page that is not
   switched off;
-- read `modules`, except `api_tokens` and `gmail_signals`;
+- read `modules`, except `api_tokens`;
 - insert chat messages, chat analytics, contact messages, page views and
   newsletter sign-ups (status `pending`; only an admin activates them).
 

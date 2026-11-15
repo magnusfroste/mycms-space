@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
-import { useChromeExtensionModule } from "@/models/modules";
 import { useSessionMessages } from "@/models/chatMessages";
 import ChatSidebar from "./ChatSidebar";
 import type { Message } from "@/components/chat/types";
@@ -32,7 +31,6 @@ const adminQuickActions = [
 
 const MagnetChat: React.FC = () => {
   const { config: aiConfig } = useAIModule();
-  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, contextSummary, hasContext } = useAIChatContext();
   const [resetTrigger, setResetTrigger] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -148,7 +146,6 @@ const MagnetChat: React.FC = () => {
               systemPrompt={aiConfig?.system_prompt || ''}
               enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
               mode="admin"
-              extensionId={extConfig?.extension_id}
             />
           )}
         </div>

@@ -3,8 +3,6 @@ import { NavSettings } from '@/components/admin/NavSettings';
 import BrandingSettings from '@/components/admin/BrandingSettings';
 import GlobalBlocksSettings from '@/components/admin/GlobalBlocksSettings';
 import SEOModuleSettings from '@/components/admin/SEOModuleSettings';
-import WebhooksManager from '@/components/admin/WebhooksManager';
-import ChromeExtensionModuleSettings from '@/components/admin/ChromeExtensionModuleSettings';
 import ProfileSettings from '@/components/admin/ProfileSettings';
 import GeneralSettings from '@/components/admin/GeneralSettings';
 import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
@@ -34,8 +32,6 @@ export default function SiteSettingsView({ section }: { section?: string }) {
       ),
     },
     { value: 'seo', label: 'SEO & AIEO', content: <SEOModuleSettings /> },
-    { value: 'webhooks', label: 'Webhooks', content: <WebhooksManager /> },
-    { value: 'chrome-extension', label: 'Chrome extension', content: <ChromeExtensionModuleSettings /> },
     {
       value: 'profile',
       label: 'Profile & API tokens',

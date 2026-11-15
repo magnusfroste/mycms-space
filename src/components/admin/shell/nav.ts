@@ -74,9 +74,9 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     label: 'Platform',
     items: [
-      { id: 'integrations', label: 'Integrations', description: 'External services the site and agents depend on.', keywords: ['openai', 'gemini', 'gmail', 'resend', 'github'] },
+      { id: 'integrations', label: 'Integrations', description: 'External services the site and agents depend on.', keywords: ['garageai', 'openai', 'gemini', 'resend', 'github', 'firecrawl'] },
       { id: 'modules', label: 'Modules', description: 'Switch features on and off.', keywords: ['features'] },
-      { id: 'site-settings', label: 'Site settings', description: 'Navigation, appearance, SEO, webhooks and your profile.', keywords: ['branding', 'seo', 'navigation', 'webhooks', 'profile', 'tokens'] },
+      { id: 'site-settings', label: 'Site settings', description: 'Navigation, appearance, SEO and your profile.', keywords: ['branding', 'seo', 'navigation', 'profile', 'tokens'] },
       { id: 'activity', label: 'Activity log', description: 'Every change, by you or an agent.', keywords: ['history', 'audit'] },
     ],
   },
@@ -101,8 +101,6 @@ export type SiteSettingsSection =
   | 'navigation'
   | 'appearance'
   | 'seo'
-  | 'webhooks'
-  | 'chrome-extension'
   | 'profile';
 
 export interface ResolvedRoute {
@@ -128,8 +126,6 @@ const legacyTabs: Record<string, ResolvedRoute> = {
   branding: { view: 'site-settings', section: 'appearance' },
   'global-blocks': { view: 'site-settings', section: 'appearance' },
   navigation: { view: 'site-settings', section: 'navigation' },
-  webhooks: { view: 'site-settings', section: 'webhooks' },
-  'chrome-extension': { view: 'site-settings', section: 'chrome-extension' },
   settings: { view: 'site-settings', section: 'profile' },
   profile: { view: 'site-settings', section: 'profile' },
   'chat-history': { view: 'conversations' },

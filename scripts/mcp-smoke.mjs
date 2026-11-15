@@ -45,6 +45,10 @@ const READ = {
     check(r.failed_runs?.every((f) => f.error && f.error !== "unknown"), "site_overview: every failed run has an error");
   }],
   get_profile: [{}, (r) => check(typeof r === "object" && Object.keys(r).length > 0, "get_profile returns a profile")],
+  get_resume: [{ max_chars: 4000 }, (r) => {
+    check(typeof r === "string" && r.length <= 4600, `get_resume pages its answer (${String(r).length} chars)`);
+    check(/next_offset: \d+/.test(String(r)), "get_resume points to the next page");
+  }],
   analytics_summary: [{ days: 7 }, (r) => {
     check(typeof r.page_views === "number", "analytics_summary.page_views is a number");
     check(![500, 1000].includes(r.page_views), `analytics_summary.page_views is not a row cap (${r.page_views})`);

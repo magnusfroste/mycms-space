@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SquarePen } from "lucide-react";
 import { ChatInterface } from "@/components/chat";
+import { usesPrivateAI } from "@/lib/privateAI";
 import { useAIModule, useHeaderModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { useVisitorInsights, formatVisitorInsightsForAI } from "@/hooks/useVisitorInsights";
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
 import SEOHead from "@/components/common/SEOHead";
-import { useChromeExtensionModule } from "@/models/modules";
 
 // Starting points for visitors (clients and recruiters), shown under the composer.
 const SUGGESTIONS = [
@@ -37,7 +37,6 @@ const Chat = () => {
   const { config: headerConfig } = useHeaderModule();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
-  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
   const visitorInsights = useVisitorInsights();
   const enrichedContext = React.useMemo(() => ({
@@ -126,6 +125,13 @@ const Chat = () => {
             emptySubtitle="Magnet answers from his CV, projects and writing. Paste a job description to check the fit."
             footerNote={
               <>
+                {usesPrivateAI(aiConfig) && (
+                  <>
+                    Runs on{" "}
+                    <a href="https://garageai.eu" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">GarageAI</a>
+                    : private AI on European hardware, no public cloud.{" "}
+                  </>
+                )}
                 Magnet is an AI and can make mistakes. For anything important,{" "}
                 <Link to="/contact" className="underline underline-offset-2 hover:text-foreground">contact Magnus</Link>.
               </>
@@ -142,7 +148,6 @@ const Chat = () => {
             systemPrompt={aiConfig?.system_prompt || ''}
             enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
             mode="public"
-            extensionId={extConfig?.extension_id}
             voiceEnabled={aiConfig?.voice_enabled ?? false}
             ttsVoice={aiConfig?.tts_voice}
             visitorConfig={{

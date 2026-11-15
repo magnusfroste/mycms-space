@@ -621,21 +621,6 @@ export const fileDeleteTool: ToolDefinition = {
   },
 };
 
-export const browserScrapeTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "browser_scrape",
-    description: "Scrape a web page using the admin's Chrome extension. Use when the admin asks to fetch, read, or extract content from a URL — especially for pages behind login walls (LinkedIn profiles, etc.) that server-side scraping can't reach. The browser extension runs in the admin's authenticated browser session.",
-    parameters: {
-      type: "object",
-      properties: {
-        url: { type: "string", description: "URL to scrape (optional — omit to scrape the admin's currently active browser tab)" },
-        reason: { type: "string", description: "Brief explanation of why you need this data" },
-      },
-    },
-  },
-};
-
 export const adminTools: Record<string, ToolDefinition> = {
   // Content
   run_research: runResearchTool,
@@ -667,7 +652,6 @@ export const adminTools: Record<string, ToolDefinition> = {
   // Knowledge base (grounds the chat)
   ...kbTools,
   // Browser
-  browser_scrape: browserScrapeTool,
   // File Manager
   file_list: fileListTool,
   file_read: fileReadTool,
@@ -712,7 +696,6 @@ export const toolDescriptions: Record<string, string> = {
   kb_get: "**kb_get** — Read a knowledge base document in full before changing it.",
   kb_upsert: "**kb_upsert** — Create or rewrite a knowledge base document (markdown prose). Read it with kb_get first.",
   kb_append: "**kb_append** — Append a section (e.g. a new assignment) to a knowledge base document.",
-  browser_scrape: "**browser_scrape** — Scrape a web page via the admin's Chrome extension. Can access login-walled pages (LinkedIn, etc.) since it runs in the admin's browser. Omit URL to scrape the active tab.",
   file_list: "**file_list** — List files in a storage bucket. Use to browse uploaded documents, images, and CMS files.",
   file_read: "**file_read** — Read the text content of a file from storage (.md, .txt, .json, .csv).",
   file_write: "**file_write** — Write or overwrite a text file in storage. Great for generating documents, configs, or notes.",
@@ -727,7 +710,6 @@ const ALWAYS_ON_ADMIN_TOOLS = [
   'automation_create', 'automation_list',
   'reflect',
   'kb_list', 'kb_get', 'kb_upsert', 'kb_append',
-  'browser_scrape',
   'file_list', 'file_read', 'file_write', 'file_delete',
 ];
 

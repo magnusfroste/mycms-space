@@ -8,9 +8,10 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { operatorSkills } from "../_shared/skills.ts";
+import { pageText } from "../_shared/paging.ts";
 import { PROFILE_TOOL_NAMES, callProfileTool, loadOwner, profileTools, type Owner } from "./profile-tools.ts";
 import { KNOWLEDGE_TOOLS, KNOWLEDGE_TOOL_NAMES, callKnowledgeTool } from "../_shared/knowledge-tools.ts";
-import { loadResumeContext } from "../_shared/ai-context.ts";
+import { loadResumeContext, loadProfileHeader } from "../_shared/ai-context.ts";
 import { CMS_TOOL_NAMES, callCmsTool, cmsToolsFor, effectiveScopes } from "./cms-tools.ts";
 import { jwtClaims } from "../_shared/cron-auth.ts";
 
@@ -539,8 +540,15 @@ const BUILTIN_TOOLS = [
   },
   {
     name: 'get_resume',
-    description: 'Get the full profile as markdown: name, title, availability and every knowledge base document (roles, assignments, projects). Use it to understand background and availability when matching to consulting assignments or jobs. Use kb_list / kb_get to read single documents.',
-    inputSchema: { type: 'object', properties: {} },
+    description: 'The profile as markdown, in pages: name, title, availability, an index of the knowledge base documents, then the documents themselves (roles, assignments, projects). Answers are at most max_chars long (default 12000); continue with next_offset, or read one document with doc=<slug>. Use it to understand background and availability when matching to consulting assignments or jobs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        doc: { type: 'string', description: 'Optional: slug of one document (see the index), e.g. roles or projects.' },
+        offset: { type: 'number', description: 'Optional: where to continue, from next_offset of the previous answer.' },
+        max_chars: { type: 'number', description: 'Optional: page size, 2000–40000 (default 12000).' },
+      },
+    },
   },
 ];
 const BUILTIN_TOOL_NAMES = new Set(BUILTIN_TOOLS.map(t => t.name));
@@ -607,9 +615,38 @@ async function callBuiltinTool(
   }
 
   if (name === 'get_resume') {
-    // Profile header + knowledge base (markdown documents) — same source as the chat.
-    const profile = await loadResumeContext({ includePrivate: !anonymous });
-    return profile || JSON.stringify({ error: 'Profile data is unavailable right now.' });
+    // Profile header + knowledge base documents — same source as the chat —
+    // served in pages so a whole CV does not land in one agent turn.
+    const max = Math.min(Math.max(Number(args.max_chars) || 12_000, 2_000), 40_000);
+    let q = supabase.from('knowledge_docs').select('slug, title, content, visibility').order('order_index').order('title');
+    if (anonymous) q = q.eq('visibility', 'public');
+    const { data: docs, error } = await q;
+    if (error) throw error;
+    const list = (docs || []).filter((d: any) => (d.content || '').trim());
+    if (!list.length) {
+      const profile = await loadResumeContext({ includePrivate: !anonymous });
+      return profile || JSON.stringify({ error: 'Profile data is unavailable right now.' });
+    }
+    const docText = (d: any) => `# ${d.title}${d.visibility === 'private' ? ' (private – do not quote to visitors)' : ''}\n\n${String(d.content).trim()}`;
+
+    let body: string;
+    let scope: string;
+    if (args.doc) {
+      const d = list.find((x: any) => x.slug === String(args.doc));
+      if (!d) return JSON.stringify({ error: `No document '${args.doc}'.`, documents: list.map((x: any) => x.slug) });
+      body = docText(d);
+      scope = `doc=${d.slug}`;
+    } else {
+      const header = await loadProfileHeader();
+      const index = ['## Documents', ...list.map((d: any) => `- ${d.slug}: ${d.title} (${String(d.content).length} chars${d.visibility === 'private' ? ', private' : ''})`)].join('\n');
+      body = [header, index, ...list.map(docText)].filter(Boolean).join('\n\n---\n\n');
+      scope = 'all';
+    }
+    const page = pageText(body, Number(args.offset) || 0, max);
+    const more = page.next_offset !== null
+      ? `Continue with get_resume({ ${args.doc ? `doc: "${args.doc}", ` : ''}offset: ${page.next_offset} }), or read one document with doc=<slug>.`
+      : 'End of the profile.';
+    return `${page.text}\n\n---\n[get_resume ${scope} · characters ${page.offset}–${page.end} of ${page.total} · next_offset: ${page.next_offset ?? 'none'}] ${more}`;
   }
 
   throw new Error(`Unknown built-in tool: ${name}`);

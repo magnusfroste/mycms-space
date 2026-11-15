@@ -787,7 +787,7 @@ async function handleWorkflows(supabase: ReturnType<typeof getSupabase>) {
   const { data: modules } = await supabase
     .from('modules')
     .select('module_type, module_config, enabled')
-    .in('module_type', ['autopilot', 'gmail_signals']);
+    .in('module_type', ['autopilot']);
 
   // Get latest task per type
   const { data: latestTasks } = await supabase

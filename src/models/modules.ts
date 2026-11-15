@@ -15,14 +15,12 @@ import type {
   HeaderModuleConfig,
   FooterModuleConfig,
   GitHubModuleConfig,
-  WebhooksModuleConfig,
   ResumeModuleConfig,
-  ChromeExtensionModuleConfig,
 } from '@/types/modules';
 import { defaultModuleConfigs } from '@/types/modules';
 
 // Re-export types
-export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, WebhooksModuleConfig, ResumeModuleConfig, ChromeExtensionModuleConfig };
+export type { Module, ModuleType, ConfigForModule, AIModuleConfig, ProjectsModuleConfig, HeaderModuleConfig, FooterModuleConfig, GitHubModuleConfig, ResumeModuleConfig };
 
 // Query keys
 export const modulesKeys = {
@@ -143,20 +141,6 @@ export const useGitHubModule = () => {
 
 export const useUpdateGitHubModule = () => useUpdateModule('github');
 
-// Webhooks Module
-export const useWebhooksModule = () => {
-  const query = useModule('webhooks');
-  const defaultConfig = defaultModuleConfigs.webhooks;
-  
-  return {
-    ...query,
-    config: (query.data?.module_config as WebhooksModuleConfig) ?? defaultConfig,
-    isEnabled: query.data?.enabled ?? true,
-  };
-};
-
-export const useUpdateWebhooksModule = () => useUpdateModule('webhooks');
-
 // Resume Module
 export const useResumeModule = () => {
   const query = useModule('resume');
@@ -170,20 +154,6 @@ export const useResumeModule = () => {
 };
 
 export const useUpdateResumeModule = () => useUpdateModule('resume');
-
-// Chrome Extension Module
-export const useChromeExtensionModule = () => {
-  const query = useModule('chrome_extension');
-  const defaultConfig = defaultModuleConfigs.chrome_extension;
-  
-  return {
-    ...query,
-    config: (query.data?.module_config as ChromeExtensionModuleConfig) ?? defaultConfig,
-    isEnabled: query.data?.enabled ?? false,
-  };
-};
-
-export const useUpdateChromeExtensionModule = () => useUpdateModule('chrome_extension');
 
 // Realtime subscription hook
 export const useModuleSubscription = (moduleType: ModuleType) => {
