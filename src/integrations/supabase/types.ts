@@ -151,6 +151,24 @@ export type Database = {
           },
         ]
       }
+      agent_locks: {
+        Row: {
+          expires_at: string
+          holder: string
+          lane: string
+        }
+        Insert: {
+          expires_at: string
+          holder: string
+          lane: string
+        }
+        Update: {
+          expires_at?: string
+          holder?: string
+          lane?: string
+        }
+        Relationships: []
+      }
       agent_memory: {
         Row: {
           category: string
@@ -1229,6 +1247,14 @@ export type Database = {
         }[]
       }
       prune_agent_logs: { Args: { p_days?: number }; Returns: Json }
+      release_agent_lock: {
+        Args: { p_holder: string; p_lane: string }
+        Returns: undefined
+      }
+      try_acquire_agent_lock: {
+        Args: { p_holder: string; p_lane: string; p_ttl_seconds: number }
+        Returns: boolean
+      }
       update_chat_session: {
         Args: { p_id: string; p_message_count: number }
         Returns: undefined
