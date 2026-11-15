@@ -44,6 +44,8 @@ export interface DraftToSave {
 
 export interface EditorDeps {
   saveDraft: (draft: DraftToSave) => Promise<{ postId: string; slug: string; coverImageUrl: string | null }>;
+  /** Continue this task in a new invocation (the edge time limit is per invocation). */
+  continueLater?: (taskId: string) => Promise<void>;
 }
 
 async function autoPublishPolicy(supabase: Supabase): Promise<{ enabled: boolean; minScore: number }> {
@@ -68,9 +70,11 @@ const MIN_SOURCES = 3;
 const MIN_WORDS = 700;
 const MAX_WORDS = 1800;
 const MIN_REVIEW_SCORE = 7;
-/** Seconds into a run after which no new writing starts / no revision is tried (edge limit is 400 s). */
-const WRITE_BY_S = 220;
-const REVISE_BY_S = 230;
+/** After this many seconds an invocation hands the rest to a new one (edge limit is 400 s per invocation). */
+const HANDOFF_AFTER_S = 60;
+/** An invocation that has already run this long does not start another model call. */
+const NO_NEW_CALL_AFTER_S = 150;
+const MAX_HOPS = 8;
 const DEFAULT_AUTO_PUBLISH_SCORE = 8;
 const FAST_MODEL = "google/gemini-3-flash-preview";
 const WRITER_MODEL = "google/gemini-2.5-pro";
@@ -408,99 +412,145 @@ Svara ENBART med JSON: {"score": <heltal 1-10>, "issues": ["konkreta, åtgärdba
 
 // ---------- orchestration ----------
 
+type Phase = "start" | "write" | "review" | "decide" | "save";
+
+interface DraftState {
+  phase: Phase;
+  hops: number;
+  pick?: TopicPick;
+  sources?: Source[];
+  draft?: DraftToSave;
+  issues?: string[];
+  rev?: Review;
+  feedback?: string;
+  attempts: Array<{ issues: string[]; score: number }>;
+}
+
+/**
+ * The weekly draft, as a sequence of phases whose state lives on the task.
+ * A slow private model can take minutes per call, so after HANDOFF_AFTER_S
+ * an invocation saves its state and lets a new invocation continue
+ * (deps.continueLater); without it, everything runs in one invocation.
+ */
 export async function handleEditorDraft(
   supabase: Supabase,
   deps: EditorDeps,
-  opts: { topic?: string; rebuildBrief?: boolean; taskId?: string } = {},
+  opts: { topic?: string; rebuildBrief?: boolean; taskId?: string; resume?: boolean } = {},
 ) {
   const taskId = opts.taskId || crypto.randomUUID();
-  await supabase.from("agent_tasks").insert({
-    id: taskId, task_type: "blog_draft", status: "running",
-    input_data: { mode: "editor", forced_topic: opts.topic || null },
-  });
+  let log: Record<string, unknown> = {};
+  let state: DraftState = { phase: "start", hops: 0, attempts: [] };
 
-  const log: Record<string, unknown> = {};
+  if (opts.resume) {
+    const { data: task } = await supabase.from("agent_tasks").select("status, input_data, output_data").eq("id", taskId).maybeSingle();
+    if (!task || task.status !== "running") return { success: false, taskId, error: "Nothing to resume" };
+    log = (task.output_data || {}) as Record<string, unknown>;
+    state = (log.state as DraftState) || state;
+    opts.topic = opts.topic ?? ((task.input_data as Record<string, unknown>)?.forced_topic as string | undefined) ?? undefined;
+  } else {
+    await supabase.from("agent_tasks").insert({
+      id: taskId, task_type: "blog_draft", status: "running",
+      input_data: { mode: "editor", forced_topic: opts.topic || null },
+    });
+  }
+
   const started = Date.now();
   const elapsed = () => Math.round((Date.now() - started) / 1000);
-  // Record the stage on the task, so a run that dies shows where it stopped.
-  const stage = async (name: string) => {
-    log.stage = name;
-    log.stage_after_s = elapsed();
+  const persist = async () => {
+    log.stage = state.phase;
+    log.stage_at = new Date().toISOString();
+    log.state = state;
     await supabase.from("agent_tasks").update({ output_data: { ...log } }).eq("id", taskId);
   };
+  const finish = async (status: string, extra: Record<string, unknown>) => {
+    delete log.state;
+    await supabase.from("agent_tasks").update({
+      status, completed_at: new Date().toISOString(), output_data: { ...log, ...extra },
+    }).eq("id", taskId);
+  };
+
   try {
-    await stage("brief");
-    const brief = await getBrief(supabase, !!opts.rebuildBrief);
-    const titles = await existingTitles(supabase);
-
-    await stage("pick");
-    const { pick, news } = await pickTopic(brief, titles, opts.topic);
-    log.pick = pick;
-
-    await stage("research");
-    const sources = await research(pick, news);
-    log.sources = sources.map((s) => ({ n: s.n, title: s.title, url: s.url }));
-    if (sources.length < MIN_SOURCES) throw new Error(`För lite research: ${sources.length} källor`);
-
-    const [samples, projects] = await Promise.all([voiceSamples(supabase), projectFacts(supabase)]);
+    state.hops++;
+    if (state.hops > MAX_HOPS) throw new Error(`Gave up after ${MAX_HOPS} hand-offs (phase ${state.phase})`);
+    const brief = await getBrief(supabase, !!opts.rebuildBrief && state.phase === "start");
+    const [titles, samples, projects] = await Promise.all([existingTitles(supabase), voiceSamples(supabase), projectFacts(supabase)]);
     const system = WRITER_SYSTEM(brief);
+    const modelPhase = (p: Phase) => p === "start" || p === "write" || p === "review";
 
-    if (elapsed() > WRITE_BY_S) throw new Error(`Out of time before writing (${elapsed()} s)`);
-    await stage("write");
-    let draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects), WRITER_MODEL));
-    let issues = mechanicalChecks(draft, sources, titles);
-    await stage("review");
-    let rev = issues.length ? { score: 0, issues: [] as string[] } : await review(draft, pick, brief, projects);
-    const attempts: Array<{ issues: string[]; score: number }> = [{ issues: [...issues, ...rev.issues], score: rev.score }];
-
-    // One revision, if there is time for it within the edge function's limit.
-    if ((issues.length || rev.score < MIN_REVIEW_SCORE) && elapsed() > REVISE_BY_S) {
-      log.revision_skipped = `no time left (${elapsed()} s)`;
-    } else if (issues.length || rev.score < MIN_REVIEW_SCORE) {
-      await stage("revise");
-      const feedback = [...issues, ...rev.issues].map((i) => `- ${i}`).join("\n");
-      draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects, feedback), WRITER_MODEL));
-      issues = mechanicalChecks(draft, sources, titles);
-      rev = issues.length ? { score: 0, issues: [] } : await review(draft, pick, brief, projects);
-      attempts.push({ issues: [...issues, ...rev.issues], score: rev.score });
+    while (true) {
+      switch (state.phase) {
+        case "start": {
+          const { pick, news } = await pickTopic(brief, titles, opts.topic);
+          log.pick = pick;
+          const sources = await research(pick, news);
+          log.sources = sources.map((x) => ({ n: x.n, title: x.title, url: x.url }));
+          if (sources.length < MIN_SOURCES) throw new Error(`För lite research: ${sources.length} källor`);
+          state.pick = pick;
+          state.sources = sources;
+          state.phase = "write";
+          break;
+        }
+        case "write": {
+          state.draft = parseDraft(await chat(system, writerPrompt(state.pick!, state.sources!, samples, titles, projects, state.feedback), WRITER_MODEL));
+          state.issues = mechanicalChecks(state.draft, state.sources!, titles);
+          state.rev = undefined;
+          state.phase = state.issues.length ? "decide" : "review";
+          break;
+        }
+        case "review": {
+          state.rev = await review(state.draft!, state.pick!, brief, projects);
+          state.phase = "decide";
+          break;
+        }
+        case "decide": {
+          const issues = state.issues || [];
+          const rev = state.rev || { score: 0, issues: [] };
+          state.attempts.push({ issues: [...issues, ...rev.issues], score: rev.score });
+          log.attempts = state.attempts;
+          if (!issues.length && rev.score >= MIN_REVIEW_SCORE) {
+            state.phase = "save";
+          } else if (state.attempts.length < 2) {
+            state.feedback = [...issues, ...rev.issues].map((i) => `- ${i}`).join("\n");
+            state.phase = "write";
+          } else {
+            await finish("rejected", { reason: "Utkastet nådde inte kvalitetskraven efter en revision", title: state.draft?.title });
+            return { success: false, taskId, rejected: true, title: state.draft?.title, attempts: state.attempts };
+          }
+          break;
+        }
+        case "save": {
+          const draft = state.draft!;
+          const score = state.rev?.score ?? 0;
+          const saved = await deps.saveDraft(draft);
+          const policy = await autoPublishPolicy(supabase);
+          const publish = policy.enabled && score >= policy.minScore;
+          if (publish) {
+            const { error } = await supabase.from("blog_posts")
+              .update({ status: "published", published_at: new Date().toISOString() })
+              .eq("id", saved.postId);
+            if (error) throw error;
+          }
+          await finish(publish ? "completed" : "needs_review", {
+            blog_post_id: saved.postId, title: draft.title, slug: saved.slug, review_score: score, cover_image_url: saved.coverImageUrl,
+            hops: state.hops,
+            ...(publish ? { decision: "auto_published", decided_by: "autopilot", decision_note: `Score ${score} ≥ ${policy.minScore}` } : {}),
+          });
+          return { success: true, taskId, postId: saved.postId, title: draft.title, reviewScore: score, published: publish };
+        }
+      }
+      await persist();
+      // Hand the next model call to a fresh invocation when this one has run a while.
+      const late = elapsed() > HANDOFF_AFTER_S && modelPhase(state.phase);
+      if (late && deps.continueLater) {
+        await deps.continueLater(taskId);
+        return { success: true, taskId, continued: true, phase: state.phase };
+      }
+      if (elapsed() > NO_NEW_CALL_AFTER_S && modelPhase(state.phase)) {
+        throw new Error(`Out of time before ${state.phase} (${elapsed()} s, no hand-off available)`);
+      }
     }
-    log.attempts = attempts;
-
-    if (issues.length || rev.score < MIN_REVIEW_SCORE) {
-      await supabase.from("agent_tasks").update({
-        status: "rejected",
-        completed_at: new Date().toISOString(),
-        output_data: { ...log, reason: "Utkastet nådde inte kvalitetskraven efter en revision", title: draft.title },
-      }).eq("id", taskId);
-      return { success: false, taskId, rejected: true, title: draft.title, attempts };
-    }
-
-    await stage("save");
-    const saved = await deps.saveDraft(draft);
-    const policy = await autoPublishPolicy(supabase);
-    const publish = policy.enabled && rev.score >= policy.minScore;
-    if (publish) {
-      const { error } = await supabase.from("blog_posts")
-        .update({ status: "published", published_at: new Date().toISOString() })
-        .eq("id", saved.postId);
-      if (error) throw error;
-    }
-    await supabase.from("agent_tasks").update({
-      status: publish ? "completed" : "needs_review",
-      completed_at: new Date().toISOString(),
-      output_data: {
-        ...log, blog_post_id: saved.postId, title: draft.title, slug: saved.slug, review_score: rev.score, cover_image_url: saved.coverImageUrl,
-        ...(publish ? { decision: "auto_published", decided_by: "autopilot", decision_note: `Score ${rev.score} ≥ ${policy.minScore}` } : {}),
-      },
-    }).eq("id", taskId);
-
-    return { success: true, taskId, postId: saved.postId, title: draft.title, reviewScore: rev.score, published: publish };
   } catch (e) {
-    await supabase.from("agent_tasks").update({
-      status: "failed",
-      completed_at: new Date().toISOString(),
-      output_data: { ...log, error: e instanceof Error ? e.message : "Unknown error", failed_after_s: elapsed() },
-    }).eq("id", taskId);
+    await finish("failed", { error: e instanceof Error ? e.message : "Unknown error", failed_in: state.phase, hops: state.hops });
     throw e;
   }
 }

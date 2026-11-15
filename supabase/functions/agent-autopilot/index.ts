@@ -10,6 +10,8 @@ import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
 
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -25,6 +27,8 @@ interface AutopilotRequest {
   schedule?: string;
   channels?: string[];
   rebuild_brief?: boolean;
+  /** Continue a blog_draft task that handed off to a new invocation. */
+  resume?: boolean;
 }
 
 function getSupabase() {
@@ -857,7 +861,7 @@ Deno.serve(async (req) => {
     console.log(`[Autopilot] Action: ${action}, Topic: ${effectiveTopic}`);
 
     // Guardrails: expire stale proposals, and don't draft more while the queue is full.
-    if (DRAFTING_ACTIONS.has(action)) {
+    if (DRAFTING_ACTIONS.has(action) && body.resume !== true) {
       const guard = await loadGuardrails(supabase);
       const expired = await expireOldReviews(supabase, guard);
       const { full, waiting } = await queueIsFull(supabase, guard);
@@ -895,8 +899,20 @@ Deno.serve(async (req) => {
         // Redaktören väljer själv ämne utifrån profilen; ett explicit topic i anropet styr ämnet.
         result = await handleEditorDraft(
           supabase,
-          { saveDraft: (draft) => saveDraftPost(supabase, draft) },
-          { topic, rebuildBrief: body.rebuild_brief, taskId },
+          {
+            saveDraft: (draft) => saveDraftPost(supabase, draft),
+            // A slow model can need several invocations: hand the rest to a new one.
+            continueLater: async (id) => {
+              const next = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/agent-autopilot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+                body: JSON.stringify({ action: 'blog_draft', taskId: id, resume: true }),
+              }).then((r) => r.text()).catch((e) => console.error('[Autopilot] hand-off failed:', e));
+              if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(next);
+              else await next;
+            },
+          },
+          { topic, rebuildBrief: body.rebuild_brief, taskId, resume: body.resume === true },
         );
         break;
 
