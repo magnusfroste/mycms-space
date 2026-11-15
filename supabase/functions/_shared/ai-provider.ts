@@ -73,18 +73,6 @@ export async function getAIModuleConfig(): Promise<AIProviderConfig | null> {
   }
 }
 
-export function getActiveProviderName(config: AIProviderConfig | null): string {
-  if (!config) return 'Lovable AI';
-  switch (config.active_integration) {
-    case 'garageai': return 'GarageAI';
-    case 'openai': return 'OpenAI';
-    case 'gemini': return 'Google Gemini';
-    case 'n8n': return 'n8n Webhook';
-    case 'lovable': 
-    default: return 'Lovable AI';
-  }
-}
-
 // ============================================
 // Unified Provider Call
 // Uses the same registry & transport as ai-agent.ts

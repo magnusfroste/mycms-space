@@ -427,8 +427,6 @@ export const publicToolsFallback: Record<string, ToolDefinition> = {
   get_visitor_insights: getVisitorInsightsTool,
 };
 
-/** @deprecated Use publicToolsFallback. Kept for backwards compat */
-export const publicTools = publicToolsFallback;
 
 /** Admin CMS co-pilot tools */
 export const getSiteStatsTool: ToolDefinition = {
@@ -554,13 +552,6 @@ export const adminTools: Record<string, ToolDefinition> = {
   file_write: fileWriteTool,
   file_delete: fileDeleteTool,
 };
-
-/** All available tools indexed by function name (backwards compat) */
-export const allTools: Record<string, ToolDefinition> = {
-  ...publicTools,
-  ...adminTools,
-};
-
 /** Tool instructions for the system prompt */
 export const toolDescriptions: Record<string, string> = {
   generate_tailored_cv: "**generate_tailored_cv** — Analyze job fit, generate tailored CV and cover letter.",
@@ -568,9 +559,6 @@ export const toolDescriptions: Record<string, string> = {
   project_deep_dive: "**project_deep_dive** — Deep-dive into a specific project's technical details.",
   check_availability: "**check_availability** — Check availability for work/consulting.",
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
-  research_topic: "**research_topic** — Research a topic with structured findings.",
-  draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
-  draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X).",
   list_review_queue: "**list_review_queue** — Show pending tasks in the review queue.",
   get_site_stats: "**get_site_stats** — Get site analytics summary.",
   save_memory: "**save_memory** — Persist a fact/learning to long-term memory.",
@@ -672,24 +660,6 @@ export async function getActiveToolsAsync(enabledTools?: string[], mode?: string
   }
   return filtered;
 }
-
-/** Sync fallback — uses hardcoded tools only */
-export function getActiveTools(enabledTools?: string[], mode?: string): ToolDefinition[] {
-  const toolPool = mode === 'admin' ? adminTools : publicToolsFallback;
-  if (!enabledTools?.length) return Object.values(toolPool);
-  const filtered = enabledTools
-    .filter(id => toolPool[id])
-    .map(id => toolPool[id]);
-  if (mode === 'admin') {
-    for (const toolName of ALWAYS_ON_ADMIN_TOOLS) {
-      if (!filtered.find(t => t.function.name === toolName) && adminTools[toolName]) {
-        filtered.push(adminTools[toolName]);
-      }
-    }
-  }
-  return filtered;
-}
-
 /** Get tool instructions — async, loads from DB for public mode */
 export async function getToolInstructionsAsync(enabledTools?: string[], mode?: string): Promise<string> {
   const toolPool = mode === 'admin' ? adminTools : await loadPublicToolsFromDB();
@@ -712,21 +682,6 @@ export async function getToolInstructionsAsync(enabledTools?: string[], mode?: s
   
   return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
 }
-
-/** Sync fallback */
-export function getToolInstructions(enabledTools?: string[], mode?: string): string {
-  const toolPool = mode === 'admin' ? adminTools : publicToolsFallback;
-  const activeNames = enabledTools?.length
-    ? Object.keys(toolDescriptions).filter(k => enabledTools.includes(k) && toolPool[k])
-    : Object.keys(toolPool).filter(k => toolDescriptions[k]);
-  if (activeNames.length === 0) return '';
-  const instructions = activeNames.map((name, i) => `${i + 1}. ${toolDescriptions[name]}`).join('\n');
-  if (mode === 'admin') {
-    return `\n\n## Tool Instructions\nYou are in CMS co-pilot mode. You have admin tools available:\n\n${instructions}\n\nProactively suggest actions. When tasks are completed, ask what to do next.`;
-  }
-  return `\n\n## Tool Instructions\nYou have several tools available. Use them proactively — prefer calling a tool over describing what it does:\n\n${instructions}\n\nAlways base your analysis on Magnus's actual profile data. Be honest about gaps while highlighting strengths.`;
-}
-
 // ============================================
 // Artifact Parsing
 // ============================================

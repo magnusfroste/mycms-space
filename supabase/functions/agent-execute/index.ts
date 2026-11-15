@@ -8,6 +8,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { resolveSkills, isRunnable } from "../_shared/skills.ts";
 import { fetchRows, periodDays, isNotFoundSlug } from "../_shared/analytics.ts";
+import { DRAFTING_ACTIONS, loadGuardrails, queueIsFull } from "../agent-autopilot/guardrails.ts";
+
+declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -135,7 +138,7 @@ Deno.serve(async (req) => {
     } else if (handler.startsWith('db:')) {
       result = await executeDbAction(supabase, handler.replace('db:', ''), skill.name, args);
     } else if (handler.startsWith('autopilot:')) {
-      result = await runAutopilot(supabaseUrl, serviceKey, handler.replace('autopilot:', ''), args);
+      result = await runAutopilot(supabase, supabaseUrl, serviceKey, handler.replace('autopilot:', ''), args);
     } else if (handler === 'builtin:get_visitor_insights') {
       result = {
         status: 'no_data',
@@ -335,15 +338,37 @@ async function weeklyDigest(supabase: any): Promise<unknown> {
 // Autopilot (drafting and research go through its pipeline and review queue)
 // ============================================
 
-async function runAutopilot(url: string, serviceKey: string, action: string, args: Record<string, unknown>): Promise<unknown> {
+async function runAutopilot(supabase: any, url: string, serviceKey: string, action: string, args: Record<string, unknown>): Promise<unknown> {
   const topic = typeof args.topic === 'string' ? args.topic.trim().slice(0, 300) : undefined;
   if ((action === 'research' || action === 'multichannel_draft') && !topic) return { error: 'topic is required' };
   const channels = Array.isArray(args.channels) ? args.channels.map(String).slice(0, 6) : undefined;
-  const response = await fetch(`${url}/functions/v1/agent-autopilot`, {
+  const call = () => fetch(`${url}/functions/v1/agent-autopilot`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
     body: JSON.stringify({ action, ...(topic ? { topic } : {}), ...(channels ? { channels } : {}) }),
   });
+
+  // Drafting takes minutes (research, writing, review). Check what would make
+  // it skip, then let it run in the background: the result lands in the
+  // review queue, so an agent turn never waits on it or times out.
+  if (DRAFTING_ACTIONS.has(action)) {
+    if (action === 'newsletter_draft') {
+      const { count } = await supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'active');
+      if (!count) return { status: 'skipped', reason: 'no_active_subscribers' };
+    }
+    const { full, waiting } = await queueIsFull(supabase, await loadGuardrails(supabase));
+    if (full) return { status: 'skipped', reason: 'review_queue_full', waiting };
+    const run = call().then((r) => r.text()).catch((e) => console.error(`[agent-execute] ${action} failed:`, e));
+    if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(run);
+    else await run;
+    return {
+      status: 'pending_review',
+      started: action,
+      note: 'Autopilot is writing it now (a few minutes). The draft lands in the review queue (review_queue_list); nothing is published without the policy or an approval.',
+    };
+  }
+
+  const response = await call();
   const body = await response.json().catch(() => ({})) as Record<string, any>;
   if (!response.ok || body.success === false && !body.rejected) {
     return { error: body.error || `agent-autopilot returned HTTP ${response.status}` };
