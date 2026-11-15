@@ -51,5 +51,11 @@ export const resolveReadmeUrls = (markdown: string, fullName: string | null | un
       isRelative(url) ? `${pre}${raw}${clean(url)}${post}` : m)
     // Markdown links (not images): [text](path)
     .replace(/(^|[^!])(\[[^\]]*\]\()\s*([^)\s]+)([^)]*\))/g, (m, lead, pre, url, post) =>
-      isRelative(url) ? `${lead}${pre}${blob}${clean(url)}${post}` : m);
+      isRelative(url) ? `${lead}${pre}${blob}${clean(url)}${post}` : m)
+    // HTML links: <a ... href="path">
+    .replace(/(<a\b[^>]*\bhref=["'])([^"']+)(["'])/gi, (m, pre, url, post) =>
+      isRelative(url) ? `${pre}${blob}${clean(url)}${post}` : m)
+    // Reference-style definitions: [label]: path
+    .replace(/^(\s{0,3}\[[^\]]+\]:\s*)(\S+)/gm, (m, pre, url) =>
+      isRelative(url) ? `${pre}${/\.(png|jpe?g|gif|svg|webp)$/i.test(url) ? raw : blob}${clean(url)}` : m);
 };
