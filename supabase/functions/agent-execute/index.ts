@@ -8,7 +8,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { resolveSkills, isRunnable } from "../_shared/skills.ts";
 import { fetchRows, periodDays, isNotFoundSlug } from "../_shared/analytics.ts";
-import { DRAFTING_ACTIONS, loadGuardrails, queueIsFull } from "../agent-autopilot/guardrails.ts";
+import { DRAFTING_ACTIONS, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
