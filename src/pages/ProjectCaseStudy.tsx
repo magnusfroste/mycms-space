@@ -4,7 +4,7 @@
 // ============================================
 
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { ArrowLeft, Star, GitFork, Github, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,7 @@ import { resolveReadmeUrls, stripMarkdown } from '@/lib/utils/markdown';
 import { preloadMarkdown } from '@/components/common/markdownLoader';
 import OptimizedImage from '@/components/common/OptimizedImage';
 import { useIsStudio } from '@/hooks/useCurrentTheme';
+import { useGitHubModule } from '@/models/modules';
 import ProjectCaseStudyStudio from '@/components/studio/pages/ProjectCaseStudyStudio';
 
 // Fetch the markdown chunk in parallel with the post/project data
@@ -29,7 +30,12 @@ const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
   const navigate = useNavigate();
   const { data: repo, isLoading, error } = useGitHubRepoByName(repoName);
+  const { config: githubConfig } = useGitHubModule();
   const isStudio = useIsStudio();
+
+  // Renamed or merged repos keep their old links working.
+  const redirectTo = repoName ? githubConfig?.project_redirects?.[repoName] : undefined;
+  if (redirectTo && redirectTo !== repoName) return <Navigate to={`/project/${redirectTo}`} replace />;
 
   if (isLoading) {
     return (
