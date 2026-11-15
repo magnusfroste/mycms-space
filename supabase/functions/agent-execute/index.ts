@@ -342,10 +342,12 @@ async function runAutopilot(supabase: any, url: string, serviceKey: string, acti
   const topic = typeof args.topic === 'string' ? args.topic.trim().slice(0, 300) : undefined;
   if ((action === 'research' || action === 'multichannel_draft') && !topic) return { error: 'topic is required' };
   const channels = Array.isArray(args.channels) ? args.channels.map(String).slice(0, 6) : undefined;
+  // The task id is chosen here, so the caller (a plan step) can follow the draft's real outcome.
+  const taskId = crypto.randomUUID();
   const call = () => fetch(`${url}/functions/v1/agent-autopilot`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-    body: JSON.stringify({ action, ...(topic ? { topic } : {}), ...(channels ? { channels } : {}) }),
+    body: JSON.stringify({ action, taskId, ...(topic ? { topic } : {}), ...(channels ? { channels } : {}) }),
   });
 
   // Drafting takes minutes (research, writing, review). Check what would make
@@ -364,6 +366,7 @@ async function runAutopilot(supabase: any, url: string, serviceKey: string, acti
     return {
       status: 'pending_review',
       started: action,
+      task_id: taskId,
       note: 'Autopilot is writing it now (a few minutes). The draft lands in the review queue (review_queue_list); nothing is published without the policy or an approval.',
     };
   }

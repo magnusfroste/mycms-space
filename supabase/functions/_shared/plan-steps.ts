@@ -27,3 +27,29 @@ export function planComplete(steps: Array<{ status: string }>): boolean {
 export function openSteps<T extends { status: string }>(steps: T[]): T[] {
   return steps.filter((s) => !FINISHED.has(s.status) && s.status !== "pending");
 }
+
+/** The review/draft task a waiting step is linked to, from the agent-execute answer it stored. */
+export function waitingTaskId(result: any): string | null {
+  const id = result?.task_id ?? result?.result?.task_id;
+  return typeof id === "string" && id ? id : null;
+}
+
+/**
+ * New status for a waiting step from its task's status, or null while it
+ * still waits (running, or in the review queue).
+ */
+export function resolvedStepStatus(taskStatus: string | null | undefined): StepStatus | null {
+  switch (taskStatus) {
+    case "completed":
+    case "approved":
+    case "published":
+      return "done";
+    case "rejected":
+    case "expired":
+      return "skipped";
+    case "failed":
+      return "failed";
+    default:
+      return null;
+  }
+}

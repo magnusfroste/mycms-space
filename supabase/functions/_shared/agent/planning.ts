@@ -5,7 +5,7 @@
 // ============================================
 
 import { operatorSkills } from "../skills.ts";
-import { stepStatus, planComplete, openSteps } from "../plan-steps.ts";
+import { stepStatus, planComplete, openSteps, waitingTaskId, resolvedStepStatus } from "../plan-steps.ts";
 import type { ToolDefinition } from "./reason.ts";
 
 const MAX_CHAIN_DEPTH = 4; // max steps to chain in a single advance_plan call
@@ -161,6 +161,23 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
       const progress = (obj.progress as Record<string, any>) || {};
       const plan = progress.plan;
       if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.', chain_results: chainResults };
+
+      // Steps that waited on a draft or an approval follow their task's real outcome.
+      const waiting = plan.steps.filter((s: any) => s.status === 'awaiting_approval' && waitingTaskId(s.result));
+      if (waiting.length) {
+        const ids = waiting.map((s: any) => waitingTaskId(s.result));
+        const { data: tasks } = await supabase.from('agent_tasks').select('id, status').in('id', ids);
+        let changed = false;
+        for (const s of waiting) {
+          const next = resolvedStepStatus(tasks?.find((t: any) => t.id === waitingTaskId(s.result))?.status);
+          if (next) { s.status = next; s.resolved_at = new Date().toISOString(); changed = true; }
+        }
+        if (changed) {
+          plan.completed = planComplete(plan.steps);
+          plan.has_failures = plan.steps.some((s: any) => s.status === 'failed');
+          await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
+        }
+      }
 
       // Find next pending step
       const nextStep = plan.steps.find((s: any) => s.status === 'pending');

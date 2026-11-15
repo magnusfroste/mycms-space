@@ -62,6 +62,27 @@ export async function expireOldReviews(supabase: Supabase, g: Guardrails): Promi
   return old.length;
 }
 
+/**
+ * Mark runs that have said nothing for `minutes` as failed. A run that hit
+ * the edge time limit never writes its own end, and a plan step waiting on it
+ * would otherwise wait forever.
+ */
+export async function failStaleRuns(supabase: Supabase, minutes = 15): Promise<number> {
+  const cutoff = new Date(Date.now() - minutes * 60_000).toISOString();
+  const { data } = await supabase.from("agent_tasks")
+    .update({ status: "failed", completed_at: new Date().toISOString() })
+    .eq("status", "running").lt("updated_at", cutoff)
+    .select("id, output_data");
+  for (const t of data || []) {
+    const out = (t.output_data || {}) as Record<string, unknown>;
+    await supabase.from("agent_tasks").update({
+      output_data: { ...out, error: `Stopped without finishing (last stage: ${out.stage ?? "unknown"}); probably the edge time limit.` },
+    }).eq("id", t.id);
+  }
+  if (data?.length) console.log(`[Autopilot] Marked ${data.length} stale run(s) as failed`);
+  return data?.length || 0;
+}
+
 /** True when the review queue is full and no new draft should be made. */
 export async function queueIsFull(supabase: Supabase, g: Guardrails): Promise<{ full: boolean; waiting: number }> {
   const { count } = await supabase.from("agent_tasks").select("id", { count: "exact", head: true }).eq("status", "needs_review");
