@@ -18,7 +18,7 @@ const corsHeaders = {
 
 const MAX_ITERATIONS = 12;
 const TOKEN_BUDGET = 120_000;
-const WALL_CLOCK_MS = 120_000;
+const WALL_CLOCK_MS = 100_000; // no new tool round after this; the run must end well inside the edge time limit
 const LOCK_TTL_SECONDS = 600;
 const SELF_HEAL_THRESHOLD = 3; // consecutive failures before auto-disable
 
@@ -357,7 +357,7 @@ CONSTRAINTS:
       maxIterations: MAX_ITERATIONS,
       tokenBudget: TOKEN_BUDGET,
       deadlineAt: startTime + WALL_CLOCK_MS,
-      toolTimeoutMs: 90_000,
+      toolTimeoutMs: 45_000,
       onToolCall: ({ name, ok }) => console.log(`[heartbeat] ${name} → ${ok ? 'ok' : 'failed'}`),
     });
     const finalResponse = run.output;
