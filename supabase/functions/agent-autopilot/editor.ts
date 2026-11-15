@@ -17,6 +17,7 @@
 // ============================================
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { parseModelJson } from "../_shared/model-json.ts";
 import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
@@ -67,6 +68,9 @@ const MIN_SOURCES = 3;
 const MIN_WORDS = 700;
 const MAX_WORDS = 1800;
 const MIN_REVIEW_SCORE = 7;
+/** Seconds into a run after which no new writing starts / no revision is tried (edge limit is 400 s). */
+const WRITE_BY_S = 220;
+const REVISE_BY_S = 230;
 const DEFAULT_AUTO_PUBLISH_SCORE = 8;
 const FAST_MODEL = "google/gemini-3-flash-preview";
 const WRITER_MODEL = "google/gemini-2.5-pro";
@@ -89,12 +93,16 @@ async function chat(system: string, user: string, model: string): Promise<string
   }
 }
 
-function parseJson<T>(raw: string): T {
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
-  const start = cleaned.search(/[[{]/);
-  const end = Math.max(cleaned.lastIndexOf("}"), cleaned.lastIndexOf("]"));
-  if (start < 0 || end < start) throw new Error(`Model did not return JSON: ${raw.slice(0, 200)}`);
-  return JSON.parse(cleaned.slice(start, end + 1)) as T;
+/** A chat whose answer must be JSON: tolerant parsing, and one retry that names the error. */
+async function chatJson<T>(system: string, user: string, model: string): Promise<T> {
+  const raw = await chat(system, user, model);
+  try {
+    return parseModelJson<T>(raw);
+  } catch (e) {
+    console.warn(`[editor] invalid JSON from the model, retrying once: ${(e as Error).message}`);
+    const again = await chat(system, `${user}\n\nYour previous answer was not valid JSON (${(e as Error).message}). Answer again with valid JSON only, no prose and no code fences.`, model);
+    return parseModelJson<T>(again);
+  }
 }
 
 // ---------- web search ----------
@@ -143,7 +151,7 @@ async function buildBrief(supabase: Supabase): Promise<EditorBrief> {
   // The public knowledge base is the profile source.
   const kbText = (await loadKnowledgeBase({ includePrivate: false }))?.slice(0, 40_000) || "";
 
-  const raw = await chat(
+  const parsed = await chatJson<Omit<EditorBrief, "built_at">>(
     `Du är chefredaktör och varumärkesstrateg. Du bygger en redaktionell brief för en personlig expertblogg.
 Svara ENBART med JSON enligt schemat:
 {"positioning": "1–2 meningar om vem personen är och vad hen står för",
@@ -166,7 +174,6 @@ ${postText}`,
     WRITER_MODEL,
   );
 
-  const parsed = parseJson<Omit<EditorBrief, "built_at">>(raw);
   if (!parsed.themes?.length) throw new Error("Brief saknar teman");
   return { ...parsed, built_at: new Date().toISOString() };
 }
@@ -212,7 +219,7 @@ async function pickTopic(brief: EditorBrief, titles: string[], forcedTopic?: str
     if (news.length === 0) throw new Error("Inga nyheter hittades för veckan – kontrollera Firecrawl");
   }
 
-  const raw = await chat(
+  const pick = await chatJson<TopicPick>(
     `Du är chefredaktör för en personlig expertblogg. Välj veckans ENDA ämne.
 Krav:
 - Ämnet ska vara aktuellt (helst förankrat i veckans nyheter) OCH ligga i ett av kärntemana.
@@ -234,7 +241,6 @@ ${forcedTopic ? `ÖNSKAT ÄMNE (från redaktören): ${forcedTopic}` : `VECKANS N
 ${news.map((n) => `- ${n.title} | ${n.url}\n  ${n.text.replace(/\s+/g, " ").slice(0, 250)}`).join("\n")}`}`,
     FAST_MODEL,
   );
-  const pick = parseJson<TopicPick>(raw);
   if (!pick.topic || !pick.thesis) throw new Error("Ämnesvalet saknar ämne eller tes");
   return { pick, news };
 }
@@ -388,7 +394,7 @@ function mechanicalChecks(draft: DraftToSave, sources: Source[], titles: string[
 interface Review { score: number; issues: string[] }
 
 async function review(draft: DraftToSave, pick: TopicPick, brief: EditorBrief, projects: string): Promise<Review> {
-  const raw = await chat(
+  const r = await chatJson<Review>(
     `Du är en sträng redaktör. Bedöm utkastet 1–10 där 7 betyder "publicerbart efter lätt redigering".
 Dagens datum är ${new Date().toISOString().slice(0, 10)}. Källorna kommer från en riktig webbsökning: datum fram till idag är inte påhittade.
 Kontrollera särskilt varje påstående om författarens egna projekt mot projektlistan nedan. Ett påhittat eller felaktigt påstående om ett eget projekt (funktion, arkitektur, resultat) är ett allvarligt fel: ange det som brist och sätt högst 4.
@@ -397,7 +403,6 @@ Svara ENBART med JSON: {"score": <heltal 1-10>, "issues": ["konkreta, åtgärdba
     `Författarprofil: ${brief.positioning}\nMålgrupp: ${brief.audience}\nAvsedd tes: ${pick.thesis}\n\nFÖRFATTARENS PROJEKT:\n${projects}\n\n# ${draft.title}\n\n${draft.content}`,
     WRITER_MODEL,
   );
-  const r = parseJson<Review>(raw);
   return { score: Number(r.score) || 0, issues: r.issues || [] };
 }
 
@@ -406,22 +411,33 @@ Svara ENBART med JSON: {"score": <heltal 1-10>, "issues": ["konkreta, åtgärdba
 export async function handleEditorDraft(
   supabase: Supabase,
   deps: EditorDeps,
-  opts: { topic?: string; rebuildBrief?: boolean } = {},
+  opts: { topic?: string; rebuildBrief?: boolean; taskId?: string } = {},
 ) {
-  const taskId = crypto.randomUUID();
+  const taskId = opts.taskId || crypto.randomUUID();
   await supabase.from("agent_tasks").insert({
     id: taskId, task_type: "blog_draft", status: "running",
     input_data: { mode: "editor", forced_topic: opts.topic || null },
   });
 
   const log: Record<string, unknown> = {};
+  const started = Date.now();
+  const elapsed = () => Math.round((Date.now() - started) / 1000);
+  // Record the stage on the task, so a run that dies shows where it stopped.
+  const stage = async (name: string) => {
+    log.stage = name;
+    log.stage_after_s = elapsed();
+    await supabase.from("agent_tasks").update({ output_data: { ...log } }).eq("id", taskId);
+  };
   try {
+    await stage("brief");
     const brief = await getBrief(supabase, !!opts.rebuildBrief);
     const titles = await existingTitles(supabase);
 
+    await stage("pick");
     const { pick, news } = await pickTopic(brief, titles, opts.topic);
     log.pick = pick;
 
+    await stage("research");
     const sources = await research(pick, news);
     log.sources = sources.map((s) => ({ n: s.n, title: s.title, url: s.url }));
     if (sources.length < MIN_SOURCES) throw new Error(`För lite research: ${sources.length} källor`);
@@ -429,12 +445,19 @@ export async function handleEditorDraft(
     const [samples, projects] = await Promise.all([voiceSamples(supabase), projectFacts(supabase)]);
     const system = WRITER_SYSTEM(brief);
 
+    if (elapsed() > WRITE_BY_S) throw new Error(`Out of time before writing (${elapsed()} s)`);
+    await stage("write");
     let draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects), WRITER_MODEL));
     let issues = mechanicalChecks(draft, sources, titles);
+    await stage("review");
     let rev = issues.length ? { score: 0, issues: [] as string[] } : await review(draft, pick, brief, projects);
     const attempts: Array<{ issues: string[]; score: number }> = [{ issues: [...issues, ...rev.issues], score: rev.score }];
 
-    if (issues.length || rev.score < MIN_REVIEW_SCORE) {
+    // One revision, if there is time for it within the edge function's limit.
+    if ((issues.length || rev.score < MIN_REVIEW_SCORE) && elapsed() > REVISE_BY_S) {
+      log.revision_skipped = `no time left (${elapsed()} s)`;
+    } else if (issues.length || rev.score < MIN_REVIEW_SCORE) {
+      await stage("revise");
       const feedback = [...issues, ...rev.issues].map((i) => `- ${i}`).join("\n");
       draft = parseDraft(await chat(system, writerPrompt(pick, sources, samples, titles, projects, feedback), WRITER_MODEL));
       issues = mechanicalChecks(draft, sources, titles);
@@ -452,6 +475,7 @@ export async function handleEditorDraft(
       return { success: false, taskId, rejected: true, title: draft.title, attempts };
     }
 
+    await stage("save");
     const saved = await deps.saveDraft(draft);
     const policy = await autoPublishPolicy(supabase);
     const publish = policy.enabled && rev.score >= policy.minScore;
@@ -474,7 +498,8 @@ export async function handleEditorDraft(
   } catch (e) {
     await supabase.from("agent_tasks").update({
       status: "failed",
-      output_data: { ...log, error: e instanceof Error ? e.message : "Unknown error" },
+      completed_at: new Date().toISOString(),
+      output_data: { ...log, error: e instanceof Error ? e.message : "Unknown error", failed_after_s: elapsed() },
     }).eq("id", taskId);
     throw e;
   }

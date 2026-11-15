@@ -9,6 +9,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { loadAgentMemory, formatMemoryForPrompt } from "../_shared/ai-context.ts";
 import { resolveDefaultAI, resolveProvider, callOpenAICompatible, buildToolbox } from "../_shared/ai-agent.ts";
 import { reason } from "../_shared/agent/reason.ts";
+import { failStaleRuns } from "../_shared/guardrails.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
@@ -253,6 +254,9 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // 0. Runs that died without finishing are failed, so plans can move on.
+    await failStaleRuns(supabase);
+
     // 1. Gather context + run self-healing in parallel
     const [agentMemory, objectiveCtx, activityCtx, statsCtx, automationCtx, signalCtx, signalPatternCtx, healingReport] = await Promise.all([
       loadAgentMemory(),

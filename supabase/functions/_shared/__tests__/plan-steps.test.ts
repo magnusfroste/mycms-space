@@ -27,3 +27,19 @@ describe("planComplete", () => {
     expect(open.map((s) => s.status)).toEqual(["awaiting_approval", "manual"]);
   });
 });
+
+import { resolvedStepStatus, waitingTaskId } from "../plan-steps";
+
+describe("waiting steps follow their task", () => {
+  it("finds the task id in a skill_call or a background draft answer", () => {
+    expect(waitingTaskId({ status: "pending_review", task_id: "t1" })).toBe("t1");
+    expect(waitingTaskId({ status: "success", result: { status: "pending_review", task_id: "t2" } })).toBe("t2");
+    expect(waitingTaskId({ status: "pending_approval" })).toBeNull();
+  });
+
+  it.each([
+    ["completed", "done"], ["approved", "done"], ["published", "done"],
+    ["rejected", "skipped"], ["expired", "skipped"], ["failed", "failed"],
+    ["running", null], ["needs_review", null], [undefined, null],
+  ])("task %s → step %s", (task, step) => expect(resolvedStepStatus(task as string | undefined)).toBe(step));
+});

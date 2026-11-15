@@ -292,13 +292,13 @@ async function saveDraftPost(supabase: ReturnType<typeof getSupabase>, draft: Dr
   return { postId: post.id as string, slug: postSlug, coverImageUrl };
 }
 
-async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>) {
+async function handleNewsletterDraft(supabase: ReturnType<typeof getSupabase>, presetTaskId?: string) {
   // No subscribers, no reader: don't draft newsletters nobody receives.
   const { count: subscribers } = await supabase.from('newsletter_subscribers')
     .select('id', { count: 'exact', head: true }).eq('status', 'active');
   if (!subscribers) return { success: true, skipped: true, reason: 'no_active_subscribers' };
 
-  const taskId = crypto.randomUUID();
+  const taskId = presetTaskId || crypto.randomUUID();
   await supabase.from('agent_tasks').insert({
     id: taskId,
     task_type: 'newsletter_draft',
@@ -643,13 +643,14 @@ async function handleMultichannelDraft(
   topic: string,
   sources: string[],
   supabase: ReturnType<typeof getSupabase>,
-  channels?: string[]
+  channels?: string[],
+  presetTaskId?: string,
 ) {
   const activeChannels = (channels?.length ? channels : Object.keys(CHANNEL_FORMATS))
     .filter(ch => ch in CHANNEL_FORMATS);
 
   const batchId = crypto.randomUUID();
-  const parentId = crypto.randomUUID();
+  const parentId = presetTaskId || crypto.randomUUID();
 
   await supabase.from('agent_tasks').insert({
     id: parentId,
@@ -895,12 +896,12 @@ Deno.serve(async (req) => {
         result = await handleEditorDraft(
           supabase,
           { saveDraft: (draft) => saveDraftPost(supabase, draft) },
-          { topic, rebuildBrief: body.rebuild_brief },
+          { topic, rebuildBrief: body.rebuild_brief, taskId },
         );
         break;
 
       case 'newsletter_draft':
-        result = await handleNewsletterDraft(supabase);
+        result = await handleNewsletterDraft(supabase, taskId);
         break;
 
       case 'scout':
@@ -909,7 +910,7 @@ Deno.serve(async (req) => {
         break;
 
       case 'multichannel_draft':
-        result = await handleMultichannelDraft(effectiveTopic, effectiveSources, supabase, body.channels);
+        result = await handleMultichannelDraft(effectiveTopic, effectiveSources, supabase, body.channels, taskId);
         break;
 
       default:
