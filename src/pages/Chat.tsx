@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SquarePen } from "lucide-react";
 import { ChatInterface } from "@/components/chat";
+import { usesPrivateAI } from "@/lib/privateAI";
 import { useAIModule, useHeaderModule } from "@/models/modules";
 import { useAIChatContext } from "@/hooks/useAIChatContext";
 import { useVisitorInsights, formatVisitorInsightsForAI } from "@/hooks/useVisitorInsights";
@@ -124,6 +125,13 @@ const Chat = () => {
             emptySubtitle="Magnet answers from his CV, projects and writing. Paste a job description to check the fit."
             footerNote={
               <>
+                {usesPrivateAI(aiConfig) && (
+                  <>
+                    Runs on{" "}
+                    <a href="https://garageai.eu" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">GarageAI</a>
+                    : private AI on European hardware, no public cloud.{" "}
+                  </>
+                )}
                 Magnet is an AI and can make mistakes. For anything important,{" "}
                 <Link to="/contact" className="underline underline-offset-2 hover:text-foreground">contact Magnus</Link>.
               </>
