@@ -1043,27 +1043,6 @@ export type Database = {
         }
         Relationships: []
       }
-      oauth_states: {
-        Row: {
-          created_at: string
-          provider: string
-          state: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          provider?: string
-          state: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          provider?: string
-          state?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       page_blocks: {
         Row: {
           block_config: Json | null
