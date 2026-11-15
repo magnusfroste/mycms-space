@@ -12,7 +12,7 @@ The old A2A/federation vision is dropped (see
   (read, content, review, settings); keys hashed, shown once, logged.
 - **Autopilot** (formerly Agency): review queue in one place, guardrails
   (`max_waiting_reviews`, `draft_expiry_days`), one-off cleanup of the old
-  queue, Gmail scan stops instead of failing when the grant has expired.
+  queue.
 - **Admin redesign**: grouped sidebar, top bar with ⌘K search and Ask Magnet,
   Overview with the north star and funnel, Operators & Autopilot,
   Integrations, Modules, Activity log.
@@ -36,8 +36,6 @@ The old A2A/federation vision is dropped (see
 Operations
 
 - Renew `GITHUB_TOKEN` (Supabase secret used by `github-repos`).
-- Reconnect Gmail in admin → Integrations; inbox scans are paused until
-  then.
 
 Content and site
 

@@ -20,7 +20,6 @@ import {
 import type { AdminViewId } from '@/components/admin/shell/nav';
 import { useReviewCount } from '@/components/admin/review/reviewData';
 import { useAutopilotStats, useOperators } from '@/components/admin/agents/agentsData';
-import { useGmailStatus } from '@/components/admin/integrations/useGmailStatus';
 import { periodLabels, useOverviewData, useOverviewStatus, type Period } from './overview/useOverviewData';
 import { cn } from '@/lib/utils';
 
@@ -72,23 +71,12 @@ export default function OverviewView() {
   const { data: autopilot } = useAutopilotStats();
   const { data: operators = [] } = useOperators();
   const { data: automations = [] } = useAutomations();
-  const { data: gmail } = useGmailStatus();
   const { config: aiConfig, isEnabled: magnetOn } = useAIModule();
 
   const host = typeof window !== 'undefined' ? window.location.host : 'the site';
 
   const attention = useMemo<AttentionItem[]>(() => {
     const items: AttentionItem[] = [];
-    if (gmail?.needs_reconnect) {
-      items.push({
-        tag: 'Integration',
-        tone: 'danger',
-        title: 'Gmail needs to be reconnected',
-        why: 'Its access has expired, so inbox scans and signal reports have stopped.',
-        action: 'Reconnect',
-        view: 'integrations',
-      });
-    }
     if (reviewCount > 0) {
       items.push({
         tag: 'Review',
@@ -154,7 +142,7 @@ export default function OverviewView() {
       });
     }
     return items;
-  }, [gmail, reviewCount, status, autopilot, automations]);
+  }, [reviewCount, status, autopilot, automations]);
 
   const inquiries = data?.inquiries ?? 0;
   const inquiryChange = data ? inquiries - data.inquiriesPrior : 0;

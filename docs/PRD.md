@@ -66,8 +66,8 @@ Overview and in the MCP tool `site_overview`.
 
 - Scheduled loop with skills, automations (cron/signal/event) and
   objectives.
-- Research, blog and newsletter drafts, signals from Gmail and the Chrome
-  extension.
+- Research, blog and newsletter drafts, signals from published posts and
+  the `signal-ingest` endpoint.
 - Guardrails: at most `max_waiting_reviews` waiting items, drafts expire
   after `draft_expiry_days`.
 

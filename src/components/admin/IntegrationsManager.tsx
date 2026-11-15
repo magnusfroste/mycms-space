@@ -6,12 +6,9 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Clock, FolderOpen, Eye, Search, Loader2, LayoutGrid, X } from 'lucide-react';
+import { Clock, FolderOpen, Eye, Search, LayoutGrid, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -32,10 +29,9 @@ import { defaultIntegrations, defaultModuleConfigs } from '@/types/modules';
 import { toast } from 'sonner';
 import { AdminPageHeader } from './shell/AdminPageHeader';
 import { Chip, Eyebrow, StatusPill, toneClasses, underlineTabs, type Tone } from './shell/primitives';
-import { useGmailStatus, gmailStatusKey } from './integrations/useGmailStatus';
 import { cn } from '@/lib/utils';
 
-type IntegrationId = 'garageai' | 'openai' | 'gemini' | 'custom' | 'n8n' | 'github' | 'gmail' | 'resend' | 'firecrawl' | 'unsplash';
+type IntegrationId = 'garageai' | 'openai' | 'gemini' | 'custom' | 'n8n' | 'github' | 'resend' | 'firecrawl' | 'unsplash';
 type Group = 'ai' | 'source' | 'tool';
 
 interface IntegrationInfo {
@@ -92,13 +88,7 @@ const integrations: IntegrationInfo[] = [
     usedBy: ['Projects', 'Project case studies', 'Magnet · project deep dive', 'MCP · projects_list'],
     secret: 'GITHUB_TOKEN', docs: 'https://docs.github.com/en/rest',
   },
-  {
-    id: 'gmail', group: 'source', name: 'Gmail signals', mono: 'M',
-    what: 'Scans your inbox for leads and assignments.',
-    powers: 'inbox scan · daily report',
-    usedBy: ['Autopilot inbox digest', 'Daily report'],
-    docs: 'https://developers.google.com/gmail/api',
-  },
+
   {
     id: 'resend', group: 'tool', name: 'Resend', mono: 'R',
     what: 'Sends the newsletter and notification emails.',
@@ -124,35 +114,17 @@ const integrations: IntegrationInfo[] = [
 
 const groups: { id: Group; title: string; hint: string }[] = [
   { id: 'ai', title: 'AI models', hint: 'The brain behind the chat, the blog editor and the CV tools. One is the default; the others are alternatives.' },
-  { id: 'source', title: 'Content sources', hint: 'Where content and signals come from.' },
+  { id: 'source', title: 'Content sources', hint: 'Where content comes from.' },
   { id: 'tool', title: 'Tools', hint: 'Helpers the agents call when they need them.' },
 ];
 
 type Status = { label: string; tone: Tone; detail?: string };
-
-// Starts the Gmail OAuth flow: the edge function (admin only) issues a
-// one-time state and returns the Google consent URL. The popup is opened
-// synchronously so popup blockers allow it, then pointed at Google.
-async function startGmailConnect() {
-  const popup = window.open('', '_blank', 'width=600,height=700');
-  const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', {
-    body: { action: 'authorize' },
-  });
-  if (error || !data?.url) {
-    popup?.close();
-    toast.error('Could not start Gmail connection');
-    return;
-  }
-  if (popup) popup.location.href = data.url;
-  else window.location.href = data.url;
-}
 
 const IntegrationsManager: React.FC = () => {
   const { config, isLoading } = useAIModule();
   const { data: githubModule, config: githubConfig } = useGitHubModule();
   const updateModule = useUpdateAIModule();
   const updateGitHubModule = useUpdateGitHubModule();
-  const { data: gmailStatus } = useGmailStatus();
   const [filter, setFilter] = useState<'all' | Group>('all');
   const [selected, setSelected] = useState<IntegrationId | null>(null);
 
@@ -240,24 +212,15 @@ const IntegrationsManager: React.FC = () => {
         return githubConfig?.username
           ? { label: 'Switched off', tone: 'neutral' }
           : { label: 'Not set up', tone: 'neutral' };
-      case 'gmail':
-        if (gmailStatus?.needs_reconnect) {
-          return { label: 'Reconnect needed', tone: 'warning', detail: 'Access expired · scans have stopped' };
-        }
-        if (gmailStatus?.connected) {
-          return { label: 'Connected', tone: 'success', detail: gmailStatus.email ? `Connected · ${gmailStatus.email}` : 'Connected' };
-        }
-        return { label: 'Not set up', tone: 'neutral' };
       default:
         return { label: 'Available', tone: 'neutral', detail: 'Uses a key stored on the server' };
     }
-  }, [activeIntegration, config, githubModule, githubConfig, gmailStatus]);
+  }, [activeIntegration, config, githubModule, githubConfig]);
 
   const actionOf = (id: IntegrationId, status: Status): { label: string; primary?: boolean } => {
     if (status.tone === 'warning') return { label: 'Reconnect', primary: true };
     if (status.tone === 'accent') return { label: 'Configure' };
     if (status.tone === 'success') return { label: 'Manage' };
-    if (id === 'gmail') return { label: 'Connect' };
     return { label: integrations.find((i) => i.id === id)?.group === 'tool' ? 'Details' : 'Set up' };
   };
 
@@ -340,15 +303,6 @@ const IntegrationsManager: React.FC = () => {
             enabled={githubModule?.enabled ?? false}
             onConfigUpdate={handleGitHubConfigUpdate}
             onToggle={toggleGitHubIntegration}
-          />
-        );
-      case 'gmail':
-        return (
-          <GmailSourceConfig
-            connected={gmailStatus?.connected ?? false}
-            needsReconnect={!!gmailStatus?.needs_reconnect}
-            email={gmailStatus?.email ?? null}
-            connectedAt={gmailStatus?.connected_at ?? null}
           />
         );
     }
@@ -440,7 +394,6 @@ const IntegrationsManager: React.FC = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelected(it.id);
-                              if (it.id === 'gmail' && action.label !== 'Manage') startGmailConnect();
                             }}
                           >
                             {action.label}
@@ -778,208 +731,5 @@ const GitHubSourceConfig: React.FC<{
   );
 };
 
-// ============================================
-// Gmail Source Config
-// ============================================
-interface GmailStatusData {
-  connected: boolean;
-  email: string | null;
-  connected_at: string | null;
-  filter_senders: string[];
-  filter_labels: string[];
-  max_messages: number;
-  scan_days: number;
-  last_scan: { scanned_at: string; signal_count: number } | null;
-}
-
-interface ScanSignal { from: string; subject: string; date: string }
-
-const GmailSourceConfig: React.FC<{
-  connected: boolean;
-  needsReconnect: boolean;
-  email: string | null;
-  connectedAt: string | null;
-}> = ({ connected, needsReconnect, email, connectedAt }) => {
-  const queryClient = useQueryClient();
-  const [disconnecting, setDisconnecting] = React.useState(false);
-  const [scanning, setScanning] = React.useState(false);
-  const [scanSignals, setScanSignals] = React.useState<ScanSignal[]>([]);
-
-  const { data: fullStatus } = useQuery({
-    queryKey: ['gmail-status-full'],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('gmail-oauth-callback', { body: { action: 'status' } });
-      if (error) return null;
-      return data as GmailStatusData;
-    },
-    enabled: connected,
-  });
-
-  const [senderInput, setSenderInput] = React.useState('');
-  const [localSenders, setLocalSenders] = React.useState<string[]>([]);
-  const [localScanDays, setLocalScanDays] = React.useState(7);
-  const [localMaxMessages, setLocalMaxMessages] = React.useState(20);
-  const [settingsDirty, setSettingsDirty] = React.useState(false);
-
-  React.useEffect(() => {
-    if (fullStatus) {
-      setLocalSenders(fullStatus.filter_senders || []);
-      setLocalScanDays(fullStatus.scan_days || 7);
-      setLocalMaxMessages(fullStatus.max_messages || 20);
-      setSettingsDirty(false);
-    }
-  }, [fullStatus]);
-
-  const handleSaveSettings = async () => {
-    try {
-      await supabase.functions.invoke('gmail-oauth-callback', {
-        body: { action: 'update_settings', filter_senders: localSenders, scan_days: localScanDays, max_messages: localMaxMessages },
-      });
-      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
-      setSettingsDirty(false);
-      toast.success('Settings saved');
-    } catch { toast.error('Failed to save'); }
-  };
-
-  const handleDisconnect = async () => {
-    setDisconnecting(true);
-    try {
-      await supabase.functions.invoke('gmail-oauth-callback', { body: { action: 'disconnect' } });
-      queryClient.invalidateQueries({ queryKey: gmailStatusKey });
-      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
-      toast.success('Gmail disconnected');
-    } catch { toast.error('Failed to disconnect'); }
-    finally { setDisconnecting(false); }
-  };
-
-  const handleScan = async () => {
-    setScanning(true);
-    setScanSignals([]);
-    try {
-      toast.info('Scanning inbox...');
-      const { data, error } = await supabase.functions.invoke('agent-inbox-scan', { body: { action: 'scan' } });
-      if (error) throw error;
-      setScanSignals(data.signals || []);
-      queryClient.invalidateQueries({ queryKey: ['gmail-status-full'] });
-      toast.success(`Scan complete: ${data.signalCount} signals`);
-    } catch (e) {
-      toast.error('Scan failed');
-    } finally { setScanning(false); }
-  };
-
-  if (connected) {
-    return (
-      <div className="space-y-5">
-        {needsReconnect ? (
-          <div className="rounded-lg border border-border bg-warning-soft p-3">
-            <p className="text-sm font-medium text-warning">Access expired</p>
-            <p className="mt-1 text-xs text-foreground/80">
-              Google no longer accepts the stored token{email ? ` for ${email}` : ''}, so inbox scans have stopped. Reconnect to resume.
-            </p>
-            <Button size="sm" className="mt-2 h-8" onClick={startGmailConnect}>Reconnect Gmail</Button>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-muted/40 p-3">
-            <p className="text-sm font-medium">Connected{email ? ` as ${email}` : ''}</p>
-            {connectedAt && <p className="mt-1 text-xs text-muted-foreground">Since {new Date(connectedAt).toLocaleDateString()}</p>}
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="border-t pt-4 space-y-3">
-          <span className="text-sm font-medium">Scan Filters</span>
-          <div className="space-y-2">
-            <Label>Filter by Sender</Label>
-            <div className="flex gap-2">
-              <Input
-                value={senderInput}
-                onChange={(e) => setSenderInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = senderInput.trim(); if (t && !localSenders.includes(t)) { setLocalSenders([...localSenders, t]); setSenderInput(''); setSettingsDirty(true); } } }}
-                placeholder="e.g. notifications@linkedin.com"
-                className="text-sm"
-              />
-              <Button size="sm" variant="outline" onClick={() => { const t = senderInput.trim(); if (t && !localSenders.includes(t)) { setLocalSenders([...localSenders, t]); setSenderInput(''); setSettingsDirty(true); } }}>Add</Button>
-            </div>
-            {localSenders.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {localSenders.map(s => (
-                  <Badge key={s} variant="secondary" className="text-xs gap-1 pr-1">
-                    {s}
-                    <button onClick={() => { setLocalSenders(localSenders.filter(x => x !== s)); setSettingsDirty(true); }} className="ml-1 hover:text-destructive">×</button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">Period (days)</Label>
-              <Input type="number" min={1} max={90} value={localScanDays} onChange={(e) => { setLocalScanDays(parseInt(e.target.value) || 7); setSettingsDirty(true); }} className="text-sm" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Max messages</Label>
-              <Input type="number" min={1} max={100} value={localMaxMessages} onChange={(e) => { setLocalMaxMessages(parseInt(e.target.value) || 20); setSettingsDirty(true); }} className="text-sm" />
-            </div>
-          </div>
-
-          {settingsDirty && <Button size="sm" onClick={handleSaveSettings}>Save Settings</Button>}
-        </div>
-
-        <div className="flex gap-2 border-t pt-4">
-          <Button size="sm" variant="outline" onClick={handleScan} disabled={scanning}>
-            {scanning ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Search className="h-3 w-3 mr-1" />}
-            Scan Now
-          </Button>
-          <Button size="sm" variant="ghost" onClick={handleDisconnect} disabled={disconnecting}>
-            {disconnecting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-            Disconnect
-          </Button>
-        </div>
-
-        {scanSignals.length > 0 && (
-          <div className="border-t pt-4 space-y-2">
-            <span className="text-sm font-medium">Scanned Signals ({scanSignals.length})</span>
-            <div className="rounded-lg border overflow-hidden">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">From</th>
-                    <th className="px-3 py-2 text-left font-medium">Subject</th>
-                    <th className="px-3 py-2 text-left font-medium">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {scanSignals.map((sig, i) => (
-                    <tr key={i} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 max-w-[120px] truncate">{sig.from}</td>
-                      <td className="px-3 py-2 max-w-[160px] truncate">{sig.subject}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">{sig.date ? new Date(sig.date).toLocaleDateString() : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {!scanSignals.length && fullStatus?.last_scan && (
-          <div className="text-xs text-muted-foreground border-t pt-3">
-            Last scan: {new Date(fullStatus.last_scan.scanned_at).toLocaleString()} · {fullStatus.last_scan.signal_count} signals
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <p className="text-[13px] text-foreground/80">Connect Gmail to harvest signals from LinkedIn, newsletters and updates.</p>
-      <Button size="sm" onClick={startGmailConnect}>
-        Connect Gmail
-      </Button>
-    </div>
-  );
-};
 
 export default IntegrationsManager;

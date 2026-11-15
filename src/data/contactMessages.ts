@@ -51,15 +51,6 @@ export const createContactMessage = async (input: CreateContactMessageInput): Pr
     created_at: new Date().toISOString(),
   };
   
-  // Dispatch webhook after successful creation
-  try {
-    const { dispatchContactWebhook } = await import('@/lib/webhooks/dispatcher');
-    await dispatchContactWebhook(input);
-  } catch (webhookError) {
-    console.error('Webhook dispatch failed:', webhookError);
-    // Don't throw - webhook failure shouldn't fail the message creation
-  }
-  
   return data as ContactMessage;
 };
 

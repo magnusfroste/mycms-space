@@ -19,7 +19,7 @@ export interface ModuleRegistryEntry {
   group: ModuleGroup;
   /**
    * Admin entries hidden when the module is off: sidebar view ids
-   * (e.g. 'blog') or inner tabs ('site-settings:webhooks').
+   * (e.g. 'blog') or inner tabs ('site-settings:seo').
    */
   sidebarItems: string[];
   /** Core modules cannot be switched off. */
@@ -153,26 +153,6 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
     defaultEnabled: true,
     admin: { label: 'Integrations', view: 'integrations' },
     mcp: 'part',
-  },
-  {
-    type: 'webhooks',
-    name: 'Webhooks',
-    description: 'Sends events such as new contact messages to other services.',
-    group: 'agents',
-    sidebarItems: ['site-settings:webhooks'],
-    defaultEnabled: false,
-    admin: { label: 'Site settings', view: 'site-settings', section: 'webhooks' },
-    mcp: 'part',
-  },
-  {
-    type: 'chrome_extension',
-    name: 'Chrome extension',
-    description: 'Captures pages from your browser into the agent.',
-    group: 'agents',
-    sidebarItems: ['site-settings:chrome-extension'],
-    defaultEnabled: false,
-    admin: { label: 'Site settings', view: 'site-settings', section: 'chrome-extension' },
-    mcp: 'no',
   },
 ];
 

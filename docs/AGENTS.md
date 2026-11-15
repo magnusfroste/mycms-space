@@ -55,7 +55,6 @@ Edge functions:
 | `magnet-heartbeat` | The scheduled loop: reflect → signals → objectives → automations → act → heal → remember. Runs due automations through `agent-execute`. |
 | `agent-execute` | Runs one skill (edge, db, module or autopilot handler) and logs it in `agent_activity`; queues `skill_call` review items and runs them once approved. |
 | `agent-autopilot` | Research, blog drafts, newsletter drafts, source scouting, multichannel drafts. Uses Firecrawl for web research. |
-| `agent-inbox-scan` | Reads Gmail, extracts signals with AI. Stops (instead of failing daily) when the Google grant has expired, until the owner reconnects. |
 | `agent-daily-report` | Emails a summary of the last 24 hours. |
 
 All of these only accept trusted callers: pg_cron with the `x-cron-secret`

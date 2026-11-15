@@ -33,7 +33,7 @@ regenerate `src/integrations/supabase/types.ts` if the schema changed.
 
 pg_cron jobs live in the database, not in migrations. They call the
 scheduled functions (`magnet-heartbeat`, `agent-autopilot`,
-`agent-inbox-scan`, `agent-daily-report`) with an `x-cron-secret` header. The
+`agent-daily-report`) with an `x-cron-secret` header. The
 secret is in `internal_secrets` (created by
 `20261017120000_cron_secret.sql`) and must not be committed.
 
@@ -53,11 +53,10 @@ existing at that time an admin; add new admins by inserting their
 | `LOVABLE_API_KEY` | Lovable AI gateway: fallback for platform AI without `GARAGEAI_API_KEY`, and always for blog cover images and PDF parsing |
 | `CUSTOM_AI_API_KEY` (or another `*API_KEY`) | Custom OpenAI-compatible endpoint |
 | `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_EMAIL` | Newsletter, notifications, daily report |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Gmail connection |
 | `GITHUB_TOKEN` | GitHub sync (`github-repos`) |
 | `FIRECRAWL_API_KEY` | Autopilot research, repo enrichment |
 | `UNSPLASH_ACCESS_KEY` | Image search in the admin |
-| `APP_URL`, `SITE_URL` | Admin links in notification emails; redirect after Gmail connect |
+| `APP_URL`, `SITE_URL` | Admin links in notification emails |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided by Supabase.
 
@@ -113,6 +112,4 @@ The old binary `bun.lockb` is gone; Bun ≥ 1.2 uses the text `bun.lock`.
   `admin_users`, so RLS returns nothing.
 - **Scheduled runs return 403** — the cron job's `x-cron-secret` does not
   match `internal_secrets`.
-- **Gmail scans stopped** — the Google grant expired; reconnect in admin →
-  Integrations.
 - **429 from chat or voice** — per-IP rate limit (see ARCHITECTURE.md).

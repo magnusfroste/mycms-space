@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { defaultMagnetTools } from "@/types/modules";
 import SEOHead from "@/components/common/SEOHead";
-import { useChromeExtensionModule } from "@/models/modules";
 
 // Starting points for visitors (clients and recruiters), shown under the composer.
 const SUGGESTIONS = [
@@ -37,7 +36,6 @@ const Chat = () => {
   const { config: headerConfig } = useHeaderModule();
   const location = useLocation();
   const { config: aiConfig } = useAIModule();
-  const { config: extConfig } = useChromeExtensionModule();
   const { contextData, isLoading: contextLoading } = useAIChatContext();
   const visitorInsights = useVisitorInsights();
   const enrichedContext = React.useMemo(() => ({
@@ -142,7 +140,6 @@ const Chat = () => {
             systemPrompt={aiConfig?.system_prompt || ''}
             enabledTools={(aiConfig?.magnet_tools || defaultMagnetTools).filter(t => t.enabled).map(t => t.id)}
             mode="public"
-            extensionId={extConfig?.extension_id}
             voiceEnabled={aiConfig?.voice_enabled ?? false}
             ttsVoice={aiConfig?.tts_voice}
             visitorConfig={{

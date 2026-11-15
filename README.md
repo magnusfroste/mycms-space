@@ -98,8 +98,8 @@ Details in [docs/MCP.md](docs/MCP.md).
 - Supabase: Postgres with RLS, Auth, Storage, Edge Functions (Deno), pg_cron
 - AI: OpenAI, Gemini, Lovable AI gateway, any OpenAI-compatible endpoint, or
   an n8n webhook — chosen in the admin
-- Integrations: GitHub, Gmail, Resend, Firecrawl, Unsplash, a Chrome
-  extension for signals
+- Integrations: GitHub, Resend, Firecrawl, Unsplash, and a token-protected
+  signal endpoint (`signal-ingest`)
 
 ## Development
 
@@ -137,7 +137,6 @@ src/                     React app (pages, components, data → models → views
 supabase/functions/      edge functions (mcp-server, ai-chat, agent-*, …)
 supabase/migrations/     database schema and policies
 public/                  llms.txt, mcp.json, robots.txt, sitemap.xml
-chrome-extension/        signal capture extension
 docs/                    PRD, architecture, agents, MCP, roadmap, redesign sketches
 ```
 

@@ -149,7 +149,7 @@ prefixed with their scope, e.g. `[content] …`.
 | Tool | What it does |
 |---|---|
 | `get_profile` | Positioning, audience, offering, themes, availability, links. |
-| `get_resume` | Profile header + knowledge base as markdown. Anonymous: public documents only; with any key: private documents too. |
+| `get_resume` | Profile header, an index of the knowledge base documents, then the documents, as markdown in pages (`max_chars`, default 12000; continue with `offset`; one document with `doc`). Anonymous: public documents only; with any key: private documents too. |
 | `kb_list`, `kb_get` | Knowledge base documents. Public only, unless the key has `read`. |
 | `list_projects`, `get_project`, `search_projects` | Enabled GitHub projects with AI-enriched fields. |
 | `analyze_job_fit` | Score a job/assignment against the profile (AI). |
@@ -171,8 +171,7 @@ supported block types with example configs),
 `modules_list`, `nav_list`, `newsletter_overview`, `media_list`,
 `activity_log`.
 
-`settings_get` refuses the secret-holding modules `api_tokens` and
-`gmail_signals`.
+`settings_get` refuses the secret-holding module `api_tokens`.
 
 ### `content`
 
@@ -200,11 +199,10 @@ irreversible).
 ### `settings`
 
 `settings_update` (merge into a module config), `module_toggle` (blog,
-projects, newsletter, ai, github, webhooks, chrome_extension), `nav_update`,
+projects, newsletter, ai, github), `nav_update`,
 `automation_update`. Plus enabled agent skills with scope `internal`.
 
-Locked even with `settings`: `api_tokens`, `gmail_signals` and `webhooks`
-module configs, and the AI provider keys in the `ai` module
+Locked even with `settings`: the `api_tokens` module config, and the AI provider keys in the `ai` module
 (`integration`, `active_integration`, `webhook_url`, `admin_ai_config`,
 `admin_ai_provider`). Those are changed by the owner in the admin.
 

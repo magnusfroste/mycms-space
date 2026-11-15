@@ -34,8 +34,8 @@ export function effectiveScopes(stored: string[] | null | undefined): Set<Scope>
 }
 
 // Modules whose config holds secrets or can redirect data/credentials.
-const SECRET_MODULES = new Set(["api_tokens", "gmail_signals"]);
-const LOCKED_FOR_MCP_UPDATE = new Set(["api_tokens", "gmail_signals", "webhooks"]);
+const SECRET_MODULES = new Set(["api_tokens"]);
+const LOCKED_FOR_MCP_UPDATE = new Set(["api_tokens"]);
 // Keys in the ai module that choose where requests (and API keys) go.
 const AI_PROVIDER_KEYS = new Set(["integration", "active_integration", "webhook_url", "admin_ai_config", "admin_ai_provider"]);
 // Block types the site can render (src/components/blocks/BlockRenderer.tsx).
@@ -727,11 +727,11 @@ const TOOLS: CmsTool[] = [
   {
     name: "module_toggle",
     scope: "settings",
-    description: "Switch an optional module on or off (blog, projects, newsletter, ai, github, webhooks, chrome_extension). Core modules cannot be switched off.",
+    description: "Switch an optional module on or off (blog, projects, newsletter, ai, github). Core modules cannot be switched off.",
     inputSchema: obj({ module_type: { type: "string" }, enabled: { type: "boolean" } }, ["module_type", "enabled"]),
     run: async (sb, a, ctx) => {
       const type = need(a, "module_type", 60);
-      const optional = new Set(["blog", "projects", "newsletter", "ai", "github", "webhooks", "chrome_extension"]);
+      const optional = new Set(["blog", "projects", "newsletter", "ai", "github"]);
       if (!optional.has(type)) return { error: `'${type}' is a core module or unknown.` };
       const { data: mod } = await sb.from("modules").select("id, enabled").eq("module_type", type).maybeSingle();
       if (!mod) return { error: `No module '${type}'.` };

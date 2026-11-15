@@ -111,9 +111,6 @@ Deno.serve(async (req) => {
     if (result.artifacts?.length) {
       responseBody.artifacts = result.artifacts;
     }
-    if (result.client_action) {
-      responseBody.client_action = result.client_action;
-    }
 
     return new Response(
       JSON.stringify(responseBody),

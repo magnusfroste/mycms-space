@@ -17,7 +17,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAIModule, useUpdateAIModule } from '@/models/modules';
 import type { AdminAIProvider } from '@/types/modules';
 import { toast } from 'sonner';
-import ExtensionBridge from './ExtensionBridge';
 
 // Generate a cryptographically random hex key
 function generateApiKey(): string {
@@ -148,14 +147,14 @@ const ApiTokensCard: React.FC = () => {
           API Tokens
         </CardTitle>
         <CardDescription>
-          Keys for the Chrome extension and signal integrations. External agents connect via MCP keys under Operators &amp; Autopilot.
+          The key for pushing signals (pages, notes) to Autopilot through the signal-ingest endpoint. External agents connect via MCP keys under Operators &amp; Autopilot.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Signal Ingest Token */}
         <TokenRow
           label="Signal Ingest Token"
-          description="Chrome extension & signals"
+          description="POST to /functions/v1/signal-ingest with Bearer token"
           tokenKey="signal_ingest_token"
           tokenConfig={config}
           moduleId={moduleId}
@@ -235,9 +234,6 @@ const GeneralSettings: React.FC = () => {
 
       {/* API Tokens */}
       <ApiTokensCard />
-
-      {/* Chrome Extension Bridge */}
-      <ExtensionBridge />
 
       {/* Admin AI Tools Provider */}
       <Card>
