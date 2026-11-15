@@ -161,92 +161,9 @@ export const availabilityCheckerTool: ToolDefinition = {
   },
 };
 
-export const researchTopicTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "research_topic",
-    description: "Research a topic using web search and return a structured analysis. Use when a user asks to research something, explore trends, or investigate a topic.",
-    parameters: {
-      type: "object",
-      properties: {
-        topic: { type: "string", description: "The topic to research" },
-        key_findings: { type: "array", items: { type: "string" }, description: "3-5 key findings" },
-        trending_angles: { type: "array", items: { type: "string" }, description: "Hot takes or trending angles" },
-        relevance: { type: "string", description: "How this relates to the site owner's expertise" },
-        suggested_posts: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              title: { type: "string" },
-              angle: { type: "string" },
-            },
-            required: ["title", "angle"],
-          },
-          description: "2-3 suggested blog post ideas",
-        },
-      },
-      required: ["topic", "key_findings", "trending_angles", "relevance", "suggested_posts"],
-    },
-  },
-};
-
-export const draftBlogPostTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "draft_blog_post",
-    description: "Draft a blog post on a topic. Use when a user asks to write or create a blog post.",
-    parameters: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "Blog post title" },
-        content: { type: "string", description: "Full blog post in markdown" },
-        excerpt: { type: "string", description: "Short excerpt (max 160 chars)" },
-        seo_keywords: { type: "array", items: { type: "string" }, description: "SEO keywords" },
-      },
-      required: ["title", "content", "excerpt"],
-    },
-  },
-};
-
 // ============================================
 // Admin Tool Definitions (CMS co-pilot mode)
 // ============================================
-
-export const runResearchTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "run_research",
-    description: "Research a topic using web sources. Use when the admin asks to research something, explore trends, or find content ideas.",
-    parameters: {
-      type: "object",
-      properties: {
-        topic: { type: "string", description: "The topic to research" },
-      },
-      required: ["topic"],
-    },
-  },
-};
-
-export const draftAllChannelsTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "draft_all_channels",
-    description: "Generate multichannel content (blog + LinkedIn + X post) from a topic. Use when admin wants content created for multiple platforms.",
-    parameters: {
-      type: "object",
-      properties: {
-        topic: { type: "string", description: "The topic to create content about" },
-        blog_title: { type: "string", description: "Blog post title" },
-        blog_content: { type: "string", description: "Full blog post in markdown" },
-        blog_excerpt: { type: "string", description: "Short excerpt (max 160 chars)" },
-        linkedin_post: { type: "string", description: "LinkedIn post text" },
-        x_post: { type: "string", description: "X/Twitter post (max 280 chars)" },
-      },
-      required: ["topic", "blog_title", "blog_content", "linkedin_post", "x_post"],
-    },
-  },
-};
 
 export const listReviewQueueTool: ToolDefinition = {
   type: "function",
@@ -258,21 +175,6 @@ export const listReviewQueueTool: ToolDefinition = {
       properties: {
         status_filter: { type: "string", enum: ["needs_review", "all"], description: "Filter by status" },
       },
-    },
-  },
-};
-
-export const approveTaskTool: ToolDefinition = {
-  type: "function",
-  function: {
-    name: "approve_task",
-    description: "Approve a pending task for publishing. Use when admin approves a draft or confirms an action.",
-    parameters: {
-      type: "object",
-      properties: {
-        task_id: { type: "string", description: "The task ID to approve" },
-      },
-      required: ["task_id"],
     },
   },
 };
@@ -622,14 +524,8 @@ export const fileDeleteTool: ToolDefinition = {
 };
 
 export const adminTools: Record<string, ToolDefinition> = {
-  // Content
-  run_research: runResearchTool,
-  draft_blog_post: draftBlogPostTool,
-  draft_all_channels: draftAllChannelsTool,
-  research_topic: researchTopicTool,
-  // Queue
+  // Queue (drafting and research are skills from the registry)
   list_review_queue: listReviewQueueTool,
-  approve_task: approveTaskTool,
   get_site_stats: getSiteStatsTool,
   // Memory
   save_memory: saveMemoryTool,
@@ -674,10 +570,8 @@ export const toolDescriptions: Record<string, string> = {
   get_visitor_insights: "**get_visitor_insights** — Get browsing insights about the current visitor to personalize the conversation.",
   research_topic: "**research_topic** — Research a topic with structured findings.",
   draft_blog_post: "**draft_blog_post** — Draft a blog post with SEO metadata.",
-  run_research: "**run_research** — Research a topic using web sources.",
   draft_all_channels: "**draft_all_channels** — Generate multichannel content (blog + LinkedIn + X).",
   list_review_queue: "**list_review_queue** — Show pending tasks in the review queue.",
-  approve_task: "**approve_task** — Approve and publish a pending task.",
   get_site_stats: "**get_site_stats** — Get site analytics summary.",
   save_memory: "**save_memory** — Persist a fact/learning to long-term memory.",
   list_memory: "**list_memory** — Review stored memories and learnings.",
@@ -837,7 +731,7 @@ export function getToolInstructions(enabledTools?: string[], mode?: string): str
 // Artifact Parsing
 // ============================================
 
-/** Map tool name to artifact metadata */
+/** Map tool name to artifact metadata (visitor-chat cards; the model fills them in, nothing runs). */
 function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): ArtifactMeta | null {
   const mapping: Record<string, (args: Record<string, unknown>) => ArtifactMeta> = {
     generate_tailored_cv: () => ({ type: "cv-match", title: "CV Match Analysis" }),
@@ -845,13 +739,6 @@ function getArtifactMeta(toolName: string, toolArgs: Record<string, unknown>): A
     project_deep_dive: (args) => ({ type: "project-deep-dive", title: (args.project_name as string) || "Project Deep Dive" }),
     check_availability: () => ({ type: "availability", title: "Availability" }),
     get_visitor_insights: (args) => ({ type: "visitor-profile", title: (args.summary as string) || "Visitor Profile" }),
-    research_topic: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
-    draft_blog_post: (args) => ({ type: "document", title: (args.title as string) || "Blog Draft" }),
-    run_research: (args) => ({ type: "document", title: `Research: ${(args.topic as string) || "Topic"}` }),
-    draft_all_channels: (args) => ({ type: "document", title: `Multichannel: ${(args.topic as string) || "Content"}` }),
-    list_review_queue: () => ({ type: "document", title: "Review Queue" }),
-    approve_task: () => ({ type: "document", title: "Task Approved" }),
-    get_site_stats: () => ({ type: "document", title: "Site Statistics" }),
   };
 
   const factory = mapping[toolName];
