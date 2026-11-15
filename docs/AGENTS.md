@@ -91,7 +91,7 @@ header, another function with the service role key, or a signed-in admin
 ### Guardrails
 
 Stored in the `autopilot` module config, changeable with `settings_update`
-(`agent-autopilot/guardrails.ts`):
+(`_shared/guardrails.ts`):
 
 - `max_waiting_reviews` (default 5, range 1–50): while this many items wait
   for review, no new drafts are made.

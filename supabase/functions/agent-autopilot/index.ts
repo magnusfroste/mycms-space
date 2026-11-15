@@ -8,7 +8,7 @@ import { cleanAnalysis } from "../_shared/text-quality.ts";
 import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
-import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "./guardrails.ts";
+import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

@@ -178,7 +178,7 @@ const GUARDRAIL_DEFAULTS: AutopilotGuardrails = {
   auto_publish_min_score: 8,
 };
 
-/** Guardrails live in modules.autopilot.module_config (read by agent-autopilot/guardrails.ts). */
+/** Guardrails live in modules.autopilot.module_config (read by _shared/guardrails.ts). */
 export function useAutopilotGuardrails() {
   return useQuery({
     queryKey: ['modules', 'autopilot'],
