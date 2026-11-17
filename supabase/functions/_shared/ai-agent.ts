@@ -56,6 +56,14 @@ const ITERATIONS: Record<Surface, number> = { public: 4, admin: 8, heartbeat: 12
 // Generic OpenAI-Compatible Provider
 // ============================================
 
+/** A model call that ran past its timeoutMs. */
+export class ModelTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ModelTimeoutError";
+  }
+}
+
 export async function callOpenAICompatible(params: {
   url: string;
   apiKey: string;
@@ -63,6 +71,8 @@ export async function callOpenAICompatible(params: {
   messages: Array<{ role: string; content?: string; tool_calls?: unknown[]; tool_call_id?: string }>;
   tools?: unknown[];
   toolChoice?: unknown;
+  /** Abort the request after this many ms (a hung provider must not outlive the edge time limit). */
+  timeoutMs?: number;
 }): Promise<{ choices: Array<{ message: { content?: string; tool_calls?: Array<{ id?: string; function?: { name?: string; arguments?: string } }> } }> }> {
   const body: Record<string, unknown> = {
     model: params.model,
@@ -83,11 +93,21 @@ export async function callOpenAICompatible(params: {
     headers.Authorization = `Bearer ${params.apiKey}`;
   }
 
-  const response = await fetch(params.url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(params.url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      ...(params.timeoutMs ? { signal: AbortSignal.timeout(params.timeoutMs) } : {}),
+    });
+  } catch (e) {
+    const name = (e as Error)?.name;
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new ModelTimeoutError(`Model call timed out after ${Math.round((params.timeoutMs || 0) / 1000)} s`);
+    }
+    throw e;
+  }
 
   if (!response.ok) {
     if (response.status === 429) throw new Error("Rate limit exceeded. Please try again later.");

@@ -355,7 +355,7 @@ CONSTRAINTS:
       { role: 'user', content: `Heartbeat triggered at ${new Date().toISOString()}. Process signals, review objectives, and advance system health.` },
     ], {
       surface: 'heartbeat',
-      callModel: ({ messages: m, tools }) => callOpenAICompatible({ url, apiKey, model, messages: m as any, tools: tools as any }),
+      callModel: ({ messages: m, tools }) => callOpenAICompatible({ url, apiKey, model, messages: m as any, tools: tools as any, timeoutMs: 120_000 }),
       tools: toolbox.tools,
       executeTool: toolbox.executeTool,
       maxIterations: MAX_ITERATIONS,
