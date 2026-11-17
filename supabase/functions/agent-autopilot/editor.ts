@@ -18,7 +18,7 @@
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { parseModelJson } from "../_shared/model-json.ts";
-import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, resolveDefaultAI, ModelTimeoutError } from "../_shared/ai-agent.ts";
 import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
 type Supabase = SupabaseClient;
@@ -75,23 +75,32 @@ const HANDOFF_AFTER_S = 60;
 /** An invocation that has already run this long does not start another model call. */
 const NO_NEW_CALL_AFTER_S = 150;
 const MAX_HOPS = 8;
+const MAX_TIMEOUT_RETRIES = 2;
 const DEFAULT_AUTO_PUBLISH_SCORE = 8;
 const FAST_MODEL = "google/gemini-3-flash-preview";
 const WRITER_MODEL = "google/gemini-2.5-pro";
 
 // ---------- model helpers ----------
 
+/** Seconds an invocation may spend on model calls; the edge limit is ~400 s. */
+const CALL_BUDGET_S = 330;
+/** When the current invocation's model calls must have finished (epoch ms); 0 = no deadline. */
+let callDeadline = 0;
+
 async function chat(system: string, user: string, model: string): Promise<string> {
   // GarageAI (private, free) when configured; the Gemini names apply to the Lovable fallback.
   const ai = resolveDefaultAI(model);
+  // A hung call must fail inside this invocation, so it is recorded and retried.
+  const timeoutMs = callDeadline ? Math.max(20_000, callDeadline - Date.now()) : 240_000;
   try {
     const data = await callOpenAICompatible({
       url: ai.url, apiKey: ai.apiKey, model: ai.model,
       messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      timeoutMs,
     });
     return data.choices?.[0]?.message?.content || "";
   } catch (e) {
-    if (model === FAST_MODEL) throw e;
+    if (e instanceof ModelTimeoutError || model === FAST_MODEL) throw e;
     console.warn(`[editor] ${model} failed, falling back to ${FAST_MODEL}:`, e);
     return chat(system, user, FAST_MODEL);
   }
@@ -424,6 +433,8 @@ interface DraftState {
   rev?: Review;
   feedback?: string;
   attempts: Array<{ issues: string[]; score: number }>;
+  /** Model calls in this task that hit the time limit and were retried. */
+  timeouts?: number;
 }
 
 /**
@@ -455,6 +466,7 @@ export async function handleEditorDraft(
   }
 
   const started = Date.now();
+  callDeadline = started + CALL_BUDGET_S * 1000;
   const elapsed = () => Math.round((Date.now() - started) / 1000);
   const persist = async () => {
     log.stage = state.phase;
@@ -550,7 +562,17 @@ export async function handleEditorDraft(
       }
     }
   } catch (e) {
-    await finish("failed", { error: e instanceof Error ? e.message : "Unknown error", failed_in: state.phase, hops: state.hops });
+    // A model call that hung: try the same phase again in a fresh invocation (twice at most).
+    if (e instanceof ModelTimeoutError && deps.continueLater && (state.timeouts ?? 0) < MAX_TIMEOUT_RETRIES) {
+      state.timeouts = (state.timeouts ?? 0) + 1;
+      log.last_timeout = { phase: state.phase, after_s: elapsed(), at: new Date().toISOString() };
+      await persist();
+      await deps.continueLater(taskId);
+      return { success: true, taskId, continued: true, retry: state.timeouts, phase: state.phase };
+    }
+    await finish("failed", { error: e instanceof Error ? e.message : "Unknown error", failed_in: state.phase, hops: state.hops, timeouts: state.timeouts ?? 0 });
     throw e;
+  } finally {
+    callDeadline = 0;
   }
 }
