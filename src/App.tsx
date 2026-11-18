@@ -87,6 +87,7 @@ const App = () => {
             {/* Legacy/guessable URLs for the projects section (falls back to /github if home has none) */}
             <Route path="/portfolio" element={<Navigate to="/#project-showcase" replace />} />
             <Route path="/projects" element={<Navigate to="/#project-showcase" replace />} />
+            <Route path="/resume" element={<Navigate to="/" replace />} />
             {/* Dynamic page route - catches any slug */}
             <Route path="/:slug" element={<DynamicPage />} />
             {/* 404 fallback */}
