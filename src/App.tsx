@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { Suspense, lazy, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -55,6 +55,16 @@ const queryClient = new QueryClient({
   },
 });
 
+// Keep old path-based admin bookmarks working while preserving query parameters
+// such as section and editPostId. Unknown views fall back to Overview in Admin.
+const LegacyAdminRedirect = () => {
+  const { tab } = useParams();
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  if (tab) params.set('tab', tab);
+  return <Navigate to={`/admin?${params.toString()}`} replace />;
+};
+
 const App = () => {
   // Global unhandled rejection handler to prevent async errors from crashing UI
   useEffect(() => {
@@ -78,7 +88,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/admin/site-settings" element={<Navigate to="/admin?tab=site-settings" replace />} />
+            <Route path="/admin/:tab" element={<LegacyAdminRedirect />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/blog" element={<BlogArchive />} />
