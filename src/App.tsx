@@ -78,6 +78,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/admin/site-settings" element={<Navigate to="/admin?tab=site-settings" replace />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/blog" element={<BlogArchive />} />
