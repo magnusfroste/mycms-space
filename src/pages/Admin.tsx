@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FramedNotice, isFramed } from '@/components/common/FrameGuard';
+import { FramedNotice, isAdminFrameBlocked } from '@/components/common/FrameGuard';
 import { Login } from '@/components/admin/Login';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopBar } from '@/components/admin/shell/AdminTopBar';
@@ -83,7 +83,7 @@ const Admin = () => {
     else navigate('/');
   };
 
-  if (isFramed()) return <FramedNotice />;
+  if (isAdminFrameBlocked()) return <FramedNotice />;
 
   if (loading) {
     return (
