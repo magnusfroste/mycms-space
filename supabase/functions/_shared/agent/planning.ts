@@ -6,6 +6,7 @@
 
 import { operatorSkills } from "../skills.ts";
 import { stepStatus, planComplete, openSteps, waitingTaskId, resolvedStepStatus } from "../plan-steps.ts";
+import { normalizeProgress, compactStepResult } from "../objective-progress.ts";
 import type { ToolDefinition } from "./reason.ts";
 
 const MAX_CHAIN_DEPTH = 4; // max steps to chain in a single advance_plan call
@@ -139,7 +140,7 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
     if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
 
     const plan = await decomposeObjectiveIntoPlan(obj, supabase);
-    const progress = (obj.progress as Record<string, any>) || {};
+    const progress = normalizeProgress(obj.progress);
     progress.plan = { ...plan, current_step: 0, created_at: new Date().toISOString() };
 
     await supabase.from('agent_objectives').update({ progress }).eq('id', objective_id);
@@ -159,7 +160,7 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
         .eq('id', objective_id).single();
       if (error || !obj) return { status: 'error', error: error?.message || 'Objective not found' };
 
-      const progress = (obj.progress as Record<string, any>) || {};
+      const progress = normalizeProgress(obj.progress);
       const plan = progress.plan;
       if (!plan?.steps?.length) return { status: 'no_plan', message: 'No plan found. Use decompose_objective first.', chain_results: chainResults };
 
@@ -230,7 +231,7 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
       // skill, has not produced anything yet, so it is not done.
       nextStep.status = stepStatus(result, !!nextStep.skill_name);
       const success = nextStep.status === 'done' || nextStep.status === 'skipped';
-      nextStep.result = result;
+      nextStep.result = compactStepResult(result);
       nextStep.completed_at = new Date().toISOString();
 
       // Check if all steps are done
@@ -366,7 +367,7 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
       const { data: objective } = await supabase.from('agent_objectives')
         .select('progress').eq('id', auto.objective_id).maybeSingle();
       if (objective) {
-        const progress = (objective.progress as Record<string, any>) || {};
+        const progress = normalizeProgress(objective.progress);
         const key = auto.skill_name || auto.name;
         const milestone = progress[key] || { runs: 0, last_success: null, streak: 0 };
         milestone.runs = (milestone.runs || 0) + 1;
@@ -384,7 +385,7 @@ export async function executePlanningTool(supabase: any, supabaseUrl: string, se
       const { data: objective } = await supabase.from('agent_objectives')
         .select('progress').eq('id', auto.objective_id).maybeSingle();
       if (objective) {
-        const progress = (objective.progress as Record<string, any>) || {};
+        const progress = normalizeProgress(objective.progress);
         const key = auto.skill_name || auto.name;
         if (progress[key]) {
           progress[key].streak = 0;

@@ -8,6 +8,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { resolveSkills, isRunnable } from "../_shared/skills.ts";
 import { fetchRows, periodDays, isNotFoundSlug } from "../_shared/analytics.ts";
+import { normalizeProgress } from "../_shared/objective-progress.ts";
 import { DRAFTING_ACTIONS, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
@@ -451,7 +452,7 @@ async function trackObjectiveProgress(
         objective_id: obj.id, activity_id: activityId,
       }).select().maybeSingle();
 
-      const progress = (obj.progress as Record<string, unknown>) || {};
+      const progress = normalizeProgress(obj.progress);
       const totalActions = ((progress.total_actions as number) || 0) + 1;
       await supabase.from('agent_objectives').update({
         progress: {

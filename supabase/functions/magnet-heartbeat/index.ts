@@ -11,6 +11,7 @@ import { callOpenAICompatible, buildToolbox } from "../_shared/ai-agent.ts";
 import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 import { reason } from "../_shared/agent/reason.ts";
 import { failStaleRuns } from "../_shared/guardrails.ts";
+import { normalizeProgress, summarizeProgress } from "../_shared/objective-progress.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 
 const corsHeaders = {
@@ -37,7 +38,7 @@ async function loadObjectives(supabase: any): Promise<string> {
   // Score each objective for priority ranking
   const scored = data.map((o: any) => {
     let score = 0;
-    const plan = o.progress?.plan;
+    const plan = normalizeProgress(o.progress).plan;
     const constraints = o.constraints || {};
     const now = Date.now();
 
@@ -80,13 +81,13 @@ async function loadObjectives(supabase: any): Promise<string> {
   scored.sort((a: any, b: any) => b._priority_score - a._priority_score);
 
   return '\n\nActive objectives (sorted by priority ⬆️):\n' + scored.map((o: any, i: number) => {
-    const plan = o.progress?.plan;
+    const plan = normalizeProgress(o.progress).plan;
     const planInfo = plan
       ? ` | plan: ${plan.steps?.filter((s: any) => s.status === 'done').length}/${plan.total_steps} steps done`
       : ' | NO PLAN (needs decompose_objective)';
     const deadline = o.constraints?.deadline ? ` | ⏰ deadline: ${o.constraints.deadline}` : '';
     const priority = o.constraints?.priority ? ` | priority: ${o.constraints.priority}` : '';
-    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${summarizeProgress(o.progress)} | criteria: ${JSON.stringify(o.success_criteria).slice(0, 400)}`;
   }).join('\n');
 }
 
