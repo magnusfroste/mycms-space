@@ -575,10 +575,10 @@ async function executeSkillViaEdge(toolName: string, toolArgs: Record<string, un
 // ============================================
 
 /**
- * The provider for the platform's own AI work (Autopilot, CV tools, planning,
- * topic suggestions). GarageAI when GARAGEAI_API_KEY is set, otherwise the
- * Lovable gateway. `lovableModel` is only used on the Lovable fallback; on
- * GarageAI the model is GARAGEAI_MODEL or garageai/auto.
+ * Fallback for platform AI when the AI module has no direct provider configured.
+ * GarageAI when GARAGEAI_API_KEY is set, otherwise the Lovable gateway.
+ * `lovableModel` is only used on the Lovable fallback; on GarageAI the model is
+ * GARAGEAI_MODEL or garageai/auto.
  */
 export function resolveDefaultAI(lovableModel?: string): { url: string; apiKey: string; model: string; provider: AgentProvider } {
   if (Deno.env.get("GARAGEAI_API_KEY")) {

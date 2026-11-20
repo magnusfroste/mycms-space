@@ -7,7 +7,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { loadAgentMemory, formatMemoryForPrompt } from "../_shared/ai-context.ts";
-import { resolveDefaultAI, resolveProvider, callOpenAICompatible, buildToolbox } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, buildToolbox } from "../_shared/ai-agent.ts";
+import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 import { reason } from "../_shared/agent/reason.ts";
 import { failStaleRuns } from "../_shared/guardrails.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
@@ -269,22 +270,8 @@ Deno.serve(async (req) => {
       runSelfHealing(supabase),
     ]);
 
-    // 2. Resolve AI provider
-    const { data: aiModule } = await supabase.from('modules')
-      .select('module_config').eq('module_type', 'ai').maybeSingle();
-    const aiConfig = (aiModule?.module_config as any) || {};
-    const provider = aiConfig.active_integration || 'lovable';
-    // integration holds the settings of the active provider (flat object)
-    const integ = aiConfig.integration?.type === provider ? aiConfig.integration : {};
-
-    const { url, apiKey, model } = provider === 'n8n'
-      ? resolveDefaultAI()
-      : resolveProvider({
-        provider,
-        model: integ.model,
-        baseUrl: integ.base_url,
-        apiKeyEnv: integ.api_key_env,
-      });
+    // 2. Resolve the same default provider as the other agent surfaces
+    const { url, apiKey, model } = await resolveConfiguredDefaultAI();
 
     // 3. Tools: the heartbeat surface of the shared toolbox
     const toolbox = await buildToolbox('heartbeat');

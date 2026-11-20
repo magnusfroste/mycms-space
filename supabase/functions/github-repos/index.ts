@@ -6,7 +6,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { resolveDefaultAI } from "../_shared/ai-agent.ts";
+import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -222,10 +222,10 @@ serve(async (req) => {
 
       const context = contextParts.join("\n\n");
 
-      // Platform AI: GarageAI when configured, else the Lovable gateway
+      // Use the default provider from Integrations, with the platform fallback.
       let ai: { url: string; apiKey: string; model: string };
       try {
-        ai = resolveDefaultAI("google/gemini-2.5-flash");
+        ai = await resolveConfiguredDefaultAI("google/gemini-2.5-flash");
       } catch (e) {
         return new Response(
           JSON.stringify({ error: (e as Error).message }),

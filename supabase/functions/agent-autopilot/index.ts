@@ -5,7 +5,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cleanAnalysis } from "../_shared/text-quality.ts";
-import { callOpenAICompatible, resolveDefaultAI } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible } from "../_shared/ai-agent.ts";
+import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
@@ -139,7 +140,7 @@ async function researchTopic(topic: string, sources: string[]): Promise<string> 
 // ============================================
 
 async function generateContent(prompt: string, systemPrompt: string): Promise<string> {
-  const { url, apiKey, model } = resolveDefaultAI();
+  const { url, apiKey, model } = await resolveConfiguredDefaultAI();
 
   const data = await callOpenAICompatible({
     url,

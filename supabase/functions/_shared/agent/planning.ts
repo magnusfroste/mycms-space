@@ -73,9 +73,10 @@ async function decomposeObjectiveIntoPlan(
 
   const skillList = skills.map((s) => `- ${s.name}: ${s.description}${s.requires_approval ? ' (needs admin approval)' : ''}`).join('\n');
 
-  // Dynamic import: ai-agent imports this module, so a static import would be a cycle.
-  const { resolveDefaultAI, callOpenAICompatible } = await import("../ai-agent.ts");
-  const { url, apiKey, model } = resolveDefaultAI();
+  // Dynamic imports: ai-agent imports this module, so static imports would cycle.
+  const { callOpenAICompatible } = await import("../ai-agent.ts");
+  const { resolveConfiguredDefaultAI } = await import("../ai-provider.ts");
+  const { url, apiKey, model } = await resolveConfiguredDefaultAI();
   const data = await callOpenAICompatible({
     url, apiKey, model,
     messages: [

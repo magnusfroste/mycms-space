@@ -5,7 +5,8 @@
 // ============================================
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { callOpenAICompatible, providerEndpoints } from "./ai-agent.ts";
+import { callOpenAICompatible, providerEndpoints, resolveDefaultAI, resolveProvider, type AgentProvider } from "./ai-agent.ts";
+import { selectModuleProvider, type ModuleProviderConfig } from "./provider-selection.ts";
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -22,15 +23,18 @@ export interface AICompletionOptions {
   tool_choice?: unknown;
 }
 
-export interface AIProviderConfig {
+export interface AIProviderConfig extends ModuleProviderConfig {
   active_integration: 'garageai' | 'lovable' | 'openai' | 'gemini' | 'n8n' | 'custom';
   admin_ai_provider?: 'garageai' | 'lovable' | 'openai' | 'gemini';
   admin_ai_config?: {
     model?: string;
   };
   integration?: {
+    type?: AgentProvider;
     webhook_url?: string;
     model?: string;
+    base_url?: string;
+    api_key_env?: string;
   };
 }
 
@@ -59,7 +63,7 @@ export async function getAIModuleConfig(): Promise<AIProviderConfig | null> {
       .from('modules')
       .select('module_config')
       .eq('module_type', 'ai')
-      .single();
+      .maybeSingle();
     
     if (error || !data) {
       console.log("Could not fetch AI module config:", error?.message);
@@ -137,6 +141,26 @@ async function callProvider(
 // ============================================
 // Public API — Chat & Admin Completions
 // ============================================
+
+/** Resolve the Integrations default for agent and platform work.
+ * Missing config and n8n keep the existing GarageAI/Lovable fallback.
+ */
+export async function resolveConfiguredDefaultAI(
+  lovableModel?: string,
+  configOverride?: AIProviderConfig | null,
+): Promise<{ url: string; apiKey: string; model: string; provider: AgentProvider }> {
+  const config = configOverride === undefined ? await getAIModuleConfig() : configOverride;
+  const selection = selectModuleProvider(config, lovableModel);
+  if (!selection) return resolveDefaultAI(lovableModel);
+
+  const model = selection.provider === 'garageai'
+    ? (Deno.env.get('GARAGEAI_MODEL') || selection.model)
+    : selection.model;
+  return {
+    ...resolveProvider({ ...selection, model }),
+    provider: selection.provider,
+  };
+}
 
 export async function getAICompletion(
   options: AICompletionOptions,

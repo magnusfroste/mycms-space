@@ -18,7 +18,8 @@
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { parseModelJson } from "../_shared/model-json.ts";
-import { callOpenAICompatible, resolveDefaultAI, ModelTimeoutError } from "../_shared/ai-agent.ts";
+import { callOpenAICompatible, ModelTimeoutError } from "../_shared/ai-agent.ts";
+import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 import { loadKnowledgeBase } from "../_shared/ai-context.ts";
 
 type Supabase = SupabaseClient;
@@ -88,8 +89,8 @@ const CALL_BUDGET_S = 330;
 let callDeadline = 0;
 
 async function chat(system: string, user: string, model: string): Promise<string> {
-  // GarageAI (private, free) when configured; the Gemini names apply to the Lovable fallback.
-  const ai = resolveDefaultAI(model);
+  // Use the Integrations default; task-specific model names apply to Lovable.
+  const ai = await resolveConfiguredDefaultAI(model);
   // A hung call must fail inside this invocation, so it is recorded and retried.
   const timeoutMs = callDeadline ? Math.max(20_000, callDeadline - Date.now()) : 240_000;
   try {
