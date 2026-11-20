@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { openSteps, planComplete, stepStatus } from "../plan-steps";
+import { openSteps, planComplete, stepStatus, planStepsFromModel } from "../plan-steps";
 
 describe("stepStatus", () => {
   it.each([
@@ -42,4 +42,24 @@ describe("waiting steps follow their task", () => {
     ["rejected", "skipped"], ["expired", "skipped"], ["failed", "failed"],
     ["running", null], ["needs_review", null], [undefined, null],
   ])("task %s → step %s", (task, step) => expect(resolvedStepStatus(task as string | undefined)).toBe(step));
+});
+
+describe("planStepsFromModel", () => {
+  const known = new Set(["research_topic", "draft_blog_post"]);
+  it("accepts a bare array and renumbers steps", () => {
+    const s = planStepsFromModel([{ id: "x", description: "Research", skill_name: "research_topic", skill_args: { topic: "a" } }, { description: "Review" }], known);
+    expect(s).toEqual([
+      { id: "s1", order: 1, description: "Research", skill_name: "research_topic", skill_args: { topic: "a" }, status: "pending" },
+      { id: "s2", order: 2, description: "Review", skill_name: null, skill_args: {}, status: "pending" },
+    ]);
+  });
+  it("accepts {steps: [...]} and turns unknown skills into manual steps", () => {
+    const s = planStepsFromModel({ steps: [{ description: "Redirect", skill_name: "create_redirect", skill_args: { a: 1 } }] }, known);
+    expect(s[0]).toMatchObject({ skill_name: null, skill_args: {} });
+  });
+  it("returns [] for anything unusable and caps at 7", () => {
+    expect(planStepsFromModel("nope", known)).toEqual([]);
+    expect(planStepsFromModel({ steps: [null, 3] }, known)).toEqual([]);
+    expect(planStepsFromModel(Array.from({ length: 12 }, (_, i) => ({ description: `d${i}` })), known)).toHaveLength(7);
+  });
 });
