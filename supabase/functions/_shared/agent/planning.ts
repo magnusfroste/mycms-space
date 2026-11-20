@@ -5,7 +5,8 @@
 // ============================================
 
 import { operatorSkills } from "../skills.ts";
-import { stepStatus, planComplete, openSteps, waitingTaskId, resolvedStepStatus } from "../plan-steps.ts";
+import { stepStatus, planComplete, openSteps, waitingTaskId, resolvedStepStatus, planStepsFromModel } from "../plan-steps.ts";
+import { parseModelJson } from "../model-json.ts";
 import { normalizeProgress, compactStepResult } from "../objective-progress.ts";
 import type { ToolDefinition } from "./reason.ts";
 
@@ -63,6 +64,10 @@ export function calculateNextRun(cronExpr: string): string | null {
   }
 }
 
+function parsePlan(raw: string | null | undefined, known: ReadonlySet<string>) {
+  try { return planStepsFromModel(parseModelJson(raw || ''), known); } catch { return []; }
+}
+
 async function decomposeObjectiveIntoPlan(
   objective: { id: string; goal: string; constraints: any; success_criteria: any },
   supabase: any,
@@ -107,25 +112,22 @@ Success criteria: ${JSON.stringify(objective.success_criteria || {})}`,
     ],
   });
 
-  const raw = data.choices?.[0]?.message?.content || '[]';
-  const cleaned = raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
-  let steps: any[];
-  try {
-    steps = JSON.parse(cleaned);
-    if (!Array.isArray(steps)) steps = [];
-  } catch {
+  const known = new Set(skills.map((s) => s.name));
+  let steps = parsePlan(data.choices?.[0]?.message?.content, known);
+  if (!steps.length) {
+    // One retry with a reminder; models sometimes wrap or break the JSON.
+    const again = await callOpenAICompatible({
+      url, apiKey, model,
+      messages: [
+        { role: 'system', content: 'Return ONLY a JSON array of 3-7 plan steps as described. No prose, no markdown.' },
+        { role: 'user', content: `Objective: "${objective.goal}"\nSkills: ${[...known].join(', ')}\nStep shape: {"description":"...","skill_name":"name or null","skill_args":{}}` },
+      ],
+    });
+    steps = parsePlan(again.choices?.[0]?.message?.content, known);
+  }
+  if (!steps.length) {
     steps = [{ id: 's1', order: 1, description: objective.goal, skill_name: null, skill_args: {}, status: 'pending' }];
   }
-
-  // Ensure all steps have required fields
-  steps = steps.map((s: any, i: number) => ({
-    id: s.id || `s${i + 1}`,
-    order: s.order || i + 1,
-    description: s.description || `Step ${i + 1}`,
-    skill_name: s.skill_name || null,
-    skill_args: s.skill_args || {},
-    status: 'pending',
-  }));
 
   return { steps, total_steps: steps.length };
 }

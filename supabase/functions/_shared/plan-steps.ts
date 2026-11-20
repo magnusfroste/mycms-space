@@ -53,3 +53,37 @@ export function resolvedStepStatus(taskStatus: string | null | undefined): StepS
       return null;
   }
 }
+
+export interface PlanStep {
+  id: string;
+  order: number;
+  description: string;
+  skill_name: string | null;
+  skill_args: Record<string, unknown>;
+  status: "pending";
+}
+
+/**
+ * Plan steps from a model's answer (already parsed): a bare array or one
+ * wrapped as {steps: [...]} / {plan: [...]}. Unknown skill names become manual
+ * steps; at most 7 steps. Returns [] when there is nothing usable.
+ */
+export function planStepsFromModel(parsed: unknown, knownSkills: ReadonlySet<string>): PlanStep[] {
+  const p = parsed as any;
+  const list: any[] = Array.isArray(p) ? p : Array.isArray(p?.steps) ? p.steps : Array.isArray(p?.plan) ? p.plan : [];
+  return list
+    .filter((s) => s && typeof s === "object" && (s.description || s.skill_name))
+    .slice(0, 7)
+    .map((s, i) => {
+      const skill = typeof s.skill_name === "string" && knownSkills.has(s.skill_name) ? s.skill_name : null;
+      const args = s.skill_args && typeof s.skill_args === "object" && !Array.isArray(s.skill_args) ? s.skill_args : {};
+      return {
+        id: `s${i + 1}`,
+        order: i + 1,
+        description: String(s.description || `Run ${s.skill_name}`).slice(0, 300),
+        skill_name: skill,
+        skill_args: skill ? args : {},
+        status: "pending" as const,
+      };
+    });
+}
