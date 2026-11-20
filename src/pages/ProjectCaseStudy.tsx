@@ -30,14 +30,15 @@ const ProjectCaseStudy = () => {
   const { repoName } = useParams<{ repoName: string }>();
   const navigate = useNavigate();
   const { data: repo, isLoading, error } = useGitHubRepoByName(repoName);
-  const { config: githubConfig } = useGitHubModule();
+  // Wait for the module too: its project_redirects decide whether this URL is a redirect or a 404.
+  const { config: githubConfig, isLoading: configLoading } = useGitHubModule();
   const isStudio = useIsStudio();
 
   // Renamed or merged repos keep their old links working.
   const redirectTo = repoName ? githubConfig?.project_redirects?.[repoName] : undefined;
   if (redirectTo && redirectTo !== repoName) return <Navigate to={`/project/${redirectTo}`} replace />;
 
-  if (isLoading) {
+  if (isLoading || configLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
