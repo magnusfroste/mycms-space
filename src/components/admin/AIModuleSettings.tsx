@@ -20,8 +20,8 @@ import { useAIChatContext } from '@/hooks/useAIChatContext';
 import { usePages } from '@/models/pages';
 import { useBlogPosts } from '@/models/blog';
 import { useEnabledGitHubRepos } from '@/models/githubRepos';
-import type { AIModuleConfig, AIIntegrationType, MagnetToolConfig } from '@/types/modules';
-import { integrationsMeta, defaultIntegrations, defaultMagnetTools } from '@/types/modules';
+import type { AIModuleConfig, MagnetToolConfig } from '@/types/modules';
+import { integrationsMeta, defaultMagnetTools } from '@/types/modules';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { AdminPageHeader } from '@/components/admin/shell/AdminPageHeader';
@@ -120,15 +120,6 @@ const AIModuleSettings: React.FC = () => {
     );
   };
 
-  const handleIntegrationChange = (integrationType: AIIntegrationType) => {
-    const newIntegration = defaultIntegrations[integrationType];
-    handleConfigUpdate({
-      active_integration: integrationType,
-      integration: { ...newIntegration, enabled: true },
-      provider: integrationType === 'n8n' ? 'n8n' : integrationType === 'lovable' ? 'lovable' : 'custom',
-    });
-  };
-
   const togglePageSlug = (slug: string) => {
     const current = config?.selected_page_slugs || [];
     const updated = current.includes(slug)
@@ -215,7 +206,6 @@ const AIModuleSettings: React.FC = () => {
   const selectedRepoIds = config?.selected_repo_ids || [];
   const publishedPosts = blogPosts.filter((p) => p.status === 'published');
   const activeIntegration = config?.active_integration || 'n8n';
-  const availableIntegrations = integrationsMeta.filter((i) => i.available);
   const activeIntegrationMeta = integrationsMeta.find((i) => i.type === activeIntegration);
 
   // Build active context sources summary
@@ -296,44 +286,31 @@ const AIModuleSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Integration Selection */}
+      {/* The default provider is managed in one place: Integrations. */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plug className="h-5 w-5" />
-            Integration
+            AI Provider
           </CardTitle>
           <CardDescription>
-            Choose which AI backend to use for chat
+            Magnet uses the default provider selected in Integrations
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="integration">Active Integration</Label>
-            <Select value={activeIntegration} onValueChange={handleIntegrationChange}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Select integration" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border z-50">
-                {availableIntegrations.map((integration) => (
-                  <SelectItem key={integration.type} value={integration.type}>
-                    <span className="font-medium">{integration.name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {activeIntegrationMeta && (
-            <div className="flex items-center justify-between pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
-                {activeIntegrationMeta.description}
+        <CardContent>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">
+                {activeIntegrationMeta?.name || activeIntegration}
               </p>
-              <Button variant="outline" size="sm" onClick={goToIntegrations}>
-                Configure
-              </Button>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {activeIntegrationMeta?.description || 'Default provider for public chat'}
+              </p>
             </div>
-          )}
+            <Button variant="outline" size="sm" className="shrink-0" onClick={goToIntegrations}>
+              Change
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

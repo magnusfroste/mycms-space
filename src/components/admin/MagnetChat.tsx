@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { integrationsMeta, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
+import { integrationsMeta, defaultIntegrations, defaultAdminMagnetTools, type AIIntegrationType } from "@/types/modules";
 import { useSessionMessages } from "@/models/chatMessages";
 import ChatSidebar from "./ChatSidebar";
 import type { Message } from "@/components/chat/types";
@@ -43,8 +43,6 @@ const MagnetChat: React.FC = () => {
   const availableIntegrations = integrationsMeta.filter(
     (meta) => meta.category === 'ai' && meta.available
   );
-  const selectedMeta = availableIntegrations.find(m => m.type === effectiveIntegration);
-
   const webhookUrl = effectiveIntegration === 'n8n'
     ? (aiConfig?.webhook_url || "https://agent.froste.eu/webhook/magnet")
     : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
@@ -142,7 +140,9 @@ const MagnetChat: React.FC = () => {
               initialSessionId={activeSessionId ?? undefined}
               siteContext={contextData}
               integration={effectiveIntegration}
-              integrationConfig={aiConfig?.integration}
+              integrationConfig={effectiveIntegration === configuredIntegration
+                ? aiConfig?.integration
+                : defaultIntegrations[effectiveIntegration]}
               systemPrompt={aiConfig?.system_prompt || ''}
               enabledTools={defaultAdminMagnetTools.filter(t => t.enabled).map(t => t.id)}
               mode="admin"

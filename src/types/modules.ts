@@ -100,6 +100,15 @@ export interface IntegrationMeta {
 
 export const integrationsMeta: IntegrationMeta[] = [
   {
+    type: 'garageai',
+    name: 'GarageAI',
+    description: 'Private, self-hosted AI with automatic model routing',
+    icon: 'Server',
+    available: true,
+    docs: 'https://garageai.eu',
+    category: 'ai',
+  },
+  {
     type: 'n8n',
     name: 'n8n Webhook',
     description: 'Connect to an n8n workflow via webhook for full AI agent control',
