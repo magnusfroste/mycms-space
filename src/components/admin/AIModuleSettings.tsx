@@ -291,10 +291,10 @@ const AIModuleSettings: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plug className="h-5 w-5" />
-            AI Provider
+            AI Service
           </CardTitle>
           <CardDescription>
-            Magnet uses the default provider selected in Integrations
+            The service that generates Magnet's answers
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -304,11 +304,11 @@ const AIModuleSettings: React.FC = () => {
                 {activeIntegrationMeta?.name || activeIntegration}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {activeIntegrationMeta?.description || 'Default provider for public chat'}
+                {activeIntegrationMeta?.description || 'Default service for public chat'}
               </p>
             </div>
             <Button variant="outline" size="sm" className="shrink-0" onClick={goToIntegrations}>
-              Change
+              Change service
             </Button>
           </div>
         </CardContent>
