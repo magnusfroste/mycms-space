@@ -51,7 +51,7 @@ const ChatHistoryManager: React.FC = () => {
     <div className="space-y-6">
       <AdminPageHeader
         title="Conversations"
-        description="What visitors asked Magnet on the site. Use it to spot gaps in the knowledge base."
+        description="What visitors asked in the AI chat on the site. Use it to spot gaps in the knowledge base."
         actions={
         <AlertDialog>
           <AlertDialogTrigger asChild>

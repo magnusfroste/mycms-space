@@ -51,41 +51,41 @@ const integrations: IntegrationInfo[] = [
     id: 'garageai', group: 'ai', name: 'GarageAI', mono: 'GA',
     what: 'Private, self-hosted models. No per-token cost.',
     powers: 'chat · autopilot · cv tools · admin tools',
-    usedBy: ['Magnet chat', 'Autopilot drafts', 'CV tools', 'Admin AI tools'],
+    usedBy: ['AI Chat', 'Autopilot drafts', 'CV tools', 'Admin AI tools'],
     secret: 'GARAGEAI_API_KEY', docs: 'https://garageai.eu',
   },
   {
     id: 'openai', group: 'ai', name: 'OpenAI', mono: 'AI',
     what: 'GPT models answer visitors and write drafts.',
     powers: 'chat · autopilot · cv tools',
-    usedBy: ['Magnet chat', 'Autopilot drafts', 'CV tools'],
+    usedBy: ['AI Chat', 'Autopilot drafts', 'CV tools'],
     secret: 'OPENAI_API_KEY', docs: 'https://platform.openai.com/docs',
   },
   {
     id: 'gemini', group: 'ai', name: 'Google Gemini', mono: 'G',
     what: 'Alternative model provider, with tool calling.',
     powers: 'chat (alternative)',
-    usedBy: ['Magnet chat'],
+    usedBy: ['AI Chat'],
     secret: 'GEMINI_API_KEY', docs: 'https://ai.google.dev/docs',
   },
   {
     id: 'custom', group: 'ai', name: 'Self-hosted model', mono: '{ }',
     what: 'Any OpenAI-compatible endpoint, e.g. Ollama or vLLM.',
     powers: 'chat (private)',
-    usedBy: ['Magnet chat'],
+    usedBy: ['AI Chat'],
   },
   {
     id: 'n8n', group: 'ai', name: 'n8n workflow', mono: 'n8n',
     what: 'Hand the whole chat to an n8n agent via webhook.',
     powers: 'chat (custom)',
-    usedBy: ['Magnet chat'],
+    usedBy: ['AI Chat'],
     docs: 'https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/',
   },
   {
     id: 'github', group: 'source', name: 'GitHub', mono: 'GH',
     what: 'Repositories become project pages.',
     powers: '/github · case studies · mcp',
-    usedBy: ['Projects', 'Project case studies', 'Magnet · project deep dive', 'MCP · projects_list'],
+    usedBy: ['Projects', 'Project case studies', 'AI Chat · project deep dive', 'MCP · projects_list'],
     secret: 'GITHUB_TOKEN', docs: 'https://docs.github.com/en/rest',
   },
 
@@ -197,7 +197,7 @@ const IntegrationsManager: React.FC = () => {
       case 'n8n': {
         if (activeIntegration === id) {
           const model = (config?.integration as { model?: string } | undefined)?.model;
-          return { label: 'Active · default', tone: 'accent', detail: model ? `Default for Magnet · ${model}` : 'Default for Magnet' };
+          return { label: 'Active · default', tone: 'accent', detail: model ? `Default for AI Chat · ${model}` : 'Default for AI Chat' };
         }
         if (id === 'custom' && config?.integration?.type === 'custom' && (config.integration as CustomIntegration).base_url) {
           return { label: 'Configured', tone: 'neutral' };
@@ -314,7 +314,7 @@ const IntegrationsManager: React.FC = () => {
     <div className="space-y-5">
       <AdminPageHeader
         title="Integrations"
-        description="External services the site and Magnet talk to. Each one says what it powers, so you know what breaks if it stops working."
+        description="External services the site and its agents talk to. Each one says what it powers, so you know what breaks if it stops working."
         actions={
           <>
             <span className={cn('inline-flex h-[26px] items-center rounded-full px-2.5 text-[12.5px] font-medium', toneClasses.success.pill)}>

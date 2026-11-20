@@ -125,7 +125,7 @@ export default function OverviewView() {
           tag: 'Content',
           tone: 'neutral',
           title: `Knowledge base unchanged for ${days} days`,
-          why: 'Magnet answers from it. Add your latest assignment so the chat stays current.',
+          why: 'AI Chat answers from it. Add your latest assignment so the chat stays current.',
           action: 'Update',
           view: 'knowledge',
         });
@@ -210,7 +210,7 @@ export default function OverviewView() {
           <p className="text-xs text-muted-foreground">From visit to inquiry, {labels.phrase}</p>
           {[
             { label: 'Visitors', value: visitors, share: 100 },
-            { label: 'Started a chat with Magnet', value: chats, share: pct(chats, visitors) },
+            { label: 'Started a chat', value: chats, share: pct(chats, visitors) },
             { label: 'Sent an inquiry', value: inquiries, share: pct(inquiries, visitors) },
           ].map((step, i) => (
             <div key={step.label} className="flex flex-col gap-1.5">
@@ -327,7 +327,7 @@ export default function OverviewView() {
               <Dot tone={magnetOn ? 'success' : 'neutral'} className="mt-[5px]" />
               <div className="min-w-0 flex-1">
                 <p className="text-[13.5px] font-semibold">
-                  Magnet <span className="font-normal text-muted-foreground">· talks to visitors</span>
+                  AI Chat <span className="font-normal text-muted-foreground">· talks to visitors</span>
                 </p>
                 <p className="mt-0.5 font-mono text-[12.5px] text-foreground/80">
                   {magnetOn ? model : 'switched off'} · {chats} chats · {status?.knowledgeDocs ?? 0} knowledge docs

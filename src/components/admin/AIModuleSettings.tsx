@@ -236,8 +236,8 @@ const AIModuleSettings: React.FC = () => {
   return (
     <div className="space-y-6 [&>*:not(:first-child)]:max-w-3xl">
       <AdminPageHeader
-        title="Magnet"
-        description="Your public AI twin on the site. It answers from the knowledge base, hands serious leads to the inbox and never changes content."
+        title="AI Chat"
+        description="Your public AI chat on the site. It answers from the knowledge base, hands serious leads to the inbox and never changes content."
         actions={
           <>
             {activeContextSources.length > 0 && (
@@ -294,7 +294,7 @@ const AIModuleSettings: React.FC = () => {
             AI Service
           </CardTitle>
           <CardDescription>
-            The service that generates Magnet's answers
+            The service that generates AI Chat's answers
           </CardDescription>
         </CardHeader>
         <CardContent>

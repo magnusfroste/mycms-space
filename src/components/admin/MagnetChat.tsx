@@ -89,7 +89,7 @@ const MagnetChat: React.FC = () => {
         {/* Compact toolbar */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-border h-10">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-sm font-medium text-muted-foreground truncate">Magnet</h2>
+            <h2 className="text-sm font-medium text-muted-foreground truncate">AI Chat</h2>
             {hasContext && (
               <Badge variant="secondary" className="text-xs gap-1 shrink-0">
                 <Database className="h-3 w-3" />
@@ -130,7 +130,7 @@ const MagnetChat: React.FC = () => {
               key={chatKey}
               webhookUrl={webhookUrl}
               fullPage={true}
-              initialPlaceholder="Ask Magnet to check, draft or change something…"
+              initialPlaceholder="Ask AI Chat to check, draft or change something…"
               activePlaceholder="Ask a follow-up…"
               emptyTitle="What should we work on, Magnus?"
               quickActions={adminQuickActions}

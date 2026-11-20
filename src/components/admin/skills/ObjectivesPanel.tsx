@@ -98,7 +98,7 @@ export function ObjectivesPanel() {
         <div className="text-center py-16 text-muted-foreground">
           <Target className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="text-lg font-medium">No objectives yet</p>
-          <p className="text-sm mt-1">Define high-level goals for Magnet to work toward autonomously.</p>
+          <p className="text-sm mt-1">Define high-level goals for Autopilot to work toward autonomously.</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

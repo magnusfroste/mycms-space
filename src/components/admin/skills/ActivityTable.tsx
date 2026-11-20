@@ -48,7 +48,7 @@ export function ActivityTable() {
           <SelectTrigger className="w-40"><SelectValue placeholder="Agent" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All agents</SelectItem>
-            <SelectItem value="magnet">Magnet</SelectItem>
+            <SelectItem value="magnet">AI Chat</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex-1" />

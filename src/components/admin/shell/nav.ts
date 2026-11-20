@@ -49,13 +49,13 @@ export const adminNavGroups: AdminNavGroup[] = [
     label: 'Agents',
     items: [
       { id: 'agents', label: 'Operators & Autopilot', description: 'MCP keys for external agents and the internal Autopilot loop.', keywords: ['mcp', 'keys', 'autopilot', 'agency', 'skills', 'automations', 'objectives'] },
-      { id: 'magnet', label: 'Magnet (public chat)', description: 'Model, prompt and tools for the AI twin on the site.', keywords: ['chat', 'ai', 'prompt', 'model'] },
+      { id: 'magnet', label: 'AI Chat', description: 'Model, prompt and tools for the AI chat on the site.', keywords: ['chat', 'ai', 'prompt', 'model', 'magnet'] },
     ],
   },
   {
     label: 'Content',
     items: [
-      { id: 'knowledge', label: 'Knowledge base', description: 'Profile and documents that Magnet and operators answer from.', keywords: ['resume', 'cv', 'profile'] },
+      { id: 'knowledge', label: 'Knowledge base', description: 'Profile and documents that AI Chat and operators answer from.', keywords: ['resume', 'cv', 'profile'] },
       { id: 'blog', label: 'Blog', description: 'Posts, categories and blog settings.', keywords: ['posts', 'articles'] },
       { id: 'projects', label: 'Projects', description: 'GitHub repositories shown as project pages.', keywords: ['github', 'repos', 'portfolio'] },
       { id: 'pages', label: 'Pages', description: 'Pages and the blocks they are made of.', keywords: ['blocks', 'landing'] },
@@ -67,7 +67,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     label: 'Audience',
     items: [
       { id: 'inbox', label: 'Inbox', description: 'Messages sent through the contact form.', keywords: ['messages', 'contact', 'leads'] },
-      { id: 'conversations', label: 'Conversations', description: 'What visitors asked Magnet.', keywords: ['chat history', 'sessions'] },
+      { id: 'conversations', label: 'Conversations', description: 'What visitors asked in the AI chat.', keywords: ['chat history', 'sessions'] },
       { id: 'analytics', label: 'Analytics', description: 'Visits, pages and chat sessions over time.', keywords: ['stats', 'traffic'] },
     ],
   },
@@ -86,8 +86,8 @@ export const adminNavItems: AdminNavItem[] = adminNavGroups.flatMap((g) => g.ite
 
 const chatItem: AdminNavItem = {
   id: 'chat',
-  label: 'Ask Magnet',
-  description: 'Chat with Magnet as the admin co-pilot.',
+  label: 'Ask AI Chat',
+  description: 'Chat with the admin co-pilot.',
 };
 
 export const findNavItem = (id: string): AdminNavItem | undefined =>

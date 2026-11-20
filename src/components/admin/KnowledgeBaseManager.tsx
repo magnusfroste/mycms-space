@@ -273,7 +273,7 @@ export default function KnowledgeBaseManager() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Knowledge base"
-        description="Your experience as plain markdown. Magnet, the CV tools and every MCP operator answer from it — and operators can update it with kb_upsert / kb_append."
+        description="Your experience as plain markdown. AI Chat, the CV tools and every MCP operator answer from it — and operators can update it with kb_upsert / kb_append."
       />
       <ProfileCard />
       <KnowledgeBaseEditor />

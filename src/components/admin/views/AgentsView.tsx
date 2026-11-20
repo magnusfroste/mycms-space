@@ -38,8 +38,8 @@ const roles = [
   },
   {
     eyebrow: 'Talks',
-    title: 'Magnet',
-    text: 'Your public twin on the site. Answers from the knowledge base and hands serious leads to the inbox. Read-only.',
+    title: 'AI Chat',
+    text: 'The public chat on the site. Answers from the knowledge base and hands serious leads to the inbox. Read-only.',
   },
 ];
 
@@ -101,7 +101,7 @@ export default function AgentsView({ section }: { section?: string }) {
     <div className="space-y-6">
       <AdminPageHeader
         title="Operators & Autopilot"
-        description="Who runs the CMS. Operators steer through MCP and decide. Autopilot keeps things running between their visits and never publishes on its own. Magnet only talks to visitors."
+        description="Who runs the CMS. Operators steer through MCP and decide. Autopilot keeps things running between their visits and never publishes on its own. AI Chat only talks to visitors."
       />
 
       <section aria-label="Roles" className="grid gap-3 md:grid-cols-3">

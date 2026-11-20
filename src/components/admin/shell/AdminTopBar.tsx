@@ -1,5 +1,5 @@
 // ============================================
-// Admin top bar: logo + breadcrumb, ⌘K jump-to search, Ask Magnet,
+// Admin top bar: logo + breadcrumb, ⌘K jump-to search, Ask AI Chat,
 // View site and the account menu.
 // ============================================
 
@@ -133,7 +133,7 @@ export function AdminTopBar({ user, activeView, onSignOut }: AdminTopBarProps) {
           )}
         >
           <span className="h-[7px] w-[7px] rounded-full bg-ring" />
-          <span className="hidden sm:inline">Ask Magnet</span>
+          <span className="hidden sm:inline">Ask AI Chat</span>
         </Link>
         <a
           href="/"
@@ -194,8 +194,8 @@ export function AdminTopBar({ user, activeView, onSignOut }: AdminTopBarProps) {
             </CommandGroup>
           ))}
           <CommandGroup heading="Actions">
-            <CommandItem value="ask magnet chat co-pilot" onSelect={() => go('chat')}>
-              <span className="text-[13.5px] font-medium">Ask Magnet</span>
+            <CommandItem value="ask ai chat co-pilot magnet" onSelect={() => go('chat')}>
+              <span className="text-[13.5px] font-medium">Ask AI Chat</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

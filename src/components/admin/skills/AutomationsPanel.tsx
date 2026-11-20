@@ -179,7 +179,7 @@ function AutomationEditorSheet({ automation, open, onClose, onSave }: { automati
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Link to an objective so Magnet tracks progress automatically.</p>
+            <p className="text-xs text-muted-foreground">Link to an objective so Autopilot tracks progress automatically.</p>
           </div>
 
           <div className="space-y-2">

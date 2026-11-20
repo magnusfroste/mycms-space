@@ -136,12 +136,12 @@ export const moduleRegistry: ModuleRegistryEntry[] = [
   // Agents & connections — how the site talks to people and other systems
   {
     type: 'ai',
-    name: 'Magnet chat',
-    description: 'The AI twin on the site, with tools for CV match and project deep dives.',
+    name: 'AI Chat',
+    description: 'The AI chat on the site, with tools for CV match and project deep dives.',
     group: 'agents',
     sidebarItems: ['magnet', 'conversations'],
     defaultEnabled: true,
-    admin: { label: 'Magnet', view: 'magnet' },
+    admin: { label: 'AI Chat', view: 'magnet' },
     mcp: 'na',
   },
   {

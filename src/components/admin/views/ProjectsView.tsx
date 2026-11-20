@@ -8,7 +8,7 @@ export default function ProjectsView({ section }: { section?: string }) {
     <div className="space-y-6">
       <AdminPageHeader
         title="Projects"
-        description="Your GitHub repositories, enriched by AI and shown as project pages. Magnet uses them to answer questions about your work."
+        description="Your GitHub repositories, enriched by AI and shown as project pages. AI Chat uses them to answer questions about your work."
       />
       <SectionTabs
         section={section}
