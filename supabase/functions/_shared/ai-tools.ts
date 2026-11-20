@@ -311,12 +311,12 @@ export const objectiveUpdateTool: ToolDefinition = {
   type: "function",
   function: {
     name: "objective_update_progress",
-    description: "Update progress on an active objective.",
+    description: "Record notes or counters on an active objective. Merged into the stored progress; the plan is changed only by the planning tools.",
     parameters: {
       type: "object",
       properties: {
         objective_id: { type: "string" },
-        progress: { type: "object" },
+        progress: { type: "object", description: "A JSON object (not a string), e.g. {\"note\": \"draft queued\"}." },
       },
       required: ["objective_id", "progress"],
     },

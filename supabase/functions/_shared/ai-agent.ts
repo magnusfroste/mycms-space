@@ -11,6 +11,7 @@ import { reason, type Surface, type ToolDefinition as CoreTool, type ToolOutcome
 import { PLANNING_TOOLS, PLANNING_TOOL_NAMES, executePlanningTool } from "./agent/planning.ts";
 import type { SiteContext, ChatMessage } from "./ai-context.ts";
 import { callKnowledgeTool } from "./knowledge-tools.ts";
+import { mergeProgress } from "./objective-progress.ts";
 
 // ============================================
 // Types
@@ -343,8 +344,11 @@ async function executeBuiltInTool(toolName: string, toolArgs: Record<string, unk
 
     // --- Objectives ---
     case 'objective_update_progress': {
+      const { data: current } = await supabase.from('agent_objectives')
+        .select('progress').eq('id', toolArgs.objective_id).maybeSingle();
+      if (!current) return `❌ Objective not found`;
       const { error } = await supabase.from('agent_objectives')
-        .update({ progress: toolArgs.progress }).eq('id', toolArgs.objective_id);
+        .update({ progress: mergeProgress(current.progress, toolArgs.progress) }).eq('id', toolArgs.objective_id);
       if (error) return `❌ Failed: ${error.message}`;
       return `✅ Objective progress updated`;
     }
