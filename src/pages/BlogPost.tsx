@@ -3,7 +3,8 @@
 // Dynamic page for viewing individual blog posts
 // ============================================
 
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import { withoutSlugTimestamp } from '@/lib/utils/slug';
 import { useBlogPostBySlug, useBlogPosts } from '@/models/blog';
 import { useSEOModule } from '@/hooks/useSEOModule';
 import { format } from 'date-fns';
@@ -82,6 +83,10 @@ const BlogPost = () => {
   }
 
   if (error || !post) {
+    // Older posts had a timestamp at the end of the slug; old links still work.
+    const cleanSlug = slug ? withoutSlugTimestamp(slug) : null;
+    if (!error && cleanSlug && cleanSlug !== slug) return <Navigate to={`/blog/${cleanSlug}`} replace />;
+
     return (
       <div className="min-h-screen flex flex-col">
         <SEOHead title="Post not found" noIndex />

@@ -10,6 +10,7 @@ import { resolveConfiguredDefaultAI } from "../_shared/ai-provider.ts";
 import { handleEditorDraft, type DraftToSave, type EditorBrief } from "./editor.ts";
 import { isTrustedCaller, forbidden } from "../_shared/cron-auth.ts";
 import { DRAFTING_ACTIONS, expireOldReviews, loadGuardrails, queueIsFull } from "../_shared/guardrails.ts";
+import { slugify, firstFreeSlug } from "../_shared/slug.ts";
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
@@ -218,13 +219,17 @@ async function themeOfTheDay(supabase: ReturnType<typeof getSupabase>): Promise<
   return `${theme.name}: ${theme.search_terms.join(', ')}`;
 }
 
+/** A readable slug from the title; -2, -3 … only if a post already uses it. */
+async function uniqueBlogSlug(supabase: ReturnType<typeof getSupabase>, title: string): Promise<string> {
+  const base = slugify(title);
+  const { data } = await supabase.from('blog_posts').select('slug').like('slug', `${base}%`);
+  return firstFreeSlug(base, new Set((data || []).map((r: { slug: string }) => r.slug)));
+}
+
 // Saves an editor draft as a blog post (draft status) and generates a cover image.
 async function saveDraftPost(supabase: ReturnType<typeof getSupabase>, draft: DraftToSave) {
   const title = draft.title;
-  const slug = title.toLowerCase()
-    .replace(/[åä]/g, 'a').replace(/ö/g, 'o')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const postSlug = `${slug}-${Date.now()}`;
+  const postSlug = await uniqueBlogSlug(supabase, title);
 
   const { data: post, error: postError } = await supabase.from('blog_posts').insert({
     title,
@@ -721,9 +726,8 @@ Be comprehensive but concise — this is the single source of truth.`
 
         // Channel-specific persistence
         if (channel === 'blog') {
-          const slug = (parsed.title as string || topic).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
           const { data: post } = await supabase.from('blog_posts').insert({
-            title: parsed.title as string, slug: `${slug}-${Date.now()}`,
+            title: parsed.title as string, slug: await uniqueBlogSlug(supabase, (parsed.title as string) || topic),
             content: parsed.content as string,
             excerpt: (parsed.excerpt as string) || (parsed.content as string).substring(0, 155),
             status: 'draft', source: 'agent',
